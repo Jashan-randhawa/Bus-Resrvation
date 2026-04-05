@@ -1,0 +1,72 @@
+.nav-link{
+    margin-right: 1em !important;
+}
+#image{
+    background-image: url(./images/sbtbsimg.jpg);
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
+    height: 588px;
+   }
+   .overlay{
+    position: absolute;
+    min-height: 100%;
+    min-width: 100%;
+    left: 0px;
+    top: 0px;
+   }
+   .description{
+    margin: auto;
+    padding-top: 8em;
+    
+}
+.description h1{
+ color:#F97300 ;
+}
+.description p{
+ color:#666;
+ font-size: 20px;
+ width: 80%;
+ margin: auto;
+ line-height: 1.5;
+}
+.description button{
+ border:1px  solid #F97300;
+ background:#F97300;
+ color:#fff;
+}
+#pnr{
+    background: #cadade;
+    margin-top: 4em;
+}
+#about{
+    background: #cadade;
+    margin-top: 4em;
+    height: 235px;
+}
+#about h1{
+    color: #F97300;
+}
+#about h4{
+    color: #F97300;
+}
+
+#about p{
+    width: 80%;
+    margin: auto;
+}
+.contact .page{
+    background: #cadade;
+    padding-bottom: 30px;
+    padding-left: 260px ;
+    padding-top: 20px;
+    padding-right: 70px;
+  }
+  .contact{
+    background: #cadade;
+    position: relative;
+
+  }
+  #contact{
+    margin-top: 4em;
+  }

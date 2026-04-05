@@ -1,0 +1,15 @@
+#image{
+    background-image: url(./images/buscv.jpg);
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
+    height: 611px;
+   }
+   
+   .overlay{
+    position: absolute;
+    min-height: 100%;
+    min-width: 100%;
+    left: 0;
+    top: 0;
+   }

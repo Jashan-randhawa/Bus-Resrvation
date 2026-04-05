@@ -1,0 +1,30 @@
+#image{
+    background-image: url(./images/AdobeStock_299508506_Preview.jpeg);
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
+    height: 611px;
+   }
+   .overlay{
+    position: absolute;
+    min-height: 100%;
+    min-width: 100%;
+    left: 0;
+    top: 0;
+   }
+   .card
+   {
+    background-color: #d5c1c1;
+   }
+   .description{
+    margin: auto;
+}
+.description h1{
+ color:#F97300 ;
+}
+.description p{
+ color:#666;
+ font-size: 20px;
+ width: 50%;
+ line-height: 1.5;
+}

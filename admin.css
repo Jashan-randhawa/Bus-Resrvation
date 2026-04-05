@@ -1,0 +1,10 @@
+.bar{
+    position: fixed;
+      top: -8px;
+      left: -48px;
+      width: 200px;
+      height: 100%;
+      background-color: #a2a4c0bb;
+      overflow-y: auto;
+      padding-top: 30px
+}
