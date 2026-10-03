@@ -5,7 +5,7 @@
 ### *A Modern, Cloud-Ready Full-Stack Bus Ticket Booking & Fleet Management Platform*
 
 [![Render](https://img.shields.io/badge/Render-Deployed-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://bus-resrvation.onrender.com)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Docker Package](https://img.shields.io/badge/GitHub%20Package-Docker-blue?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation)
 [![PHP](https://img.shields.io/badge/PHP-8.1-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://www.php.net/)
 [![TiDB Cloud](https://img.shields.io/badge/TiDB%20Cloud-MySQL%20Compatible-E30C34?style=for-the-badge&logo=mysql&logoColor=white)](https://tidb.cloud/)
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-4.6-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
@@ -108,23 +108,26 @@ flowchart TD
 
 ---
 
-### 💻 Option B: Run Locally with Docker
+### 💻 Option B: Run with GitHub Container Package (Fastest)
 
 ```bash
-# Build the Docker image
-docker build -t bus-reservation .
+# Pull the pre-built image from GitHub Container Registry
+docker pull ghcr.io/jashan-randhawa/bus-resrvation:latest
 
 # Run the container
-docker run -p 8080:80 \
+docker run -d -p 8080:80 \
   -e DB_HOST=your_host \
   -e DB_PORT=4000 \
   -e DB_USER=your_user \
   -e DB_PASS=your_pass \
-  -e DB_NAME=majorproject \
+  -e DB_NAME=test \
   -e DB_SSL=true \
-  bus-reservation
+  --name bus-reservation-app \
+  ghcr.io/jashan-randhawa/bus-resrvation:latest
 ```
 Visit `http://localhost:8080` in your browser.
+
+> You can also build locally from source with `docker build -t bus-reservation .`.
 
 ---
 
