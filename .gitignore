@@ -1,0 +1,29 @@
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*~
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+# Logs & Temporary Files
+*.log
+tmp/
+temp/
+scratch/
+
+# Database dumps (except setup files)
+*.dump
+*.sql.gz
+!init.sql
