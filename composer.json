@@ -1,0 +1,31 @@
+{
+  "name": "jashan-randhawa/bus-reservation",
+  "description": "A full-stack cloud-native Bus Ticket Booking & Fleet Management Platform",
+  "type": "project",
+  "license": "MIT",
+  "keywords": [
+    "bus-reservation",
+    "ticket-booking",
+    "fleet-management",
+    "php",
+    "mysql",
+    "tidb-cloud",
+    "docker",
+    "render"
+  ],
+  "homepage": "https://bus-resrvation.onrender.com",
+  "authors": [
+    {
+      "name": "Jashan Randhawa",
+      "homepage": "https://github.com/Jashan-randhawa"
+    }
+  ],
+  "require": {
+    "php": ">=7.4",
+    "ext-mysqli": "*"
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "sort-packages": true
+  }
+}
