@@ -14,9 +14,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['run_migrations'])) {
     flash_set('success', 'Database migrations executed successfully.');
 }
 
-$title = 'System Diagnostics & Health Check';
-require_once __DIR__ . '/../includes/layout/header-admin.php';
-
 // Safe query runner for administrative/metadata queries (SHOW COLUMNS, SHOW INDEX, etc.)
 $run_query = function(string $sql) use ($link): array {
     try {
@@ -33,110 +30,128 @@ $run_query = function(string $sql) use ($link): array {
     }
 };
 
-// Diagnostics checks
+function run_check(string $name, callable $fn): array {
+    try {
+        return ['name' => $name] + $fn();
+    } catch (Throwable $t) {
+        error_log('[busres] diag ' . $name . ': ' . $t->getMessage());
+        return ['name' => $name, 'status' => 'FAIL', 'message' => $t->getMessage()];
+    }
+}
+
+// Compute all diagnostic checks before sending HTML header
 $checks = [];
 
 // 1. PHP Version & Extensions
-$checks[] = [
-    'name' => 'PHP Version',
-    'status' => version_compare(PHP_VERSION, '7.4.0', '>=') ? 'OK' : 'WARN',
-    'message' => 'PHP ' . PHP_VERSION . ' (Recommended: 8.0+)'
-];
+$checks[] = run_check('PHP Version', function() {
+    return [
+        'status' => version_compare(PHP_VERSION, '7.4.0', '>=') ? 'OK' : 'WARN',
+        'message' => 'PHP ' . PHP_VERSION . ' (Recommended: 8.0+)'
+    ];
+});
 
-$mysqli_loaded = extension_loaded('mysqli');
-$checks[] = [
-    'name' => 'MySQLi Extension',
-    'status' => $mysqli_loaded ? 'OK' : 'FAIL',
-    'message' => $mysqli_loaded ? 'Loaded' : 'Missing mysqli extension'
-];
+$checks[] = run_check('MySQLi Extension', function() {
+    $ok = extension_loaded('mysqli');
+    return [
+        'status' => $ok ? 'OK' : 'FAIL',
+        'message' => $ok ? 'Loaded' : 'Missing mysqli extension'
+    ];
+});
 
-$openssl_loaded = extension_loaded('openssl');
-$checks[] = [
-    'name' => 'OpenSSL Extension',
-    'status' => $openssl_loaded ? 'OK' : 'FAIL',
-    'message' => $openssl_loaded ? 'Loaded' : 'Missing openssl extension'
-];
+$checks[] = run_check('OpenSSL Extension', function() {
+    $ok = extension_loaded('openssl');
+    return [
+        'status' => $ok ? 'OK' : 'FAIL',
+        'message' => $ok ? 'Loaded' : 'Missing openssl extension'
+    ];
+});
 
 // 2. Database Connectivity & Mode
-$db_ping = false;
-try {
+$checks[] = run_check('Database Connectivity', function() use ($link) {
     $db_ping = @mysqli_ping($link);
-} catch (Throwable $e) {}
-
-$checks[] = [
-    'name' => 'Database Connectivity',
-    'status' => $db_ping ? 'OK' : 'FAIL',
-    'message' => $db_ping ? ('Connected to ' . DB_NAME . '@' . DB_HOST) : 'Database unreachable'
-];
+    $host_info = defined('DB_NAME') && defined('DB_HOST') ? (DB_NAME . '@' . DB_HOST) : 'configured';
+    return [
+        'status' => $db_ping ? 'OK' : 'FAIL',
+        'message' => $db_ping ? ('Connected to ' . $host_info) : 'Database unreachable'
+    ];
+});
 
 // 3. Schema & Constraints Inspection
-$booking_cols = $run_query('SHOW COLUMNS FROM `booking`');
-$b_col_names = array_column($booking_cols, 'Field');
-$has_pnr = in_array('pnr', $b_col_names, true);
-$has_status = in_array('status', $b_col_names, true);
+$checks[] = run_check('Booking Table Hardening', function() use ($run_query) {
+    $booking_cols = $run_query('SHOW COLUMNS FROM `booking`');
+    $b_col_names = array_column($booking_cols, 'Field');
+    $has_pnr = in_array('pnr', $b_col_names, true);
+    $has_status = in_array('status', $b_col_names, true);
+    return [
+        'status' => ($has_pnr && $has_status) ? 'OK' : 'WARN',
+        'message' => "PNR Column: " . ($has_pnr ? 'Present' : 'Missing') . " | Status Column: " . ($has_status ? 'Present' : 'Missing')
+    ];
+});
 
-$checks[] = [
-    'name' => 'Booking Table Hardening',
-    'status' => ($has_pnr && $has_status) ? 'OK' : 'WARN',
-    'message' => "PNR Column: " . ($has_pnr ? 'Present' : 'Missing') . " | Status Column: " . ($has_status ? 'Present' : 'Missing')
-];
-
-$buses_cols = $run_query('SHOW COLUMNS FROM `buses`');
-$has_capacity = in_array('capacity', array_column($buses_cols, 'Field'), true);
-$checks[] = [
-    'name' => 'Fleet Capacity Modeling',
-    'status' => $has_capacity ? 'OK' : 'WARN',
-    'message' => "Capacity Column in buses: " . ($has_capacity ? 'Present (Dynamic)' : 'Missing (36 fallback)')
-];
+$checks[] = run_check('Fleet Capacity Modeling', function() use ($run_query) {
+    $buses_cols = $run_query('SHOW COLUMNS FROM `buses`');
+    $has_capacity = in_array('capacity', array_column($buses_cols, 'Field'), true);
+    return [
+        'status' => $has_capacity ? 'OK' : 'WARN',
+        'message' => "Capacity Column in buses: " . ($has_capacity ? 'Present (Dynamic)' : 'Missing (36 fallback)')
+    ];
+});
 
 // 4. Unique Constraints
-$indexes = $run_query('SHOW INDEX FROM `booking`');
-$idx_names = array_column($indexes, 'Key_name');
-$has_uq_seat = in_array('uq_booking_seat', $idx_names, true);
-$has_uq_pnr = in_array('uq_booking_pnr', $idx_names, true);
-
-$checks[] = [
-    'name' => 'Concurrency & Unique Indexes',
-    'status' => ($has_uq_seat && $has_uq_pnr) ? 'OK' : 'WARN',
-    'message' => "uq_booking_seat: " . ($has_uq_seat ? 'Active' : 'Missing') . " | uq_booking_pnr: " . ($has_uq_pnr ? 'Active' : 'Missing')
-];
+$checks[] = run_check('Concurrency & Unique Indexes', function() use ($run_query) {
+    $indexes = $run_query('SHOW INDEX FROM `booking`');
+    $idx_names = array_column($indexes, 'Key_name');
+    $has_uq_seat = in_array('uq_booking_seat', $idx_names, true);
+    $has_uq_pnr = in_array('uq_booking_pnr', $idx_names, true);
+    return [
+        'status' => ($has_uq_seat && $has_uq_pnr) ? 'OK' : 'WARN',
+        'message' => "uq_booking_seat: " . ($has_uq_seat ? 'Active' : 'Missing') . " | uq_booking_pnr: " . ($has_uq_pnr ? 'Active' : 'Missing')
+    ];
+});
 
 // 5. Rate Limiting Table
-$login_attempts_check = $run_query("SHOW TABLES LIKE 'login_attempts'");
-$checks[] = [
-    'name' => 'Rate Limiting Table (login_attempts)',
-    'status' => !empty($login_attempts_check) ? 'OK' : 'FAIL',
-    'message' => !empty($login_attempts_check) ? 'Active & Ready' : 'Table missing (H-05)'
-];
+$checks[] = run_check('Rate Limiting Table (login_attempts)', function() use ($run_query) {
+    $login_attempts_check = $run_query("SHOW TABLES LIKE 'login_attempts'");
+    return [
+        'status' => !empty($login_attempts_check) ? 'OK' : 'FAIL',
+        'message' => !empty($login_attempts_check) ? 'Active & Ready' : 'Table missing (H-05)'
+    ];
+});
 
 // 6. Migrations Status
-$mig_check = $run_query("SHOW TABLES LIKE 'schema_migrations'");
-$applied_count = 0;
 $m_rows = [];
-if (!empty($mig_check)) {
-    $m_rows = $run_query('SELECT migration, applied_at FROM `schema_migrations` ORDER BY id ASC');
-    $applied_count = count($m_rows);
-}
-$checks[] = [
-    'name' => 'Schema Migrations Runner (O7)',
-    'status' => ($applied_count > 0) ? 'OK' : 'INFO',
-    'message' => "{$applied_count} migrations recorded in schema_migrations"
-];
+$checks[] = run_check('Schema Migrations Runner (O7)', function() use ($run_query, &$m_rows) {
+    $mig_check = $run_query("SHOW TABLES LIKE 'schema_migrations'");
+    $applied_count = 0;
+    if (!empty($mig_check)) {
+        $m_rows = $run_query('SELECT migration, applied_at FROM `schema_migrations` ORDER BY id ASC');
+        $applied_count = count($m_rows);
+    }
+    return [
+        'status' => ($applied_count > 0) ? 'OK' : 'INFO',
+        'message' => "{$applied_count} migrations recorded in schema_migrations"
+    ];
+});
 
 // 7. Security Configurations
-$cookie_params = session_get_cookie_params();
-$checks[] = [
-    'name' => 'Session Cookie Security',
-    'status' => ($cookie_params['httponly']) ? 'OK' : 'WARN',
-    'message' => "HttpOnly: " . ($cookie_params['httponly'] ? 'Yes' : 'No') . " | SameSite: " . ($cookie_params['samesite'] ?? 'None') . " | Secure: " . ($cookie_params['secure'] ? 'Yes' : 'No')
-];
+$checks[] = run_check('Session Cookie Security', function() {
+    $cookie_params = session_get_cookie_params();
+    return [
+        'status' => ($cookie_params['httponly']) ? 'OK' : 'WARN',
+        'message' => "HttpOnly: " . ($cookie_params['httponly'] ? 'Yes' : 'No') . " | SameSite: " . ($cookie_params['samesite'] ?? 'None') . " | Secure: " . ($cookie_params['secure'] ? 'Yes' : 'No')
+    ];
+});
 
-$tz = date_default_timezone_get();
-$checks[] = [
-    'name' => 'Application Timezone',
-    'status' => 'OK',
-    'message' => "Current Timezone: {$tz} (Time: " . date('Y-m-d H:i:s') . ")"
-];
+$checks[] = run_check('Application Timezone', function() {
+    $tz = date_default_timezone_get();
+    return [
+        'status' => 'OK',
+        'message' => "Current Timezone: {$tz} (Time: " . date('Y-m-d H:i:s') . ")"
+    ];
+});
+
+$title = 'System Diagnostics & Health Check';
+require_once __DIR__ . '/../includes/layout/header-admin.php';
 ?>
 <div class="col-lg-10 col-md-10 col-sm-12" style="float: right;">
     <section class="mt-4 mb-5">

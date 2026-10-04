@@ -68,3 +68,15 @@
                 </ul>
             </div>
         </nav>
+        <?php if (function_exists('flash_get')): ?>
+            <?php foreach (flash_get() as $m): ?>
+                <div class="col-lg-10 col-md-10 col-sm-12" style="float: right;">
+                    <div class="alert alert-<?= e($m['type'] === 'error' ? 'danger' : $m['type']) ?> alert-dismissible fade show mt-3 mb-0" role="alert">
+                        <?= e($m['msg']) ?>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>

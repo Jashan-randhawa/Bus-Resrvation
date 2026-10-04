@@ -35,7 +35,7 @@ if (!defined('BUS_SEATS')) {
 // Application Timezone (F6: default Asia/Kolkata)
 date_default_timezone_set(getenv('APP_TZ') ?: 'Asia/Kolkata');
 
-// Global exception handler (M-04)
+// Global exception handler (M-04 / D-02)
 if (!function_exists('busres_exception_handler')) {
     function busres_exception_handler(Throwable $t): void {
         $where = $t->getFile() . ':' . $t->getLine();
@@ -43,7 +43,17 @@ if (!function_exists('busres_exception_handler')) {
         if (!headers_sent()) {
             http_response_code(500);
         }
-        echo '<p style="color:#721c24; background-color:#f8d7da; border:1px solid #f5c6cb; padding:12px; border-radius:4px; font-family:sans-serif; text-align:center; max-width:600px; margin:2rem auto;">Something went wrong. Please try again in a moment.</p>';
+        $is_debug = (getenv('APP_DEBUG') === '1' || getenv('APP_DEBUG') === 'true');
+        $is_admin = (!empty($_SESSION['role']) && $_SESSION['role'] === 'admin') || !empty($_SESSION['admin']);
+        if ($is_debug || $is_admin) {
+            echo '<div style="color:#721c24; background-color:#f8d7da; border:1px solid #f5c6cb; padding:15px; border-radius:4px; font-family:monospace; max-width:800px; margin:2rem auto;">';
+            echo '<strong style="display:block; margin-bottom:8px;">[Application Exception: ' . htmlspecialchars(get_class($t), ENT_QUOTES, 'UTF-8') . ']</strong>';
+            echo '<p style="margin:4px 0;"><strong>Message:</strong> ' . htmlspecialchars($t->getMessage(), ENT_QUOTES, 'UTF-8') . '</p>';
+            echo '<p style="margin:4px 0;"><strong>Location:</strong> ' . htmlspecialchars($where, ENT_QUOTES, 'UTF-8') . '</p>';
+            echo '</div>';
+        } else {
+            echo '<p style="color:#721c24; background-color:#f8d7da; border:1px solid #f5c6cb; padding:12px; border-radius:4px; font-family:sans-serif; text-align:center; max-width:600px; margin:2rem auto;">Something went wrong. Please try again in a moment.</p>';
+        }
     }
     set_exception_handler('busres_exception_handler');
 }

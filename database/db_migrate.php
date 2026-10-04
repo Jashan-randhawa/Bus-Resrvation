@@ -13,6 +13,7 @@ if (PHP_SAPI !== 'cli' && !isset($_GET['migrate_key']) && empty($_SESSION['admin
 
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/db_con.php';
+require_once __DIR__ . '/../includes/helpers.php';
 
 echo "=== Bus Reservation Database Migration Runner ===\n";
 echo "Database: " . DB_NAME . "@" . DB_HOST . "\n\n";

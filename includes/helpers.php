@@ -27,6 +27,23 @@ function csrf_verify(): void {
     }
 }
 
+/* ---------- Flash Messages (D-03) ---------- */
+function flash_set(string $type, string $msg): void {
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        @session_start();
+    }
+    $_SESSION['flash'][] = ['type' => $type, 'msg' => $msg];
+}
+
+function flash_get(): array {
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        @session_start();
+    }
+    $f = $_SESSION['flash'] ?? [];
+    unset($_SESSION['flash']);
+    return $f;
+}
+
 /* ---------- Database helpers (prepared statements) ---------- */
 function db_one(mysqli $link, string $sql, string $types = '', array $params = []): ?array {
     $stmt = mysqli_prepare($link, $sql);

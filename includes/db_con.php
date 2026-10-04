@@ -11,6 +11,11 @@ $db_name  = getenv('DB_NAME') ?: 'majorproject';
 $db_port  = (int)(getenv('DB_PORT') ?: 3306);
 $use_ssl  = filter_var(getenv('DB_SSL'), FILTER_VALIDATE_BOOLEAN) || (getenv('DB_SSL') === 'true');
 
+defined('DB_HOST') || define('DB_HOST', $hostname);
+defined('DB_USER') || define('DB_USER', $username);
+defined('DB_NAME') || define('DB_NAME', $db_name);
+defined('DB_PORT') || define('DB_PORT', $db_port);
+
 $link = mysqli_init();
 $flags = 0;
 
