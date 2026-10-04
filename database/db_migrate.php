@@ -238,4 +238,18 @@ if (!migration_applied($link, $m2)) {
     echo "[i] Migration {$m2} already applied.\n";
 }
 
+// 5. Fleet capacity modeling (O8: 003_bus_capacity)
+$m3 = '003_bus_capacity';
+if (!migration_applied($link, $m3)) {
+    echo "[*] Running migration: {$m3}...\n";
+    if (!has_column($link, 'buses', 'capacity')) {
+        mysqli_query($link, "ALTER TABLE `buses` ADD COLUMN `capacity` INT NOT NULL DEFAULT 36");
+        echo "  -> Added capacity column to buses table (default 36 seats).\n";
+    }
+    record_migration($link, $m3);
+    echo "  -> Completed {$m3}.\n";
+} else {
+    echo "[i] Migration {$m3} already applied.\n";
+}
+
 echo "\n[✓] All database migrations are up to date!\n";

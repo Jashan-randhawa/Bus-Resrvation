@@ -140,6 +140,26 @@ function get_booked_seats(mysqli $link, string $bus, string $date, string $time)
 }
 
 /**
+ * Get total seat capacity for a bus number (O8).
+ * Defaults to 36 if column is not yet present or value is invalid.
+ */
+function get_bus_capacity(mysqli $link, string $bus_number): int {
+    if ($bus_number === '') {
+        return 36;
+    }
+    $cols = db_all($link, 'SHOW COLUMNS FROM buses');
+    $has_cap = in_array('capacity', array_column($cols, 'Field'), true);
+    if ($has_cap) {
+        $row = db_one($link, 'SELECT capacity FROM buses WHERE bus_number = ? LIMIT 1', 's', [$bus_number]);
+        $cap = (int)($row['capacity'] ?? 0);
+        if ($cap > 0) {
+            return $cap;
+        }
+    }
+    return 36;
+}
+
+/**
  * Canonical booking helper (O6).
  * Validates travel date, seat number, and inserts atomically, catching duplicate seat reservations.
  *
@@ -173,8 +193,11 @@ function create_booking(mysqli $link, array $data): array {
     if ($date === $today && $time !== '' && $time < $now_time) {
         return ['ok' => false, 'pnr' => '', 'error' => 'This bus has already departed for today.'];
     }
-    if ($seat < 1 || $seat > 36) {
-        return ['ok' => false, 'pnr' => '', 'error' => 'Please select a valid seat number between 1 and 36.'];
+
+    $capacity = get_bus_capacity($link, $bus);
+
+    if ($seat < 1 || $seat > $capacity) {
+        return ['ok' => false, 'pnr' => '', 'error' => "Please select a valid seat number between 1 and {$capacity}."];
     }
     if ($name === '' || $contact === '') {
         return ['ok' => false, 'pnr' => '', 'error' => 'Passenger name and contact number are required.'];

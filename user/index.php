@@ -138,8 +138,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
                                             <?php
                                             $rid = (int)($row['sno'] ?? $row['id'] ?? 0);
                                             $travel_date = $search_date ?: date('Y-m-d');
+                                            $bus_cap = get_bus_capacity($link, (string)$row['busno']);
                                             $taken = count(get_booked_seats($link, (string)$row['busno'], $travel_date, (string)$row['time']));
-                                            $available_seats = max(0, 36 - $taken);
+                                            $available_seats = max(0, $bus_cap - $taken);
                                             $book_params = http_build_query([
                                                 'route_id' => $rid,
                                                 'city1'    => $row['city1'],
@@ -158,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
                                                 <td><?= e($row['time'] ?? '') ?></td>
                                                 <td>
                                                     <span class="badge badge-<?= $available_seats > 0 ? 'success' : 'danger' ?> p-2">
-                                                        <?= $available_seats ?> / 36
+                                                        <?= $available_seats ?> / <?= $bus_cap ?>
                                                     </span>
                                                 </td>
                                                 <td>$<?= e(number_format((float)($row['price'] ?? 0), 2)) ?></td>

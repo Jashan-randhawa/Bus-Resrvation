@@ -13,7 +13,7 @@ if (!$col_check || mysqli_num_rows($col_check) === 0) {
 $alert = null;
 $alert_type = 'info';
 
-// Handle Add Route
+// Handle Add Route (O11, O12)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
     csrf_verify();
     $from = trim((string)($_POST['From'] ?? ''));
@@ -25,25 +25,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
     if ($from === '' || $to === '' || $bus === '' || $time === '' || $price <= 0) {
         $alert = 'Please fill all route fields with valid values.';
         $alert_type = 'danger';
+    } elseif (strcasecmp($from, $to) === 0) {
+        $alert = 'Origin and destination cities cannot be the same.';
+        $alert_type = 'danger';
     } else {
-        db_exec($link,
-            "INSERT INTO route (city1, city2, busno, time, price) VALUES (?, ?, ?, ?, ?)",
-            'ssssd',
-            [$from, $to, $bus, $time, $price]
-        );
-        $alert = 'Route added successfully.';
-        $alert_type = 'success';
+        // O11: Check for route conflict (same bus assigned at same departure time)
+        $conflict = db_one($link, 'SELECT * FROM route WHERE busno = ? AND `time` = ?', 'ss', [$bus, $time]);
+        if ($conflict) {
+            $alert = "Bus '{$bus}' is already scheduled to depart at {$time} ({$conflict['city1']} -> {$conflict['city2']}).";
+            $alert_type = 'danger';
+        } else {
+            db_exec($link,
+                "INSERT INTO route (city1, city2, busno, time, price) VALUES (?, ?, ?, ?, ?)",
+                'ssssd',
+                [$from, $to, $bus, $time, $price]
+            );
+            $alert = 'Route added successfully.';
+            $alert_type = 'success';
+        }
     }
 }
 
-// Handle Delete Route (converted from insecure GET to POST)
+// Handle Delete Route (O10: verify active bookings before deleting route)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_route'])) {
     csrf_verify();
     $delete_id = (int)($_POST['delete_id'] ?? 0);
     if ($delete_id > 0) {
-        db_exec($link, "DELETE FROM route WHERE `{$route_pk}` = ?", 'i', [$delete_id]);
-        $alert = 'Route deleted successfully.';
-        $alert_type = 'success';
+        $route_row = db_one($link, "SELECT * FROM route WHERE `{$route_pk}` = ?", 'i', [$delete_id]);
+        if (!$route_row) {
+            $alert = 'Route not found.';
+            $alert_type = 'danger';
+        } else {
+            $r_bus = (string)$route_row['busno'];
+            $r_time = (string)$route_row['time'];
+            $today = date('Y-m-d');
+            // Check active bookings for this route's bus and departure time on/after today
+            $active_bookings = db_one($link,
+                "SELECT COUNT(*) AS n FROM booking WHERE bus = ? AND `time` = ? AND `date` >= ? AND (status IS NULL OR status != 'Cancelled')",
+                'sss', [$r_bus, $r_time, $today]
+            );
+
+            if ((int)($active_bookings['n'] ?? 0) > 0) {
+                $alert = "Cannot delete route ({$route_row['city1']} -> {$route_row['city2']} at {$r_time}) because there are active upcoming bookings.";
+                $alert_type = 'danger';
+            } else {
+                db_exec($link, "DELETE FROM route WHERE `{$route_pk}` = ?", 'i', [$delete_id]);
+                $alert = 'Route deleted successfully.';
+                $alert_type = 'success';
+            }
+        }
     }
 }
 

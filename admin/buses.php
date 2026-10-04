@@ -13,10 +13,15 @@ if ($col_check && mysqli_num_rows($col_check) > 0) {
 $alert = null;
 $alert_type = 'info';
 
-// Handle Add Bus
+// Handle Add Bus (O8, O12)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
     csrf_verify();
     $busno = trim((string)($_POST['busno'] ?? ''));
+    $capacity = (int)($_POST['capacity'] ?? 36);
+    if ($capacity < 10 || $capacity > 60) {
+        $capacity = 36;
+    }
+
     if ($busno === '') {
         $alert = 'Bus number is required.';
         $alert_type = 'danger';
@@ -26,21 +31,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
             $alert = 'A bus with that number already exists.';
             $alert_type = 'danger';
         } else {
-            db_exec($link, 'INSERT INTO buses (bus_number) VALUES (?)', 's', [$busno]);
+            $cols = db_all($link, 'SHOW COLUMNS FROM buses');
+            $has_cap = in_array('capacity', array_column($cols, 'Field'), true);
+            if ($has_cap) {
+                db_exec($link, 'INSERT INTO buses (bus_number, capacity) VALUES (?, ?)', 'si', [$busno, $capacity]);
+            } else {
+                db_exec($link, 'INSERT INTO buses (bus_number) VALUES (?)', 's', [$busno]);
+            }
             $alert = 'Bus added successfully.';
             $alert_type = 'success';
         }
     }
 }
 
-// Handle Delete Bus (converted from insecure GET to POST)
+// Handle Delete Bus (O10: referential check before deletion)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_bus'])) {
     csrf_verify();
     $delete_id = (int)($_POST['delete_id'] ?? 0);
     if ($delete_id > 0) {
-        db_exec($link, "DELETE FROM buses WHERE `{$bus_pk}` = ?", 'i', [$delete_id]);
-        $alert = 'Bus deleted successfully.';
-        $alert_type = 'success';
+        $bus_row = db_one($link, "SELECT bus_number FROM buses WHERE `{$bus_pk}` = ?", 'i', [$delete_id]);
+        if (!$bus_row) {
+            $alert = 'Bus not found.';
+            $alert_type = 'danger';
+        } else {
+            $b_num = (string)$bus_row['bus_number'];
+            // Check active routes assigned to this bus
+            $active_routes = db_one($link, 'SELECT COUNT(*) AS n FROM route WHERE busno = ?', 's', [$b_num]);
+            // Check active bookings for this bus
+            $active_bookings = db_one($link, "SELECT COUNT(*) AS n FROM booking WHERE bus = ? AND (status IS NULL OR status != 'Cancelled')", 's', [$b_num]);
+
+            if ((int)($active_routes['n'] ?? 0) > 0) {
+                $alert = "Cannot delete bus '{$b_num}' because it is assigned to existing routes. Remove or reassign those routes first.";
+                $alert_type = 'danger';
+            } elseif ((int)($active_bookings['n'] ?? 0) > 0) {
+                $alert = "Cannot delete bus '{$b_num}' because it has active passenger bookings.";
+                $alert_type = 'danger';
+            } else {
+                db_exec($link, "DELETE FROM buses WHERE `{$bus_pk}` = ?", 'i', [$delete_id]);
+                $alert = 'Bus deleted successfully.';
+                $alert_type = 'success';
+            }
+        }
     }
 }
 
@@ -78,6 +109,10 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
               <input type="text" id="busno" name="busno" class="form-control" placeholder="Bus Number" required />
             </div>
             <div class="form-group">
+              <label for="capacity">Total Capacity (Seats) :</label>
+              <input type="number" id="capacity" name="capacity" class="form-control" value="36" min="10" max="60" required />
+            </div>
+            <div class="form-group">
               <input type="submit" class="btn btn-success" name="add" value="Submit" />
             </div>
           </form>
@@ -94,19 +129,24 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
           <tr>
             <th>#</th>
             <th>Bus Number</th>
+            <th>Capacity</th>
             <th>Edit</th>
             <th>Delete</th>
           </tr>
         </thead>
         <tbody>
           <?php if (empty($buses)): ?>
-            <tr><td colspan="4" class="text-center text-muted">No buses found.</td></tr>
+            <tr><td colspan="5" class="text-center text-muted">No buses found.</td></tr>
           <?php else: ?>
             <?php foreach ($buses as $row): ?>
-              <?php $bid = (int)($row[$bus_pk] ?? $row['id'] ?? $row['sno'] ?? 0); ?>
+              <?php
+              $bid = (int)($row[$bus_pk] ?? $row['id'] ?? $row['sno'] ?? 0);
+              $cap = (int)($row['capacity'] ?? 36);
+              ?>
               <tr>
                 <td><?= e($bid) ?></td>
                 <td><?= e($row['bus_number'] ?? '') ?></td>
+                <td><span class="badge badge-info p-2"><?= $cap ?> Seats</span></td>
                 <td>
                   <a href="<?= BASE_URL ?>/admin/edit/edit-bus.php?id=<?= e($bid) ?>" class="btn btn-warning btn-sm">Edit</a>
                 </td>

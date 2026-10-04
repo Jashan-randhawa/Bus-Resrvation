@@ -74,43 +74,15 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                 <span class="badge badge-info p-2">Blue = Available</span>
             </div>
             <div class="card-body">
-                <div class="container" style="max-width: 480px;">
-                    <?php for ($row_idx = 0; $row_idx < 6; $row_idx++): ?>
-                        <div class="row mb-3 justify-content-between">
-                            <div class="col-5 d-flex justify-content-start">
-                                <?php for ($col_idx = 1; $col_idx <= 2; $col_idx++): ?>
-                                    <?php
-                                    $seat_no = ($row_idx * 5) + $col_idx;
-                                    $is_booked = isset($booked_seats[$seat_no]);
-                                    ?>
-                                    <button type="button" class="btn <?= $is_booked ? 'btn-danger' : 'btn-info' ?> mr-2" style="width: 50px; height: 42px;" <?= $is_booked ? 'disabled' : '' ?>>
-                                        <?= e($seat_no) ?>
-                                    </button>
-                                <?php endfor; ?>
-                            </div>
-                            <div class="col-7 d-flex justify-content-end">
-                                <?php for ($col_idx = 3; $col_idx <= 5; $col_idx++): ?>
-                                    <?php
-                                    $seat_no = ($row_idx * 5) + $col_idx;
-                                    $is_booked = isset($booked_seats[$seat_no]);
-                                    ?>
-                                    <button type="button" class="btn <?= $is_booked ? 'btn-danger' : 'btn-info' ?> mr-2" style="width: 50px; height: 42px;" <?= $is_booked ? 'disabled' : '' ?>>
-                                        <?= e($seat_no) ?>
-                                    </button>
-                                <?php endfor; ?>
-                            </div>
-                        </div>
-                    <?php endfor; ?>
-                    <!-- Last Row (Seats 31 to 36) -->
-                    <div class="row mb-3 justify-content-center">
-                        <div class="col-12 d-flex justify-content-between">
-                            <?php for ($seat_no = 31; $seat_no <= 36; $seat_no++): ?>
-                                <?php $is_booked = isset($booked_seats[$seat_no]); ?>
-                                <button type="button" class="btn <?= $is_booked ? 'btn-danger' : 'btn-info' ?> btn-sm" style="width: 48px; height: 42px;" <?= $is_booked ? 'disabled' : '' ?>>
-                                    <?= e($seat_no) ?>
-                                </button>
-                            <?php endfor; ?>
-                        </div>
+                <?php $admin_bus_cap = get_bus_capacity($link, $selected_bus); ?>
+                <div class="container" style="max-width: 520px;">
+                    <div class="d-flex flex-wrap justify-content-center">
+                        <?php for ($seat_no = 1; $seat_no <= $admin_bus_cap; $seat_no++): ?>
+                            <?php $is_booked = isset($booked_seats[$seat_no]); ?>
+                            <button type="button" class="btn <?= $is_booked ? 'btn-danger' : 'btn-info' ?> m-1" style="width: 48px; height: 42px;" <?= $is_booked ? 'disabled' : '' ?>>
+                                <?= e((string)$seat_no) ?>
+                            </button>
+                        <?php endfor; ?>
                     </div>
                 </div>
             </div>

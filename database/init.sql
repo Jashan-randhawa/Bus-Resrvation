@@ -24,10 +24,11 @@ CREATE TABLE IF NOT EXISTS `costumer` (
   UNIQUE KEY `uq_customer_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Buses table (unique bus number)
+-- Buses table (unique bus number and configurable capacity)
 CREATE TABLE IF NOT EXISTS `buses` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `bus_number` VARCHAR(50) NOT NULL,
+  `capacity` INT NOT NULL DEFAULT 36,
   UNIQUE KEY `uq_bus_number` (`bus_number`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

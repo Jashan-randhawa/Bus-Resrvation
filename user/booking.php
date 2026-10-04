@@ -41,6 +41,9 @@ if ($route) {
     $price = 0.0;
 }
 
+// Get bus capacity dynamically (O8)
+$bus_capacity = get_bus_capacity($link, $bus);
+
 // Fetch currently booked seats for this trip: bus + date + time (O5, F3)
 $booked_seats = get_booked_seats($link, $bus, $date, $time);
 
@@ -149,66 +152,27 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                         </div>
                     </div>
 
-                    <!-- Interactive Seat Selection Map -->
+                    <!-- Interactive Seat Selection Map (O8) -->
                     <div class="form-group mt-3">
-                        <label class="font-weight-bold">Select Your Seat (1 - 36) :</label>
+                        <label class="font-weight-bold">Select Your Seat (1 - <?= $bus_capacity ?>) :</label>
                         <div class="d-flex mb-2">
                             <span class="badge badge-info p-2 mr-2">Blue = Available</span>
                             <span class="badge badge-danger p-2 mr-2">Red = Already Booked</span>
                             <span class="badge badge-success p-2">Green = Selected</span>
                         </div>
-                        <div class="p-3 border rounded bg-light" style="max-width: 460px; margin: auto;">
-                            <?php for ($r = 0; $r < 6; $r++): ?>
-                                <div class="row mb-2 justify-content-between">
-                                    <div class="col-5 d-flex justify-content-start">
-                                        <?php for ($c = 1; $c <= 2; $c++): ?>
-                                            <?php
-                                            $s = ($r * 5) + $c;
-                                            $is_booked = isset($booked_seats[$s]);
-                                            ?>
-                                            <button type="button"
-                                                class="btn <?= $is_booked ? 'btn-danger' : 'btn-info' ?> mr-2 seat-btn"
-                                                style="width: 46px; height: 40px;"
-                                                data-seat="<?= $s ?>"
-                                                <?= $is_booked ? 'disabled' : '' ?>
-                                                onclick="selectSeat(<?= $s ?>)">
-                                                <?= $s ?>
-                                            </button>
-                                        <?php endfor; ?>
-                                    </div>
-                                    <div class="col-7 d-flex justify-content-end">
-                                        <?php for ($c = 3; $c <= 5; $c++): ?>
-                                            <?php
-                                            $s = ($r * 5) + $c;
-                                            $is_booked = isset($booked_seats[$s]);
-                                            ?>
-                                            <button type="button"
-                                                class="btn <?= $is_booked ? 'btn-danger' : 'btn-info' ?> mr-2 seat-btn"
-                                                style="width: 46px; height: 40px;"
-                                                data-seat="<?= $s ?>"
-                                                <?= $is_booked ? 'disabled' : '' ?>
-                                                onclick="selectSeat(<?= $s ?>)">
-                                                <?= $s ?>
-                                            </button>
-                                        <?php endfor; ?>
-                                    </div>
-                                </div>
-                            <?php endfor; ?>
-                            <!-- Back Row Seats 31 - 36 -->
-                            <div class="row mb-2 justify-content-center">
-                                <div class="col-12 d-flex justify-content-between">
-                                    <?php for ($s = 31; $s <= 36; $s++): ?>
-                                        <?php $is_booked = isset($booked_seats[$s]); ?>
-                                        <button type="button"
-                                            class="btn <?= $is_booked ? 'btn-danger' : 'btn-info' ?> btn-sm seat-btn"
-                                            style="width: 44px; height: 40px;"
-                                            data-seat="<?= $s ?>"
-                                            <?= $is_booked ? 'disabled' : '' ?>
-                                            onclick="selectSeat(<?= $s ?>)">
-                                            <?= $s ?>
-                                        </button>
-                                    <?php endfor; ?>
-                                </div>
+                        <div class="p-3 border rounded bg-light" style="max-width: 520px; margin: auto;">
+                            <div class="d-flex flex-wrap justify-content-center">
+                                <?php for ($s = 1; $s <= $bus_capacity; $s++): ?>
+                                    <?php $is_booked = isset($booked_seats[$s]); ?>
+                                    <button type="button"
+                                        class="btn <?= $is_booked ? 'btn-danger' : 'btn-info' ?> m-1 seat-btn"
+                                        style="width: 46px; height: 40px;"
+                                        data-seat="<?= $s ?>"
+                                        <?= $is_booked ? 'disabled' : '' ?>
+                                        onclick="selectSeat(<?= $s ?>)">
+                                        <?= $s ?>
+                                    </button>
+                                <?php endfor; ?>
                             </div>
                         </div>
                     </div>
@@ -216,7 +180,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                     <div class="row mt-3">
                         <div class="col-md-6 form-group">
                             <label for="seat_no">Selected Seat Number :</label>
-                            <input type="number" min="1" max="36" name="seat" class="form-control" id="seat_no" placeholder="Click a seat above" readonly required>
+                            <input type="number" min="1" max="<?= $bus_capacity ?>" name="seat" class="form-control" id="seat_no" placeholder="Click a seat above" readonly required>
                         </div>
                         <div class="col-md-6 form-group">
                             <label for="amount">Total Ticket Fare ($) :</label>

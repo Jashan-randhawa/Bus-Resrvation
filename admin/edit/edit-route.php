@@ -16,9 +16,15 @@ if ($id <= 0) {
     exit;
 }
 
+$row = db_one($link, "SELECT * FROM route WHERE `{$route_pk}` = ?", 'i', [$id]);
+if (!$row) {
+    header('Location: ' . BASE_URL . '/admin/routes.php');
+    exit;
+}
+
 $error = null;
 
-// Handle Update before rendering HTML
+// Handle Update before rendering HTML (O11, O12)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit'])) {
     csrf_verify();
     $from = trim((string)($_POST['From'] ?? ''));
@@ -29,21 +35,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit'])) {
 
     if ($from === '' || $to === '' || $bus === '' || $time === '' || $price <= 0) {
         $error = 'Please fill all route fields with valid values.';
+    } elseif (strcasecmp($from, $to) === 0) {
+        $error = 'Origin and destination cities cannot be the same.';
     } else {
-        db_exec($link,
-            "UPDATE route SET busno = ?, city1 = ?, city2 = ?, time = ?, price = ? WHERE `{$route_pk}` = ?",
-            'ssssdi',
-            [$bus, $from, $to, $time, $price, $id]
+        // Check for schedule conflict with another route
+        $conflict = db_one($link,
+            "SELECT * FROM route WHERE busno = ? AND `time` = ? AND `{$route_pk}` != ?",
+            'ssi', [$bus, $time, $id]
         );
-        header('Location: ' . BASE_URL . '/admin/routes.php');
-        exit;
+        if ($conflict) {
+            $error = "Bus '{$bus}' is already scheduled to depart at {$time} on another route ({$conflict['city1']} -> {$conflict['city2']}).";
+        } else {
+            db_exec($link,
+                "UPDATE route SET busno = ?, city1 = ?, city2 = ?, time = ?, price = ? WHERE `{$route_pk}` = ?",
+                'ssssdi',
+                [$bus, $from, $to, $time, $price, $id]
+            );
+            header('Location: ' . BASE_URL . '/admin/routes.php');
+            exit;
+        }
     }
-}
-
-$row = db_one($link, "SELECT * FROM route WHERE `{$route_pk}` = ?", 'i', [$id]);
-if (!$row) {
-    header('Location: ' . BASE_URL . '/admin/routes.php');
-    exit;
 }
 
 $buses = db_all($link, 'SELECT bus_number FROM buses ORDER BY bus_number ASC');
