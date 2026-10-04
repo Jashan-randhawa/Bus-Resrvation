@@ -14,23 +14,36 @@ if (!empty($_GET['booked']) && !empty($_GET['pnr'])) {
     $alert_type = 'success';
 }
 
-// Handle Cancel Booking (F7: strictly verify user account ID and ensure trip is not in the past)
+// Check if status column exists in booking table (O4)
+$booking_cols = db_all($link, 'SHOW COLUMNS FROM booking');
+$has_status = in_array('status', array_column($booking_cols, 'Field'), true);
+
+// Handle Cancel Booking (O4, F7: strictly verify user account ID and ensure trip is not in the past)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_booking'])) {
     csrf_verify();
     $cancel_id = (int)($_POST['cancel_id'] ?? 0);
     if ($cancel_id > 0) {
         $today = date('Y-m-d');
-        $existing = db_one($link, 'SELECT `date` FROM booking WHERE sno = ? AND id = ?', 'ii', [$cancel_id, $uid]);
+        $existing = db_one($link, 'SELECT `date`, status FROM booking WHERE sno = ? AND id = ?', 'ii', [$cancel_id, $uid]);
 
         if (!$existing) {
             $alert = 'Booking not found or does not belong to your account.';
             $alert_type = 'danger';
+        } elseif (($existing['status'] ?? '') === 'Cancelled') {
+            $alert = 'This booking has already been cancelled.';
+            $alert_type = 'info';
         } elseif ($existing['date'] < $today) {
             $alert = 'Cannot cancel a booking for a trip that has already departed.';
             $alert_type = 'danger';
         } else {
-            $deleted = db_exec($link, 'DELETE FROM booking WHERE sno = ? AND id = ?', 'ii', [$cancel_id, $uid]);
-            if ($deleted > 0) {
+            if ($has_status) {
+                // O4: Soft cancellation preserves audit trail and frees the seat
+                $updated = db_exec($link, "UPDATE booking SET status = 'Cancelled' WHERE sno = ? AND id = ?", 'ii', [$cancel_id, $uid]);
+            } else {
+                $updated = db_exec($link, 'DELETE FROM booking WHERE sno = ? AND id = ?', 'ii', [$cancel_id, $uid]);
+            }
+
+            if ($updated > 0) {
                 $alert = 'Booking cancelled successfully.';
                 $alert_type = 'success';
             } else {
@@ -57,7 +70,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
 
     <?php if ($alert): ?>
       <div class="alert alert-<?= e($alert_type) ?> alert-dismissible fade show" role="alert">
-        <?= $alert ?>
+        <?= e($alert) ?>
         <button type="button" class="close" data-dismiss="alert">&times;</button>
       </div>
     <?php endif; ?>
@@ -75,6 +88,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
             <th>Date</th>
             <th>Time</th>
             <th>Seat Number</th>
+            <th>Status</th>
             <th>Fare</th>
             <th>Action</th>
           </tr>
@@ -82,7 +96,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
         <tbody>
           <?php if (empty($bookings)): ?>
             <tr>
-              <td colspan="11" class="text-center text-muted py-4">
+              <td colspan="12" class="text-center text-muted py-4">
                 You have no active bookings. <a href="<?= BASE_URL ?>/user/index.php" class="btn btn-sm btn-info ml-2">Book a Trip</a>
               </td>
             </tr>
@@ -91,8 +105,10 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
               <?php
               $sno = (int)$row['sno'];
               $display_pnr = (string)($row['pnr'] ?? '');
+              $status = (string)($row['status'] ?? 'Confirmed');
+              $is_cancelled = ($status === 'Cancelled');
               ?>
-              <tr>
+              <tr class="<?= $is_cancelled ? 'table-secondary text-muted' : '' ?>">
                 <td><strong><?= e($display_pnr) ?></strong></td>
                 <td><?= e($row['bus'] ?? '') ?></td>
                 <td><?= e($row['name'] ?? '') ?></td>
@@ -101,14 +117,23 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                 <td><?= e($row['city2'] ?? '') ?></td>
                 <td><?= e($row['date'] ?? '') ?></td>
                 <td><?= e($row['time'] ?? '') ?></td>
-                <td><span class="badge badge-info p-2"><?= e($row['seat'] ?? '') ?></span></td>
+                <td><span class="badge badge-<?= $is_cancelled ? 'secondary' : 'info' ?> p-2"><?= e($row['seat'] ?? '') ?></span></td>
+                <td>
+                  <span class="badge badge-<?= $is_cancelled ? 'danger' : 'success' ?> p-2">
+                    <?= e($status) ?>
+                  </span>
+                </td>
                 <td>$<?= e(number_format((float)($row['price'] ?? 0), 2)) ?></td>
                 <td>
-                  <form method="post" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="cancel_id" value="<?= e($sno) ?>">
-                    <button type="submit" name="cancel_booking" class="btn btn-danger btn-sm">Cancel Booking</button>
-                  </form>
+                  <?php if ($is_cancelled): ?>
+                    <span class="badge badge-secondary p-2">Cancelled</span>
+                  <?php else: ?>
+                    <form method="post" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
+                      <?= csrf_field() ?>
+                      <input type="hidden" name="cancel_id" value="<?= e($sno) ?>">
+                      <button type="submit" name="cancel_booking" class="btn btn-danger btn-sm">Cancel</button>
+                    </form>
+                  <?php endif; ?>
                 </td>
               </tr>
             <?php endforeach; ?>

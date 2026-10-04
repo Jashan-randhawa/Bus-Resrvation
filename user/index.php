@@ -125,17 +125,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
                                         <th>To</th>
                                         <th>Bus Number</th>
                                         <th>Departure Time</th>
+                                        <th>Seats Available</th>
                                         <th>Price</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php if (empty($matched_routes)): ?>
-                                        <tr><td colspan="7" class="text-center text-muted">No buses available for this route. Please try different cities.</td></tr>
+                                        <tr><td colspan="8" class="text-center text-muted">No buses available for this route. Please try different cities.</td></tr>
                                     <?php else: ?>
                                         <?php foreach ($matched_routes as $row): ?>
                                             <?php
                                             $rid = (int)($row['sno'] ?? $row['id'] ?? 0);
+                                            $travel_date = $search_date ?: date('Y-m-d');
+                                            $taken = count(get_booked_seats($link, (string)$row['busno'], $travel_date, (string)$row['time']));
+                                            $available_seats = max(0, 36 - $taken);
                                             $book_params = http_build_query([
                                                 'route_id' => $rid,
                                                 'city1'    => $row['city1'],
@@ -143,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
                                                 'bus'      => $row['busno'],
                                                 'time'     => $row['time'],
                                                 'price'    => $row['price'],
-                                                'date'     => $search_date ?: date('Y-m-d')
+                                                'date'     => $travel_date
                                             ]);
                                             ?>
                                             <tr>
@@ -152,9 +156,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
                                                 <td><?= e($row['city2'] ?? '') ?></td>
                                                 <td><?= e($row['busno'] ?? '') ?></td>
                                                 <td><?= e($row['time'] ?? '') ?></td>
+                                                <td>
+                                                    <span class="badge badge-<?= $available_seats > 0 ? 'success' : 'danger' ?> p-2">
+                                                        <?= $available_seats ?> / 36
+                                                    </span>
+                                                </td>
                                                 <td>$<?= e(number_format((float)($row['price'] ?? 0), 2)) ?></td>
                                                 <td>
-                                                    <a href="<?= BASE_URL ?>/user/booking.php?<?= e($book_params) ?>" class="btn btn-warning btn-sm">Book Seat</a>
+                                                    <?php if ($available_seats > 0): ?>
+                                                        <a href="<?= BASE_URL ?>/user/booking.php?<?= e($book_params) ?>" class="btn btn-warning btn-sm">Book Seat</a>
+                                                    <?php else: ?>
+                                                        <button class="btn btn-secondary btn-sm" disabled>Sold Out</button>
+                                                    <?php endif; ?>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>

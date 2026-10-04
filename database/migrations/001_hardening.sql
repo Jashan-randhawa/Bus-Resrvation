@@ -12,11 +12,12 @@ ALTER TABLE admin ADD UNIQUE KEY uq_admin_email (Email_id);
 ALTER TABLE costumer ADD UNIQUE KEY uq_customer_email (email);
 ALTER TABLE buses ADD UNIQUE KEY uq_bus_number (bus_number);
 
--- 3. Public PNR token (replaces the guessable booking.sno)
+-- 3. Public PNR token and booking status column
 ALTER TABLE booking ADD COLUMN pnr CHAR(10) NULL;
 UPDATE booking SET pnr = UPPER(SUBSTRING(MD5(CONCAT(sno, RAND(), NOW(6))), 1, 10)) WHERE pnr IS NULL;
 ALTER TABLE booking MODIFY pnr CHAR(10) NOT NULL;
 ALTER TABLE booking ADD UNIQUE KEY uq_booking_pnr (pnr);
+ALTER TABLE booking ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'Confirmed';
 
 -- 4. A seat can only be sold once per bus, date and departure (run the duplicate check from H-04 first)
 ALTER TABLE booking ADD UNIQUE KEY uq_booking_seat (bus, `date`, `time`, seat);

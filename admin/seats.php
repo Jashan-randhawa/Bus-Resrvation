@@ -7,14 +7,26 @@ $buses = db_all($link, 'SELECT bus_number FROM buses ORDER BY bus_number ASC');
 
 $selected_bus = trim((string)($_POST['bus'] ?? ''));
 $selected_date = trim((string)($_POST['date'] ?? ''));
+$selected_time = trim((string)($_POST['time'] ?? ''));
 $booked_seats = [];
+
+// Available departure times for selected bus (if any)
+$route_times = db_all($link, 'SELECT DISTINCT time FROM route ORDER BY time ASC');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     csrf_verify();
     if ($selected_bus !== '' && $selected_date !== '') {
-        $rows = db_all($link, 'SELECT seat FROM booking WHERE bus = ? AND date = ?', 'ss', [$selected_bus, $selected_date]);
-        foreach ($rows as $r) {
-            $booked_seats[(int)$r['seat']] = true;
+        if ($selected_time !== '') {
+            $booked_seats = get_booked_seats($link, $selected_bus, $selected_date, $selected_time);
+        } else {
+            // If no specific time selected, check any active booking for bus and date
+            $rows = db_all($link,
+                "SELECT seat FROM booking WHERE bus = ? AND `date` = ? AND (status IS NULL OR status != 'Cancelled')",
+                'ss', [$selected_bus, $selected_date]
+            );
+            foreach ($rows as $r) {
+                $booked_seats[(int)$r['seat']] = true;
+            }
         }
     }
 }
@@ -23,7 +35,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 ?>
 <div class="col-lg-10 col-md-10 col-sm-12" style="float: right;">
     <h1 class="text-info mb-4">Bus Seat Status</h1>
-    <div class="card col-lg-5 col-md-6 col-sm-12">
+    <div class="card col-lg-6 col-md-8 col-sm-12">
         <div class="card-body">
             <form action="" method="post">
                 <?= csrf_field() ?>
@@ -43,6 +55,10 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                     <input type="date" id="date" name="date" class="form-control" value="<?= e($selected_date) ?>" required>
                 </div>
                 <div class="form-group">
+                    <label for="time">Departure Time (optional):</label>
+                    <input type="time" id="time" name="time" class="form-control" value="<?= e($selected_time) ?>">
+                </div>
+                <div class="form-group">
                     <input type="submit" name="submit" value="Check Seat Availability" class="btn btn-primary btn-block">
                 </div>
             </form>
@@ -53,7 +69,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     <section class="mt-4">
         <div class="card col-lg-8 col-md-10 col-sm-12">
             <div class="card-header bg-light">
-                <h5>Seat Map for Bus: <strong><?= e($selected_bus) ?></strong> on Date: <strong><?= e($selected_date) ?></strong></h5>
+                <h5>Seat Map for Bus: <strong><?= e($selected_bus) ?></strong> on Date: <strong><?= e($selected_date) ?></strong> <?= $selected_time !== '' ? 'at <strong>' . e($selected_time) . '</strong>' : '' ?></h5>
                 <span class="badge badge-danger p-2 mr-2">Red = Booked</span>
                 <span class="badge badge-info p-2">Blue = Available</span>
             </div>

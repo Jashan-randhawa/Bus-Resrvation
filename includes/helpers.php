@@ -107,3 +107,117 @@ function throttle_blocked(mysqli $link, string $key, int $max = 5, int $window =
         'si', [sha1($key), $window]);
     return (int)($r['n'] ?? 0) >= $max;
 }
+
+/**
+ * Returns a map of booked seat numbers [seat_no => true] for a specific bus, date, and departure time.
+ * Ignores soft-cancelled bookings.
+ */
+function get_booked_seats(mysqli $link, string $bus, string $date, string $time): array {
+    $booked = [];
+    if ($bus === '' || $date === '' || $time === '') {
+        return $booked;
+    }
+
+    $cols = db_all($link, 'SHOW COLUMNS FROM booking');
+    $has_status = in_array('status', array_column($cols, 'Field'), true);
+
+    if ($has_status) {
+        $rows = db_all($link,
+            "SELECT seat FROM booking WHERE bus = ? AND `date` = ? AND `time` = ? AND (status IS NULL OR status != 'Cancelled')",
+            'sss', [$bus, $date, $time]
+        );
+    } else {
+        $rows = db_all($link,
+            'SELECT seat FROM booking WHERE bus = ? AND `date` = ? AND `time` = ?',
+            'sss', [$bus, $date, $time]
+        );
+    }
+
+    foreach ($rows as $r) {
+        $booked[(int)$r['seat']] = true;
+    }
+    return $booked;
+}
+
+/**
+ * Canonical booking helper (O6).
+ * Validates travel date, seat number, and inserts atomically, catching duplicate seat reservations.
+ *
+ * @return array ['ok' => bool, 'pnr' => string, 'error' => string]
+ */
+function create_booking(mysqli $link, array $data): array {
+    $bus = trim((string)($data['bus'] ?? ''));
+    $from = trim((string)($data['city1'] ?? ''));
+    $to = trim((string)($data['city2'] ?? ''));
+    $date = trim((string)($data['date'] ?? ''));
+    $time = trim((string)($data['time'] ?? ''));
+    $seat = (int)($data['seat'] ?? 0);
+    $price = (float)($data['price'] ?? 0);
+    $name = trim((string)($data['name'] ?? ''));
+    $contact = trim((string)($data['contact'] ?? ''));
+    $cust_id = (int)($data['id'] ?? 0);
+
+    $today = date('Y-m-d');
+    $max_date = date('Y-m-d', strtotime('+90 days'));
+    $now_time = date('H:i:s');
+
+    if ($bus === '' || $from === '' || $to === '') {
+        return ['ok' => false, 'pnr' => '', 'error' => 'Incomplete route details.'];
+    }
+    if ($date < $today) {
+        return ['ok' => false, 'pnr' => '', 'error' => 'Travel date cannot be in the past.'];
+    }
+    if ($date > $max_date) {
+        return ['ok' => false, 'pnr' => '', 'error' => 'Bookings can only be made up to 90 days in advance.'];
+    }
+    if ($date === $today && $time !== '' && $time < $now_time) {
+        return ['ok' => false, 'pnr' => '', 'error' => 'This bus has already departed for today.'];
+    }
+    if ($seat < 1 || $seat > 36) {
+        return ['ok' => false, 'pnr' => '', 'error' => 'Please select a valid seat number between 1 and 36.'];
+    }
+    if ($name === '' || $contact === '') {
+        return ['ok' => false, 'pnr' => '', 'error' => 'Passenger name and contact number are required.'];
+    }
+
+    $cols = db_all($link, 'SHOW COLUMNS FROM booking');
+    $col_names = array_column($cols, 'Field');
+    $has_pnr = in_array('pnr', $col_names, true);
+    $has_status = in_array('status', $col_names, true);
+
+    // If status column exists, verify seat is not currently active
+    if ($has_status) {
+        $active_seat = db_one($link,
+            "SELECT sno FROM booking WHERE bus = ? AND `date` = ? AND `time` = ? AND seat = ? AND (status IS NULL OR status != 'Cancelled') LIMIT 1",
+            'sssi', [$bus, $date, $time, $seat]
+        );
+        if ($active_seat) {
+            return ['ok' => false, 'pnr' => '', 'error' => "Seat #{$seat} on bus {$bus} for date {$date} ({$time}) is already booked."];
+        }
+    }
+
+    mysqli_begin_transaction($link);
+    try {
+        $pnr = strtoupper(bin2hex(random_bytes(5)));
+
+        if ($has_pnr && $has_status) {
+            $sql = "INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed')";
+            db_exec($link, $sql, 'isssssssids', [$cust_id, $bus, $name, $contact, $from, $to, $date, $time, $seat, $price, $pnr]);
+        } elseif ($has_pnr) {
+            $sql = 'INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+            db_exec($link, $sql, 'isssssssids', [$cust_id, $bus, $name, $contact, $from, $to, $date, $time, $seat, $price, $pnr]);
+        } else {
+            $sql = 'INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+            db_exec($link, $sql, 'isssssssid', [$cust_id, $bus, $name, $contact, $from, $to, $date, $time, $seat, $price]);
+        }
+
+        mysqli_commit($link);
+        return ['ok' => true, 'pnr' => $pnr, 'error' => ''];
+    } catch (mysqli_sql_exception $e) {
+        mysqli_rollback($link);
+        if ((int)$e->getCode() === 1062) {
+            return ['ok' => false, 'pnr' => '', 'error' => "Seat #{$seat} on bus {$bus} for date {$date} ({$time}) was just reserved by another passenger. Please pick another seat."];
+        }
+        return ['ok' => false, 'pnr' => '', 'error' => 'Booking could not be completed: ' . $e->getMessage()];
+    }
+}

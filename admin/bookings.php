@@ -12,7 +12,7 @@ $col_names = array_column($booking_cols, 'Field');
 $has_pnr = in_array('pnr', $col_names, true);
 $has_status = in_array('status', $col_names, true);
 
-// Handle Add Booking (H-04, H-08)
+// Handle Add Booking (O6, H-04, H-08)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
     csrf_verify();
     $bus = trim((string)($_POST['bus'] ?? ''));
@@ -25,60 +25,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
     $seat = (int)($_POST['seat'] ?? 0);
     $amount = (float)($_POST['amount'] ?? 0);
 
-    if ($bus === '' || $unm === '' || $num === '' || $from === '' || $to === '' || $date === '' || $seat < 1 || $seat > 36 || $amount <= 0) {
-        $alert = 'Please provide valid booking details with a seat between 1 and 36.';
-        $alert_type = 'danger';
+    $res = create_booking($link, [
+        'id'      => 0, // Admin booking
+        'bus'     => $bus,
+        'city1'   => $from,
+        'city2'   => $to,
+        'date'    => $date,
+        'time'    => $time,
+        'seat'    => $seat,
+        'price'   => $amount,
+        'name'    => $unm,
+        'contact' => $num
+    ]);
+
+    if ($res['ok']) {
+        $alert = "Booking confirmed! PNR: {$res['pnr']}, Seat: #{$seat}";
+        $alert_type = 'success';
     } else {
-        $today = date('Y-m-d');
-        $max_date = date('Y-m-d', strtotime('+90 days'));
-        if ($date < $today) {
-            $alert = 'Travel date cannot be in the past.';
-            $alert_type = 'danger';
-        } elseif ($date > $max_date) {
-            $alert = 'Bookings can only be made up to 90 days in advance.';
-            $alert_type = 'danger';
-        } else {
-            // Direct insert inside transaction catching duplicate key 1062 (F3, F4)
-            mysqli_begin_transaction($link);
-            try {
-                // Secure random 10-character PNR token (H-08, O1)
-                $pnr = strtoupper(bin2hex(random_bytes(5)));
-                $cust_id = 0; // Admin booking
-
-                if ($has_pnr && $has_status) {
-                    $insert_sql = 'INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-                    db_exec($link, $insert_sql, 'isssssssidss', [$cust_id, $bus, $unm, $num, $from, $to, $date, $time, $seat, $amount, $pnr, 'Confirmed']);
-                } elseif ($has_pnr) {
-                    $insert_sql = 'INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-                    db_exec($link, $insert_sql, 'isssssssids', [$cust_id, $bus, $unm, $num, $from, $to, $date, $time, $seat, $amount, $pnr]);
-                } else {
-                    $insert_sql = 'INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-                    db_exec($link, $insert_sql, 'isssssssid', [$cust_id, $bus, $unm, $num, $from, $to, $date, $time, $seat, $amount]);
-                }
-
-                mysqli_commit($link);
-                $alert = "Booking confirmed! PNR: {$pnr}, Seat: #{$seat}";
-                $alert_type = 'success';
-            } catch (mysqli_sql_exception $e) {
-                mysqli_rollback($link);
-                if ((int)$e->getCode() === 1062) {
-                    $alert = "Seat #{$seat} on bus {$bus} for date {$date} ({$time}) is already booked.";
-                } else {
-                    $alert = 'Booking could not be completed: ' . $e->getMessage();
-                }
-                $alert_type = 'danger';
-            }
-        }
+        $alert = $res['error'];
+        $alert_type = 'danger';
     }
 }
 
-// Handle Delete Booking (POST with CSRF)
+// Handle Cancel / Delete Booking (O4)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_booking'])) {
     csrf_verify();
     $delete_id = (int)($_POST['delete_id'] ?? 0);
     if ($delete_id > 0) {
-        db_exec($link, 'DELETE FROM booking WHERE sno = ?', 'i', [$delete_id]);
-        $alert = 'Booking cancelled / deleted successfully.';
+        if ($has_status) {
+            db_exec($link, "UPDATE booking SET status = 'Cancelled' WHERE sno = ?", 'i', [$delete_id]);
+            $alert = 'Booking status marked as Cancelled (audit record preserved).';
+        } else {
+            db_exec($link, 'DELETE FROM booking WHERE sno = ?', 'i', [$delete_id]);
+            $alert = 'Booking deleted successfully.';
+        }
         $alert_type = 'success';
     }
 }
@@ -211,21 +191,24 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             <th>Date</th>
             <th>Time</th>
             <th>Seat</th>
+            <th>Status</th>
             <th>Price</th>
             <th>Edit</th>
-            <th>Delete</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
           <?php if (empty($bookings)): ?>
-            <tr><td colspan="12" class="text-center text-muted">No bookings found.</td></tr>
+            <tr><td colspan="13" class="text-center text-muted">No bookings found.</td></tr>
           <?php else: ?>
             <?php foreach ($bookings as $row): ?>
               <?php
               $sno = (int)$row['sno'];
               $display_pnr = (string)($row['pnr'] ?? '');
+              $status = (string)($row['status'] ?? 'Confirmed');
+              $is_cancelled = ($status === 'Cancelled');
               ?>
-              <tr>
+              <tr class="<?= $is_cancelled ? 'table-secondary text-muted' : '' ?>">
                 <td><strong><?= e($display_pnr !== '' ? $display_pnr : '-') ?></strong></td>
                 <td><?= e($row['bus'] ?? '') ?></td>
                 <td><?= e($row['name'] ?? '') ?></td>
@@ -234,17 +217,26 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                 <td><?= e($row['city2'] ?? '') ?></td>
                 <td><?= e($row['date'] ?? '') ?></td>
                 <td><?= e($row['time'] ?? '') ?></td>
-                <td><span class="badge badge-info p-2"><?= e($row['seat'] ?? '') ?></span></td>
+                <td><span class="badge badge-<?= $is_cancelled ? 'secondary' : 'info' ?> p-2"><?= e($row['seat'] ?? '') ?></span></td>
+                <td>
+                  <span class="badge badge-<?= $is_cancelled ? 'danger' : 'success' ?> p-2">
+                    <?= e($status) ?>
+                  </span>
+                </td>
                 <td>$<?= e(number_format((float)($row['price'] ?? 0), 2)) ?></td>
                 <td>
                   <a href="<?= BASE_URL ?>/admin/edit/edit-booking.php?id=<?= e($sno) ?>" class="btn btn-warning btn-sm">Edit</a>
                 </td>
                 <td>
-                  <form method="post" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to cancel / delete this booking?');">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="delete_id" value="<?= e($sno) ?>">
-                    <button type="submit" name="delete_booking" class="btn btn-danger btn-sm">Delete</button>
-                  </form>
+                  <?php if ($is_cancelled): ?>
+                    <span class="badge badge-secondary p-2">Cancelled</span>
+                  <?php else: ?>
+                    <form method="post" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
+                      <?= csrf_field() ?>
+                      <input type="hidden" name="delete_id" value="<?= e($sno) ?>">
+                      <button type="submit" name="delete_booking" class="btn btn-danger btn-sm">Cancel</button>
+                    </form>
+                  <?php endif; ?>
                 </td>
               </tr>
             <?php endforeach; ?>
