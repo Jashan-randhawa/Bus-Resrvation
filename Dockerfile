@@ -16,6 +16,9 @@ RUN echo "ServerName localhost" > /etc/apache2/conf-available/servername.conf \
  && sed -ri 's/Listen 80/Listen ${PORT}/' /etc/apache2/ports.conf \
  && sed -ri 's#<VirtualHost \*:80>#<VirtualHost *:${PORT}>#' /etc/apache2/sites-available/000-default.conf
 
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 COPY --chown=www-data:www-data . /var/www/html/
 
 EXPOSE 80
@@ -23,4 +26,5 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
  CMD curl -fsS -o /dev/null "http://localhost:${PORT}/index.php" || exit 1
 
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["apache2-foreground"]

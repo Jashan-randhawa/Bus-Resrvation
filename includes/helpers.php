@@ -89,23 +89,60 @@ function client_ip(): string {
     return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 }
 
+function ensure_login_attempts_table(mysqli $link): void {
+    static $checked = false;
+    if ($checked) {
+        return;
+    }
+    try {
+        mysqli_query($link, "
+            CREATE TABLE IF NOT EXISTS `login_attempts` (
+                `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+                `k` CHAR(40) NOT NULL,
+                `ts` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                KEY `idx_attempts` (`k`, `ts`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ");
+        $checked = true;
+    } catch (mysqli_sql_exception $e) {
+        error_log('[busres] ensure_login_attempts_table: ' . $e->getMessage());
+    }
+}
+
 function throttle_hit(mysqli $link, string $key): void {
-    db_exec($link, 'INSERT INTO login_attempts (k) VALUES (?)', 's', [sha1($key)]);
-    // O9: Clean up expired rows older than 1 day so table stays small
-    if (random_int(1, 20) === 1) {
-        db_exec($link, 'DELETE FROM login_attempts WHERE ts < (NOW() - INTERVAL 1 DAY)');
+    ensure_login_attempts_table($link);
+    try {
+        db_exec($link, 'INSERT INTO login_attempts (k) VALUES (?)', 's', [sha1($key)]);
+        // O9: Clean up expired rows older than 1 day so table stays small
+        if (random_int(1, 20) === 1) {
+            db_exec($link, 'DELETE FROM login_attempts WHERE ts < (NOW() - INTERVAL 1 DAY)');
+        }
+    } catch (mysqli_sql_exception $e) {
+        // Fallback gracefully without breaking login if table creation pending
+        error_log('[busres] throttle_hit exception: ' . $e->getMessage());
     }
 }
 
 function throttle_clear(mysqli $link, string $key): void {
-    db_exec($link, 'DELETE FROM login_attempts WHERE k = ?', 's', [sha1($key)]);
+    ensure_login_attempts_table($link);
+    try {
+        db_exec($link, 'DELETE FROM login_attempts WHERE k = ?', 's', [sha1($key)]);
+    } catch (mysqli_sql_exception $e) {
+        error_log('[busres] throttle_clear exception: ' . $e->getMessage());
+    }
 }
 
 function throttle_blocked(mysqli $link, string $key, int $max = 5, int $window = 900): bool {
-    $r = db_one($link,
-        'SELECT COUNT(*) AS n FROM login_attempts WHERE k = ? AND ts > (NOW() - INTERVAL ? SECOND)',
-        'si', [sha1($key), $window]);
-    return (int)($r['n'] ?? 0) >= $max;
+    ensure_login_attempts_table($link);
+    try {
+        $r = db_one($link,
+            'SELECT COUNT(*) AS n FROM login_attempts WHERE k = ? AND ts > (NOW() - INTERVAL ? SECOND)',
+            'si', [sha1($key), $window]);
+        return (int)($r['n'] ?? 0) >= $max;
+    } catch (mysqli_sql_exception $e) {
+        error_log('[busres] throttle_blocked exception: ' . $e->getMessage());
+        return false;
+    }
 }
 
 /**

@@ -2,7 +2,10 @@
 // database/db_migrate.php -- Idempotent Database Schema & Migration Runner (O7)
 // Usage: php database/db_migrate.php [--force]
 
-if (PHP_SAPI !== 'cli' && !isset($_GET['migrate_key'])) {
+if (session_status() !== PHP_SESSION_ACTIVE && PHP_SAPI !== 'cli') {
+    session_start();
+}
+if (PHP_SAPI !== 'cli' && !isset($_GET['migrate_key']) && empty($_SESSION['admin'])) {
     http_response_code(403);
     echo "CLI or authorized web invocation only.\n";
     exit;
@@ -24,13 +27,17 @@ mysqli_query($link, "
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ");
 
-function migration_applied(mysqli $link, string $name): bool {
-    $row = db_one($link, "SELECT id FROM schema_migrations WHERE migration = ?", 's', [$name]);
-    return !empty($row);
+if (!function_exists('migration_applied')) {
+    function migration_applied(mysqli $link, string $name): bool {
+        $row = db_one($link, "SELECT id FROM schema_migrations WHERE migration = ?", 's', [$name]);
+        return !empty($row);
+    }
 }
 
-function record_migration(mysqli $link, string $name): void {
-    db_exec($link, "INSERT INTO schema_migrations (migration) VALUES (?)", 's', [$name]);
+if (!function_exists('record_migration')) {
+    function record_migration(mysqli $link, string $name): void {
+        db_exec($link, "INSERT INTO schema_migrations (migration) VALUES (?)", 's', [$name]);
+    }
 }
 
 // 2. Ensure base tables exist (idempotent init)
@@ -122,15 +129,19 @@ mysqli_query($link, "
 echo "  -> Base tables verified.\n";
 
 // Helper for column existence check
-function has_column(mysqli $link, string $table, string $column): bool {
-    $res = mysqli_query($link, "SHOW COLUMNS FROM `$table` LIKE '$column'");
-    return $res && mysqli_num_rows($res) > 0;
+if (!function_exists('has_column')) {
+    function has_column(mysqli $link, string $table, string $column): bool {
+        $res = mysqli_query($link, "SHOW COLUMNS FROM `$table` LIKE '$column'");
+        return $res && mysqli_num_rows($res) > 0;
+    }
 }
 
 // Helper for index existence check
-function has_index(mysqli $link, string $table, string $index_name): bool {
-    $res = mysqli_query($link, "SHOW INDEX FROM `$table` WHERE Key_name = '$index_name'");
-    return $res && mysqli_num_rows($res) > 0;
+if (!function_exists('has_index')) {
+    function has_index(mysqli $link, string $table, string $index_name): bool {
+        $res = mysqli_query($link, "SHOW INDEX FROM `$table` WHERE Key_name = '$index_name'");
+        return $res && mysqli_num_rows($res) > 0;
+    }
 }
 
 // 3. Run Step Migrations

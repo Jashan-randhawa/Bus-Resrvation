@@ -4,6 +4,19 @@ require_once __DIR__ . '/../includes/auth/admin-session.php';
 require_once __DIR__ . '/../includes/db_con.php';
 require_once __DIR__ . '/../includes/helpers.php';
 
+$migration_log = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['run_migrations'])) {
+    if (!csrf_verify($_POST['csrf_token'] ?? null)) {
+        flash_set('error', 'CSRF token mismatch.');
+        redirect('admin/diagnostics.php');
+    }
+    ob_start();
+    $_GET['migrate_key'] = 'admin_session';
+    require __DIR__ . '/../database/db_migrate.php';
+    $migration_log = ob_get_clean();
+    flash_set('success', 'Database migrations executed successfully.');
+}
+
 $title = 'System Diagnostics & Health Check';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
 
@@ -117,8 +130,22 @@ $checks[] = [
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                 <span class="font-weight-bold">Diagnostics Matrix</span>
-                <a href="" class="btn btn-sm btn-outline-light">Refresh Status</a>
+                <div>
+                    <form method="post" class="d-inline" onsubmit="return confirm('Execute all database schema migrations now?');">
+                        <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
+                        <button type="submit" name="run_migrations" value="1" class="btn btn-sm btn-outline-warning mr-2">
+                            Run Database Migrations
+                        </button>
+                    </form>
+                    <a href="" class="btn btn-sm btn-outline-light">Refresh Status</a>
+                </div>
             </div>
+            <?php if (!empty($migration_log)): ?>
+                <div class="p-3 bg-secondary text-white">
+                    <h6 class="font-weight-bold mb-2 text-warning">Migration Execution Log:</h6>
+                    <pre class="bg-dark text-light p-3 rounded mb-0" style="max-height: 250px; overflow-y: auto; font-size: 0.85rem;"><?= e($migration_log) ?></pre>
+                </div>
+            <?php endif; ?>
             <div class="table-responsive">
                 <table class="table table-hover table-bordered mb-0">
                     <thead class="thead-light">
