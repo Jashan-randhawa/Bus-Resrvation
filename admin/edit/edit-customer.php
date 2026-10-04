@@ -29,29 +29,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit'])) {
     if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Please provide a valid name and email address.';
     } else {
-        if ($pwd !== '') {
-            if (strlen($pwd) < 8) {
-                $error = 'New password must be at least 8 characters.';
+        $dup = db_one($link, "SELECT `{$cust_pk}` FROM costumer WHERE email = ? AND `{$cust_pk}` != ?", 'si', [$email, $id]);
+        if ($dup) {
+            $error = "Email address '{$email}' is already registered to another customer.";
+        } else {
+            if ($pwd !== '') {
+                if (strlen($pwd) < 8) {
+                    $error = 'New password must be at least 8 characters.';
+                } else {
+                    $hashed = password_hash($pwd, PASSWORD_DEFAULT);
+                    db_exec($link,
+                        "UPDATE costumer SET name = ?, email = ?, pwd = ?, phone = ?, address = ? WHERE `{$cust_pk}` = ?",
+                        'sssssi',
+                        [$name, $email, $hashed, $phone, $address, $id]
+                    );
+                    flash_set('success', 'Customer updated successfully.');
+                    header('Location: ' . BASE_URL . '/admin/customers.php');
+                    exit;
+                }
             } else {
-                $hashed = password_hash($pwd, PASSWORD_DEFAULT);
                 db_exec($link,
-                    "UPDATE costumer SET name = ?, email = ?, pwd = ?, phone = ?, address = ? WHERE `{$cust_pk}` = ?",
-                    'sssssi',
-                    [$name, $email, $hashed, $phone, $address, $id]
+                    "UPDATE costumer SET name = ?, email = ?, phone = ?, address = ? WHERE `{$cust_pk}` = ?",
+                    'ssssi',
+                    [$name, $email, $phone, $address, $id]
                 );
                 flash_set('success', 'Customer updated successfully.');
                 header('Location: ' . BASE_URL . '/admin/customers.php');
                 exit;
             }
-        } else {
-            db_exec($link,
-                "UPDATE costumer SET name = ?, email = ?, phone = ?, address = ? WHERE `{$cust_pk}` = ?",
-                'ssssi',
-                [$name, $email, $phone, $address, $id]
-            );
-            flash_set('success', 'Customer updated successfully.');
-            header('Location: ' . BASE_URL . '/admin/customers.php');
-            exit;
         }
     }
 }

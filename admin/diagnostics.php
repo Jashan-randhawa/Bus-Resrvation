@@ -73,39 +73,72 @@ $checks[] = run_check('OpenSSL Extension', function() {
     ];
 });
 
-// 2. Database Connectivity & Mode
-$checks[] = run_check('Database Connectivity', function() use ($link) {
-    $db_ping = @mysqli_ping($link);
+// 2. Database Connectivity & Latency (D-09)
+$checks[] = run_check('Database Round-Trip & Server Info', function() use ($link) {
+    $start = microtime(true);
+    $res = mysqli_query($link, 'SELECT VERSION() AS v');
+    $duration_ms = round((microtime(true) - $start) * 1000, 2);
+    $ver_row = ($res instanceof mysqli_result) ? mysqli_fetch_assoc($res) : null;
+    $version = $ver_row['v'] ?? 'unknown';
+
+    $ssl_cipher = '';
+    try {
+        $c_res = mysqli_query($link, "SHOW STATUS LIKE 'Ssl_cipher'");
+        if ($c_res instanceof mysqli_result && $c_row = mysqli_fetch_assoc($c_res)) {
+            $ssl_cipher = (string)($c_row['Value'] ?? '');
+        }
+    } catch (Throwable $e) {}
+
+    $ssl_desc = $ssl_cipher !== '' ? "SSL: {$ssl_cipher}" : 'SSL: Plain';
     $host_info = defined('DB_NAME') && defined('DB_HOST') ? (DB_NAME . '@' . DB_HOST) : 'configured';
+
     return [
-        'status' => $db_ping ? 'OK' : 'FAIL',
-        'message' => $db_ping ? ('Connected to ' . $host_info) : 'Database unreachable'
+        'status' => 'OK',
+        'message' => "Latency: {$duration_ms}ms | {$host_info} (v{$version}) | {$ssl_desc}"
     ];
 });
 
-// 3. Schema & Constraints Inspection
-$checks[] = run_check('Booking Table Hardening', function() use ($run_query) {
+// 3. Core Tables Audit (D-08)
+$checks[] = run_check('Core Schema Tables Presence', function() use ($run_query) {
+    $required = ['admin', 'costumer', 'buses', 'route', 'booking', 'query', 'login_attempts', 'schema_migrations'];
+    $raw_tables = $run_query('SHOW TABLES');
+    $tables = array_map(function($r) {
+        return (string)array_values($r)[0];
+    }, $raw_tables);
+
+    $missing = array_diff($required, $tables);
+    if (empty($missing)) {
+        return ['status' => 'OK', 'message' => 'All 8 core application tables are present.'];
+    }
+    return ['status' => 'FAIL', 'message' => 'Missing database tables: ' . implode(', ', $missing)];
+});
+
+// 4. Booking Table Schema Hardening
+$checks[] = run_check('Booking Table Schema Hardening', function() use ($run_query) {
     $booking_cols = $run_query('SHOW COLUMNS FROM `booking`');
     $b_col_names = array_column($booking_cols, 'Field');
     $has_pnr = in_array('pnr', $b_col_names, true);
     $has_status = in_array('status', $b_col_names, true);
+    $has_hold = in_array('hold_expires_at', $b_col_names, true);
+    $all_ok = $has_pnr && $has_status && $has_hold;
     return [
-        'status' => ($has_pnr && $has_status) ? 'OK' : 'WARN',
-        'message' => "PNR Column: " . ($has_pnr ? 'Present' : 'Missing') . " | Status Column: " . ($has_status ? 'Present' : 'Missing')
+        'status' => $all_ok ? 'OK' : 'WARN',
+        'message' => "PNR: " . ($has_pnr ? 'Present' : 'Missing') . " | Status: " . ($has_status ? 'Present' : 'Missing') . " | Hold Expiry: " . ($has_hold ? 'Present' : 'Missing')
     ];
 });
 
+// 5. Fleet Capacity Modeling
 $checks[] = run_check('Fleet Capacity Modeling', function() use ($run_query) {
     $buses_cols = $run_query('SHOW COLUMNS FROM `buses`');
     $has_capacity = in_array('capacity', array_column($buses_cols, 'Field'), true);
     return [
         'status' => $has_capacity ? 'OK' : 'WARN',
-        'message' => "Capacity Column in buses: " . ($has_capacity ? 'Present (Dynamic)' : 'Missing (36 fallback)')
+        'message' => "Capacity Column in buses: " . ($has_capacity ? 'Present (Dynamic Fleet)' : 'Missing (36 fallback)')
     ];
 });
 
-// 4. Unique Constraints
-$checks[] = run_check('Concurrency & Unique Indexes', function() use ($run_query) {
+// 6. Concurrency & Unique Indexes
+$checks[] = run_check('Booking Concurrency Constraints', function() use ($run_query) {
     $indexes = $run_query('SHOW INDEX FROM `booking`');
     $idx_names = array_column($indexes, 'Key_name');
     $has_uq_seat = in_array('uq_booking_seat', $idx_names, true);
@@ -116,7 +149,51 @@ $checks[] = run_check('Concurrency & Unique Indexes', function() use ($run_query
     ];
 });
 
-// 5. Rate Limiting Table
+// 7. Master Data Unique Indexes (D-08)
+$checks[] = run_check('Master Data Unique Constraints', function() use ($run_query) {
+    $admin_idx = array_column($run_query('SHOW INDEX FROM `admin`'), 'Key_name');
+    $cust_idx = array_column($run_query('SHOW INDEX FROM `costumer`'), 'Key_name');
+    $buses_idx = array_column($run_query('SHOW INDEX FROM `buses`'), 'Key_name');
+
+    $has_ua = in_array('uq_admin_email', $admin_idx, true);
+    $has_uc = in_array('uq_customer_email', $cust_idx, true);
+    $has_ub = in_array('uq_bus_number', $buses_idx, true);
+
+    if ($has_ua && $has_uc && $has_ub) {
+        return ['status' => 'OK', 'message' => 'Email and vehicle uniqueness constraints active.'];
+    }
+    return [
+        'status' => 'WARN',
+        'message' => 'Pending unique indexes: ' . (!$has_ua ? 'uq_admin_email ' : '') . (!$has_uc ? 'uq_customer_email ' : '') . (!$has_ub ? 'uq_bus_number' : '')
+    ];
+});
+
+// 8. Password Hashing Audit (D-08)
+$checks[] = run_check('Password Encryption Audit', function() use ($run_query) {
+    $legacy_admins = 0;
+    $admin_rows = $run_query('SELECT Password FROM `admin`');
+    foreach ($admin_rows as $a) {
+        if (password_get_info($a['Password'])['algo'] === null) {
+            $legacy_admins++;
+        }
+    }
+    $legacy_users = 0;
+    $user_rows = $run_query('SELECT pwd FROM `costumer`');
+    foreach ($user_rows as $u) {
+        if (password_get_info($u['pwd'])['algo'] === null) {
+            $legacy_users++;
+        }
+    }
+    if ($legacy_admins === 0 && $legacy_users === 0) {
+        return ['status' => 'OK', 'message' => 'All admin and customer credentials hashed with strong algorithms.'];
+    }
+    return [
+        'status' => 'WARN',
+        'message' => "Detected unhashed legacy passwords: {$legacy_admins} admin(s), {$legacy_users} customer(s)."
+    ];
+});
+
+// 9. Rate Limiting Table
 $checks[] = run_check('Rate Limiting Table (login_attempts)', function() use ($run_query) {
     $login_attempts_check = $run_query("SHOW TABLES LIKE 'login_attempts'");
     return [
@@ -125,22 +202,23 @@ $checks[] = run_check('Rate Limiting Table (login_attempts)', function() use ($r
     ];
 });
 
-// 6. Migrations Status
+// 10. Migrations Status
 $m_rows = [];
-$checks[] = run_check('Schema Migrations Runner (O7)', function() use ($run_query, &$m_rows) {
+$checks[] = run_check('Schema Migrations Runner (O7 / D-08)', function() use ($run_query, &$m_rows) {
     $mig_check = $run_query("SHOW TABLES LIKE 'schema_migrations'");
     $applied_count = 0;
     if (!empty($mig_check)) {
         $m_rows = $run_query('SELECT migration, applied_at FROM `schema_migrations` ORDER BY id ASC');
         $applied_count = count($m_rows);
     }
+    $expected_count = 4; // 001, 002, 003, 004
     return [
-        'status' => ($applied_count > 0) ? 'OK' : 'INFO',
-        'message' => "{$applied_count} migrations recorded in schema_migrations"
+        'status' => ($applied_count >= $expected_count) ? 'OK' : 'INFO',
+        'message' => "{$applied_count} of {$expected_count} migrations recorded in schema_migrations"
     ];
 });
 
-// 7. Security Configurations
+// 11. Security Configurations
 $checks[] = run_check('Session Cookie Security', function() {
     $cookie_params = session_get_cookie_params();
     return [
@@ -149,11 +227,12 @@ $checks[] = run_check('Session Cookie Security', function() {
     ];
 });
 
+// 12. Application Timezone
 $checks[] = run_check('Application Timezone', function() {
     $tz = date_default_timezone_get();
     return [
         'status' => 'OK',
-        'message' => "Current Timezone: {$tz} (Time: " . date('Y-m-d H:i:s') . ")"
+        'message' => "Timezone: {$tz} (System Time: " . date('Y-m-d H:i:s') . ")"
     ];
 });
 

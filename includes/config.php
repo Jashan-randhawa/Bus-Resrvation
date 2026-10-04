@@ -32,6 +32,10 @@ if (!defined('BUS_SEATS')) {
     define('BUS_SEATS', 36);
 }
 
+if (!defined('CURRENCY')) {
+    define('CURRENCY', getenv('APP_CURRENCY') ?: '₹');
+}
+
 // Application Timezone (F6: default Asia/Kolkata)
 date_default_timezone_set(getenv('APP_TZ') ?: 'Asia/Kolkata');
 

@@ -51,9 +51,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_customer'])) {
     csrf_verify();
     $delete_id = (int)($_POST['delete_id'] ?? 0);
     if ($delete_id > 0) {
-        db_exec($link, "DELETE FROM costumer WHERE `{$cust_pk}` = ?", 'i', [$delete_id]);
-        $alert = 'Customer deleted successfully.';
-        $alert_type = 'success';
+        // P-09: Prevent deleting customer with active bookings
+        $active_bookings = db_one($link,
+            "SELECT COUNT(*) AS c FROM booking WHERE id = ? AND (status IS NULL OR status IN ('Confirmed', 'Pending'))",
+            'i', [$delete_id]
+        );
+        if ((int)($active_bookings['c'] ?? 0) > 0) {
+            $alert = 'Cannot delete customer account because they have active ticket reservations.';
+            $alert_type = 'danger';
+        } else {
+            db_exec($link, "DELETE FROM costumer WHERE `{$cust_pk}` = ?", 'i', [$delete_id]);
+            $alert = 'Customer deleted successfully.';
+            $alert_type = 'success';
+        }
     }
 }
 

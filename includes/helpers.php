@@ -163,12 +163,37 @@ function throttle_blocked(mysqli $link, string $key, int $max = 5, int $window =
 }
 
 /**
+ * Cached table column inspection to avoid redundant SHOW COLUMNS queries per request (P-10).
+ */
+function table_columns(mysqli $link, string $table): array {
+    static $cache = [];
+    if (!isset($cache[$table])) {
+        $cols = [];
+        try {
+            $res = mysqli_query($link, "SHOW COLUMNS FROM `{$table}`");
+            if ($res instanceof mysqli_result) {
+                while ($r = mysqli_fetch_assoc($res)) {
+                    $cols[] = $r['Field'];
+                }
+                mysqli_free_result($res);
+            }
+        } catch (Throwable $e) {
+            error_log('[busres] table_columns error for ' . $table . ': ' . $e->getMessage());
+        }
+        $cache[$table] = $cols;
+    }
+    return $cache[$table];
+}
+
+function table_has_column(mysqli $link, string $table, string $column): bool {
+    return in_array($column, table_columns($link, $table), true);
+}
+
+/**
  * Automatically releases seats held in 'Pending' status whose hold window has expired (O13).
  */
 function release_expired_holds(mysqli $link): void {
-    $cols = db_all($link, 'SHOW COLUMNS FROM booking');
-    $col_names = array_column($cols, 'Field');
-    if (in_array('status', $col_names, true) && in_array('hold_expires_at', $col_names, true)) {
+    if (table_has_column($link, 'booking', 'status') && table_has_column($link, 'booking', 'hold_expires_at')) {
         db_exec($link,
             "UPDATE booking SET status = 'Expired' WHERE status = 'Pending' AND hold_expires_at IS NOT NULL AND hold_expires_at < NOW()"
         );
@@ -188,8 +213,7 @@ function get_booked_seats(mysqli $link, string $bus, string $date, string $time)
     // Sweep expired holds first (O13)
     release_expired_holds($link);
 
-    $cols = db_all($link, 'SHOW COLUMNS FROM booking');
-    $has_status = in_array('status', array_column($cols, 'Field'), true);
+    $has_status = table_has_column($link, 'booking', 'status');
 
     if ($has_status) {
         $rows = db_all($link,
@@ -217,9 +241,7 @@ function get_bus_capacity(mysqli $link, string $bus_number): int {
     if ($bus_number === '') {
         return 36;
     }
-    $cols = db_all($link, 'SHOW COLUMNS FROM buses');
-    $has_cap = in_array('capacity', array_column($cols, 'Field'), true);
-    if ($has_cap) {
+    if (table_has_column($link, 'buses', 'capacity')) {
         $row = db_one($link, 'SELECT capacity FROM buses WHERE bus_number = ? LIMIT 1', 's', [$bus_number]);
         $cap = (int)($row['capacity'] ?? 0);
         if ($cap > 0) {
@@ -273,11 +295,9 @@ function create_booking(mysqli $link, array $data): array {
         return ['ok' => false, 'pnr' => '', 'error' => 'Passenger name and contact number are required.'];
     }
 
-    $cols = db_all($link, 'SHOW COLUMNS FROM booking');
-    $col_names = array_column($cols, 'Field');
-    $has_pnr = in_array('pnr', $col_names, true);
-    $has_status = in_array('status', $col_names, true);
-    $has_hold = in_array('hold_expires_at', $col_names, true);
+    $has_pnr = table_has_column($link, 'booking', 'pnr');
+    $has_status = table_has_column($link, 'booking', 'status');
+    $has_hold = table_has_column($link, 'booking', 'hold_expires_at');
 
     $booking_status = trim((string)($data['status'] ?? 'Confirmed'));
     if (!in_array($booking_status, ['Confirmed', 'Pending'], true)) {

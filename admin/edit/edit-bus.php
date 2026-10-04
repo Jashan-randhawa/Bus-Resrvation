@@ -36,23 +36,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
         $error = 'Bus number cannot be empty.';
     } else {
         $old_bus = (string)($row['bus_number'] ?? '');
-        $cols = db_all($link, 'SHOW COLUMNS FROM buses');
-        $has_cap = in_array('capacity', array_column($cols, 'Field'), true);
 
-        if ($has_cap) {
-            db_exec($link, "UPDATE buses SET bus_number = ?, capacity = ? WHERE `{$bus_pk}` = ?", 'sii', [$busno, $capacity, $id]);
+        // Pre-check uniqueness
+        $dup = db_one($link, "SELECT `{$bus_pk}` FROM buses WHERE bus_number = ? AND `{$bus_pk}` != ?", 'si', [$busno, $id]);
+        if ($dup) {
+            $error = "Bus number '{$busno}' is already registered to another vehicle.";
         } else {
-            db_exec($link, "UPDATE buses SET bus_number = ? WHERE `{$bus_pk}` = ?", 'si', [$busno, $id]);
-        }
+            // Verify capacity is not lower than highest active booked seat
+            $max_seat_row = db_one($link, "SELECT COALESCE(MAX(seat), 0) AS max_s FROM booking WHERE bus = ? AND (status IS NULL OR status IN ('Confirmed', 'Pending'))", 's', [$old_bus]);
+            $max_booked_seat = (int)($max_seat_row['max_s'] ?? 0);
+            if ($capacity < $max_booked_seat) {
+                $error = "Cannot reduce capacity to {$capacity} seats because seat #{$max_booked_seat} is currently reserved.";
+            } else {
+                $has_cap = table_has_column($link, 'buses', 'capacity');
 
-        if ($old_bus !== '' && $old_bus !== $busno) {
-            db_exec($link, 'UPDATE route SET busno = ? WHERE busno = ?', 'ss', [$busno, $old_bus]);
-            db_exec($link, 'UPDATE booking SET bus = ? WHERE bus = ?', 'ss', [$busno, $old_bus]);
-        }
+                mysqli_begin_transaction($link);
+                try {
+                    if ($has_cap) {
+                        db_exec($link, "UPDATE buses SET bus_number = ?, capacity = ? WHERE `{$bus_pk}` = ?", 'sii', [$busno, $capacity, $id]);
+                    } else {
+                        db_exec($link, "UPDATE buses SET bus_number = ? WHERE `{$bus_pk}` = ?", 'si', [$busno, $id]);
+                    }
 
-        flash_set('success', 'Bus updated successfully.');
-        header('Location: ' . BASE_URL . '/admin/buses.php');
-        exit;
+                    if ($old_bus !== '' && $old_bus !== $busno) {
+                        db_exec($link, 'UPDATE route SET busno = ? WHERE busno = ?', 'ss', [$busno, $old_bus]);
+                        db_exec($link, 'UPDATE booking SET bus = ? WHERE bus = ?', 'ss', [$busno, $old_bus]);
+                    }
+
+                    mysqli_commit($link);
+                    flash_set('success', 'Bus updated successfully.');
+                    header('Location: ' . BASE_URL . '/admin/buses.php');
+                    exit;
+                } catch (Throwable $e) {
+                    mysqli_rollback($link);
+                    $error = ($link->errno === 1062) ? 'Bus number already in use.' : ('Update failed: ' . $e->getMessage());
+                }
+            }
+        }
     }
 }
 
