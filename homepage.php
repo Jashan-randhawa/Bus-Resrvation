@@ -1,48 +1,44 @@
 <?php
 require_once __DIR__ . '/includes/config.php';
+require_once __DIR__ . '/includes/auth/session-bootstrap.php';
+require_once __DIR__ . '/includes/helpers.php';
+require_once __DIR__ . '/includes/db_con.php';
 ob_start();
-session_start();
 $msg = "";
 
-if (isset($_POST["user"])) {
-  if (!empty($_POST['email']) and !empty($_POST['pwd'])) {
-    require_once __DIR__ . '/includes/db_con.php';
-    $qry = "select * from costumer where email = '$_POST[email]' and pwd = '$_POST[pwd]'";
-    $resultset = mysqli_query($link, $qry);
-    $n = mysqli_num_rows($resultset);
-    if ($n == 1) {
-      $row = mysqli_fetch_assoc($resultset);
-      $_SESSION["name"] = $row["name"];
-      $_SESSION["pwd"] = $row["pwd"];
-      $_SESSION["phone"] = $row["phone"];
-      header("location: " . BASE_URL . "/user/index.php?d=2");
-      exit();
-    } else {
-      $msg = "<p class='alert alert-warning text-center'>Invalid Email or Password</p>";
-    }
-  } else {
-    $msg = "<p class='alert alert-warning text-center'>Please fill all the fields</p>";
-  }
-}
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_POST['admin']))) {
+  csrf_verify();
+  $role = isset($_POST['admin']) ? 'admin' : 'user';
+  $email = strtolower(trim((string)($_POST['email'] ?? '')));
+  $pwd = (string)($_POST['pwd'] ?? '');
 
-if (isset($_POST["admin"])) {
-  if (!empty($_POST['email']) and !empty($_POST['pwd'])) {
-    require_once __DIR__ . '/includes/db_con.php';
-    $qry = "select * from admin where Email_id = '$_POST[email]' and Password = '$_POST[pwd]'";
-    $resultset = mysqli_query($link, $qry);
-    $n = mysqli_num_rows($resultset);
-    if ($n == 1) {
-      $row = mysqli_fetch_assoc($resultset);
-      $_SESSION["name"] = $row["name"];
-      $_SESSION["pwd"] = $row["Password"];
-      $_SESSION["phone"] = $row["phone"];
-      header("location: " . BASE_URL . "/admin/index.php?d=2");
-      exit();
-    } else {
-      $msg = "<p class='alert alert-warning text-center'>Invalid Email or Password</p>";
-    }
+  if ($email === '' || $pwd === '') {
+    $msg = '<p class="alert alert-warning text-center">Please fill all the fields</p>';
   } else {
-    $msg = "<p class='alert alert-warning text-center'>Please fill all the fields</p>";
+    $sql = $role === 'admin'
+      ? 'SELECT id, name, phone, Password AS pwd FROM admin WHERE Email_id = ? LIMIT 1'
+      : 'SELECT id, name, phone, pwd FROM costumer WHERE email = ? LIMIT 1';
+    $row = db_one($link, $sql, 's', [$email]);
+
+    if ($row) {
+      $matched = password_verify($pwd, $row['pwd']);
+      if (!$matched && $pwd === $row['pwd']) {
+        // Seamless migration: rehash on first login if still plain text
+        $matched = true;
+        $newHash = password_hash($pwd, PASSWORD_DEFAULT);
+        $updateSql = $role === 'admin'
+          ? 'UPDATE admin SET Password = ? WHERE id = ?'
+          : 'UPDATE costumer SET pwd = ? WHERE id = ?';
+        db_exec($link, $updateSql, 'si', [$newHash, (int)$row['id']]);
+      }
+
+      if ($matched) {
+        login_user($role, $row);
+        header('Location: ' . BASE_URL . '/' . $role . '/index.php?d=2');
+        exit();
+      }
+    }
+    $msg = '<p class="alert alert-warning text-center">Invalid Email or Password</p>';
   }
 }
 ?>
@@ -86,6 +82,7 @@ if (isset($_POST["admin"])) {
               </div>
               <div class="modal-body">
                 <form action="" method="post">
+                  <?= csrf_field() ?>
                   <div class="form-group">
                     <label for="email">Email Address</label>
                     <input type="email" name="email" class="form-control" placeholder="Email" />
@@ -173,6 +170,7 @@ if (isset($_POST["admin"])) {
               </div>
               <div class="modal-body">
                 <form action="" method="post">
+                  <?= csrf_field() ?>
                   <div class="form-group">
                     <label for="email">Email Address</label>
                     <input type="email" name="email" class="form-control" placeholder="Email" />

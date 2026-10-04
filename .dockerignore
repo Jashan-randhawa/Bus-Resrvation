@@ -1,6 +1,12 @@
+# .dockerignore
 .git
+.github
 .gitignore
-README.md
+.env
+.env.*
+database/
+docs/
+wiki/
 *.md
 LICENSE
 .dockerignore
