@@ -41,6 +41,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
     $msg = '<p class="alert alert-warning text-center">Invalid Email or Password</p>';
   }
 }
+
+// Registration handler (H-06)
+if (isset($_POST['userbtn'])) {
+  csrf_verify();
+  $name = trim(trim((string)($_POST['fname'] ?? '')) . ' ' . trim((string)($_POST['lname'] ?? '')));
+  $email = strtolower(trim((string)($_POST['user_email'] ?? '')));
+  $pwd = (string)($_POST['user_pwd'] ?? '');
+  $phone = preg_replace('/\D/', '', (string)($_POST['user_no'] ?? ''));
+  $addr = trim((string)($_POST['address'] ?? ''));
+  $errors = [];
+
+  if ($name === '') { $errors[] = 'Name is required.'; }
+  if (!filter_var($email, FILTER_VALIDATE_EMAIL)) { $errors[] = 'Enter a valid email.'; }
+  if (strlen($pwd) < 8 || !preg_match('/[A-Za-z]/', $pwd) || !preg_match('/\d/', $pwd)) {
+    $errors[] = 'Password needs 8+ characters with a letter and a number.';
+  }
+  if (strlen($phone) < 10 || strlen($phone) > 15) { $errors[] = 'Enter a valid phone number.'; }
+  if (!$errors && db_one($link, 'SELECT id FROM costumer WHERE email = ?', 's', [$email])) {
+    $errors[] = 'That email is already registered.';
+  }
+
+  if ($errors) {
+    $msg = '<p class="alert alert-warning text-center">' . e(implode(' ', $errors)) . '</p>';
+  } else {
+    db_exec($link,
+      'INSERT INTO costumer (name, email, pwd, phone, address) VALUES (?,?,?,?,?)',
+      'sssss', [$name, $email, password_hash($pwd, PASSWORD_DEFAULT), $phone, $addr]);
+    $msg = '<p class="alert alert-success text-center">Account created successfully. You can log in now.</p>';
+  }
+}
+
+// Contact form handler (C-02, H-07)
+if (isset($_POST['subbtn'])) {
+  csrf_verify();
+  $n = trim((string)($_POST['name'] ?? ''));
+  $em = trim((string)($_POST['email'] ?? ''));
+  $s = trim((string)($_POST['subject'] ?? ''));
+  $q = trim((string)($_POST['query'] ?? ''));
+
+  if ($n !== '' && filter_var($em, FILTER_VALIDATE_EMAIL) && $q !== '') {
+    db_exec($link,
+      'INSERT INTO query (user_name, user_email, user_subject, user_qry) VALUES (?,?,?,?)',
+      'ssss', [$n, $em, $s, $q]);
+    $msg = '<p class="alert alert-success text-center">Thanks, we received your message.</p>';
+  } else {
+    $msg = '<p class="alert alert-warning text-center">Please fill name, a valid email and message.</p>';
+  }
+}
 ?>
 <?php require_once __DIR__ . '/includes/layout/header-public.php'; ?>
 <?php if (!empty($msg)) { echo $msg; } ?>
@@ -107,47 +155,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
               </div>
               <div class="modal-body">
                 <form action="" method="post">
+                  <?= csrf_field() ?>
                   <div class="row">
                     <div class="form-group col-6">
-                      <label for="First-name">First Name:</label>
-                      <input type="text" class="form-control" name="fname" placeholder="First Name" />
+                      <label for="fname">First Name:</label>
+                      <input type="text" class="form-control" name="fname" id="fname" placeholder="First Name" required />
                     </div>
                     <div class="form-group col-6">
-                      <label for="Last-Name">Last Name:</label>
-                      <input type="text" class="form-control" name="lname" placeholder="Last Name" />
+                      <label for="lname">Last Name:</label>
+                      <input type="text" class="form-control" name="lname" id="lname" placeholder="Last Name" required />
                     </div>
                   </div>
                   <div class="form-group col--lg-12">
-                    <label for="Email">Email:</label>
-                    <input type="text" class="form-control" placeholder="Email" name="user_email" />
+                    <label for="user_email">Email:</label>
+                    <input type="email" class="form-control" placeholder="Email" name="user_email" id="user_email" required />
                   </div>
                   <div class="form-group col--lg-12">
-                    <label for="Password">Password:</label>
-                    <input type="text" class="form-control" name="user_pwd" placeholder="Password" />
+                    <label for="user_pwd">Password:</label>
+                    <input type="password" class="form-control" name="user_pwd" id="user_pwd" placeholder="Password" minlength="8" autocomplete="new-password" required />
                   </div>
                   <h6>
                     Password must be a minimum of 8 characters and contain at
                     least 1 number and 1 letter
                   </h6>
                   <div class="form-group col--lg-12">
-                    <label for="Phone">Phone:</label>
-                    <input type="tel" class="form-control" name="user_no" placeholder="Mobile Number" />
+                    <label for="user_no">Phone:</label>
+                    <input type="tel" class="form-control" name="user_no" id="user_no" placeholder="Mobile Number" required />
                   </div>
                   <div class="form-group col--lg-12">
-                    <label for="Address">Address:</label>
-                    <textarea name="address" id="address" cols="2" placeholder="Your Address"
+                    <label for="address">Address:</label>
+                    <textarea name="address" id="address" rows="2" placeholder="Your Address"
                       style=" width: 100% ; "></textarea>
                   </div>
                   <div class="form-group col--lg-12 ">
-                    <input type="submit" class="btn btn-success btn-block" name="userbtn" />
+                    <input type="submit" class="btn btn-success btn-block" name="userbtn" value="Register Account" />
                   </div>
-                  <?php
-                  if (isset($_POST['userbtn'])) {
-                    require_once __DIR__ . '/includes/db_con.php';
-                    $qry = "insert into costumer values('','$_POST[fname] $_POST[lname]','$_POST[user_email]','$_POST[user_pwd]','$_POST[user_no]','$_POST[address]')";
-                    $resultset = mysqli_query($link, $qry);
-                  }
-                  ?>
                 </form>
               </div>
             </div>
@@ -198,89 +240,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
   </div>
 </section>
 <section id="pnr">
-  <div class="pb-5">
-    <form action="" method="post">
-      <center>
-        <label for="PNR">
-          <h1 class="mt-5 mb-5">Enter Your PNR Number To Get Booking Details</h1>
-        </label>
-        <table>
-          <tr>
-            <td style=" padding-top: 12px; ">
-              <label for="pnr">
-                <h4>Enter PNR Number : </h4>
-              </label>
-            </td>
-            <td>
-              <input type="number" name="pnrnum">
-            </td>
-          </tr>
-        </table>
-        <input type="submit" class=" btn btn-block btn-info col-lg-4 " name="pnr" value=" search ">
-      </center>
-      <?php
-      if (isset($_POST['pnr'])) {
-        $pnr = $_POST['pnrnum']; ?>
-        <script>
-          window.location.href = "./homepage.php?pnr=<?php echo $pnr; ?>";
-        </script>
-        <?php
-      }
-      ?>
+  <div class="pb-5 text-center">
+    <h1 class="mt-5 mb-4">Check Your Booking Details</h1>
+    <form method="get" action="<?= e(BASE_URL) ?>/homepage.php#pnr" class="form-inline justify-content-center">
+      <input class="form-control m-1" name="pnr" maxlength="10" placeholder="PNR (10 characters or ID)" value="<?= e($_GET['pnr'] ?? '') ?>" required>
+      <input class="form-control m-1" name="phone4" maxlength="4" pattern="\d{4}" placeholder="Last 4 digits of phone" value="<?= e($_GET['phone4'] ?? '') ?>" required>
+      <button class="btn btn-info m-1" type="submit">Search Booking</button>
     </form>
-    <center>
-      <button class="btn btn-danger col-lg-4 " id="go" data-toggle="modal"
-        data-target="#pnrmodal" hidden>Administrator Login</button>
-    </center>
     <?php
-    if (isset($_GET['pnr'])) {
-      require_once __DIR__ . '/includes/db_con.php';
-      $qry = "select * from booking where sno ='$_GET[pnr]'";
-      $resultset = mysqli_query($link, $qry);
-      $row = mysqli_fetch_assoc($resultset);
-      if (isset($row)) {
-        error_reporting(E_ERROR | E_PARSE);
-        if ($_GET['pnr'] == $row['sno']) {
-          ?>
-          <script type="text/javascript">
-            function show_modal() {
-              document.getElementById("go").click();
-            }
-          </script>
-          <?php
-        } 
-      } else {
-        echo "<script>alert('invalid pnr number');</script>";
+    if (isset($_GET['pnr'], $_GET['phone4'])) {
+      $pnrInput = strtoupper(trim((string)$_GET['pnr']));
+      $phone4 = preg_replace('/\D/', '', (string)$_GET['phone4']);
+      $b = null;
+      $key = 'pnr:' . client_ip();
+
+      if (!throttle_blocked($link, $key, 10, 600)) {
+        throttle_hit($link, $key);
+        if ((preg_match('/^[A-F0-9]{10}$/', $pnrInput) || ctype_digit($pnrInput)) && strlen($phone4) === 4) {
+          $b = db_one($link,
+            'SELECT pnr, bus, name, contact, city1, city2, `date`, `time`, seat, price, sno
+             FROM booking
+             WHERE (pnr = ? OR sno = ?) AND RIGHT(contact, 4) = ?
+             LIMIT 1',
+            'sss', [$pnrInput, $pnrInput, $phone4]);
+        }
       }
-    }
-    ?>
-    <div class="modal fade" id="pnrmodal">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <button type="button" class="close text-right" data-dismiss="modal">
-            <span>&times;</span>
-          </button>
-          <div class=" tab-content ">
-            <?php
-            if(isset($_GET['pnr'])){
-              require_once __DIR__ . '/includes/db_con.php';
-              $qry="select * from booking where sno='$_GET[pnr]'";
-              $resultset=mysqli_query($link,$qry);
-              $row=mysqli_fetch_assoc($resultset);
-              echo "<h1 class='text-center'> PNR Number = ".$row['sno'],"</h1>";
-              echo "<h1 class='text-center'> Bus Number = ".$row['bus'],"</h1>";
-              echo "<h1 class='text-center'> Name = ".$row['name'],"</h1>";
-              echo "<h1 class='text-center'> Contact Number = ".$row['contact'],"</h1>";
-              echo "<h1 class='text-center'> Bus point = ".$row['city1'],"</h1>";
-              echo "<h1 class='text-center'> Destination = ".$row['city2'],"</h1>";
-              echo "<h1 class='text-center'> Seat Number = ".$row['seat'],"</h1>";
-              echo "<h1 class='text-center'> Total Amount = ".$row['price'],"</h1>";
-            }
-            ?>
+
+      if ($b): ?>
+        <div class="card mx-auto mt-4 text-left shadow-sm" style="max-width:540px;">
+          <div class="card-body">
+            <h4 class="card-title text-success">PNR: <?= e($b['pnr'] ?: $b['sno']) ?></h4>
+            <hr>
+            <p class="mb-1"><strong>Passenger:</strong> <?= e($b['name']) ?> (Phone: ***-***-<?= e(substr($b['contact'], -4)) ?>)</p>
+            <p class="mb-1"><strong>Bus Number:</strong> <?= e($b['bus']) ?></p>
+            <p class="mb-1"><strong>Route:</strong> <?= e($b['city1']) ?> &rarr; <?= e($b['city2']) ?></p>
+            <p class="mb-1"><strong>Departure:</strong> <?= e($b['date']) ?> at <?= e($b['time']) ?></p>
+            <p class="mb-1"><strong>Seat Allocated:</strong> <span class="badge badge-info">Seat <?= e((string)$b['seat']) ?></span></p>
+            <p class="mb-0"><strong>Total Amount:</strong> $<?= e((string)$b['price']) ?></p>
           </div>
         </div>
-      </div>
-    </div>
+      <?php else: ?>
+        <p class="alert alert-warning mt-4 mx-auto" style="max-width:540px;">
+          No booking found matching those details, or too many lookup attempts. Please verify your PNR and last 4 digits of your phone.
+        </p>
+      <?php endif;
+    }
+    ?>
   </div>
 </section>
 <section id="about">
@@ -307,17 +312,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
         way,On her way she met a copy.
       </p>
       <form action="" method="post">
+        <?= csrf_field() ?>
         <div class="input-group mt-4 mb-4">
           <div class="input-group-append">
             <span class="input-group-text" id="basic-addon1">Name</span>
           </div>
           <input type="text" class="form-control" placeholder="Username" name="name" aria-label="Username"
-            aria-describedby="basic-addon1" />
+            aria-describedby="basic-addon1" required />
           <div class="input-group-append">
             <span class="input-group-text" id="basic-addon2">Email</span>
           </div>
-          <input type="text" class="form-control" name="email" placeholder="Email Address" aria-label="Email Address"
-            aria-describedby="basic-addon2" />
+          <input type="email" class="form-control" name="email" placeholder="Email Address" aria-label="Email Address"
+            aria-describedby="basic-addon2" required />
         </div>
         <div class="input-group mt-4 mb-4">
           <div class="input-group-append">
@@ -327,20 +333,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
             aria-describedby="basic-addon3" />
         </div>
         <div class="input-group mt-4 mb-4">
-          <textarea rows="number" class="form-control" placeholder="How We Can Help You" name="query"
-            aria-label="Username" aria-describedby="basic-addon3"></textarea>
+          <textarea rows="4" class="form-control" placeholder="How We Can Help You" name="query"
+            aria-label="Username" aria-describedby="basic-addon3" required></textarea>
         </div>
         <div class="input-group-append">
-          <input type="submit" name="subbtn" class="btn btn-primary btn-lg btn-block">
+          <input type="submit" name="subbtn" class="btn btn-primary btn-lg btn-block" value="Send Message">
         </div>
+      </form>
     </div>
   </div>
-  <?php
-  if (isset($_POST['subbtn'])) {
-    require_once __DIR__ . '/includes/db_con.php';
-    $qry = "insert into query (user_name,user_email,user_subject,user_qry) values ('$_POST[name]','$_POST[email]','$_POST[subject]','$_POST[query]')";
-    $resultset = mysqli_query($link, $qry);
-  }
-  ?>
 </section>
 <?php require_once __DIR__ . '/includes/layout/footer.php'; ?>
