@@ -4,7 +4,6 @@
 .gitignore
 .env
 .env.*
-database/
 docs/
 wiki/
 *.md
