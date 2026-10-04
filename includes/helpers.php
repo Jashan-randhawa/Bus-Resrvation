@@ -74,17 +74,31 @@ function db_exec(mysqli $link, string $sql, string $types = '', array $params = 
 
 /* ---------- Rate limiting (needs table login_attempts, see 001_hardening.sql) ---------- */
 function client_ip(): string {
-    // Behind Render's proxy chain the leftmost X-Forwarded-For entry can be client supplied,
-    // so always combine IP limits with an account-based key (see H-05).
+    // When behind a reverse proxy (e.g. Render), the client can spoof the leftmost X-Forwarded-For value.
+    // The trusted proxy appends the real client IP at the right. We take the rightmost address (O1).
     $xff = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
     if ($xff !== '') {
-        return trim(explode(',', $xff)[0]);
+        $ips = array_map('trim', explode(',', $xff));
+        $hops = (int)(getenv('TRUSTED_PROXY_HOPS') ?: 1);
+        $idx = max(0, count($ips) - $hops);
+        $candidate = $ips[$idx] ?? '';
+        if (filter_var($candidate, FILTER_VALIDATE_IP)) {
+            return $candidate;
+        }
     }
     return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 }
 
 function throttle_hit(mysqli $link, string $key): void {
     db_exec($link, 'INSERT INTO login_attempts (k) VALUES (?)', 's', [sha1($key)]);
+    // O9: Clean up expired rows older than 1 day so table stays small
+    if (random_int(1, 20) === 1) {
+        db_exec($link, 'DELETE FROM login_attempts WHERE ts < (NOW() - INTERVAL 1 DAY)');
+    }
+}
+
+function throttle_clear(mysqli $link, string $key): void {
+    db_exec($link, 'DELETE FROM login_attempts WHERE k = ?', 's', [sha1($key)]);
 }
 
 function throttle_blocked(mysqli $link, string $key, int $max = 5, int $window = 900): bool {

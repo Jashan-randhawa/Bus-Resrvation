@@ -29,19 +29,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
         $alert = 'Please provide valid booking details with a seat between 1 and 36.';
         $alert_type = 'danger';
     } else {
-        // Enforce transaction to prevent race conditions (H-04)
-        mysqli_begin_transaction($link);
-        try {
-            // Lock and check if seat is already booked for this bus, date, and departure
-            $check_sql = 'SELECT sno FROM booking WHERE bus = ? AND `date` = ? AND seat = ? FOR UPDATE';
-            $existing = db_one($link, $check_sql, 'ssi', [$bus, $date, $seat]);
-
-            if ($existing) {
-                mysqli_rollback($link);
-                $alert = "Seat #{$seat} on bus {$bus} is already booked for date {$date}.";
-                $alert_type = 'danger';
-            } else {
-                // Secure random 10-character PNR token (H-08)
+        $today = date('Y-m-d');
+        $max_date = date('Y-m-d', strtotime('+90 days'));
+        if ($date < $today) {
+            $alert = 'Travel date cannot be in the past.';
+            $alert_type = 'danger';
+        } elseif ($date > $max_date) {
+            $alert = 'Bookings can only be made up to 90 days in advance.';
+            $alert_type = 'danger';
+        } else {
+            // Direct insert inside transaction catching duplicate key 1062 (F3, F4)
+            mysqli_begin_transaction($link);
+            try {
+                // Secure random 10-character PNR token (H-08, O1)
                 $pnr = strtoupper(bin2hex(random_bytes(5)));
                 $cust_id = 0; // Admin booking
 
@@ -59,15 +59,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
                 mysqli_commit($link);
                 $alert = "Booking confirmed! PNR: {$pnr}, Seat: #{$seat}";
                 $alert_type = 'success';
+            } catch (mysqli_sql_exception $e) {
+                mysqli_rollback($link);
+                if ((int)$e->getCode() === 1062) {
+                    $alert = "Seat #{$seat} on bus {$bus} for date {$date} ({$time}) is already booked.";
+                } else {
+                    $alert = 'Booking could not be completed: ' . $e->getMessage();
+                }
+                $alert_type = 'danger';
             }
-        } catch (mysqli_sql_exception $e) {
-            mysqli_rollback($link);
-            if ($e->getCode() === 1062) {
-                $alert = "Seat #{$seat} was just taken by another transaction. Please choose another seat.";
-            } else {
-                $alert = 'Booking could not be completed: ' . $e->getMessage();
-            }
-            $alert_type = 'danger';
         }
     }
 }
@@ -223,10 +223,10 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             <?php foreach ($bookings as $row): ?>
               <?php
               $sno = (int)$row['sno'];
-              $display_pnr = !empty($row['pnr']) ? $row['pnr'] : (string)$sno;
+              $display_pnr = (string)($row['pnr'] ?? '');
               ?>
               <tr>
-                <td><strong><?= e($display_pnr) ?></strong></td>
+                <td><strong><?= e($display_pnr !== '' ? $display_pnr : '-') ?></strong></td>
                 <td><?= e($row['bus'] ?? '') ?></td>
                 <td><?= e($row['name'] ?? '') ?></td>
                 <td><?= e($row['contact'] ?? '') ?></td>

@@ -20,97 +20,120 @@ $to = trim((string)($_GET['city2'] ?? ''));
 $time = trim((string)($_GET['time'] ?? ''));
 $date = trim((string)($_GET['date'] ?? date('Y-m-d')));
 
-// Server-side Route and Price Resolution (prevent client-side price tampering)
+// Server-side Route and Price Resolution (F1, F2)
 $route = null;
 if ($route_id > 0) {
-    $route = db_one($link, 'SELECT * FROM route WHERE sno = ? OR id = ?', 'ii', [$route_id, $route_id]);
+    $route = db_one($link, 'SELECT * FROM route WHERE sno = ?', 'i', [$route_id]);
 }
 if (!$route && $bus !== '' && $from !== '' && $to !== '') {
     $route = db_one($link, 'SELECT * FROM route WHERE busno = ? AND city1 = ? AND city2 = ? LIMIT 1', 'sss', [$bus, $from, $to]);
 }
 
 if ($route) {
+    $route_id = (int)$route['sno'];
     $bus = (string)$route['busno'];
     $from = (string)$route['city1'];
     $to = (string)$route['city2'];
     $time = (string)$route['time'];
     $price = (float)$route['price'];
 } else {
-    $price = (float)($_GET['price'] ?? 0);
+    // F2: Price cannot be trusted from client if route is missing
+    $price = 0.0;
 }
 
-// Fetch currently booked seats for this bus and date
+// Fetch currently booked seats for this trip: bus + date + time (F3)
 $booked_seats = [];
-if ($bus !== '' && $date !== '') {
-    $booked_rows = db_all($link, 'SELECT seat FROM booking WHERE bus = ? AND `date` = ?', 'ss', [$bus, $date]);
+if ($bus !== '' && $date !== '' && $time !== '') {
+    $booked_rows = db_all($link, 'SELECT seat FROM booking WHERE bus = ? AND `date` = ? AND `time` = ?', 'sss', [$bus, $date, $time]);
     foreach ($booked_rows as $br) {
         $booked_seats[(int)$br['seat']] = true;
     }
 }
 
-// Handle Booking Submission (H-04, H-08)
+// Handle Booking Submission (H-04, H-08, F1-F5)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
     csrf_verify();
-    $post_bus = trim((string)($_POST['bus'] ?? ''));
-    $post_from = trim((string)($_POST['from'] ?? ''));
-    $post_to = trim((string)($_POST['to'] ?? ''));
+    $post_route_id = (int)($_POST['route_id'] ?? 0);
     $post_date = trim((string)($_POST['date'] ?? ''));
-    $post_time = trim((string)($_POST['time'] ?? ''));
     $seat = (int)($_POST['seat'] ?? 0);
     $unm = trim((string)($_POST['unm'] ?? $_SESSION['name'] ?? ''));
     $num = trim((string)($_POST['num'] ?? $_SESSION['phone'] ?? ''));
     $cust_id = (int)($_SESSION['uid'] ?? 0);
 
-    // Validate travel date
-    $today = date('Y-m-d');
-    if ($post_date < $today) {
-        $alert = 'Travel date cannot be in the past.';
-        $alert_type = 'danger';
-    } elseif ($seat < 1 || $seat > 36) {
-        $alert = 'Please select a valid seat number between 1 and 36.';
-        $alert_type = 'danger';
-    } elseif ($post_bus === '' || $post_from === '' || $post_to === '') {
-        $alert = 'Incomplete route details.';
+    // Resolve route strictly from DB
+    $sub_route = null;
+    if ($post_route_id > 0) {
+        $sub_route = db_one($link, 'SELECT * FROM route WHERE sno = ?', 'i', [$post_route_id]);
+    }
+    if (!$sub_route) {
+        $post_bus = trim((string)($_POST['bus'] ?? ''));
+        $post_from = trim((string)($_POST['from'] ?? ''));
+        $post_to = trim((string)($_POST['to'] ?? ''));
+        if ($post_bus !== '' && $post_from !== '' && $post_to !== '') {
+            $sub_route = db_one($link, 'SELECT * FROM route WHERE busno = ? AND city1 = ? AND city2 = ? LIMIT 1', 'sss', [$post_bus, $post_from, $post_to]);
+        }
+    }
+
+    if (!$sub_route) {
+        $alert = 'Selected route is no longer available. Please select another route.';
         $alert_type = 'danger';
     } else {
-        // Enforce transaction for atomic booking and double-booking defense (H-04)
-        mysqli_begin_transaction($link);
-        try {
-            // Check and lock the seat for this bus, date, departure
-            $check_sql = 'SELECT sno FROM booking WHERE bus = ? AND `date` = ? AND seat = ? FOR UPDATE';
-            $already_booked = db_one($link, $check_sql, 'ssi', [$post_bus, $post_date, $seat]);
+        $final_bus = (string)$sub_route['busno'];
+        $final_from = (string)$sub_route['city1'];
+        $final_to = (string)$sub_route['city2'];
+        $final_time = (string)$sub_route['time'];
+        $final_price = (float)$sub_route['price'];
 
-            if ($already_booked) {
-                mysqli_rollback($link);
-                $alert = "Seat #{$seat} is already booked on bus {$post_bus} for date {$post_date}. Please choose another seat.";
-                $alert_type = 'danger';
-            } else {
-                // Generate secure random 10-character hex PNR (H-08)
+        // F5: Date validation (today up to 90 days ahead)
+        $today = date('Y-m-d');
+        $max_date = date('Y-m-d', strtotime('+90 days'));
+        $now_time = date('H:i:s');
+
+        if ($post_date < $today) {
+            $alert = 'Travel date cannot be in the past.';
+            $alert_type = 'danger';
+        } elseif ($post_date > $max_date) {
+            $alert = 'Bookings can only be made up to 90 days in advance.';
+            $alert_type = 'danger';
+        } elseif ($post_date === $today && $final_time !== '' && $final_time < $now_time) {
+            $alert = 'This bus has already departed for today.';
+            $alert_type = 'danger';
+        } elseif ($seat < 1 || $seat > 36) {
+            $alert = 'Please select a valid seat number between 1 and 36.';
+            $alert_type = 'danger';
+        } elseif ($unm === '' || $num === '') {
+            $alert = 'Passenger name and contact number are required.';
+            $alert_type = 'danger';
+        } else {
+            // F4: Atomic booking using direct INSERT and catch duplicate key 1062
+            mysqli_begin_transaction($link);
+            try {
+                // Generate secure random 10-character hex PNR (H-08, O1)
                 $pnr = strtoupper(bin2hex(random_bytes(5)));
 
                 if ($has_pnr && $has_status) {
                     $sql = 'INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-                    db_exec($link, $sql, 'isssssssidss', [$cust_id, $post_bus, $unm, $num, $post_from, $post_to, $post_date, $post_time, $seat, $price, $pnr, 'Confirmed']);
+                    db_exec($link, $sql, 'isssssssidss', [$cust_id, $final_bus, $unm, $num, $final_from, $final_to, $post_date, $final_time, $seat, $final_price, $pnr, 'Confirmed']);
                 } elseif ($has_pnr) {
                     $sql = 'INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-                    db_exec($link, $sql, 'isssssssids', [$cust_id, $post_bus, $unm, $num, $post_from, $post_to, $post_date, $post_time, $seat, $price, $pnr]);
+                    db_exec($link, $sql, 'isssssssids', [$cust_id, $final_bus, $unm, $num, $final_from, $final_to, $post_date, $final_time, $seat, $final_price, $pnr]);
                 } else {
                     $sql = 'INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-                    db_exec($link, $sql, 'isssssssid', [$cust_id, $post_bus, $unm, $num, $post_from, $post_to, $post_date, $post_time, $seat, $price]);
+                    db_exec($link, $sql, 'isssssssid', [$cust_id, $final_bus, $unm, $num, $final_from, $final_to, $post_date, $final_time, $seat, $final_price]);
                 }
 
                 mysqli_commit($link);
                 header('Location: ' . BASE_URL . '/user/my-bookings.php?booked=1&pnr=' . urlencode($pnr));
                 exit;
+            } catch (mysqli_sql_exception $e) {
+                mysqli_rollback($link);
+                if ((int)$e->getCode() === 1062) {
+                    $alert = "Seat #{$seat} on bus {$final_bus} for date {$post_date} ({$final_time}) was just reserved by another passenger. Please pick another seat.";
+                } else {
+                    $alert = 'Booking could not be completed: ' . $e->getMessage();
+                }
+                $alert_type = 'danger';
             }
-        } catch (mysqli_sql_exception $e) {
-            mysqli_rollback($link);
-            if ($e->getCode() === 1062) {
-                $alert = "Seat #{$seat} was just reserved by another customer. Please choose a different seat.";
-            } else {
-                $alert = 'Booking could not be completed: ' . $e->getMessage();
-            }
-            $alert_type = 'danger';
         }
     }
 }
@@ -133,6 +156,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
 
                 <form action="" method="post">
                     <?= csrf_field() ?>
+                    <input type="hidden" name="route_id" value="<?= e($route_id) ?>">
                     <div class="row">
                         <div class="col-md-6 form-group">
                             <label for="bus">Bus Number :</label>
@@ -150,7 +174,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                         </div>
                         <div class="col-md-6 form-group">
                             <label for="date">Travel Date :</label>
-                            <input type="date" min="<?= date('Y-m-d') ?>" name="date" id="date" value="<?= e($date) ?>" class="form-control" required />
+                            <input type="date" min="<?= date('Y-m-d') ?>" max="<?= date('Y-m-d', strtotime('+90 days')) ?>" name="date" id="date" value="<?= e($date) ?>" class="form-control" required />
                         </div>
                     </div>
                     <div class="row">

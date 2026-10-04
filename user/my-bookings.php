@@ -14,34 +14,39 @@ if (!empty($_GET['booked']) && !empty($_GET['pnr'])) {
     $alert_type = 'success';
 }
 
-// Handle Cancel Booking (converted from insecure GET to POST with CSRF and IDOR authorization)
+// Handle Cancel Booking (F7: strictly verify user account ID and ensure trip is not in the past)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_booking'])) {
     csrf_verify();
     $cancel_id = (int)($_POST['cancel_id'] ?? 0);
     if ($cancel_id > 0) {
-        // Enforce IDOR protection: User can ONLY cancel their own booking
-        $deleted = db_exec(
-            $link,
-            'DELETE FROM booking WHERE sno = ? AND (id = ? OR contact = ?)',
-            'iis',
-            [$cancel_id, $uid, $phone]
-        );
-        if ($deleted > 0) {
-            $alert = 'Booking cancelled successfully.';
-            $alert_type = 'success';
-        } else {
-            $alert = 'Booking could not be cancelled or does not belong to your account.';
+        $today = date('Y-m-d');
+        $existing = db_one($link, 'SELECT `date` FROM booking WHERE sno = ? AND id = ?', 'ii', [$cancel_id, $uid]);
+
+        if (!$existing) {
+            $alert = 'Booking not found or does not belong to your account.';
             $alert_type = 'danger';
+        } elseif ($existing['date'] < $today) {
+            $alert = 'Cannot cancel a booking for a trip that has already departed.';
+            $alert_type = 'danger';
+        } else {
+            $deleted = db_exec($link, 'DELETE FROM booking WHERE sno = ? AND id = ?', 'ii', [$cancel_id, $uid]);
+            if ($deleted > 0) {
+                $alert = 'Booking cancelled successfully.';
+                $alert_type = 'success';
+            } else {
+                $alert = 'Failed to cancel booking. Please try again.';
+                $alert_type = 'danger';
+            }
         }
     }
 }
 
-// Fetch user's bookings securely
+// Fetch user's bookings securely strictly by account ID (F7)
 $bookings = db_all(
     $link,
-    'SELECT * FROM booking WHERE (id = ? OR contact = ?) ORDER BY sno DESC',
-    'is',
-    [$uid, $phone]
+    'SELECT * FROM booking WHERE id = ? ORDER BY sno DESC',
+    'i',
+    [$uid]
 );
 
 require_once __DIR__ . '/../includes/layout/header-user.php';
@@ -85,7 +90,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
             <?php foreach ($bookings as $row): ?>
               <?php
               $sno = (int)$row['sno'];
-              $display_pnr = !empty($row['pnr']) ? $row['pnr'] : (string)$sno;
+              $display_pnr = (string)($row['pnr'] ?? '');
               ?>
               <tr>
                 <td><strong><?= e($display_pnr) ?></strong></td>

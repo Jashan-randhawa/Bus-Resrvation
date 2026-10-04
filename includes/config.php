@@ -32,6 +32,9 @@ if (!defined('BUS_SEATS')) {
     define('BUS_SEATS', 36);
 }
 
+// Application Timezone (F6: default Asia/Kolkata)
+date_default_timezone_set(getenv('APP_TZ') ?: 'Asia/Kolkata');
+
 // Global exception handler (M-04)
 if (!function_exists('busres_exception_handler')) {
     function busres_exception_handler(Throwable $t): void {

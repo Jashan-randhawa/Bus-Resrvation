@@ -11,34 +11,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
   $role = isset($_POST['admin']) ? 'admin' : 'user';
   $email = strtolower(trim((string)($_POST['email'] ?? '')));
   $pwd = (string)($_POST['pwd'] ?? '');
+  $ip = client_ip();
 
   if ($email === '' || $pwd === '') {
     $msg = '<p class="alert alert-warning text-center">Please fill all the fields</p>';
   } else {
-    $sql = $role === 'admin'
-      ? 'SELECT id, name, phone, Password AS pwd FROM admin WHERE Email_id = ? LIMIT 1'
-      : 'SELECT id, name, phone, pwd FROM costumer WHERE email = ? LIMIT 1';
-    $row = db_one($link, $sql, 's', [$email]);
+    $acctKey = 'login:acct:' . $email;
+    $ipKey   = 'login:ip:' . $ip;
 
-    if ($row) {
-      $matched = password_verify($pwd, $row['pwd']);
-      if (!$matched && $pwd === $row['pwd']) {
-        // Seamless migration: rehash on first login if still plain text
-        $matched = true;
-        $newHash = password_hash($pwd, PASSWORD_DEFAULT);
-        $updateSql = $role === 'admin'
-          ? 'UPDATE admin SET Password = ? WHERE id = ?'
-          : 'UPDATE costumer SET pwd = ? WHERE id = ?';
-        db_exec($link, $updateSql, 'si', [$newHash, (int)$row['id']]);
+    // Rate limiting (O3: 5 failures per 15 min per account, 20 per 15 min per IP)
+    if (throttle_blocked($link, $acctKey, 5, 900) || throttle_blocked($link, $ipKey, 20, 900)) {
+      $msg = '<p class="alert alert-warning text-center">Invalid Email or Password</p>';
+    } else {
+      $sql = $role === 'admin'
+        ? 'SELECT id, name, phone, Password AS pwd FROM admin WHERE Email_id = ? LIMIT 1'
+        : 'SELECT id, name, phone, pwd FROM costumer WHERE email = ? LIMIT 1';
+      $row = db_one($link, $sql, 's', [$email]);
+
+      if ($row) {
+        $matched = password_verify($pwd, $row['pwd']);
+
+        // O2: Only allow legacy migration if stored value is NOT a password hash
+        if (!$matched && password_get_info($row['pwd'])['algo'] === null && hash_equals($row['pwd'], $pwd)) {
+          $matched = true;
+          $newHash = password_hash($pwd, PASSWORD_DEFAULT);
+          $updateSql = $role === 'admin'
+            ? 'UPDATE admin SET Password = ? WHERE id = ?'
+            : 'UPDATE costumer SET pwd = ? WHERE id = ?';
+          db_exec($link, $updateSql, 'si', [$newHash, (int)$row['id']]);
+        }
+
+        if ($matched) {
+          // Rehash if password hash cost needs upgrade
+          if (password_needs_rehash($row['pwd'], PASSWORD_DEFAULT)) {
+            $newHash = password_hash($pwd, PASSWORD_DEFAULT);
+            $updateSql = $role === 'admin'
+              ? 'UPDATE admin SET Password = ? WHERE id = ?'
+              : 'UPDATE costumer SET pwd = ? WHERE id = ?';
+            db_exec($link, $updateSql, 'si', [$newHash, (int)$row['id']]);
+          }
+
+          throttle_clear($link, $acctKey);
+          login_user($role, $row);
+          header('Location: ' . BASE_URL . '/' . $role . '/index.php?d=2');
+          exit();
+        }
       }
 
-      if ($matched) {
-        login_user($role, $row);
-        header('Location: ' . BASE_URL . '/' . $role . '/index.php?d=2');
-        exit();
-      }
+      // Record failed login attempt
+      throttle_hit($link, $acctKey);
+      throttle_hit($link, $ipKey);
+      $msg = '<p class="alert alert-warning text-center">Invalid Email or Password</p>';
     }
-    $msg = '<p class="alert alert-warning text-center">Invalid Email or Password</p>';
   }
 }
 
@@ -237,7 +261,7 @@ if (isset($_POST['subbtn'])) {
   <div class="pb-5 text-center">
     <h1 class="mt-5 mb-4">Check Your Booking Details</h1>
     <form method="get" action="<?= e(BASE_URL) ?>/homepage.php#pnr" class="form-inline justify-content-center">
-      <input class="form-control m-1" name="pnr" maxlength="10" placeholder="PNR (10 characters or ID)" value="<?= e($_GET['pnr'] ?? '') ?>" required>
+      <input class="form-control m-1" name="pnr" maxlength="10" placeholder="PNR (10 characters)" value="<?= e($_GET['pnr'] ?? '') ?>" required>
       <input class="form-control m-1" name="phone4" maxlength="4" pattern="\d{4}" placeholder="Last 4 digits of phone" value="<?= e($_GET['phone4'] ?? '') ?>" required>
       <button class="btn btn-info m-1" type="submit">Search Booking</button>
     </form>
@@ -246,24 +270,30 @@ if (isset($_POST['subbtn'])) {
       $pnrInput = strtoupper(trim((string)$_GET['pnr']));
       $phone4 = preg_replace('/\D/', '', (string)$_GET['phone4']);
       $b = null;
-      $key = 'pnr:' . client_ip();
+      $ip = client_ip();
+      $ipKey = 'pnr:ip:' . $ip;
+      $targetKey = 'pnr:target:' . $pnrInput;
 
-      if (!throttle_blocked($link, $key, 10, 600)) {
-        throttle_hit($link, $key);
-        if ((preg_match('/^[A-F0-9]{10}$/', $pnrInput) || ctype_digit($pnrInput)) && strlen($phone4) === 4) {
+      // O1: Key rate limits on both IP and target PNR (5 attempts per 15 min per target)
+      if (!throttle_blocked($link, $ipKey, 10, 600) && !throttle_blocked($link, $targetKey, 5, 900)) {
+        throttle_hit($link, $ipKey);
+        throttle_hit($link, $targetKey);
+
+        // O1: Accept ONLY the random 10-hex character token (no sequential sno fallback)
+        if (preg_match('/^[A-F0-9]{10}$/', $pnrInput) && strlen($phone4) === 4) {
           $b = db_one($link,
             'SELECT pnr, bus, name, contact, city1, city2, `date`, `time`, seat, price, sno
              FROM booking
-             WHERE (pnr = ? OR sno = ?) AND RIGHT(contact, 4) = ?
+             WHERE pnr = ? AND RIGHT(contact, 4) = ?
              LIMIT 1',
-            'sss', [$pnrInput, $pnrInput, $phone4]);
+            'ss', [$pnrInput, $phone4]);
         }
       }
 
       if ($b): ?>
         <div class="card mx-auto mt-4 text-left shadow-sm" style="max-width:540px;">
           <div class="card-body">
-            <h4 class="card-title text-success">PNR: <?= e($b['pnr'] ?: $b['sno']) ?></h4>
+            <h4 class="card-title text-success">PNR: <?= e($b['pnr']) ?></h4>
             <hr>
             <p class="mb-1"><strong>Passenger:</strong> <?= e($b['name']) ?> (Phone: ***-***-<?= e(substr($b['contact'], -4)) ?>)</p>
             <p class="mb-1"><strong>Bus Number:</strong> <?= e($b['bus']) ?></p>
@@ -275,7 +305,7 @@ if (isset($_POST['subbtn'])) {
         </div>
       <?php else: ?>
         <p class="alert alert-warning mt-4 mx-auto" style="max-width:540px;">
-          No booking found matching those details, or too many lookup attempts. Please verify your PNR and last 4 digits of your phone.
+          No booking found for those details, or too many attempts. Try again later.
         </p>
       <?php endif;
     }
