@@ -6,10 +6,7 @@ require_once __DIR__ . '/../includes/helpers.php';
 
 $migration_log = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['run_migrations'])) {
-    if (!csrf_verify($_POST['csrf_token'] ?? null)) {
-        flash_set('error', 'CSRF token mismatch.');
-        redirect('admin/diagnostics.php');
-    }
+    csrf_verify();
     ob_start();
     $_GET['migrate_key'] = 'admin_session';
     require __DIR__ . '/../database/db_migrate.php';
@@ -19,6 +16,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['run_migrations'])) {
 
 $title = 'System Diagnostics & Health Check';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
+
+// Safe query runner for administrative/metadata queries (SHOW COLUMNS, SHOW INDEX, etc.)
+$run_query = function(string $sql) use ($link): array {
+    try {
+        $res = mysqli_query($link, $sql);
+        if ($res instanceof mysqli_result) {
+            $rows = mysqli_fetch_all($res, MYSQLI_ASSOC);
+            mysqli_free_result($res);
+            return $rows;
+        }
+        return [];
+    } catch (Throwable $e) {
+        error_log('[busres] diagnostics query error: ' . $e->getMessage());
+        return [];
+    }
+};
 
 // Diagnostics checks
 $checks = [];
@@ -45,7 +58,11 @@ $checks[] = [
 ];
 
 // 2. Database Connectivity & Mode
-$db_ping = @mysqli_ping($link);
+$db_ping = false;
+try {
+    $db_ping = @mysqli_ping($link);
+} catch (Throwable $e) {}
+
 $checks[] = [
     'name' => 'Database Connectivity',
     'status' => $db_ping ? 'OK' : 'FAIL',
@@ -53,7 +70,7 @@ $checks[] = [
 ];
 
 // 3. Schema & Constraints Inspection
-$booking_cols = db_all($link, 'SHOW COLUMNS FROM booking');
+$booking_cols = $run_query('SHOW COLUMNS FROM `booking`');
 $b_col_names = array_column($booking_cols, 'Field');
 $has_pnr = in_array('pnr', $b_col_names, true);
 $has_status = in_array('status', $b_col_names, true);
@@ -64,7 +81,7 @@ $checks[] = [
     'message' => "PNR Column: " . ($has_pnr ? 'Present' : 'Missing') . " | Status Column: " . ($has_status ? 'Present' : 'Missing')
 ];
 
-$buses_cols = db_all($link, 'SHOW COLUMNS FROM buses');
+$buses_cols = $run_query('SHOW COLUMNS FROM `buses`');
 $has_capacity = in_array('capacity', array_column($buses_cols, 'Field'), true);
 $checks[] = [
     'name' => 'Fleet Capacity Modeling',
@@ -73,7 +90,7 @@ $checks[] = [
 ];
 
 // 4. Unique Constraints
-$indexes = db_all($link, 'SHOW INDEX FROM booking');
+$indexes = $run_query('SHOW INDEX FROM `booking`');
 $idx_names = array_column($indexes, 'Key_name');
 $has_uq_seat = in_array('uq_booking_seat', $idx_names, true);
 $has_uq_pnr = in_array('uq_booking_pnr', $idx_names, true);
@@ -85,7 +102,7 @@ $checks[] = [
 ];
 
 // 5. Rate Limiting Table
-$login_attempts_check = db_all($link, "SHOW TABLES LIKE 'login_attempts'");
+$login_attempts_check = $run_query("SHOW TABLES LIKE 'login_attempts'");
 $checks[] = [
     'name' => 'Rate Limiting Table (login_attempts)',
     'status' => !empty($login_attempts_check) ? 'OK' : 'FAIL',
@@ -93,10 +110,11 @@ $checks[] = [
 ];
 
 // 6. Migrations Status
-$mig_check = db_all($link, "SHOW TABLES LIKE 'schema_migrations'");
+$mig_check = $run_query("SHOW TABLES LIKE 'schema_migrations'");
 $applied_count = 0;
+$m_rows = [];
 if (!empty($mig_check)) {
-    $m_rows = db_all($link, 'SELECT migration, applied_at FROM schema_migrations ORDER BY id ASC');
+    $m_rows = $run_query('SELECT migration, applied_at FROM `schema_migrations` ORDER BY id ASC');
     $applied_count = count($m_rows);
 }
 $checks[] = [
@@ -132,7 +150,7 @@ $checks[] = [
                 <span class="font-weight-bold">Diagnostics Matrix</span>
                 <div>
                     <form method="post" class="d-inline" onsubmit="return confirm('Execute all database schema migrations now?');">
-                        <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
+                        <?= csrf_field() ?>
                         <button type="submit" name="run_migrations" value="1" class="btn btn-sm btn-outline-warning mr-2">
                             Run Database Migrations
                         </button>
