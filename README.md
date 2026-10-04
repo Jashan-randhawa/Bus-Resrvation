@@ -195,11 +195,12 @@ Bus-Resrvation/
 ├── admin/                    # 👑 Administrator Panel
 │   ├── index.php             # Dashboard shell & navigation sidebar
 │   ├── dashboard.php         # Real-time metrics & earnings KPIs
-│   ├── buses.php             # Fleet & bus management
-│   ├── routes.php            # Route schedule & fare controls
+│   ├── buses.php             # Fleet & bus management (dynamic capacity)
+│   ├── routes.php            # Route schedule & fare controls (conflict checks)
 │   ├── customers.php         # Customer records management
 │   ├── bookings.php          # Booking management & seat picker
-│   ├── seats.php             # Live seat availability monitor
+│   ├── seats.php             # Live seat availability monitor & departure filter
+│   ├── diagnostics.php       # Operational integrity & security diagnostics
 │   ├── queries.php           # Customer inquiry viewer
 │   ├── add-admin.php         # Administrator provisioning
 │   └── edit/                 # ✏️ Inline record editing subsystem
@@ -209,14 +210,14 @@ Bus-Resrvation/
 │       └── edit-customer.php
 │
 ├── user/                     # 🧑‍💼 Customer Portal
-│   ├── index.php             # Customer dashboard
-│   ├── booking.php           # Reservation engine & interactive seat map
-│   └── my-bookings.php       # Personal booking history
+│   ├── index.php             # Customer dashboard & live seat availability
+│   ├── booking.php           # Reservation engine & dynamic seat map
+│   └── my-bookings.php       # Personal booking history & soft cancellation
 │
 ├── includes/                 # 🔧 Shared Application Kernels
 │   ├── config.php            # Dynamic BASE_URL auto-detector & exception handler
 │   ├── db_con.php            # Central environment-driven database connector
-│   ├── helpers.php           # Prepared statements (db_one, db_exec), e() escaping, CSRF
+│   ├── helpers.php           # Prepared statements, create_booking(), CSRF, rate limits
 │   ├── auth/
 │   │   ├── session-bootstrap.php # Hardened session manager & cookie policy
 │   │   ├── admin-session.php # Admin session authentication guard
@@ -230,12 +231,16 @@ Bus-Resrvation/
 │       ├── footer.php        # Public & edit footer scripts
 │       └── footer-admin.php  # Admin & customer footer scripts
 │
+├── tests/                    # 🧪 Automated Regression & Concurrency Tests
+│   └── run_tests.php         # Test harness (rate limits, double-booking, hold expiration)
+│
 ├── assets/                   # 🎨 Static Client Assets
 │   ├── css/                  # public.css, home.css, admin.css, edit.css
 │   └── images/               # Vector SVGs, icons, and hero photography
 │
 ├── database/                 # 🗄️ Relational Data Layer
 │   ├── init.sql              # Idempotent hardened schema DDL
+│   ├── db_migrate.php        # Idempotent database schema migration runner
 │   ├── create-admin.php      # CLI administrator provisioning script
 │   └── migrations/
 │       ├── 001_hardening.sql # Security schema migration
