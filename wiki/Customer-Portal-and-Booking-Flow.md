@@ -1,6 +1,6 @@
 # 🧑‍💼 Customer Portal & Booking Flow
 
-The **Customer Portal** (`userinterface/`) allows passengers to manage their reservations, view booking history, and reserve bus seats using an interactive seat picker.
+The **Customer Portal** (`user/`) allows passengers to search routes, view real-time seat availability counts, reserve bus seats via an interactive dynamic seat picker, and manage their reservations.
 
 ---
 
@@ -9,102 +9,78 @@ The **Customer Portal** (`userinterface/`) allows passengers to manage their res
 ```mermaid
 sequenceDiagram
     actor User as Passenger
-    participant Home as Homepage.php
+    participant Home as homepage.php
     participant DB as TiDB / MySQL
     participant Session as PHP Session
-    participant Portal as userinterface/admin.php
+    participant Portal as user/index.php
 
     User->>Home: Click "Account Login" or "Create Account"
     
     alt Register
-        User->>Home: Submit name, email, password, phone, address
-        Home->>DB: INSERT INTO costumer VALUES (...)
+        User->>Home: Submit name, email, password (min 8 chars), phone, address
+        Home->>DB: INSERT INTO costumer (pwd = password_hash(...))
         DB-->>Home: Account created
     else Login
         User->>Home: Submit email & password
-        Home->>DB: SELECT * FROM costumer WHERE email=... AND pwd=...
-        DB-->>Home: 1 Record found
-        Home->>Session: Set $_SESSION['name'], $_SESSION['pwd'], $_SESSION['phone']
-        Home->>Portal: Redirect to /userinterface/admin.php?d=2
+        Home->>DB: Check throttle_blocked('login:user:...')
+        Home->>DB: SELECT * FROM costumer WHERE email=?
+        DB-->>Home: Customer record found
+        Home->>Home: Verify password_verify(pwd, hash)
+        Home->>Session: Store $_SESSION['uid'], $_SESSION['name'], $_SESSION['phone']
+        Home->>Portal: Redirect to /user/index.php
     end
 ```
 
-- **Default Test Customer:**
-  - **Email:** `user@example.com`
-  - **Password:** `user123`
+---
+
+## 2. Real-Time Route Search & Availability (`user/index.php`)
+
+When passengers search for trips between two cities:
+1. The server resolves all active routes matching origin and destination.
+2. For each route and date, the system dynamically calculates available seats:
+   $$\text{Available Seats} = \text{Bus Capacity} - \text{Booked Seats}(\text{bus}, \text{date}, \text{time})$$
+3. Active seats include `Confirmed` and `Pending` reservations. Soft-cancelled and expired hold seats are automatically liberated.
+4. If $\text{Available Seats} = 0$, the action button is disabled with a "Sold Out" badge.
 
 ---
 
-## 2. Interactive 36-Seat Bus Map Engine
+## 3. Dynamic Interactive Bus Seat Map Engine (`user/booking.php`)
 
-The booking system features a visual seat map mimicking a standard passenger coach (36 seats arranged in a 2+3 layout across 9 rows):
+The seat picker dynamically renders the exact capacity of the assigned vehicle (`get_bus_capacity()`, from 10 to 60 seats):
 
-```
-       FRONT OF BUS (Driver)
-Row 1:   [ 01 ] [ 02 ]   |AISLE|   [ 03 ] [ 04 ] [ 05 ]
-Row 2:   [ 06 ] [ 07 ]   |AISLE|   [ 08 ] [ 09 ] [ 10 ]
-Row 3:   [ 11 ] [ 12 ]   |AISLE|   [ 13 ] [ 14 ] [ 15 ]
-Row 4:   [ 16 ] [ 17 ]   |AISLE|   [ 18 ] [ 19 ] [ 20 ]
-Row 5:   [ 21 ] [ 22 ]   |AISLE|   [ 23 ] [ 24 ] [ 25 ]
-Row 6:   [ 26 ] [ 27 ]   |AISLE|   [ 28 ] [ 29 ] [ 30 ]
-Row 7:   [ 31 ] [ 32 ]   |AISLE|   [ 33 ] [ 34 ] [ 35 ]
-Row 8:   [ 36 ]          |AISLE|   (Rear Entry/Emergency)
-```
-
-### How the Seat Picker Interactivity Works:
-1. Every seat is represented by an HTML `<button>` styled with Bootstrap class `btn-info` (blue).
-2. Clicking a seat executes JavaScript:
-   ```javascript
-   function fun(seatNumber) {
-       document.getElementById('seat_no').value = seatNumber;
-   }
-   ```
-3. The selected seat is recorded into a hidden input field and sent with the POST payload on submit.
+- Available seats render as **Blue** clickable buttons (`btn-info`).
+- Already booked or held seats render as **Red** disabled buttons (`btn-danger`).
+- Clicking an available seat turns it **Green** (`btn-success`) and populates the validated hidden input field.
 
 ---
 
-## 3. Step-by-Step Ticket Reservation Lifecycle
+## 4. Ticket Reservation & Concurrency Defense
 
-1. **Step 1 — Route Selection:**
-   - Passenger selects departure city (`From`) and destination (`To`).
-   - Selects an available operational bus number from the dropdown.
-2. **Step 2 — Schedule & Date:**
-   - Chooses travel date (date picker enforces minimum date of today).
-   - Chooses preferred departure time.
-3. **Step 3 — Seat Allocation:**
-   - Selects an available seat number on the interactive bus grid.
-4. **Step 4 — Confirmation & PNR Generation:**
-   - Server generates a unique PNR integer using `rand(1, 10000000)`.
-   - Inserts record into `booking` table.
-   - Confirmation is displayed on screen.
+1. **Server-Side Price & Departure Time Resolution (F1, F2):** Fare and departure times are read strictly from the database, preventing client-side price tampering.
+2. **Date Boundaries (F5):** Travel dates cannot be in the past or more than 90 days in advance. Buses scheduled earlier than the current server time for today cannot be booked.
+3. **Atomic Concurrency Defense (F4):** Booking insertions rely on MySQL's unique constraint `uq_booking_seat (bus, date, time, seat)`. Any race condition is caught immediately as duplicate key `1062`, rolling back cleanly and instructing the customer to pick another seat.
+4. **Cryptographic PNR Generation:** Uses `random_bytes(5)` to generate a 10-character hex token (e.g. `B4C90A81DE`).
+5. **Seat Hold & Payment Lifecycle (O13):**
+   - Bookings can enter `Pending` state with a 10-minute hold window (`hold_expires_at`).
+   - If not confirmed within 10 minutes, `release_expired_holds()` automatically transitions the state to `Expired`, liberating the seat for other passengers.
 
 ---
 
-## 4. Personal Trip History (`userinterface/userbooking.php`)
+## 5. Personal Bookings & Soft Cancellation (`user/my-bookings.php`)
 
-Passengers can view their own booked tickets. The view queries bookings filtered by the active session identity:
-
-```sql
-SELECT * FROM booking WHERE unm = '$_SESSION[name]'
-```
-
-Each record displays:
-- **PNR Number**
-- **Bus Assigned**
-- **From & To Cities**
-- **Travel Date & Departure Time**
-- **Seat Number**
-- **Amount Paid**
+Passengers can inspect their travel history strictly bound to their authenticated session ID (`WHERE id = ?`):
+- Displays PNR token, bus number, route, departure timestamp, seat badge, status badge, and fare.
+- **Cancellation Policy (O4, F7):**
+  - Only un-departed future trips can be cancelled (`date >= today`).
+  - Cancellation marks `status = 'Cancelled'`, keeping the audit record while instantly releasing the seat for new reservations.
 
 ---
 
-## 5. Public PNR Lookup (Zero Login Required)
+## 6. Public PNR Verification (`homepage.php#pnr`)
 
-Any passenger can verify their ticket status from the landing page (`Homepage.php`):
-
-1. Passenger enters their numerical **PNR** into the search box.
-2. The page queries:
-   ```sql
-   SELECT * FROM booking WHERE sno = '$pnr_number'
-   ```
-3. If located, opens the PNR details modal displaying ticket confirmation, route, seat number, and payment status.
+Travelers can verify ticket status from the homepage without logging in:
+1. Requires the **10-character PNR** and the **last 4 digits of the passenger phone number**.
+2. **Rate Limited (O1):** Public lookups are protected against brute-force enumeration:
+   - Max 10 attempts per 10 minutes per IP.
+   - Max 5 attempts per 15 minutes per target PNR token.
+3. Displays live status badge (`Confirmed`, `Pending`, `Expired`, `Cancelled`), passenger initials, route, seat number, and departure time.
