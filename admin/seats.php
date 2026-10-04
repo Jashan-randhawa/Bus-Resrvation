@@ -1,147 +1,105 @@
-<?php require_once __DIR__ . '/../includes/auth/admin-session.php' ?>
-<?php require_once __DIR__ . '/../includes/layout/header-admin.php' ?>
-<div class=" col-lg-10 col-md-10 col-sm-6 col-xs-12 " style=" float: right;  ">
-    <div class="card col-lg-4 col-md-6 col-sm-12 col-xs-12 ">
-        <div class=" card-body ">
+<?php
+// admin/seats.php
+require_once __DIR__ . '/../includes/auth/admin-session.php';
+require_once __DIR__ . '/../includes/db_con.php';
+
+$buses = db_all($link, 'SELECT bus_number FROM buses ORDER BY bus_number ASC');
+
+$selected_bus = trim((string)($_POST['bus'] ?? ''));
+$selected_date = trim((string)($_POST['date'] ?? ''));
+$booked_seats = [];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
+    csrf_verify();
+    if ($selected_bus !== '' && $selected_date !== '') {
+        $rows = db_all($link, 'SELECT seat FROM booking WHERE bus = ? AND date = ?', 'ss', [$selected_bus, $selected_date]);
+        foreach ($rows as $r) {
+            $booked_seats[(int)$r['seat']] = true;
+        }
+    }
+}
+
+require_once __DIR__ . '/../includes/layout/header-admin.php';
+?>
+<div class="col-lg-10 col-md-10 col-sm-12" style="float: right;">
+    <h1 class="text-info mb-4">Bus Seat Status</h1>
+    <div class="card col-lg-5 col-md-6 col-sm-12">
+        <div class="card-body">
             <form action="" method="post">
-                    <div class=" form-group col-lg-12" style="margin: auto ; ">
-                        <select name="bus" id="bus" style=" width: 250px; " required>
-                            <option value="">Select Bus Number</option>
-                            <?php
-                            require_once __DIR__ . '/../includes/db_con.php';
-                            $qry = "SELECT bus_number FROM buses";
-                            $resultset = mysqli_query($link, $qry);
-                            while ($row = mysqli_fetch_assoc($resultset)) {
-                                ?>
-                                <option value="<?php echo $row['bus_number']; ?>"><?php echo $row['bus_number']; ?></option>
-                                <?php
-                            }
-                            ?>
-                        </select>
-                    </div>
-                    <div class=" form-group col-lg-12 mt-3" style="margin: auto ; ">
-                    <input type="date" id="date" name="date" style=" width: 250px; " required>
-                    </div>
-                    <div class=" form-group col-lg-12 mt-3 " style="margin: auto ; ">
-                        <input type="submit" name="submit" value="Submit" class="btn btn-block btn-primary col-lg-12">
-                    </div>
+                <?= csrf_field() ?>
+                <div class="form-group">
+                    <label for="bus">Bus Number:</label>
+                    <select name="bus" id="bus" class="form-control" required>
+                        <option value="">Select Bus Number</option>
+                        <?php foreach ($buses as $row): ?>
+                            <option value="<?= e($row['bus_number']) ?>" <?= $selected_bus === $row['bus_number'] ? 'selected' : '' ?>>
+                                <?= e($row['bus_number']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="date">Travel Date:</label>
+                    <input type="date" id="date" name="date" class="form-control" value="<?= e($selected_date) ?>" required>
+                </div>
+                <div class="form-group">
+                    <input type="submit" name="submit" value="Check Seat Availability" class="btn btn-primary btn-block">
+                </div>
             </form>
         </div>
     </div>
-    <section>
-        <?php
-        if (isset($_POST['submit'])) {
-            require_once __DIR__ . '/../includes/db_con.php';
-            $qry = "select seat from booking where date='$_POST[date]' and  bus='$_POST[bus]'";
-            $resultset = mysqli_query($link, $qry);
-            $row = mysqli_num_rows($resultset);
-            while ($val = mysqli_fetch_assoc($resultset)) {
-                ?>
-                <script>
-                    function fun<?php echo $val['seat']; ?>() {
-                        document.getElementById("<?php echo $val['seat']; ?>").style.background = "red";
-                        document.getElementById("<?php echo $val['seat']; ?>").click();
-                    }
-                </script>
-                <?php
-            } ?>
-            <script> function call(){
-            <?php require_once __DIR__ . '/../includes/db_con.php';
-            $qry = "select seat from booking where date='$_POST[date]' and   bus='$_POST[bus]'";
-            $resultset = mysqli_query($link, $qry);
-            $row = mysqli_num_rows($resultset);
-            while ($val = mysqli_fetch_assoc($resultset)) {
-                ?>
-                fun<?php echo $val['seat']; ?>();
 
-                <?php
-            }
-            echo "}</script>";
-        }
-
-        ?>
-        <div class=" container col-lg-6 mt-5">
-            <div class="row mb-3 ">
-                <div class="col-lg-4 col-md-6 col-sm-4 ">
-                    <button type="button" class="btn btn-info seat" style=" width: 50px; height: 40px; "
-                        id="1">1</button>
-                    <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="2">2</button>
-                </div>
-                <div class="col-lg-6 col-md-4 col-sm-4 ">
-                    <button class="btn btn-info" style=" width: 50px; height: 40px; " id="3">3</button>
-                    <button class="btn btn-info" style=" width: 50px; height: 40px; " id="4">4</button>
-                    <button class="btn btn-info" style=" width: 50px; height: 40px; " id="5">5</button>
-                </div>
+    <?php if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])): ?>
+    <section class="mt-4">
+        <div class="card col-lg-8 col-md-10 col-sm-12">
+            <div class="card-header bg-light">
+                <h5>Seat Map for Bus: <strong><?= e($selected_bus) ?></strong> on Date: <strong><?= e($selected_date) ?></strong></h5>
+                <span class="badge badge-danger p-2 mr-2">Red = Booked</span>
+                <span class="badge badge-info p-2">Blue = Available</span>
             </div>
-            <div class="row mb-3 ">
-                <div class="col-lg-4 col-md-6 col-sm-4 ">
-                    <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="6"
-                        onclick="fun6()">6</button>
-                    <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="7"
-                        onclick="fun7()">7</button>
-                </div>
-                <div class="col-lg-6 col-md-4 col-sm-4 ">
-                    <button class="btn btn-info" style=" width: 50px; height: 40px; " id="8">8</button>
-                    <button class="btn btn-info" style=" width: 50px; height: 40px; " id="9">9</button>
-                    <button class="btn btn-info" style=" width: 50px; height: 40px; " id="10">10</button>
-                </div>
-            </div>
-            <div class="row mb-3 ">
-                <div class="col-lg-4 col-md-6 col-sm-4 ">
-                    <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="11">11</button>
-                    <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="12">12</button>
-                </div>
-                <div class="col-lg-6 col-md-4 col-sm-4 ">
-                    <button class="btn btn-info" style=" width: 50px; height: 40px; " id="13">13</button>
-                    <button class="btn btn-info" style=" width: 50px; height: 40px; " id="14">14</button>
-                    <button class="btn btn-info" style=" width: 50px; height: 40px; " id="15">15</button>
-                </div>
-            </div>
-            <div class="row mb-3 ">
-                <div class="col-lg-4 col-md-6 col-sm-4 ">
-                    <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="16">16</button>
-                    <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="17">17</button>
-                </div>
-                <div class="col-lg-6 col-md-4 col-sm-4 ">
-                    <button class="btn btn-info" style=" width: 50px; height: 40px; " id="18">18</button>
-                    <button class="btn btn-info" style=" width: 50px; height: 40px; " id="19">19</button>
-                    <button class="btn btn-info" style=" width: 50px; height: 40px; " id="20">20</button>
-                </div>
-            </div>
-            <div class="row mb-3 ">
-                <div class="col-lg-4 col-md-6 col-sm-4 ">
-                    <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="21">21</button>
-                    <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="22">22</button>
-                </div>
-                <div class="col-lg-6 col-md-4 col-sm-4 ">
-                    <button class="btn btn-info" style=" width: 50px; height: 40px; " id="23">23</button>
-                    <button class="btn btn-info" style=" width: 50px; height: 40px; " id="24">24</button>
-                    <button class="btn btn-info" style=" width: 50px; height: 40px; " id="25">25</button>
-                </div>
-            </div>
-            <div class="row mb-3 ">
-                <div class="col-lg-4 col-md-6 col-sm-4 ">
-                    <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="26">26</button>
-                    <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="27">27</button>
-                </div>
-                <div class="col-lg-6 col-md-4 col-sm-4 ">
-                    <button class="btn btn-info" style=" width: 50px; height: 40px; " id="28">28</button>
-                    <button class="btn btn-info" style=" width: 50px; height: 40px; " id="29">29</button>
-                    <button class="btn btn-info" style=" width: 50px; height: 40px; " id="30">30</button>
-                </div>
-            </div>
-            <div class="row  mb-3">
-                <div class="col-lg-10 col-md-6 col-sm-4 " style=" width: 300px; ">
-                    <button class="btn btn-info btn-sm " id="31" style=" width: 50px; height: 40px; ">31</button>
-                    <button class="btn btn-info btn-sm ml-1 " id="32" style=" width: 50px; height: 40px; ">32</button>
-                    <button class="btn btn-info btn-sm ml-1 " id="33" style=" width: 50px; height: 40px; ">33</button>
-                    <button class="btn btn-info btn-sm ml-1 " id="34" style=" width: 50px; height: 40px; ">34</button>
-                    <button class="btn btn-info btn-sm " id="35" style=" width: 50px; height: 40px; ">35</button>
-                    <button class="btn btn-info btn-sm " id="36" style=" width: 50px; height: 40px; ">36</button>
+            <div class="card-body">
+                <div class="container" style="max-width: 480px;">
+                    <?php for ($row_idx = 0; $row_idx < 6; $row_idx++): ?>
+                        <div class="row mb-3 justify-content-between">
+                            <div class="col-5 d-flex justify-content-start">
+                                <?php for ($col_idx = 1; $col_idx <= 2; $col_idx++): ?>
+                                    <?php
+                                    $seat_no = ($row_idx * 5) + $col_idx;
+                                    $is_booked = isset($booked_seats[$seat_no]);
+                                    ?>
+                                    <button type="button" class="btn <?= $is_booked ? 'btn-danger' : 'btn-info' ?> mr-2" style="width: 50px; height: 42px;" <?= $is_booked ? 'disabled' : '' ?>>
+                                        <?= e($seat_no) ?>
+                                    </button>
+                                <?php endfor; ?>
+                            </div>
+                            <div class="col-7 d-flex justify-content-end">
+                                <?php for ($col_idx = 3; $col_idx <= 5; $col_idx++): ?>
+                                    <?php
+                                    $seat_no = ($row_idx * 5) + $col_idx;
+                                    $is_booked = isset($booked_seats[$seat_no]);
+                                    ?>
+                                    <button type="button" class="btn <?= $is_booked ? 'btn-danger' : 'btn-info' ?> mr-2" style="width: 50px; height: 42px;" <?= $is_booked ? 'disabled' : '' ?>>
+                                        <?= e($seat_no) ?>
+                                    </button>
+                                <?php endfor; ?>
+                            </div>
+                        </div>
+                    <?php endfor; ?>
+                    <!-- Last Row (Seats 31 to 36) -->
+                    <div class="row mb-3 justify-content-center">
+                        <div class="col-12 d-flex justify-content-between">
+                            <?php for ($seat_no = 31; $seat_no <= 36; $seat_no++): ?>
+                                <?php $is_booked = isset($booked_seats[$seat_no]); ?>
+                                <button type="button" class="btn <?= $is_booked ? 'btn-danger' : 'btn-info' ?> btn-sm" style="width: 48px; height: 42px;" <?= $is_booked ? 'disabled' : '' ?>>
+                                    <?= e($seat_no) ?>
+                                </button>
+                            <?php endfor; ?>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
-  
+    <?php endif; ?>
 </div>
-<?php require_once __DIR__ . '/../includes/layout/footer-admin.php' ?>
+<?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>

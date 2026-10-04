@@ -32,7 +32,7 @@
                     </li>
                     <li>
                         <img src="<?= BASE_URL ?>/assets/images/userav-min.png" alt="" class=" img-fluid ">
-                        <h4 class=" text-center"><?php echo $_SESSION['name']; ?></h4>
+                        <h4 class=" text-center"><?= e($_SESSION['name'] ?? 'Admin') ?></h4>
                         <h6 class=" text-center">system administration</h6>
                     </li>
                     <li class="nav-item active">
@@ -60,6 +60,7 @@
                     </li>
                     <li>
                         <form action="" method="post">
+                        <?= csrf_field() ?>
                         <input type="submit" value="logout" name="logout" class=" btn btn-link col-lg-6 " style=" text-decoration: none; color: black; " >
                         </form>
                     </li>

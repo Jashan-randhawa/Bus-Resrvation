@@ -1,85 +1,128 @@
-<?php require_once __DIR__ . '/../includes/auth/admin-session.php' ?>
-<?php require_once __DIR__ . '/../includes/layout/header-admin.php' ?>
+<?php
+// admin/buses.php
+require_once __DIR__ . '/../includes/auth/admin-session.php';
+require_once __DIR__ . '/../includes/db_con.php';
+
+// Detect primary key column for buses (supports both `id` and `sno` schemas)
+$bus_pk = 'id';
+$col_check = mysqli_query($link, "SHOW COLUMNS FROM `buses` LIKE 'sno'");
+if ($col_check && mysqli_num_rows($col_check) > 0) {
+    $bus_pk = 'sno';
+}
+
+$alert = null;
+$alert_type = 'info';
+
+// Handle Add Bus
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
+    csrf_verify();
+    $busno = trim((string)($_POST['busno'] ?? ''));
+    if ($busno === '') {
+        $alert = 'Bus number is required.';
+        $alert_type = 'danger';
+    } else {
+        $existing = db_one($link, 'SELECT * FROM buses WHERE bus_number = ?', 's', [$busno]);
+        if ($existing) {
+            $alert = 'A bus with that number already exists.';
+            $alert_type = 'danger';
+        } else {
+            db_exec($link, 'INSERT INTO buses (bus_number) VALUES (?)', 's', [$busno]);
+            $alert = 'Bus added successfully.';
+            $alert_type = 'success';
+        }
+    }
+}
+
+// Handle Delete Bus (converted from insecure GET to POST)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_bus'])) {
+    csrf_verify();
+    $delete_id = (int)($_POST['delete_id'] ?? 0);
+    if ($delete_id > 0) {
+        db_exec($link, "DELETE FROM buses WHERE `{$bus_pk}` = ?", 'i', [$delete_id]);
+        $alert = 'Bus deleted successfully.';
+        $alert_type = 'success';
+    }
+}
+
+$buses = db_all($link, 'SELECT * FROM buses ORDER BY ' . $bus_pk . ' ASC');
+
+require_once __DIR__ . '/../includes/layout/header-admin.php';
+?>
 <div class="col-lg-10 col-md-12 col-sm-12" style=" float: right ; ">
   <h1 class="text-info">Bus Status</h1>
   <br>
-  <button class="btn btn-danger " data-toggle="modal" data-target="#loginModal">Add Bus Details</button>
-  <div class="modal fade" id="loginModal">
+
+  <?php if ($alert): ?>
+    <div class="alert alert-<?= e($alert_type) ?> alert-dismissible fade show" role="alert">
+      <?= e($alert) ?>
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+  <?php endif; ?>
+
+  <button class="btn btn-danger" data-toggle="modal" data-target="#addBusModal">Add Bus Details</button>
+
+  <div class="modal fade" id="addBusModal">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <button type="button" class="close text-right" data-dismiss="modal">
+        <button type="button" class="close text-right pr-3 pt-2" data-dismiss="modal">
           <span>&times;</span>
         </button>
-        <div class="tab-content">
-          <div role="tabpanel" class="tab-pane active" id="login">
-            <div class="modal-header">
-              <h5>
-                Add Bus Number
-              </h5>
+        <div class="modal-header">
+          <h5 class="modal-title">Add Bus Number</h5>
+        </div>
+        <div class="modal-body">
+          <form action="" method="post">
+            <?= csrf_field() ?>
+            <div class="form-group">
+              <label for="busno">Bus Number :</label>
+              <input type="text" id="busno" name="busno" class="form-control" placeholder="Bus Number" required />
             </div>
-            <div class="modal-body">
-              <form action="" method="post">
-                <div class="form-group">
-                  <label for="Bus Number">Bus Number :</label>
-                  <input type="text" name="busno" class="form-control" placeholder="Bus Number" />
-                </div>
-                <div class="form-group">
-                  <input type="submit" class="btn btn-success" name="add" value="Submit" />
-                </div>
-                <?php
-                if (isset($_POST['add'])) {
-                  require_once __DIR__ . '/../includes/db_con.php';
-                  $qry = "insert into buses(bus_number) values('$_POST[busno]')";
-                  $resultset = mysqli_query($link, $qry);
-                }
-                ?>
-              </form>
+            <div class="form-group">
+              <input type="submit" class="btn btn-success" name="add" value="Submit" />
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
   </div>
-  <section  >
-    <form action="" method="post">
-      <input type="submit" name="open" class=" btn btn-block btn-info mt-4 " value=" Show Bus Details ">
-    </form>
-    <?php
-    if (isset($_POST['open'])) {
-      //var_dump($row);
-      $mytable = <<<Tab
-        <div class="table-responsive" style="margin-top:10px;">
-        <table class="table table-bordered table-striped" >
-        <tr>
-        <th>#</th>
-        <th>Bus Number</th>
-        <th>Edit</th>
-        <th>Delete</th>
-        Tab;
 
-      require_once __DIR__ . '/../includes/db_con.php';
-      $qry = "select * from buses";
-      $resultset = mysqli_query($link, $qry);
-      while ($row = mysqli_fetch_assoc($resultset)) {
-        $mytable = $mytable . "
-        <tr><td>$row[sno]</td>
-        <td>$row[bus_number]</td>
-        <td><a href='./edit/edit-bus.php?id=$row[sno]' class='btn btn-warning'>Edit</a></td>
-        <td><a href='./buses.php?id=$row[sno]' class='btn btn-danger'>Delete</a></td>";
-      }
-      $mytable = $mytable . "</table></div>";
-      echo $mytable;
-
-    }
-
-    ?>
-    <?php
-    if(isset($_GET['id'])){
-      require_once __DIR__ . '/../includes/db_con.php';
-      $qry = "delete from buses where sno = $_GET[id]";
-      $resultset=mysqli_query($link,$qry);
-    }
-    ?>
+  <section class="mt-4">
+    <h4 class="text-secondary mb-3">All Buses</h4>
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead class="thead-dark">
+          <tr>
+            <th>#</th>
+            <th>Bus Number</th>
+            <th>Edit</th>
+            <th>Delete</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if (empty($buses)): ?>
+            <tr><td colspan="4" class="text-center text-muted">No buses found.</td></tr>
+          <?php else: ?>
+            <?php foreach ($buses as $row): ?>
+              <?php $bid = (int)($row[$bus_pk] ?? $row['id'] ?? $row['sno'] ?? 0); ?>
+              <tr>
+                <td><?= e($bid) ?></td>
+                <td><?= e($row['bus_number'] ?? '') ?></td>
+                <td>
+                  <a href="<?= BASE_URL ?>/admin/edit/edit-bus.php?id=<?= e($bid) ?>" class="btn btn-warning btn-sm">Edit</a>
+                </td>
+                <td>
+                  <form method="post" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this bus?');">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="delete_id" value="<?= e($bid) ?>">
+                    <button type="submit" name="delete_bus" class="btn btn-danger btn-sm">Delete</button>
+                  </form>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
   </section>
 </div>
-<?php require_once __DIR__ . '/../includes/layout/footer-admin.php' ?>
+<?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>

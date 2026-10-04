@@ -1,240 +1,272 @@
-<?php require_once __DIR__ . '/../includes/auth/user-session.php'; ?>
-<?php require_once __DIR__ . '/../includes/layout/header-user.php'; ?>
+<?php
+// user/booking.php
+require_once __DIR__ . '/../includes/auth/user-session.php';
+require_once __DIR__ . '/../includes/db_con.php';
 
+$alert = null;
+$alert_type = 'info';
 
-<div class=" col-lg-10 col-md-10 col-sm-12 col-xs-12" style="
-  float: right;">
-    <section class=" col-lg-8 col-md-8 col-sm-12 col-xs-12" " style=" margin: auto ;">
-        <div class=" card">
-            <div class="card-body">
-                <h5>
-                    Add Booking
-                </h5>
-                <form action="" method="post">
-                    <div class=" form-group ">
-                        <label for="PNR">PNR</label>
-                        <input type="text" name="id" class=" form-control " value=" <?php echo rand(1, 10000000); ?> ">
-                    </div>
-                    <div class="form-group">
-                        <label for="bus" class="mr-5">Bus Number :</label>
-                        <input type="text" name="bus" class="form-control" value="<?php echo $_GET['bus']; ?>" readonly
-                            placeholder="Enter Bus Number" />
-                    </div>
-                    <div class="form-group">
-                        <label for="Your Name">Your Name :</label>
-                        <input type="text" name="unm" value="<?php echo $_SESSION['name']; ?>" class="form-control"
-                            placeholder="Enter Costumer Name" required />
-                    </div>
-                    <div class="form-group">
-                        <label for="Contact Number">Contact Number:</label>
-                        <input type="tel" name="num" value="<?php echo $_SESSION['phone'] ?>" class="form-control"
-                            placeholder="Enter Contact Number" required />
-                    </div>
-                    <div class="form-group">
-                        <label for="#">From :</label>
-                        <input type="text" name="from" class="form-control" value="<?php echo $_GET['city1']; ?>"
-                            readonly placeholder="Enter Bus Number" />
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="#">To :</label>
-                        <input type="text" name="to" class="form-control" value="<?php echo $_GET['city2']; ?>" readonly
-                            placeholder="Enter Bus Number" />
-                    </div>
-                    <div class="form-group">
-                        <label for="date">Date</label>
-                        <input type="date" min="<?php
-                        $currentDate = date('Y-m-d');
-                        echo $currentDate; ?>" name="date" id="date" value="<?php echo $_GET['date']; ?>" class="form-control" placeholder="Enter Date" />
-                    </div>
-                    <div class="form-group">
-                        <label for="time">Time</label>
-                        <input type="time" name="time" class="form-control" value="<?php echo $_GET['time'];  ?>" placeholder="Enter Date" />
-                    </div>
-                    <script>
-                        function fun(val) {
-                            document.getElementById("seat_no").value = val;
-                        }
-                    </script>
-                    <?php
-                    if (isset($_GET['bus'])) {
-                        require_once __DIR__ . '/../includes/db_con.php';
-                        $qry = "select seat from booking where date='$_GET[date]' and bus='$_GET[bus]'";
-                        $resultset = mysqli_query($link, $qry);
-                        $row = mysqli_num_rows($resultset);
-                        while ($val = mysqli_fetch_assoc($resultset)) {
-                            ?>
-                            <script>
-                                function fun<?php echo $val['seat']; ?>() {
-                                    document.getElementById("<?php echo $val['seat']; ?>").style.background = "red";
-                                    document.getElementById("<?php echo $val['seat']; ?>").disabled = true;
-                                }
-                            </script>
-                            <?php
-                        } ?>
-                        <script> function call() {
-                                <?php require_once __DIR__ . '/../includes/db_con.php';
-                                $qry = "select seat from booking where date='$_GET[date]' and bus='$_GET[bus]'";
-                                $resultset = mysqli_query($link, $qry);
-                                $row = mysqli_num_rows($resultset);
-                                while ($val = mysqli_fetch_assoc($resultset)) {
-                                    ?>
-                                    fun<?php echo $val['seat']; ?>();
+// Detect columns in booking table
+$booking_cols = db_all($link, 'SHOW COLUMNS FROM booking');
+$col_names = array_column($booking_cols, 'Field');
+$has_pnr = in_array('pnr', $col_names, true);
+$has_status = in_array('status', $col_names, true);
 
-                                    <?php
-                                }
-                                echo "}</script>";
-                    }
+// Get route information from GET parameters or route_id
+$route_id = (int)($_GET['route_id'] ?? 0);
+$bus = trim((string)($_GET['bus'] ?? ''));
+$from = trim((string)($_GET['city1'] ?? ''));
+$to = trim((string)($_GET['city2'] ?? ''));
+$time = trim((string)($_GET['time'] ?? ''));
+$date = trim((string)($_GET['date'] ?? date('Y-m-d')));
 
-                    ?>
-                <div class="form-group" >
-                <label for="Select Seat">Select Seat :</label>
-                <div class="mb-3">
-                    <div class="container" id="seat">
-                        <div class="row mb-3 ">
-                            <div class="col-lg-4 col-md-6 col-sm-4 ">
-                                <button type="button" class="btn btn-info seat" style=" width: 50px; height: 40px; "
-                                    id="1" onclick="fun(1)">1</button>
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="2"
-                                    onclick="fun(2)">2</button>
-                            </div>
-                            <div class="col-lg-6 col-md-4 col-sm-4 ">
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="3"
-                                    onclick="fun(3)">3</button>
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="4"
-                                    onclick="fun(4)">4</button>
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="5"
-                                    onclick="fun(5)">5</button>
-                            </div>
-                        </div>
-                        <div class="row mb-3 ">
-                            <div class="col-lg-4 col-md-6 col-sm-4 ">
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="6"
-                                    onclick="fun(6)">6</button>
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="7"
-                                    onclick="fun(7)">7</button>
-                            </div>
-                            <div class="col-lg-6 col-md-4 col-sm-4 ">
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="8"
-                                    onclick="fun(8)">8</button>
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="9"
-                                    onclick="fun(9)">9</button>
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="10"
-                                    onclick="fun(10)">10</button>
-                            </div>
-                        </div>
-                        <div class="row mb-3 ">
-                            <div class="col-lg-4 col-md-6 col-sm-4 ">
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="11"
-                                    onclick="fun(11)">11</button>
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="12"
-                                    onclick="fun(12)">12</button>
-                            </div>
-                            <div class="col-lg-6 col-md-4 col-sm-4 ">
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="13"
-                                    onclick="fun(13)">13</button>
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="14"
-                                    onclick="fun(14)">14</button>
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="15"
-                                    onclick="fun(15)">15</button>
-                            </div>
-                        </div>
-                        <div class="row mb-3 ">
-                            <div class="col-lg-4 col-md-6 col-sm-4 ">
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="16"
-                                    onclick="fun(16)">16</button>
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="17"
-                                    onclick="fun(17)">17</button>
-                            </div>
-                            <div class="col-lg-6 col-md-4 col-sm-4 ">
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="18"
-                                    onclick="fun(18)">18</button>
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="19"
-                                    onclick="fun(19)">19</button>
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="20"
-                                    onclick="fun(20)">20</button>
-                            </div>
-                        </div>
-                        <div class="row mb-3 ">
-                            <div class="col-lg-4 col-md-6 col-sm-4 ">
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="21"
-                                    onclick="fun(21)">21</button>
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="22"
-                                    onclick="fun(22)">22</button>
-                            </div>
-                            <div class="col-lg-6 col-md-4 col-sm-4 ">
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="23"
-                                    onclick="fun(23)">23</button>
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="24"
-                                    onclick="fun(24)">24</button>
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="25"
-                                    onclick="fun(25)">25</button>
-                            </div>
-                        </div>
-                        <div class="row mb-3 ">
-                            <div class="col-lg-4 col-md-6 col-sm-4 ">
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="26"
-                                    onclick="fun(26)">26</button>
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="27"
-                                    onclick="fun(27)">27</button>
-                            </div>
-                            <div class="col-lg-6 col-md-4 col-sm-4 ">
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="28"
-                                    onclick="fun(28)">28</button>
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="29"
-                                    onclick="fun(29)">29</button>
-                                <button type="button" class="btn btn-info" style=" width: 50px; height: 40px; " id="30"
-                                    onclick="fun(30)">30</button>
-                            </div>
-                        </div>
-                        <div class="row  mb-3">
-                            <div class="col-lg-10 col-md-6 col-sm-4 " style=" width: 300px; ">
-                                <button type="button" class="btn btn-info btn-sm  " id="31" style=" width: 50px; height: 40px; "
-                                    onclick="fun(31)">31</button>
-                                <button type="button" class="btn btn-info btn-sm ml-2" id="32" style=" width: 50px; height: 40px; "
-                                    onclick="fun(32)">32</button>
-                                <button type="button" class="btn btn-info btn-sm ml-2" id="33" style=" width: 50px; height: 40px; "
-                                    onclick="fun(33)">33</button>
-                                <button type="button" class="btn btn-info btn-sm ml-2" id="34" style=" width: 50px; height: 40px; "
-                                    onclick="fun(34)">34</button>
-                                <button type="button" class="btn btn-info btn-sm ml-2  " id="35" style=" width: 50px; height: 40px; "
-                                    onclick="fun(35)">35</button>
-                                <button type="button" class="btn btn-info btn-sm ml-3 " id="36" style=" width: 50px; height: 40px; "
-                                    onclick="fun(36)">36</button>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class=" form-group "></div>
-                            <label for="Seat Number">Seat Number:</label>
-                            <input type="number" name="seat" class="form-control" id="seat_no"
-                                placeholder="Enter Seat Number" required >
-                        </div>
-                    </div>
-                </div>
-            </div >
-            <div class="form-group">
-                <label for="Amount">Total Amount:</label>
-                <input type="number" name="amount" class="form-control" id="amount"
-                    value="<?php echo $_GET['price']; ?>" placeholder="Enter Amount" required>
-            </div>
-            <div class="form-group">
-                <input type="submit" class="btn btn-success btn-block" name="check" value="Submit" />
-            </div>
-            <?php
-            if (isset($_POST["check"])) {
-                require_once __DIR__ . '/../includes/db_con.php';
-                $qry = "insert into booking (bus, name, contact, city1, city2, seat, price, date, time, status) values('$_POST[bus]','$_POST[unm]','$_POST[num]','$_POST[from]','$_POST[to]','$_POST[seat]','$_POST[amount]','$_POST[date]','$_POST[time]','Confirmed')";
-                $resultset = mysqli_query($link, $qry);
-                if($resultset){
-                    echo "<script>alert('Booking Successful!');</script>";
-                    echo "<script>window.location.replace('index.php');</script>";
+// Server-side Route and Price Resolution (prevent client-side price tampering)
+$route = null;
+if ($route_id > 0) {
+    $route = db_one($link, 'SELECT * FROM route WHERE sno = ? OR id = ?', 'ii', [$route_id, $route_id]);
+}
+if (!$route && $bus !== '' && $from !== '' && $to !== '') {
+    $route = db_one($link, 'SELECT * FROM route WHERE busno = ? AND city1 = ? AND city2 = ? LIMIT 1', 'sss', [$bus, $from, $to]);
+}
+
+if ($route) {
+    $bus = (string)$route['busno'];
+    $from = (string)$route['city1'];
+    $to = (string)$route['city2'];
+    $time = (string)$route['time'];
+    $price = (float)$route['price'];
+} else {
+    $price = (float)($_GET['price'] ?? 0);
+}
+
+// Fetch currently booked seats for this bus and date
+$booked_seats = [];
+if ($bus !== '' && $date !== '') {
+    $booked_rows = db_all($link, 'SELECT seat FROM booking WHERE bus = ? AND `date` = ?', 'ss', [$bus, $date]);
+    foreach ($booked_rows as $br) {
+        $booked_seats[(int)$br['seat']] = true;
+    }
+}
+
+// Handle Booking Submission (H-04, H-08)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
+    csrf_verify();
+    $post_bus = trim((string)($_POST['bus'] ?? ''));
+    $post_from = trim((string)($_POST['from'] ?? ''));
+    $post_to = trim((string)($_POST['to'] ?? ''));
+    $post_date = trim((string)($_POST['date'] ?? ''));
+    $post_time = trim((string)($_POST['time'] ?? ''));
+    $seat = (int)($_POST['seat'] ?? 0);
+    $unm = trim((string)($_POST['unm'] ?? $_SESSION['name'] ?? ''));
+    $num = trim((string)($_POST['num'] ?? $_SESSION['phone'] ?? ''));
+    $cust_id = (int)($_SESSION['uid'] ?? 0);
+
+    // Validate travel date
+    $today = date('Y-m-d');
+    if ($post_date < $today) {
+        $alert = 'Travel date cannot be in the past.';
+        $alert_type = 'danger';
+    } elseif ($seat < 1 || $seat > 36) {
+        $alert = 'Please select a valid seat number between 1 and 36.';
+        $alert_type = 'danger';
+    } elseif ($post_bus === '' || $post_from === '' || $post_to === '') {
+        $alert = 'Incomplete route details.';
+        $alert_type = 'danger';
+    } else {
+        // Enforce transaction for atomic booking and double-booking defense (H-04)
+        mysqli_begin_transaction($link);
+        try {
+            // Check and lock the seat for this bus, date, departure
+            $check_sql = 'SELECT sno FROM booking WHERE bus = ? AND `date` = ? AND seat = ? FOR UPDATE';
+            $already_booked = db_one($link, $check_sql, 'ssi', [$post_bus, $post_date, $seat]);
+
+            if ($already_booked) {
+                mysqli_rollback($link);
+                $alert = "Seat #{$seat} is already booked on bus {$post_bus} for date {$post_date}. Please choose another seat.";
+                $alert_type = 'danger';
+            } else {
+                // Generate secure random 10-character hex PNR (H-08)
+                $pnr = strtoupper(bin2hex(random_bytes(5)));
+
+                if ($has_pnr && $has_status) {
+                    $sql = 'INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+                    db_exec($link, $sql, 'isssssssidss', [$cust_id, $post_bus, $unm, $num, $post_from, $post_to, $post_date, $post_time, $seat, $price, $pnr, 'Confirmed']);
+                } elseif ($has_pnr) {
+                    $sql = 'INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+                    db_exec($link, $sql, 'isssssssids', [$cust_id, $post_bus, $unm, $num, $post_from, $post_to, $post_date, $post_time, $seat, $price, $pnr]);
                 } else {
-                    echo "<script>alert('Booking failed: " . mysqli_error($link) . "');</script>";
+                    $sql = 'INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+                    db_exec($link, $sql, 'isssssssid', [$cust_id, $post_bus, $unm, $num, $post_from, $post_to, $post_date, $post_time, $seat, $price]);
                 }
-            } ?>
-        </form >
-    </div >
-    </div >
-</section >
-</div >
-<?php require_once __DIR__ . '/../includes/layout/footer-admin.php' ?>
+
+                mysqli_commit($link);
+                header('Location: ' . BASE_URL . '/user/my-bookings.php?booked=1&pnr=' . urlencode($pnr));
+                exit;
+            }
+        } catch (mysqli_sql_exception $e) {
+            mysqli_rollback($link);
+            if ($e->getCode() === 1062) {
+                $alert = "Seat #{$seat} was just reserved by another customer. Please choose a different seat.";
+            } else {
+                $alert = 'Booking could not be completed: ' . $e->getMessage();
+            }
+            $alert_type = 'danger';
+        }
+    }
+}
+
+require_once __DIR__ . '/../includes/layout/header-user.php';
+?>
+<div class="col-lg-10 col-md-10 col-sm-12 col-xs-12" style="float: right;">
+    <section class="col-lg-8 col-md-10 col-sm-12 mx-auto my-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0">Complete Your Bus Booking</h4>
+            </div>
+            <div class="card-body">
+                <?php if ($alert): ?>
+                    <div class="alert alert-<?= e($alert_type) ?> alert-dismissible fade show" role="alert">
+                        <?= e($alert) ?>
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    </div>
+                <?php endif; ?>
+
+                <form action="" method="post">
+                    <?= csrf_field() ?>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label for="bus">Bus Number :</label>
+                            <input type="text" id="bus" name="bus" class="form-control" value="<?= e($bus) ?>" readonly required />
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label for="unm">Passenger Name :</label>
+                            <input type="text" id="unm" name="unm" value="<?= e($_SESSION['name'] ?? '') ?>" class="form-control" placeholder="Enter passenger name" required />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label for="num">Contact Number :</label>
+                            <input type="tel" id="num" name="num" value="<?= e($_SESSION['phone'] ?? '') ?>" class="form-control" placeholder="Enter contact number" required />
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label for="date">Travel Date :</label>
+                            <input type="date" min="<?= date('Y-m-d') ?>" name="date" id="date" value="<?= e($date) ?>" class="form-control" required />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 form-group">
+                            <label for="from">From :</label>
+                            <input type="text" id="from" name="from" class="form-control" value="<?= e($from) ?>" readonly required />
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label for="to">To :</label>
+                            <input type="text" id="to" name="to" class="form-control" value="<?= e($to) ?>" readonly required />
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label for="time">Departure Time :</label>
+                            <input type="time" id="time" name="time" class="form-control" value="<?= e($time) ?>" readonly required />
+                        </div>
+                    </div>
+
+                    <!-- Interactive Seat Selection Map -->
+                    <div class="form-group mt-3">
+                        <label class="font-weight-bold">Select Your Seat (1 - 36) :</label>
+                        <div class="d-flex mb-2">
+                            <span class="badge badge-info p-2 mr-2">Blue = Available</span>
+                            <span class="badge badge-danger p-2 mr-2">Red = Already Booked</span>
+                            <span class="badge badge-success p-2">Green = Selected</span>
+                        </div>
+                        <div class="p-3 border rounded bg-light" style="max-width: 460px; margin: auto;">
+                            <?php for ($r = 0; $r < 6; $r++): ?>
+                                <div class="row mb-2 justify-content-between">
+                                    <div class="col-5 d-flex justify-content-start">
+                                        <?php for ($c = 1; $c <= 2; $c++): ?>
+                                            <?php
+                                            $s = ($r * 5) + $c;
+                                            $is_booked = isset($booked_seats[$s]);
+                                            ?>
+                                            <button type="button"
+                                                class="btn <?= $is_booked ? 'btn-danger' : 'btn-info' ?> mr-2 seat-btn"
+                                                style="width: 46px; height: 40px;"
+                                                data-seat="<?= $s ?>"
+                                                <?= $is_booked ? 'disabled' : '' ?>
+                                                onclick="selectSeat(<?= $s ?>)">
+                                                <?= $s ?>
+                                            </button>
+                                        <?php endfor; ?>
+                                    </div>
+                                    <div class="col-7 d-flex justify-content-end">
+                                        <?php for ($c = 3; $c <= 5; $c++): ?>
+                                            <?php
+                                            $s = ($r * 5) + $c;
+                                            $is_booked = isset($booked_seats[$s]);
+                                            ?>
+                                            <button type="button"
+                                                class="btn <?= $is_booked ? 'btn-danger' : 'btn-info' ?> mr-2 seat-btn"
+                                                style="width: 46px; height: 40px;"
+                                                data-seat="<?= $s ?>"
+                                                <?= $is_booked ? 'disabled' : '' ?>
+                                                onclick="selectSeat(<?= $s ?>)">
+                                                <?= $s ?>
+                                            </button>
+                                        <?php endfor; ?>
+                                    </div>
+                                </div>
+                            <?php endfor; ?>
+                            <!-- Back Row Seats 31 - 36 -->
+                            <div class="row mb-2 justify-content-center">
+                                <div class="col-12 d-flex justify-content-between">
+                                    <?php for ($s = 31; $s <= 36; $s++): ?>
+                                        <?php $is_booked = isset($booked_seats[$s]); ?>
+                                        <button type="button"
+                                            class="btn <?= $is_booked ? 'btn-danger' : 'btn-info' ?> btn-sm seat-btn"
+                                            style="width: 44px; height: 40px;"
+                                            data-seat="<?= $s ?>"
+                                            <?= $is_booked ? 'disabled' : '' ?>
+                                            onclick="selectSeat(<?= $s ?>)">
+                                            <?= $s ?>
+                                        </button>
+                                    <?php endfor; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6 form-group">
+                            <label for="seat_no">Selected Seat Number :</label>
+                            <input type="number" min="1" max="36" name="seat" class="form-control" id="seat_no" placeholder="Click a seat above" readonly required>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label for="amount">Total Ticket Fare ($) :</label>
+                            <input type="text" class="form-control" id="amount" value="<?= e(number_format($price, 2)) ?>" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <input type="submit" class="btn btn-success btn-block btn-lg" name="check" value="Confirm and Book Ticket" />
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+function selectSeat(seatNum) {
+    document.getElementById('seat_no').value = seatNum;
+    var allSeats = document.querySelectorAll('.seat-btn');
+    allSeats.forEach(function(btn) {
+        if (!btn.disabled) {
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-info');
+        }
+    });
+    var selected = document.querySelector('.seat-btn[data-seat="' + seatNum + '"]');
+    if (selected && !selected.disabled) {
+        selected.classList.remove('btn-info');
+        selected.classList.add('btn-success');
+    }
+}
+</script>
+<?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>

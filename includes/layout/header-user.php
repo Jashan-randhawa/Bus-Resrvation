@@ -39,7 +39,7 @@
                     <li>
                         <img src="<?= BASE_URL ?>/assets/images/userav-min.png" alt="" class=" img-fluid ">
                         <h4 class=" text-center">User</h4>
-                        <h6 class=" text-center"><?php echo $_SESSION['name']; ?></h6>
+                        <h6 class=" text-center"><?= e($_SESSION['name'] ?? 'User') ?></h6>
                     </li>
                     <li>
                         <a href="<?= BASE_URL ?>/user/index.php" class=" col-lg-3 " style=" text-decoration: none ; color: black; " >New Booking</a>
@@ -49,6 +49,7 @@
                     </li>
                     <li>
                         <form action="" method="post">
+                            <?= csrf_field() ?>
                             <button type="submit" value="logout" name="logout" class=" btn btn-link col-lg-3 " style=" text-decoration: none; color: black; " >logout</button>
                         </form>
                     </li>

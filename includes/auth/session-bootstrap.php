@@ -1,6 +1,7 @@
 <?php
 // includes/auth/session-bootstrap.php (include this instead of calling session_start())
 require_once dirname(__DIR__) . '/config.php';
+require_once dirname(__DIR__) . '/helpers.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
@@ -46,4 +47,13 @@ function require_role(string $role): void {
         exit;
     }
     $_SESSION['last_seen'] = time();
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
+    if (function_exists('csrf_verify')) {
+        csrf_verify();
+    }
+    logout_all();
+    header('Location: ' . BASE_URL . '/homepage.php');
+    exit;
 }

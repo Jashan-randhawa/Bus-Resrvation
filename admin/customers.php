@@ -1,111 +1,165 @@
-<?php require_once __DIR__ . '/../includes/auth/admin-session.php' ?>
-<?php require_once __DIR__ . '/../includes/layout/header-admin.php' ?>
+<?php
+// admin/customers.php
+require_once __DIR__ . '/../includes/auth/admin-session.php';
+require_once __DIR__ . '/../includes/db_con.php';
+
+// Detect primary key column for customer table
+$cust_pk = 'id';
+$col_check = mysqli_query($link, "SHOW COLUMNS FROM `costumer` LIKE 'sno'");
+if ($col_check && mysqli_num_rows($col_check) > 0) {
+    $cust_pk = 'sno';
+}
+
+$alert = null;
+$alert_type = 'info';
+
+// Handle Add Customer
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
+    csrf_verify();
+    $name = trim((string)($_POST['unm'] ?? ''));
+    $email = trim((string)($_POST['email'] ?? ''));
+    $pwd = (string)($_POST['pwd'] ?? '');
+    $phone = trim((string)($_POST['phone'] ?? ''));
+    $address = trim((string)($_POST['address'] ?? ''));
+
+    if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $alert = 'Please provide a valid name and email address.';
+        $alert_type = 'danger';
+    } elseif (strlen($pwd) < 8) {
+        $alert = 'Password must be at least 8 characters.';
+        $alert_type = 'danger';
+    } else {
+        $existing = db_one($link, 'SELECT * FROM costumer WHERE email = ?', 's', [$email]);
+        if ($existing) {
+            $alert = 'A customer with that email already exists.';
+            $alert_type = 'danger';
+        } else {
+            $hashed = password_hash($pwd, PASSWORD_DEFAULT);
+            db_exec($link,
+                "INSERT INTO costumer (name, email, pwd, phone, address) VALUES (?, ?, ?, ?, ?)",
+                'sssss',
+                [$name, $email, $hashed, $phone, $address]
+            );
+            $alert = 'Customer added successfully.';
+            $alert_type = 'success';
+        }
+    }
+}
+
+// Handle Delete Customer (converted from insecure GET to POST)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_customer'])) {
+    csrf_verify();
+    $delete_id = (int)($_POST['delete_id'] ?? 0);
+    if ($delete_id > 0) {
+        db_exec($link, "DELETE FROM costumer WHERE `{$cust_pk}` = ?", 'i', [$delete_id]);
+        $alert = 'Customer deleted successfully.';
+        $alert_type = 'success';
+    }
+}
+
+$customers = db_all($link, "SELECT * FROM costumer ORDER BY `{$cust_pk}` ASC");
+
+require_once __DIR__ . '/../includes/layout/header-admin.php';
+?>
 <div class="col-lg-10 col-md-12 col-sm-12" style=" float: right ; ">
-  <h1 class="text-info">Costumer Status</h1>
+  <h1 class="text-info">Customer Status</h1>
   <br>
-  <button class="btn btn-danger " data-toggle="modal" data-target="#loginModal">Add Costumer Details</button>
-  <div class="modal fade" id="loginModal">
+
+  <?php if ($alert): ?>
+    <div class="alert alert-<?= e($alert_type) ?> alert-dismissible fade show" role="alert">
+      <?= e($alert) ?>
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+  <?php endif; ?>
+
+  <button class="btn btn-danger" data-toggle="modal" data-target="#addCustomerModal">Add Customer Details</button>
+
+  <div class="modal fade" id="addCustomerModal">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <button type="button" class="close text-right" data-dismiss="modal">
+        <button type="button" class="close text-right pr-3 pt-2" data-dismiss="modal">
           <span>&times;</span>
         </button>
-        <div class="tab-content">
-          <div role="tabpanel" class="tab-pane active" id="login">
-            <div class="modal-header">
-              <h5>
-                Costumer Details
-              </h5>
+        <div class="modal-header">
+          <h5 class="modal-title">Customer Details</h5>
+        </div>
+        <div class="modal-body">
+          <form action="" method="post">
+            <?= csrf_field() ?>
+            <div class="form-group">
+              <label for="unm">Name :</label>
+              <input type="text" id="unm" name="unm" class="form-control" placeholder="Enter full name" required />
             </div>
-            <div class="modal-body">
-              <form action="" method="post">
-                <div class="form-group">
-                  <label for="Name">Name :</label>
-                  <input type="text" name="unm" class="form-control" placeholder="Enter your name" />
-                </div>
-                <div class="form-group">
-                  <label for="email">Email Id :</label>
-                  <input type="email" name="email" class="form-control" placeholder="Enter your email" />
-                </div>
-                <div class="form-group">
-                  <label for="password">Password</label>
-                  <input type="password" name="pwd" class="form-control" placeholder="password" />
-                </div>
-                <div class="form-group">
-                  <label for="Phone">Phone :</label>
-                  <input type="tel" name="phone" class="form-control" placeholder="Enter your number" />
-                </div>
-                <div class="form-group">
-                  <label for="Address">Address :</label>
-                  <textarea name="address" class="form-control" placeholder="Enter your address" cols="2"></textarea>
-                </div>
-                <div class="form-group">
-                  <input type="submit" class="btn btn-success" name="add" value="Submit" />
-                </div>
-                <?php
-
-                if (isset($_POST['add'])) {
-                  require_once __DIR__ . '/../includes/db_con.php';
-                  $qry = "insert into costumer values('','$_POST[unm]','$_POST[email]','$_POST[pwd]','$_POST[phone]','$_POST[address]')";
-                  $resultset = mysqli_query($link, $qry);
-                }
-                ?>
-              </form>
+            <div class="form-group">
+              <label for="email">Email Id :</label>
+              <input type="email" id="email" name="email" class="form-control" placeholder="Enter email" required />
             </div>
-          </div>
+            <div class="form-group">
+              <label for="pwd">Password :</label>
+              <input type="password" id="pwd" name="pwd" class="form-control" placeholder="Minimum 8 characters" minlength="8" required />
+            </div>
+            <div class="form-group">
+              <label for="phone">Phone :</label>
+              <input type="tel" id="phone" name="phone" class="form-control" placeholder="Enter phone number" required />
+            </div>
+            <div class="form-group">
+              <label for="address">Address :</label>
+              <textarea id="address" name="address" class="form-control" placeholder="Enter address" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+              <input type="submit" class="btn btn-success" name="add" value="Submit" />
+            </div>
+          </form>
         </div>
       </div>
     </div>
   </div>
-  <section>
-    <form action="" method="post">
-      <input type="submit" name="costumer" class=" btn btn-block btn-info mt-4 " value=" Show Costumer Details ">
-    </form>
-    <?php
-    if (isset($_POST['costumer'])) {
-      //var_dump($row);
-      $mytable = <<<Tab
-        <div class="table-responsive" style="margin-top:10px;">
-        <table class="table table-bordered table-striped" >
-        <tr>
-        <th>#</th>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Password</th>
-        <th>Phone</th>
-        <th>Address</th>
-        <th>Edit</th>
-        <th>Delete</th>
-        </tr>
-        Tab;
 
-      require_once __DIR__ . '/../includes/db_con.php';
-      $qry = "select *from costumer";
-      $resultset = mysqli_query($link, $qry);
-      while ($row = mysqli_fetch_assoc($resultset)) {
-        $mytable = $mytable . "
-        <tr><td>$row[sno]</td>
-        <td>$row[name]</td>
-        <td>$row[email]</td>
-        <td>$row[pwd]</td>
-        <td>$row[phone]</td>
-        <td>$row[address]</td>
-        <td><a href='./edit/edit-customer.php?id=$row[sno]' class='btn btn-warning'>Edit</a></td>
-        <td><a href='./customers.php?id=$row[sno]' class='btn btn-danger'>Delete</a></td></tr>";
-      }
-      $mytable = $mytable . "</table></div>";
-      echo $mytable;
-
-    }
-
-    ?>
-    <?php
-    if (isset($_GET['id'])) {
-      require_once __DIR__ . '/../includes/db_con.php';
-      $qry = "delete from costumer where sno = $_GET[id]";
-      $resultset = mysqli_query($link, $qry);
-    }
-    ?>
+  <section class="mt-4">
+    <h4 class="text-secondary mb-3">All Customers</h4>
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead class="thead-dark">
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Password</th>
+            <th>Phone</th>
+            <th>Address</th>
+            <th>Edit</th>
+            <th>Delete</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if (empty($customers)): ?>
+            <tr><td colspan="8" class="text-center text-muted">No customers found.</td></tr>
+          <?php else: ?>
+            <?php foreach ($customers as $row): ?>
+              <?php $cid = (int)($row[$cust_pk] ?? $row['id'] ?? $row['sno'] ?? 0); ?>
+              <tr>
+                <td><?= e($cid) ?></td>
+                <td><?= e($row['name'] ?? '') ?></td>
+                <td><?= e($row['email'] ?? '') ?></td>
+                <td><span class="text-muted">••••••••</span></td>
+                <td><?= e($row['phone'] ?? '') ?></td>
+                <td><?= e($row['address'] ?? '') ?></td>
+                <td>
+                  <a href="<?= BASE_URL ?>/admin/edit/edit-customer.php?id=<?= e($cid) ?>" class="btn btn-warning btn-sm">Edit</a>
+                </td>
+                <td>
+                  <form method="post" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this customer?');">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="delete_id" value="<?= e($cid) ?>">
+                    <button type="submit" name="delete_customer" class="btn btn-danger btn-sm">Delete</button>
+                  </form>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
   </section>
 </div>
-<?php require_once __DIR__ . '/../includes/layout/footer-admin.php' ?>
+<?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>

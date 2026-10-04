@@ -1,124 +1,161 @@
-<?php require_once __DIR__ . '/../includes/auth/admin-session.php' ?>
-<?php require_once __DIR__ . '/../includes/layout/header-admin.php' ?>
+<?php
+// admin/routes.php
+require_once __DIR__ . '/../includes/auth/admin-session.php';
+require_once __DIR__ . '/../includes/db_con.php';
+
+// Detect primary key column for route table
+$route_pk = 'sno';
+$col_check = mysqli_query($link, "SHOW COLUMNS FROM `route` LIKE 'sno'");
+if (!$col_check || mysqli_num_rows($col_check) === 0) {
+    $route_pk = 'id';
+}
+
+$alert = null;
+$alert_type = 'info';
+
+// Handle Add Route
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
+    csrf_verify();
+    $from = trim((string)($_POST['From'] ?? ''));
+    $to = trim((string)($_POST['To'] ?? ''));
+    $bus = trim((string)($_POST['bus'] ?? ''));
+    $time = trim((string)($_POST['time'] ?? ''));
+    $price = (float)($_POST['price'] ?? 0);
+
+    if ($from === '' || $to === '' || $bus === '' || $time === '' || $price <= 0) {
+        $alert = 'Please fill all route fields with valid values.';
+        $alert_type = 'danger';
+    } else {
+        db_exec($link,
+            "INSERT INTO route (city1, city2, busno, time, price) VALUES (?, ?, ?, ?, ?)",
+            'ssssd',
+            [$from, $to, $bus, $time, $price]
+        );
+        $alert = 'Route added successfully.';
+        $alert_type = 'success';
+    }
+}
+
+// Handle Delete Route (converted from insecure GET to POST)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_route'])) {
+    csrf_verify();
+    $delete_id = (int)($_POST['delete_id'] ?? 0);
+    if ($delete_id > 0) {
+        db_exec($link, "DELETE FROM route WHERE `{$route_pk}` = ?", 'i', [$delete_id]);
+        $alert = 'Route deleted successfully.';
+        $alert_type = 'success';
+    }
+}
+
+$buses = db_all($link, 'SELECT bus_number FROM buses ORDER BY bus_number ASC');
+$routes = db_all($link, "SELECT * FROM route ORDER BY `{$route_pk}` ASC");
+
+require_once __DIR__ . '/../includes/layout/header-admin.php';
+?>
 <div class="col-lg-10 col-md-12 col-sm-12" style=" float: right ; ">
   <h1 class="text-info">Bus Status</h1>
   <br>
-  <button class="btn btn-danger " data-toggle="modal" data-target="#loginModal">Add Route Details</button>
-  <div class="modal fade" id="loginModal">
+
+  <?php if ($alert): ?>
+    <div class="alert alert-<?= e($alert_type) ?> alert-dismissible fade show" role="alert">
+      <?= e($alert) ?>
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+  <?php endif; ?>
+
+  <button class="btn btn-danger" data-toggle="modal" data-target="#addRouteModal">Add Route Details</button>
+
+  <div class="modal fade" id="addRouteModal">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <button type="button" class="close text-right" data-dismiss="modal">
+        <button type="button" class="close text-right pr-3 pt-2" data-dismiss="modal">
           <span>&times;</span>
         </button>
-        <div class="tab-content">
-          <div role="tabpanel" class="tab-pane active" id="login">
-            <div class="modal-header">
-              <h5>
-                Add Bus Route Details
-              </h5>
+        <div class="modal-header">
+          <h5 class="modal-title">Add Bus Route Details</h5>
+        </div>
+        <div class="modal-body">
+          <form action="" method="post">
+            <?= csrf_field() ?>
+            <div class="form-group">
+              <label for="From">From :</label>
+              <input type="text" id="From" name="From" class="form-control" placeholder="From city" required />
             </div>
-            <div class="modal-body">
-              <form action="" method="post">
-                <div class="form-group">
-                  <label for="From"> From :</label>
-                  <input type="text" name="From" class="form-control" placeholder="From city" />
-                </div>
-                <div class="form-group">
-                  <label for="To"> To :</label>
-                  <input type="text" name="To" class="form-control" placeholder="To city" />
-                </div>
-                <div class="form-group">
-                  <label for="bus no">Bus no :</label>
-                  <select name="bus" id="bus" style=" width: 189px; " required>
-                    <option value="">Select Bus Number</option>
-                    <?php
-                    require_once __DIR__ . '/../includes/db_con.php';
-                    $qry = "SELECT bus_number FROM buses";
-                    $resultset = mysqli_query($link, $qry);
-                    $row = mysqli_fetch_assoc($resultset);
-                    while ($row = mysqli_fetch_assoc($resultset)) {
-                      ?>
-                      <option value="<?php echo $row['bus_number']; ?>"><?php echo $row['bus_number']; ?></option>
-                      <?php
-                    }
-                    ?>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label for="Departure Time :">Departure Time :</label>
-                  <input type="time" name="time" class="form-control" placeholder="Departure Time" />
-                </div>
-                <div class="form-group">
-                  <label for="Ticket price">Ticket Price :</label>
-                  <input type=" number " name="price" class="form-control" placeholder="Ticket Price" />
-                </div>
-                <div class="form-group">
-                  <input type="submit" class="btn btn-success" name="add" value="Submit" />
-                </div>
-                <?php
-                if (isset($_REQUEST["add"])) {
-                  require_once __DIR__ . '/../includes/db_con.php';
-                  $qry = " insert into route values(null,'$_REQUEST[From]','$_REQUEST[To]','$_REQUEST[bus]','$_REQUEST[time]','$_REQUEST[price]')";
-                  $resultset = mysqli_query($link, $qry);
-                }
-                ?>
-              </form>
+            <div class="form-group">
+              <label for="To">To :</label>
+              <input type="text" id="To" name="To" class="form-control" placeholder="To city" required />
             </div>
-          </div>
+            <div class="form-group">
+              <label for="bus">Bus no :</label>
+              <select name="bus" id="bus" class="form-control" required>
+                <option value="">Select Bus Number</option>
+                <?php foreach ($buses as $b): ?>
+                  <option value="<?= e($b['bus_number']) ?>"><?= e($b['bus_number']) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="time">Departure Time :</label>
+              <input type="time" id="time" name="time" class="form-control" required />
+            </div>
+            <div class="form-group">
+              <label for="price">Ticket Price :</label>
+              <input type="number" step="0.01" min="1" id="price" name="price" class="form-control" placeholder="Ticket Price" required />
+            </div>
+            <div class="form-group">
+              <input type="submit" class="btn btn-success" name="add" value="Submit" />
+            </div>
+          </form>
         </div>
       </div>
     </div>
   </div>
+
   <section class="mt-4">
-    <form action="" method="post">
-      <input type="submit" name="route" class=" btn btn-block btn-info " value="Show Route Details">
-    </form>
-    <?php
-    if (isset($_REQUEST["route"])) {
-      //var_dump($row);
-      $mytable = <<<Tab
-        <div class="table-responsive" style="margin-top:10px;">
-        <table class="table table-bordered table-striped" >
-        <tr>
-        <th>#</th>
-        <th>From</th>
-        <th>To</th>
-        <th>Bus Number</th>
-        <th>Time</th>
-        <th>Price</th>
-        <th>Edit</th>
-        <th>Delete</th>
-        </tr>
-        Tab;
-
-      require_once __DIR__ . '/../includes/db_con.php';
-      $qry = "select * from route";
-      $resultset = mysqli_query($link, $qry);
-      while ($row = mysqli_fetch_assoc($resultset)) {
-        $mytable = $mytable . "
-        <tr><td>$row[sno]</td>
-        <td>$row[city1]</td>
-        <td>$row[city2]</td>
-        <td>$row[busno]</td>
-        <td>$row[time]</td>
-        <td>$row[price]</td>
-        <td><a href='./edit/edit-route.php?id=$row[sno]' class='btn btn-warning'>Edit</a></td>
-        <td><a href='./routes.php?id=$row[sno]' class='btn btn-danger'>Delete</a></td></tr>";
-      }
-      $mytable = $mytable . "</table></div>";
-      echo $mytable;
-
-    }
-
-    ?>
-    <?php
-    if (isset($_GET['id'])) {
-      require_once __DIR__ . '/../includes/db_con.php';
-      $qry = "delete from route where sno= $_GET[id]";
-      $resultset = mysqli_query($link, $qry);
-      echo "<script>window.location='routes.php'</script>";
-    }
-    ?>
+    <h4 class="text-secondary mb-3">All Routes</h4>
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead class="thead-dark">
+          <tr>
+            <th>#</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Bus Number</th>
+            <th>Time</th>
+            <th>Price</th>
+            <th>Edit</th>
+            <th>Delete</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if (empty($routes)): ?>
+            <tr><td colspan="8" class="text-center text-muted">No routes found.</td></tr>
+          <?php else: ?>
+            <?php foreach ($routes as $row): ?>
+              <?php $rid = (int)($row[$route_pk] ?? $row['sno'] ?? $row['id'] ?? 0); ?>
+              <tr>
+                <td><?= e($rid) ?></td>
+                <td><?= e($row['city1'] ?? '') ?></td>
+                <td><?= e($row['city2'] ?? '') ?></td>
+                <td><?= e($row['busno'] ?? '') ?></td>
+                <td><?= e($row['time'] ?? '') ?></td>
+                <td>$<?= e(number_format((float)($row['price'] ?? 0), 2)) ?></td>
+                <td>
+                  <a href="<?= BASE_URL ?>/admin/edit/edit-route.php?id=<?= e($rid) ?>" class="btn btn-warning btn-sm">Edit</a>
+                </td>
+                <td>
+                  <form method="post" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this route?');">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="delete_id" value="<?= e($rid) ?>">
+                    <button type="submit" name="delete_route" class="btn btn-danger btn-sm">Delete</button>
+                  </form>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
   </section>
 </div>
-<?php require_once __DIR__ . '/../includes/layout/footer-admin.php' ?>
+<?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>
