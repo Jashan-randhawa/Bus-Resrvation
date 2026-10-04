@@ -4,11 +4,7 @@ require_once __DIR__ . '/../includes/auth/admin-session.php';
 require_once __DIR__ . '/../includes/db_con.php';
 
 // Detect primary key column for buses (supports both `id` and `sno` schemas)
-$bus_pk = 'id';
-$col_check = mysqli_query($link, "SHOW COLUMNS FROM `buses` LIKE 'sno'");
-if ($col_check && mysqli_num_rows($col_check) > 0) {
-    $bus_pk = 'sno';
-}
+$bus_pk = table_has_column($link, 'buses', 'sno') ? 'sno' : 'id';
 
 $alert = null;
 $alert_type = 'info';
@@ -31,8 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
             $alert = 'A bus with that number already exists.';
             $alert_type = 'danger';
         } else {
-            $cols = db_all($link, 'SHOW COLUMNS FROM buses');
-            $has_cap = in_array('capacity', array_column($cols, 'Field'), true);
+            $has_cap = table_has_column($link, 'buses', 'capacity');
             if ($has_cap) {
                 db_exec($link, 'INSERT INTO buses (bus_number, capacity) VALUES (?, ?)', 'si', [$busno, $capacity]);
             } else {

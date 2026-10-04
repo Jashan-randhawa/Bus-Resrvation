@@ -4,11 +4,7 @@ require_once __DIR__ . '/../../includes/auth/admin-session.php';
 require_once __DIR__ . '/../../includes/db_con.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 
-$cust_pk = 'id';
-$col_check = mysqli_query($link, "SHOW COLUMNS FROM `costumer` LIKE 'sno'");
-if ($col_check && mysqli_num_rows($col_check) > 0) {
-    $cust_pk = 'sno';
-}
+$cust_pk = table_has_column($link, 'costumer', 'sno') ? 'sno' : 'id';
 
 $id = (int)($_GET['id'] ?? 0);
 if ($id <= 0) {
