@@ -112,7 +112,7 @@ if (isset($_POST['subbtn'])) {
           </button>
           <ul class="nav nav-tabs">
             <li class="btn nav-item col-6 active">
-              <a href="#login" aria-controls="login" class="btn btn-info btn-block" data-toggle="tab">Account
+              <a href="#user-login" aria-controls="user-login" class="btn btn-info btn-block" data-toggle="tab">Account
                 Login</a>
             </li>
             <li class="btn nav-item col-6">
@@ -121,7 +121,7 @@ if (isset($_POST['subbtn'])) {
             </li>
           </ul>
           <div class="tab-content">
-            <div role="tabpanel" class="tab-pane active" id="login">
+            <div role="tabpanel" class="tab-pane active" id="user-login">
               <div class="modal-header">
                 <h5>
                   If you already have an online account, please enter your email
@@ -132,12 +132,12 @@ if (isset($_POST['subbtn'])) {
                 <form action="" method="post">
                   <?= csrf_field() ?>
                   <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" name="email" class="form-control" placeholder="Email" />
+                    <label for="user-email-input">Email Address</label>
+                    <input type="email" id="user-email-input" name="email" class="form-control" placeholder="Email" required />
                   </div>
                   <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" name="pwd" class="form-control" placeholder="password" />
+                    <label for="user-pwd-input">Password</label>
+                    <input type="password" id="user-pwd-input" name="pwd" class="form-control" placeholder="Password" required />
                   </div>
                   <div class="form-group">
                     <input type="submit" class="btn btn-success btn-block" name="user" value="User Login" />
@@ -145,13 +145,10 @@ if (isset($_POST['subbtn'])) {
 
                 </form>
               </div>
-              <div class="modal-footer">
-                <a href class="btn-link">forget password?</a>
-              </div>
             </div>
             <div role="tabpanel" class="tab-pane" id="Register">
               <div class="modal-header">
-                <h5>New Registeration</h5>
+                <h5>New Registration</h5>
               </div>
               <div class="modal-body">
                 <form action="" method="post">
@@ -204,7 +201,7 @@ if (isset($_POST['subbtn'])) {
             <span>&times;</span>
           </button>
           <div class="tab-content">
-            <div role="tabpanel" class="tab-pane active" id="login">
+            <div role="tabpanel" class="tab-pane active" id="admin-login-tab">
               <div class="modal-header">
                 <h5>
                   Only Registered Admin Can Login
@@ -214,29 +211,26 @@ if (isset($_POST['subbtn'])) {
                 <form action="" method="post">
                   <?= csrf_field() ?>
                   <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" name="email" class="form-control" placeholder="Email" />
+                    <label for="admin-email-input">Email Address</label>
+                    <input type="email" id="admin-email-input" name="email" class="form-control" placeholder="Email" required />
                   </div>
                   <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" name="pwd" class="form-control" placeholder="password" />
+                    <label for="admin-pwd-input">Password</label>
+                    <input type="password" id="admin-pwd-input" name="pwd" class="form-control" placeholder="Password" required />
                   </div>
                   <div class="form-group">
                     <input type="submit" class="btn btn-success btn-block" name="admin" value="Admin Login" />
                   </div>
                 </form>
               </div>
-              <div class="modal-footer">
-                <a href class="btn-link">forget password?</a>
-              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    <center class=" mt-3 ">
+    <div class="text-center mt-3">
       <a href="#pnr" data-value="pnr"><button class="btn btn-primary">Scroll Down <i class="fa fa-arrow-down"></i></button></a>
-    </center>
+    </div>
   </div>
 </section>
 <section id="pnr">
@@ -289,27 +283,21 @@ if (isset($_POST['subbtn'])) {
   </div>
 </section>
 <section id="about">
-  <div>
-    <h1 class=" text-center mt-5 ">About Us</h1>
-    <h4 class=" text-center mb-3 ">Wanna know were it all started?</h4>
-    <p>
-      Lorem ipsum dolor sit amet consecteturadipisicing elit. Perferendis soluta voluptas eaque, numquam veritatis
-      aperiam expedita deleniti, nesciunt cum alias velit. Cupiditate commodi
-      Lorem ipsum dolor, sit amet consectetur adipisicing elit. Accusamus cum nisi ea optio unde aliquam quia
-      reprehenderit atque eum tenetur!
-      Lorem ipsum dolor sit amet consectetur adipisicing elit. Sed placeat debitis corporis voluptates modi quibusdam
-      quidem voluptatibus illum, maiores sequi.
+  <div class="container text-center py-5">
+    <h1 class="mt-3">About Us</h1>
+    <h4 class="text-secondary mb-4">Reliable & Modern Bus Travel</h4>
+    <p class="lead text-muted mx-auto" style="max-width: 800px;">
+      Bus Reservation System is a full-stack, cloud-native ticketing and fleet management platform designed for simple booking, real-time seat selection, and reliable trip administration across regional transit routes.
     </p>
   </div>
 </section>
 <section id="contact">
-  <div class="contact p-5" id="contact">
+  <div class="contact p-5">
     <div class="container btn page">
       <div class="row"></div>
       <h1 class="text-center col-lg-12 col-md-12 col-sm-12">Contact Us</h1>
-      <p>
-        Pityful a rethoric question ran over her cheek,then she comtinued her
-        way,On her way she met a copy.
+      <p class="text-center text-muted">
+        Have questions about routes or need assistance with your booking? Send us a message and our support team will get back to you promptly.
       </p>
       <form action="" method="post">
         <?= csrf_field() ?>
@@ -317,7 +305,7 @@ if (isset($_POST['subbtn'])) {
           <div class="input-group-append">
             <span class="input-group-text" id="basic-addon1">Name</span>
           </div>
-          <input type="text" class="form-control" placeholder="Username" name="name" aria-label="Username"
+          <input type="text" class="form-control" placeholder="Your Name" name="name" aria-label="Username"
             aria-describedby="basic-addon1" required />
           <div class="input-group-append">
             <span class="input-group-text" id="basic-addon2">Email</span>

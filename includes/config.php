@@ -27,3 +27,20 @@ if (!defined('BASE_URL')) {
         define('BASE_URL', rtrim($base, '/'));
     }
 }
+
+if (!defined('BUS_SEATS')) {
+    define('BUS_SEATS', 36);
+}
+
+// Global exception handler (M-04)
+if (!function_exists('busres_exception_handler')) {
+    function busres_exception_handler(Throwable $t): void {
+        $where = $t->getFile() . ':' . $t->getLine();
+        error_log('[busres] ' . get_class($t) . ': ' . $t->getMessage() . ' @ ' . $where);
+        if (!headers_sent()) {
+            http_response_code(500);
+        }
+        echo '<p style="color:#721c24; background-color:#f8d7da; border:1px solid #f5c6cb; padding:12px; border-radius:4px; font-family:sans-serif; text-align:center; max-width:600px; margin:2rem auto;">Something went wrong. Please try again in a moment.</p>';
+    }
+    set_exception_handler('busres_exception_handler');
+}

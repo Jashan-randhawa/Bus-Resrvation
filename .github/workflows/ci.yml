@@ -1,0 +1,34 @@
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mysqli
+          tools: composer
+
+      - name: PHP Syntax Check (lint)
+        run: find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
+
+      - name: Composer validate
+        run: composer validate --strict
+
+      - name: Block raw request data inside SQL
+        run: |
+          if grep -rnE '\$_(GET|POST|REQUEST|COOKIE)\[' --include='*.php' . \
+             | grep -iE 'select |insert |update |delete '; then
+            echo "Raw request data inside a SQL string found!"; exit 1
+          fi

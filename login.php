@@ -1,8 +1,12 @@
-<?php require_once __DIR__ . '/includes/layout/header-login.php'; ?>
+<?php
+require_once __DIR__ . '/includes/auth/session-bootstrap.php';
+require_once __DIR__ . '/includes/layout/header-login.php';
+?>
 <section id="image">
     <div class="overlay">
         <div class="description">
             <form action="homepage.php" method="post">
+                <?= csrf_field() ?>
                 <div class="card col-lg-6 col-md-6 col-sm-12 col-xs-12" style=" margin: auto ; ">
                     <div class="card-header">
                         <h1 class="text-center">Login</h1>
@@ -27,5 +31,5 @@
             </form>
         </div>
     </div>
-    </div>
-    <?php require_once __DIR__ . '/includes/layout/footer.php'; ?>
+</section>
+<?php require_once __DIR__ . '/includes/layout/footer.php'; ?>

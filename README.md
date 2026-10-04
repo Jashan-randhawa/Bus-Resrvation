@@ -171,12 +171,15 @@ Visit `http://localhost:8080` in your browser.
 
 ---
 
-## 🔑 Demo Credentials
+## 🔐 Initial Administrator Setup
 
-| Role | Email | Password | Access Level |
-|---|---|---|---|
-| 👑 **Administrator** | `admin@example.com` | `admin123` | Full control: fleet, routes, analytics |
-| 🧑‍💼 **Customer** | `user@example.com` | `user123` | Ticket booking & booking history |
+Default credentials are intentionally **not hardcoded** in the schema for security. To provision your first administrator account, execute the CLI script:
+
+```bash
+php database/create-admin.php "Admin Name" "admin@example.com" "1234567890"
+```
+
+You will be prompted for a secure password (minimum 12 characters). Customers can register directly through the public portal.
 
 ---
 
@@ -211,9 +214,11 @@ Bus-Resrvation/
 │   └── my-bookings.php       # Personal booking history
 │
 ├── includes/                 # 🔧 Shared Application Kernels
-│   ├── config.php            # Dynamic BASE_URL auto-detector
+│   ├── config.php            # Dynamic BASE_URL auto-detector & exception handler
 │   ├── db_con.php            # Central environment-driven database connector
+│   ├── helpers.php           # Prepared statements (db_one, db_exec), e() escaping, CSRF
 │   ├── auth/
+│   │   ├── session-bootstrap.php # Hardened session manager & cookie policy
 │   │   ├── admin-session.php # Admin session authentication guard
 │   │   └── user-session.php  # Customer session authentication guard
 │   └── layout/
@@ -230,7 +235,15 @@ Bus-Resrvation/
 │   └── images/               # Vector SVGs, icons, and hero photography
 │
 ├── database/                 # 🗄️ Relational Data Layer
-│   └── init.sql              # Complete schema DDL & initial seed accounts
+│   ├── init.sql              # Idempotent hardened schema DDL
+│   ├── create-admin.php      # CLI administrator provisioning script
+│   └── migrations/
+│       ├── 001_hardening.sql # Security schema migration
+│       └── 002_hash_passwords.php # Password migration & rehashing script
+│
+├── docker/                   # 🐳 Container Configuration
+│   ├── php-extra.ini         # Hardened PHP production settings
+│   └── apache-security.conf  # HTTP security headers (CSP, HSTS, X-Frame-Options)
 │
 ├── docs/                     # 📄 Project Documents & Reports
 │   └── Bus_Reservation_GitHub_Packages_Plan.pdf
@@ -245,26 +258,34 @@ Bus-Resrvation/
 │   └── Security-Configuration-and-Troubleshooting.md
 │
 ├── .github/                  # 🤖 GitHub Automation Workflows
+│   ├── dependabot.yml        # Weekly automated dependency maintenance
 │   └── workflows/
+│       ├── ci.yml            # Automated linting, composer audit, and SQL checks
 │       └── docker-publish.yml # Automated GHCR Docker image build & publish
 │
-├── Dockerfile                # Production container specification (PHP 8.1 + Apache)
+├── Dockerfile                # Production container specification (PHP 8.4 + Apache)
 ├── .dockerignore             # Docker build context filter
 ├── .gitignore                # Version control exclusions
 ├── composer.json             # PHP Composer package definition
+├── CHANGELOG.md              # Version and security audit release history
+├── SECURITY.md               # Security architecture & vulnerability reporting policy
 ├── LICENSE                   # MIT License
 └── README.md                 # Primary project overview
 ```
 
 ---
 
-## 🛡️ Security & Best Practices Implemented
+## 🛡️ Security & Hardening Architecture
 
-- ✅ **Zero Hardcoded Credentials:** 100% of database configurations rely on environment variables (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_SSL`).
-- ✅ **Encrypted In-Transit:** Enforced SSL/TLS connections for cloud databases like TiDB (`MYSQLI_CLIENT_SSL`).
-- ✅ **Output Buffering & Clean Sessions:** Robust header and session state management across container restarts.
-- ✅ **Dynamic Port Binding:** Seamless execution on cloud container orchestrators like Render (`${PORT}`).
-- ✅ **Automated CI/CD:** GitHub Actions pipeline automatically builds and publishes container images to GitHub Packages.
+- 🛡️ **Prepared Statements Project-Wide (C-01, C-02):** 100% of SQL queries use parameterized prepared statements (`db_one`, `db_all`, `db_exec`) with zero direct string interpolation.
+- 🔑 **Cryptographic Password Hashing (C-03, C-04):** Passwords stored using `password_hash()` with modern bcrypt algorithms (`$2y$`). All demo credentials removed.
+- 🛡️ **Cross-Site Request Forgery (CSRF) Defense (H-03):** Every state-changing form and action carries a cryptographic anti-CSRF token verified on submission.
+- 🚦 **Strict Role Isolation & Session Hardening (H-01, H-02):** Strict role guards (`admin` vs `user`), session ID regeneration on login, 30-minute idle expiration, and secure cookie attributes (`HttpOnly`, `SameSite=Lax`, HTTPS detection).
+- 🔒 **Transactional Seat Booking & Anti-Double-Booking (H-04, H-08):** Ticket booking runs inside ACID database transactions with row-level locks and unique constraints on `(bus, date, time, seat)`. Authoritative pricing resolved server-side.
+- 🎟️ **Cryptographic PNR Privacy & Rate Limiting (C-05, H-05):** Replaced sequential integer IDs with random 10-character hex tokens. PNR lookup requires a second factor (last 4 digits of phone) and is throttled against brute-force scraping.
+- 🧼 **XSS Output Sanitization (C-06, H-07):** All dynamic outputs are escaped with `e()` HTML escaping.
+- 🐳 **Hardened Container Runtime (M-05, M-06):** Upgraded to PHP 8.4-apache with health check, production error logging, and HTTP security headers (HSTS, CSP, X-Frame-Options, X-Content-Type-Options).
+- ⚙️ **Automated CI/CD & Auditing (M-08):** Continuous integration checks PHP syntax, composer configurations, and blocks SQL string anti-patterns. Dependabot enabled for weekly maintenance.
 
 ---
 
