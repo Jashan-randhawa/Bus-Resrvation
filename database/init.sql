@@ -59,9 +59,12 @@ CREATE TABLE IF NOT EXISTS `booking` (
   `price` DECIMAL(10,2) NOT NULL,
   `pnr` CHAR(10) NOT NULL,
   `status` VARCHAR(20) NOT NULL DEFAULT 'Confirmed',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `hold_expires_at` TIMESTAMP NULL DEFAULT NULL,
   UNIQUE KEY `uq_booking_pnr` (`pnr`),
   UNIQUE KEY `uq_booking_seat` (`bus`, `date`, `time`, `seat`),
-  KEY `idx_booking_customer` (`id`)
+  KEY `idx_booking_customer` (`id`),
+  KEY `idx_booking_hold` (`status`, `hold_expires_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Query / Feedback table

@@ -192,6 +192,37 @@ $res_rebook = create_booking($link, [
 ]);
 assert_test("Liberated seat can be successfully booked by a new customer", $res_rebook['ok']);
 
+// -------------------------------------------------------------
+// Test 7: Seat Hold Expiration & Payment States (O13)
+// -------------------------------------------------------------
+echo "\n[*] Suite 7: Seat Hold Expiration & Payment States (O13)\n";
+$res_hold = create_booking($link, [
+    'bus' => $test_busno,
+    'city1' => 'CityA',
+    'city2' => 'CityB',
+    'date' => $test_date,
+    'time' => $test_time,
+    'seat' => 7,
+    'price' => 50.0,
+    'name' => 'Hold User',
+    'contact' => '1111111111',
+    'status' => 'Pending'
+]);
+assert_test("Booking created with 'Pending' seat hold status", $res_hold['ok'] && ($res_hold['status'] ?? '') === 'Pending');
+
+$booked_during_hold = get_booked_seats($link, $test_busno, $test_date, $test_time);
+assert_test("Pending seat hold blocks other bookings (Seat 7 taken)", isset($booked_during_hold[7]));
+
+// Simulate hold expiration by setting hold_expires_at in the past
+db_exec($link, "UPDATE booking SET hold_expires_at = DATE_SUB(NOW(), INTERVAL 1 MINUTE) WHERE pnr = ?", 's', [$res_hold['pnr']]);
+release_expired_holds($link);
+
+$expired_row = db_one($link, "SELECT status FROM booking WHERE pnr = ?", 's', [$res_hold['pnr']]);
+assert_test("Expired hold status automatically updated to 'Expired'", ($expired_row['status'] ?? '') === 'Expired');
+
+$booked_after_expiration = get_booked_seats($link, $test_busno, $test_date, $test_time);
+assert_test("Expired seat 7 is automatically released for new customers", !isset($booked_after_expiration[7]));
+
 // Clean up test data
 db_exec($link, 'DELETE FROM booking WHERE bus = ?', 's', [$test_busno]);
 db_exec($link, 'DELETE FROM buses WHERE bus_number = ?', 's', [$test_busno]);

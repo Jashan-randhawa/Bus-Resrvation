@@ -281,8 +281,9 @@ if (isset($_POST['subbtn'])) {
 
         // O1: Accept ONLY the random 10-hex character token (no sequential sno fallback)
         if (preg_match('/^[A-F0-9]{10}$/', $pnrInput) && strlen($phone4) === 4) {
+          release_expired_holds($link);
           $b = db_one($link,
-            'SELECT pnr, bus, name, contact, city1, city2, `date`, `time`, seat, price, sno
+            'SELECT pnr, bus, name, contact, city1, city2, `date`, `time`, seat, price, sno, status
              FROM booking
              WHERE pnr = ? AND RIGHT(contact, 4) = ?
              LIMIT 1',
@@ -293,7 +294,16 @@ if (isset($_POST['subbtn'])) {
       if ($b): ?>
         <div class="card mx-auto mt-4 text-left shadow-sm" style="max-width:540px;">
           <div class="card-body">
-            <h4 class="card-title text-success">PNR: <?= e($b['pnr']) ?></h4>
+            <div class="d-flex justify-content-between align-items-center">
+              <h4 class="card-title text-success mb-0">PNR: <?= e($b['pnr']) ?></h4>
+              <?php
+              $b_status = (string)($b['status'] ?? 'Confirmed');
+              $badge_color = 'success';
+              if ($b_status === 'Pending') $badge_color = 'warning';
+              elseif ($b_status === 'Cancelled' || $b_status === 'Expired') $badge_color = 'danger';
+              ?>
+              <span class="badge badge-<?= $badge_color ?> p-2 px-3"><?= e($b_status) ?></span>
+            </div>
             <hr>
             <p class="mb-1"><strong>Passenger:</strong> <?= e($b['name']) ?> (Phone: ***-***-<?= e(substr($b['contact'], -4)) ?>)</p>
             <p class="mb-1"><strong>Bus Number:</strong> <?= e($b['bus']) ?></p>

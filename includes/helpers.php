@@ -109,8 +109,21 @@ function throttle_blocked(mysqli $link, string $key, int $max = 5, int $window =
 }
 
 /**
+ * Automatically releases seats held in 'Pending' status whose hold window has expired (O13).
+ */
+function release_expired_holds(mysqli $link): void {
+    $cols = db_all($link, 'SHOW COLUMNS FROM booking');
+    $col_names = array_column($cols, 'Field');
+    if (in_array('status', $col_names, true) && in_array('hold_expires_at', $col_names, true)) {
+        db_exec($link,
+            "UPDATE booking SET status = 'Expired' WHERE status = 'Pending' AND hold_expires_at IS NOT NULL AND hold_expires_at < NOW()"
+        );
+    }
+}
+
+/**
  * Returns a map of booked seat numbers [seat_no => true] for a specific bus, date, and departure time.
- * Ignores soft-cancelled bookings.
+ * Ignores cancelled and expired bookings. Automatically sweeps expired holds.
  */
 function get_booked_seats(mysqli $link, string $bus, string $date, string $time): array {
     $booked = [];
@@ -118,12 +131,15 @@ function get_booked_seats(mysqli $link, string $bus, string $date, string $time)
         return $booked;
     }
 
+    // Sweep expired holds first (O13)
+    release_expired_holds($link);
+
     $cols = db_all($link, 'SHOW COLUMNS FROM booking');
     $has_status = in_array('status', array_column($cols, 'Field'), true);
 
     if ($has_status) {
         $rows = db_all($link,
-            "SELECT seat FROM booking WHERE bus = ? AND `date` = ? AND `time` = ? AND (status IS NULL OR status != 'Cancelled')",
+            "SELECT seat FROM booking WHERE bus = ? AND `date` = ? AND `time` = ? AND (status IS NULL OR status IN ('Confirmed', 'Pending'))",
             'sss', [$bus, $date, $time]
         );
     } else {
@@ -207,11 +223,20 @@ function create_booking(mysqli $link, array $data): array {
     $col_names = array_column($cols, 'Field');
     $has_pnr = in_array('pnr', $col_names, true);
     $has_status = in_array('status', $col_names, true);
+    $has_hold = in_array('hold_expires_at', $col_names, true);
+
+    $booking_status = trim((string)($data['status'] ?? 'Confirmed'));
+    if (!in_array($booking_status, ['Confirmed', 'Pending'], true)) {
+        $booking_status = 'Confirmed';
+    }
+
+    // Release any stale holds before checking availability (O13)
+    release_expired_holds($link);
 
     // If status column exists, verify seat is not currently active
     if ($has_status) {
         $active_seat = db_one($link,
-            "SELECT sno FROM booking WHERE bus = ? AND `date` = ? AND `time` = ? AND seat = ? AND (status IS NULL OR status != 'Cancelled') LIMIT 1",
+            "SELECT sno FROM booking WHERE bus = ? AND `date` = ? AND `time` = ? AND seat = ? AND status IN ('Confirmed', 'Pending') LIMIT 1",
             'sssi', [$bus, $date, $time, $seat]
         );
         if ($active_seat) {
@@ -223,9 +248,13 @@ function create_booking(mysqli $link, array $data): array {
     try {
         $pnr = strtoupper(bin2hex(random_bytes(5)));
 
-        if ($has_pnr && $has_status) {
-            $sql = "INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed')";
-            db_exec($link, $sql, 'isssssssids', [$cust_id, $bus, $name, $contact, $from, $to, $date, $time, $seat, $price, $pnr]);
+        if ($has_pnr && $has_status && $has_hold) {
+            $hold_exp = ($booking_status === 'Pending') ? date('Y-m-d H:i:s', strtotime('+10 minutes')) : null;
+            $sql = "INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr, status, hold_expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            db_exec($link, $sql, 'isssssssidsss', [$cust_id, $bus, $name, $contact, $from, $to, $date, $time, $seat, $price, $pnr, $booking_status, $hold_exp]);
+        } elseif ($has_pnr && $has_status) {
+            $sql = "INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            db_exec($link, $sql, 'isssssssidss', [$cust_id, $bus, $name, $contact, $from, $to, $date, $time, $seat, $price, $pnr, $booking_status]);
         } elseif ($has_pnr) {
             $sql = 'INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
             db_exec($link, $sql, 'isssssssids', [$cust_id, $bus, $name, $contact, $from, $to, $date, $time, $seat, $price, $pnr]);
@@ -235,7 +264,7 @@ function create_booking(mysqli $link, array $data): array {
         }
 
         mysqli_commit($link);
-        return ['ok' => true, 'pnr' => $pnr, 'error' => ''];
+        return ['ok' => true, 'pnr' => $pnr, 'status' => $booking_status, 'error' => ''];
     } catch (mysqli_sql_exception $e) {
         mysqli_rollback($link);
         if ((int)$e->getCode() === 1062) {

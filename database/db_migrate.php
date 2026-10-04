@@ -252,4 +252,23 @@ if (!migration_applied($link, $m3)) {
     echo "[i] Migration {$m3} already applied.\n";
 }
 
+// 6. Seat hold expiration & payment states (O13: 004_seat_hold_and_payment_states)
+$m4 = '004_seat_hold_and_payment_states';
+if (!migration_applied($link, $m4)) {
+    echo "[*] Running migration: {$m4}...\n";
+    if (!has_column($link, 'booking', 'created_at')) {
+        mysqli_query($link, "ALTER TABLE `booking` ADD COLUMN `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP");
+    }
+    if (!has_column($link, 'booking', 'hold_expires_at')) {
+        mysqli_query($link, "ALTER TABLE `booking` ADD COLUMN `hold_expires_at` TIMESTAMP NULL DEFAULT NULL");
+    }
+    if (!has_index($link, 'booking', 'idx_booking_hold')) {
+        @mysqli_query($link, "ALTER TABLE `booking` ADD KEY `idx_booking_hold` (`status`, `hold_expires_at`)");
+    }
+    record_migration($link, $m4);
+    echo "  -> Completed {$m4}.\n";
+} else {
+    echo "[i] Migration {$m4} already applied.\n";
+}
+
 echo "\n[✓] All database migrations are up to date!\n";
