@@ -64,6 +64,9 @@
                     <li class=" nav-item active">
                         <a href="<?= BASE_URL ?>/admin/queries.php" class="nav-link">Query</a>
                     </li>
+                    <li class=" nav-item active">
+                        <a href="<?= BASE_URL ?>/admin/diagnostics.php" class="nav-link text-info font-weight-bold">Diagnostics</a>
+                    </li>
                     <li>
                         <form action="" method="post">
                         <?= csrf_field() ?>
