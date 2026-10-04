@@ -80,10 +80,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_route'])) {
 $buses = db_all($link, 'SELECT bus_number FROM buses ORDER BY bus_number ASC');
 $routes = db_all($link, "SELECT * FROM route ORDER BY `{$route_pk}` ASC");
 
+$title = 'Routes';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
 ?>
-<div class="col-lg-10 col-md-12 col-sm-12" style=" float: right ; ">
-  <h1 class="text-info">Bus Status</h1>
+<div class="admin-content-wrap">
+  <h1 class="text-info">Route Management</h1>
   <br>
 
   <?php if ($alert): ?>

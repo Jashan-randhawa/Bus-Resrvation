@@ -11,7 +11,7 @@ $total_admins = (int)(db_one($link, 'SELECT COUNT(*) AS c FROM admin')['c'] ?? 0
 $earnings_row = db_one($link, 'SELECT COALESCE(SUM(price), 0) AS cost FROM booking');
 $total_earnings = number_format((float)($earnings_row['cost'] ?? 0), 2);
 ?>
-<div class="col-lg-10 col-md-12 col-sm-12" style=" float: right ; ">
+<div class="dashboard-wrapper">
     <div class="row">
         <div class=" card col-lg-3 m-4">
             <div class="card-body">

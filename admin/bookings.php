@@ -68,10 +68,11 @@ $from_cities = db_all($link, 'SELECT DISTINCT city1 FROM route ORDER BY city1 AS
 $to_cities = db_all($link, 'SELECT DISTINCT city2 FROM route ORDER BY city2 ASC');
 $bookings = db_all($link, 'SELECT * FROM booking ORDER BY sno DESC');
 
+$title = 'Bookings';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
 ?>
-<div class="col-lg-10 col-md-12 col-sm-12" style=" float: right ; ">
-  <h1 class="text-info">Booking Status</h1>
+<div class="admin-content-wrap">
+  <h1 class="text-info">Booking Management</h1>
   <br>
 
   <?php if ($alert): ?>

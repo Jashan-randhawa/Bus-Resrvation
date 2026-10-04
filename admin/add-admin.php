@@ -47,10 +47,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
 
 $admins = db_all($link, "SELECT * FROM admin ORDER BY `{$admin_pk}` ASC");
 
+$title = 'Administrators';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
 ?>
-<div class="col-lg-10 col-md-12 col-sm-12" style=" float: right ; ">
-    <h1 class="text-info">Add New Admin</h1>
+<div class="admin-content-wrap">
+    <h1 class="text-info">Administrator Management</h1>
 
     <?php if ($alert): ?>
         <div class="alert alert-<?= e($alert_type) ?> alert-dismissible fade show" role="alert">

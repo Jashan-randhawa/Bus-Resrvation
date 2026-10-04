@@ -26,9 +26,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_query'])) {
 
 $queries = db_all($link, "SELECT * FROM `query` ORDER BY `{$query_pk}` DESC");
 
+$title = 'Customer Queries';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
 ?>
-<div class="col-lg-10 col-md-12 col-sm-12" style=" float: right ; ">
+<div class="admin-content-wrap">
   <h1 class="text-info">Customer Queries & Feedback</h1>
   <br>
 

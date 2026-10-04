@@ -160,7 +160,7 @@ $checks[] = run_check('Application Timezone', function() {
 $title = 'System Diagnostics & Health Check';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
 ?>
-<div class="col-lg-10 col-md-10 col-sm-12" style="float: right;">
+<div class="admin-content-wrap">
     <section class="mt-4 mb-5">
         <h2 class="text-info mb-3">System Diagnostics & Integrity Checks</h2>
         <p class="text-muted">

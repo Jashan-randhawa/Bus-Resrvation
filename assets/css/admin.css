@@ -1,10 +1,165 @@
-.bar{
-    position: fixed;
-      top: -8px;
-      left: -48px;
-      width: 200px;
-      height: 100%;
-      background-color: #a2a4c0bb;
-      overflow-y: auto;
-      padding-top: 30px
+/* assets/css/admin.css -- Modern Admin Shell & Flexbox Layout (L-05) */
+body {
+    background-color: #f4f6f9;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+.admin-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+.admin-sidebar {
+    width: 250px;
+    flex: 0 0 250px;
+    background-color: #1a2238;
+    color: #cfd7e6;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    border-right: 1px solid #141b2d;
+    z-index: 1020;
+}
+
+.admin-brand {
+    padding: 20px 18px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-brand .brand-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #ffffff;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.admin-brand .brand-logo {
+    width: 28px;
+    height: 28px;
+    margin-right: 10px;
+}
+
+.admin-brand .brand-badge {
+    font-size: 0.68rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 4px 6px;
+}
+
+.admin-profile {
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.profile-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    margin-right: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.profile-info {
+    overflow: hidden;
+}
+
+.profile-name {
+    font-weight: 600;
+    color: #ffffff;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.profile-role {
+    font-size: 0.75rem;
+    color: #8a99b5;
+}
+
+.admin-nav {
+    flex: 1;
+    padding: 14px 12px;
+}
+
+.nav-group-header {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #7284a8;
+    font-weight: 700;
+    padding: 12px 10px 4px;
+}
+
+.nav-group-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.admin-nav .nav-item {
+    margin-bottom: 2px;
+}
+
+.admin-nav .nav-link {
+    display: block;
+    color: #b0bed9;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+}
+
+.admin-nav .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+
+.admin-nav .nav-link.active {
+    background-color: #007bff;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.admin-sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: rgba(0, 0, 0, 0.15);
+}
+
+.admin-main {
+    flex: 1;
+    min-width: 0;
+    padding: 24px 32px;
+    background-color: #f8f9fa;
+}
+
+@media (max-width: 991px) {
+    .admin-shell {
+        display: block;
+    }
+    .admin-sidebar {
+        width: 100%;
+        height: auto;
+        position: static;
+    }
+    .admin-main {
+        padding: 16px;
+    }
 }

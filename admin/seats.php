@@ -31,10 +31,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     }
 }
 
+$title = 'Seat Availability';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
 ?>
-<div class="col-lg-10 col-md-10 col-sm-12" style="float: right;">
-    <h1 class="text-info mb-4">Bus Seat Status</h1>
+<div class="admin-content-wrap">
+    <h1 class="text-info mb-4">Seat Availability</h1>
     <div class="card col-lg-6 col-md-8 col-sm-12">
         <div class="card-body">
             <form action="" method="post">

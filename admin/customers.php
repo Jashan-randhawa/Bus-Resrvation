@@ -59,10 +59,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_customer'])) {
 
 $customers = db_all($link, "SELECT * FROM costumer ORDER BY `{$cust_pk}` ASC");
 
+$title = 'Customers';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
 ?>
-<div class="col-lg-10 col-md-12 col-sm-12" style=" float: right ; ">
-  <h1 class="text-info">Customer Status</h1>
+<div class="admin-content-wrap">
+  <h1 class="text-info">Customer Management</h1>
   <br>
 
   <?php if ($alert): ?>
