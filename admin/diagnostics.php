@@ -4,14 +4,21 @@ require_once __DIR__ . '/../includes/auth/admin-session.php';
 require_once __DIR__ . '/../includes/db_con.php';
 require_once __DIR__ . '/../includes/helpers.php';
 
-$migration_log = null;
+$migration_log = $_SESSION['migration_log'] ?? null;
+unset($_SESSION['migration_log']);
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['run_migrations'])) {
     csrf_verify();
-    ob_start();
-    $_GET['migrate_key'] = 'admin_session';
-    require __DIR__ . '/../database/db_migrate.php';
-    $migration_log = ob_get_clean();
-    flash_set('success', 'Database migrations executed successfully.');
+    require_once __DIR__ . '/../database/db_migrate.php';
+    $res = run_migrations($link);
+    if ($res['ok']) {
+        flash_set('success', 'Database migrations executed successfully.');
+    } else {
+        flash_set('danger', 'One or more database migrations failed. Review log below.');
+    }
+    $_SESSION['migration_log'] = implode("\n", $res['log']);
+    header('Location: ' . BASE_URL . '/admin/diagnostics.php');
+    exit;
 }
 
 // Safe query runner for administrative/metadata queries (SHOW COLUMNS, SHOW INDEX, etc.)
