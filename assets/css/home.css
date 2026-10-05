@@ -39,9 +39,15 @@ html.dark-mode body.home-page {
   --home-primary:    #3b82f6;
   --home-primary-h:  #60a5fa;
   --home-accent:     #fbbf24;
-  --home-accent-fill:#78350f;
+  --home-accent-fill:rgba(217, 119, 6, 0.2);
   --home-border:     #1e293b;
   --home-border-subtle: rgba(30, 41, 59, 0.8);
+}
+
+html[data-theme="dark"] .hero-pill {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(251, 191, 36, 0.35);
 }
 
 html[data-theme="dark"] .navbar-public {
@@ -187,11 +193,13 @@ section[id] {
   padding: 0.35rem 0.85rem;
   background: var(--home-accent-fill);
   color: #92400e;
+  border: 1px solid rgba(217, 119, 6, 0.25);
   font-weight: 600;
   font-size: 0.8125rem;
   border-radius: var(--radius-full, 9999px);
   margin-bottom: 1.25rem;
   letter-spacing: 0.02em;
+  transition: all var(--transition-fast, 150ms ease);
 }
 
 .hero-heading {
