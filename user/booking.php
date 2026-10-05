@@ -161,109 +161,21 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                     <div class="form-group mt-3">
                         <label class="font-weight-bold small text-muted mb-2 d-block text-center">Select Your Seat Number</label>
                         
-                        <!-- Real-Life Coach Bus Legend -->
-                        <div class="seat-legend mb-4">
-                            <div class="legend-item">
-                                <div class="legend-seat-mini available">
-                                    <span class="mini-headrest"></span>
-                                    <span class="mini-cushion"></span>
+                        <div class="bus-map-wrapper">
+                            <!-- Proposed Bus-Shaped 2+2 Map Container -->
+                            <div class="bus-map-card">
+                                <!-- Top: Driver and Door -->
+                                <div class="bus-map-header">
+                                    <span class="bus-driver-label">Driver</span>
+                                    <span class="bus-door-label">Door &rarr;</span>
                                 </div>
-                                <span>Available Seat</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="legend-seat-mini selected">
-                                    <span class="mini-headrest"></span>
-                                    <span class="mini-cushion">✓</span>
-                                </div>
-                                <span>Selected Seat</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="legend-seat-mini booked">
-                                    <span class="mini-headrest"></span>
-                                    <span class="mini-cushion">✕</span>
-                                </div>
-                                <span>Already Booked</span>
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-badge">🛞</span>
-                                <span>Driver Area</span>
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-badge">🚪</span>
-                                <span>Entrance Door</span>
-                            </div>
-                        </div>
+                                <div class="bus-dash-divider"></div>
 
-                        <!-- Real-Life Coach Bus Vehicle Shell -->
-                        <div class="bus-vehicle-container">
-                            <!-- Aerodynamic Front Roof & Windshield -->
-                            <div class="bus-front-roof">
-                                <div class="bus-side-mirror mirror-left" title="Rearview Mirror Left"></div>
-                                <div class="bus-side-mirror mirror-right" title="Rearview Mirror Right"></div>
-
-                                <div class="bus-windshield">
-                                    <div class="windshield-glare"></div>
-                                    <div class="windshield-display">
-                                        <span class="led-blink">●</span>
-                                        <span class="led-route">EXPRESS COACH &bull; <?= e($bus) ?> &bull; <?= e($route['city1']) ?> ➔ <?= e($route['city2']) ?></span>
-                                    </div>
-                                    <div class="windshield-wipers">
-                                        <span class="wiper wiper-left"></span>
-                                        <span class="wiper wiper-right"></span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Interior Passenger Cabin -->
-                            <div class="bus-cabin">
-                                <!-- Cockpit Area: Boarding steps on left, Driver cockpit on right -->
-                                <div class="bus-cabin-front">
-                                    <!-- Boarding Door -->
-                                    <div class="cabin-entry-gate" title="Passenger Entrance Door">
-                                        <div class="entry-steps-tread">
-                                            <span class="step-tread"></span>
-                                            <span class="step-tread"></span>
-                                        </div>
-                                        <span class="entry-icon">🚪</span>
-                                        <span class="entry-text">ENTRANCE</span>
-                                    </div>
-
-                                    <!-- Front Aisle Guide -->
-                                    <div class="cabin-aisle-guide">
-                                        <span class="guide-arrow">▲</span>
-                                        <span>FRONT OF BUS</span>
-                                    </div>
-
-                                    <!-- Driver Cockpit with Realistic Steering Wheel -->
-                                    <div class="cabin-driver-deck" title="Driver Cabin">
-                                        <div class="driver-steering-icon">
-                                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                                <circle cx="12" cy="12" r="9"></circle>
-                                                <circle cx="12" cy="12" r="2.5"></circle>
-                                                <path d="M12 3v6.5"></path>
-                                                <path d="M4.5 16.5l5.5-3"></path>
-                                                <path d="M19.5 16.5l-5.5-3"></path>
-                                            </svg>
-                                        </div>
-                                        <div class="driver-deck-label">
-                                            <span class="driver-tag-main">DRIVER</span>
-                                            <span class="driver-tag-sub">CABIN</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Cabin Window Sills Indicator -->
-                                <div class="cabin-window-strip">
-                                    <span class="window-sill"><span class="win-icon">🪟</span> Window</span>
-                                    <span class="aisle-title"><span class="aisle-icon">🚶</span> Central Aisle</span>
-                                    <span class="window-sill">Window <span class="win-icon">🪟</span></span>
-                                </div>
-
-                                <!-- 2+2 Real Coach Seating Matrix -->
+                                <!-- 2+2 Bus Seats -->
                                 <?php
                                 $num_rows = (int)ceil($bus_capacity / 4);
                                 ?>
-                                <div role="radiogroup" aria-label="Bus seat selection" class="bus-seat-matrix">
+                                <div role="radiogroup" aria-label="Bus seat selection" class="bus-seats-grid">
                                     <?php for ($r = 1; $r <= $num_rows; $r++): ?>
                                         <?php
                                         $s1 = ($r - 1) * 4 + 1;
@@ -271,93 +183,88 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                                         $s3 = ($r - 1) * 4 + 3;
                                         $s4 = ($r - 1) * 4 + 4;
                                         ?>
-                                        <div class="seat-row" data-row="<?= $r ?>">
+                                        <div class="bus-row">
                                             <!-- Left Pair (Window + Aisle) -->
-                                            <div class="seat-pair left-pair">
+                                            <div class="bus-seat-pair">
                                                 <?php if ($s1 <= $bus_capacity): ?>
                                                     <?php $bk1 = isset($booked_seats[$s1]); ?>
-                                                    <div class="seat-box <?= $bk1 ? 'seat-box-booked' : 'seat-box-available' ?>">
+                                                    <div class="seat-box">
                                                         <input type="radio" name="seat" id="seat-<?= $s1 ?>" value="<?= $s1 ?>"
                                                             class="seat-radio"
                                                             <?= $bk1 ? 'disabled' : '' ?>
                                                             aria-label="Seat <?= $s1 ?>, Window seat, <?= $bk1 ? 'Already Booked' : 'Available' ?>"
                                                             <?= ($s1 === 1 && !$bk1) ? 'required' : '' ?>>
-                                                        <label for="seat-<?= $s1 ?>" class="seat-label <?= $bk1 ? 'seat-booked' : 'seat-available' ?>" title="Seat #<?= $s1 ?> (Window) &bull; <?= $bk1 ? 'Already Booked' : 'Available for Reservation' ?>">
-                                                            <span class="seat-headrest"><span class="headrest-cover"></span></span>
-                                                            <span class="seat-armrest armrest-left"></span>
-                                                            <span class="seat-armrest armrest-right"></span>
-                                                            <span class="seat-cushion">
-                                                                <span class="seat-num"><?= $s1 ?></span>
-                                                                <span class="seat-type-tag"><?= $bk1 ? '<span class="seat-booked-icon">✕</span>' : 'WIN' ?></span>
-                                                            </span>
+                                                        <label for="seat-<?= $s1 ?>" class="seat-label <?= $bk1 ? 'seat-booked' : 'seat-available' ?>" title="Seat <?= $s1 ?> (Window) &bull; <?= $bk1 ? 'Booked' : 'Available' ?>">
+                                                            <?php if ($bk1): ?>
+                                                                <span class="seat-corner-icon">✕</span>
+                                                            <?php else: ?>
+                                                                <span class="seat-corner-icon check-icon">✓</span>
+                                                            <?php endif; ?>
+                                                            <span class="seat-num"><?= $s1 ?></span>
+                                                            <span class="seat-type-tag">W</span>
                                                         </label>
                                                     </div>
                                                 <?php endif; ?>
 
                                                 <?php if ($s2 <= $bus_capacity): ?>
                                                     <?php $bk2 = isset($booked_seats[$s2]); ?>
-                                                    <div class="seat-box <?= $bk2 ? 'seat-box-booked' : 'seat-box-available' ?>">
+                                                    <div class="seat-box">
                                                         <input type="radio" name="seat" id="seat-<?= $s2 ?>" value="<?= $s2 ?>"
                                                             class="seat-radio"
                                                             <?= $bk2 ? 'disabled' : '' ?>
                                                             aria-label="Seat <?= $s2 ?>, Aisle seat, <?= $bk2 ? 'Already Booked' : 'Available' ?>">
-                                                        <label for="seat-<?= $s2 ?>" class="seat-label <?= $bk2 ? 'seat-booked' : 'seat-available' ?>" title="Seat #<?= $s2 ?> (Aisle) &bull; <?= $bk2 ? 'Already Booked' : 'Available for Reservation' ?>">
-                                                            <span class="seat-headrest"><span class="headrest-cover"></span></span>
-                                                            <span class="seat-armrest armrest-left"></span>
-                                                            <span class="seat-armrest armrest-right"></span>
-                                                            <span class="seat-cushion">
-                                                                <span class="seat-num"><?= $s2 ?></span>
-                                                                <span class="seat-type-tag"><?= $bk2 ? '<span class="seat-booked-icon">✕</span>' : 'AIS' ?></span>
-                                                            </span>
+                                                        <label for="seat-<?= $s2 ?>" class="seat-label <?= $bk2 ? 'seat-booked' : 'seat-available' ?>" title="Seat <?= $s2 ?> (Aisle) &bull; <?= $bk2 ? 'Booked' : 'Available' ?>">
+                                                            <?php if ($bk2): ?>
+                                                                <span class="seat-corner-icon">✕</span>
+                                                            <?php else: ?>
+                                                                <span class="seat-corner-icon check-icon">✓</span>
+                                                            <?php endif; ?>
+                                                            <span class="seat-num"><?= $s2 ?></span>
+                                                            <span class="seat-type-tag">A</span>
                                                         </label>
                                                     </div>
                                                 <?php endif; ?>
                                             </div>
 
-                                            <!-- Center Aisle Runner -->
-                                            <div class="aisle-gap" title="Aisle Corridor &bull; Row <?= $r ?>">
-                                                <div class="aisle-runner">
-                                                    <span class="aisle-row-marker">R<?= $r ?></span>
-                                                    <span class="aisle-dot"></span>
-                                                </div>
-                                            </div>
+                                            <!-- Center Aisle Space -->
+                                            <div class="bus-aisle-space"></div>
 
                                             <!-- Right Pair (Aisle + Window) -->
-                                            <div class="seat-pair right-pair">
+                                            <div class="bus-seat-pair">
                                                 <?php if ($s3 <= $bus_capacity): ?>
                                                     <?php $bk3 = isset($booked_seats[$s3]); ?>
-                                                    <div class="seat-box <?= $bk3 ? 'seat-box-booked' : 'seat-box-available' ?>">
+                                                    <div class="seat-box">
                                                         <input type="radio" name="seat" id="seat-<?= $s3 ?>" value="<?= $s3 ?>"
                                                             class="seat-radio"
                                                             <?= $bk3 ? 'disabled' : '' ?>
                                                             aria-label="Seat <?= $s3 ?>, Aisle seat, <?= $bk3 ? 'Already Booked' : 'Available' ?>">
-                                                        <label for="seat-<?= $s3 ?>" class="seat-label <?= $bk3 ? 'seat-booked' : 'seat-available' ?>" title="Seat #<?= $s3 ?> (Aisle) &bull; <?= $bk3 ? 'Already Booked' : 'Available for Reservation' ?>">
-                                                            <span class="seat-headrest"><span class="headrest-cover"></span></span>
-                                                            <span class="seat-armrest armrest-left"></span>
-                                                            <span class="seat-armrest armrest-right"></span>
-                                                            <span class="seat-cushion">
-                                                                <span class="seat-num"><?= $s3 ?></span>
-                                                                <span class="seat-type-tag"><?= $bk3 ? '<span class="seat-booked-icon">✕</span>' : 'AIS' ?></span>
-                                                            </span>
+                                                        <label for="seat-<?= $s3 ?>" class="seat-label <?= $bk3 ? 'seat-booked' : 'seat-available' ?>" title="Seat <?= $s3 ?> (Aisle) &bull; <?= $bk3 ? 'Booked' : 'Available' ?>">
+                                                            <?php if ($bk3): ?>
+                                                                <span class="seat-corner-icon">✕</span>
+                                                            <?php else: ?>
+                                                                <span class="seat-corner-icon check-icon">✓</span>
+                                                            <?php endif; ?>
+                                                            <span class="seat-num"><?= $s3 ?></span>
+                                                            <span class="seat-type-tag">A</span>
                                                         </label>
                                                     </div>
                                                 <?php endif; ?>
 
                                                 <?php if ($s4 <= $bus_capacity): ?>
                                                     <?php $bk4 = isset($booked_seats[$s4]); ?>
-                                                    <div class="seat-box <?= $bk4 ? 'seat-box-booked' : 'seat-box-available' ?>">
+                                                    <div class="seat-box">
                                                         <input type="radio" name="seat" id="seat-<?= $s4 ?>" value="<?= $s4 ?>"
                                                             class="seat-radio"
                                                             <?= $bk4 ? 'disabled' : '' ?>
                                                             aria-label="Seat <?= $s4 ?>, Window seat, <?= $bk4 ? 'Already Booked' : 'Available' ?>">
-                                                        <label for="seat-<?= $s4 ?>" class="seat-label <?= $bk4 ? 'seat-booked' : 'seat-available' ?>" title="Seat #<?= $s4 ?> (Window) &bull; <?= $bk4 ? 'Already Booked' : 'Available for Reservation' ?>">
-                                                            <span class="seat-headrest"><span class="headrest-cover"></span></span>
-                                                            <span class="seat-armrest armrest-left"></span>
-                                                            <span class="seat-armrest armrest-right"></span>
-                                                            <span class="seat-cushion">
-                                                                <span class="seat-num"><?= $s4 ?></span>
-                                                                <span class="seat-type-tag"><?= $bk4 ? '<span class="seat-booked-icon">✕</span>' : 'WIN' ?></span>
-                                                            </span>
+                                                        <label for="seat-<?= $s4 ?>" class="seat-label <?= $bk4 ? 'seat-booked' : 'seat-available' ?>" title="Seat <?= $s4 ?> (Window) &bull; <?= $bk4 ? 'Booked' : 'Available' ?>">
+                                                            <?php if ($bk4): ?>
+                                                                <span class="seat-corner-icon">✕</span>
+                                                            <?php else: ?>
+                                                                <span class="seat-corner-icon check-icon">✓</span>
+                                                            <?php endif; ?>
+                                                            <span class="seat-num"><?= $s4 ?></span>
+                                                            <span class="seat-type-tag">W</span>
                                                         </label>
                                                     </div>
                                                 <?php endif; ?>
@@ -366,20 +273,27 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                                     <?php endfor; ?>
                                 </div>
 
-                                <!-- Rear Bulkhead / Emergency Exit -->
-                                <div class="bus-cabin-rear">
-                                    <div class="rear-bulkhead">
-                                        <span class="emergency-icon">🚨</span>
-                                        <span class="emergency-text">REAR EMERGENCY EXIT</span>
-                                    </div>
+                                <div class="bus-dash-divider footer-divider"></div>
+                                <!-- Bottom: Rear -->
+                                <div class="bus-map-footer">
+                                    <span class="bus-rear-label">Rear</span>
                                 </div>
                             </div>
 
-                            <!-- Bus Rear Bumper & Taillights -->
-                            <div class="bus-rear-bumper">
-                                <span class="rear-light light-red"></span>
-                                <span class="bus-plate">EXP &bull; <?= e($bus) ?></span>
-                                <span class="rear-light light-red"></span>
+                            <!-- Legend from Proposed Diagram -->
+                            <div class="bus-legend">
+                                <div class="bus-legend-item">
+                                    <span class="bus-legend-swatch swatch-available"></span>
+                                    <span>Available</span>
+                                </div>
+                                <div class="bus-legend-item">
+                                    <span class="bus-legend-swatch swatch-selected"></span>
+                                    <span>Selected</span>
+                                </div>
+                                <div class="bus-legend-item">
+                                    <span class="bus-legend-swatch swatch-booked"></span>
+                                    <span>Booked</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -433,8 +347,8 @@ document.addEventListener('DOMContentLoaded', function() {
         radio.addEventListener('change', function() {
             if (this.checked) {
                 var label = document.querySelector('label[for="' + this.id + '"]');
-                var typeTag = label ? label.querySelector('.seat-type-tag')?.textContent : '';
-                var typeStr = typeTag === 'WIN' ? 'Window' : (typeTag === 'AIS' ? 'Aisle' : 'Standard');
+                var typeTag = label ? label.querySelector('.seat-type-tag')?.textContent?.trim() : '';
+                var typeStr = (typeTag === 'W' || typeTag === 'WIN') ? 'Window' : ((typeTag === 'A' || typeTag === 'AIS') ? 'Aisle' : 'Standard');
                 onSeatSelected(this.value, typeStr);
             }
         });
@@ -488,7 +402,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             radio.disabled = true;
                             if (label) {
                                 label.className = 'seat-label seat-booked';
-                                label.innerHTML = '<span class="seat-headrest"><span class="headrest-cover"></span></span><span class="seat-armrest armrest-left"></span><span class="seat-armrest armrest-right"></span><span class="seat-cushion"><span class="seat-num">' + sNum + '</span><span class="seat-type-tag"><span class="seat-booked-icon">✕</span></span></span>';
+                                var tagSpan = label.querySelector('.seat-type-tag');
+                                var tagVal = tagSpan ? tagSpan.textContent.trim() : 'W';
+                                label.innerHTML = '<span class="seat-corner-icon">✕</span><span class="seat-num">' + sNum + '</span><span class="seat-type-tag">' + tagVal + '</span>';
                             }
                         }
                     });
