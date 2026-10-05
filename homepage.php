@@ -294,7 +294,7 @@ if (isset($_POST['subbtn'])) {
     </div>
   </section>
 
-  <!-- 3. PNR Lookup Section -->
+  <!-- 3. PNR Lookup Section (D1-D8) -->
   <section id="pnr" class="home-section" aria-labelledby="pnrHeading">
     <div class="container">
       <div class="text-center mb-5">
@@ -306,51 +306,112 @@ if (isset($_POST['subbtn'])) {
       </div>
 
       <div class="pnr-search-box mx-auto" style="max-width: 700px;">
-        <form method="get" action="<?= e(BASE_URL) ?>/homepage.php#pnr" class="row">
+        <form method="get" action="<?= e(BASE_URL) ?>/homepage.php#pnr" id="pnrSearchForm" onsubmit="handlePnrSubmit()" class="row">
           <div class="col-md-5 mb-3 mb-md-0">
-            <label class="form-label font-weight-bold small text-muted">PNR Number</label>
-            <input class="form-control" name="pnr" maxlength="10" placeholder="e.g. 9B3A57EF10" value="<?= e($_GET['pnr'] ?? '') ?>" required style="text-transform: uppercase;">
+            <label for="pnr_input" class="form-label font-weight-bold small text-muted">PNR Number</label>
+            <input class="form-control" 
+                   id="pnr_input"
+                   name="pnr" 
+                   maxlength="10" 
+                   pattern="[A-Fa-f0-9]{10}"
+                   autocomplete="off"
+                   autocapitalize="characters"
+                   placeholder="e.g. 9B3A57EF10" 
+                   value="<?= e($_GET['pnr'] ?? '') ?>" 
+                   required 
+                   style="text-transform: uppercase;">
           </div>
           <div class="col-md-4 mb-3 mb-md-0">
-            <label class="form-label font-weight-bold small text-muted">Last 4 Digits of Phone</label>
-            <input class="form-control" name="phone4" maxlength="4" pattern="\d{4}" placeholder="e.g. 5521" value="<?= e($_GET['phone4'] ?? '') ?>" required>
+            <label for="phone4_input" class="form-label font-weight-bold small text-muted">Last 4 Digits of Phone</label>
+            <input class="form-control" 
+                   id="phone4_input"
+                   name="phone4" 
+                   maxlength="4" 
+                   pattern="\d{4}" 
+                   inputmode="numeric"
+                   autocomplete="off"
+                   placeholder="e.g. 5521" 
+                   value="<?= e($_GET['phone4'] ?? '') ?>" 
+                   required>
           </div>
           <div class="col-md-3 d-flex align-items-end">
-            <button class="btn btn-primary btn-block py-2" type="submit" style="min-height: 40px;">
+            <button class="btn btn-primary btn-block py-2" id="pnrSubmitBtn" type="submit" style="min-height: 40px;">
               Search Ticket
             </button>
           </div>
         </form>
+        <script>
+          function handlePnrSubmit() {
+            var btn = document.getElementById('pnrSubmitBtn');
+            if (btn) {
+              btn.disabled = true;
+              btn.innerHTML = '<span class="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span> Searching...';
+            }
+            document.getElementById('pnrSearchForm').submit();
+          }
+        </script>
 
         <?php
         if (isset($_GET['pnr'], $_GET['phone4'])) {
+          // Send no-store & noindex headers for privacy on PNR lookup results (D3)
+          if (!headers_sent()) {
+            header('Cache-Control: no-store, no-cache, must-revalidate');
+          }
+          echo '<meta name="robots" content="noindex">';
+
           $pnrInput = strtoupper(trim((string)$_GET['pnr']));
           $phone4 = preg_replace('/\D/', '', (string)$_GET['phone4']);
           $b = null;
+          $pnr_state = 'not_found';
           $ip = client_ip();
           $ipKey = 'pnr:ip:' . $ip;
           $targetKey = 'pnr:target:' . $pnrInput;
 
-          if (!throttle_blocked($link, $ipKey, 10, 600) && !throttle_blocked($link, $targetKey, 5, 900)) {
+          // 1. Validate format
+          if (!preg_match('/^[A-F0-9]{10}$/', $pnrInput) || strlen($phone4) !== 4) {
+            $pnr_state = 'invalid';
+          } elseif (throttle_blocked($link, $ipKey, 10, 600) || throttle_blocked($link, $targetKey, 5, 900)) {
+            // 2. Throttled state (D1)
+            $pnr_state = 'throttled';
+          } else {
+            // Count search attempt against rate limits
             throttle_hit($link, $ipKey);
             throttle_hit($link, $targetKey);
 
-            if (preg_match('/^[A-F0-9]{10}$/', $pnrInput) && strlen($phone4) === 4) {
-              release_expired_holds($link);
-              $b = db_one($link,
-                'SELECT pnr, bus, name, contact, city1, city2, `date`, `time`, seat, price, sno, status
-                 FROM booking
-                 WHERE pnr = ? AND RIGHT(contact, 4) = ?
-                 LIMIT 1',
-                'ss', [$pnrInput, $phone4]);
+            release_expired_holds($link);
+            $b = db_one($link,
+              'SELECT pnr, bus, name, contact, city1, city2, `date`, `time`, seat, price, sno, status
+               FROM booking
+               WHERE pnr = ? AND RIGHT(contact, 4) = ?
+               LIMIT 1',
+              'ss', [$pnrInput, $phone4]);
+
+            if ($b) {
+              $pnr_state = 'found';
+            } else {
+              $pnr_state = 'not_found';
             }
           }
 
-          if ($b): ?>
-            <div class="ticket-receipt-card">
+          if ($pnr_state === 'found' && $b): 
+            // Format dates and times cleanly (D4)
+            $rawDate = (string)($b['date'] ?? '');
+            $rawTime = (string)($b['time'] ?? '');
+            $formattedDate = $rawDate;
+            $formattedTime = $rawTime;
+            if ($dObj = DateTime::createFromFormat('Y-m-d', $rawDate)) {
+              $formattedDate = $dObj->format('D, d M Y');
+            }
+            if ($tObj = DateTime::createFromFormat('H:i:s', $rawTime)) {
+              $formattedTime = $tObj->format('h:i A');
+            } elseif ($tObj = DateTime::createFromFormat('H:i', $rawTime)) {
+              $formattedTime = $tObj->format('h:i A');
+            }
+            ?>
+            <div class="ticket-receipt-card" role="status" tabindex="-1" id="pnrResultArea">
               <div class="ticket-header">
                 <div>
-                  <div class="pnr-label">Booking Reference</div>
+                  <div class="pnr-label">Booking Reference (PNR)</div>
                   <div class="pnr-code"><?= e($b['pnr']) ?></div>
                 </div>
                 <?php
@@ -370,36 +431,68 @@ if (isset($_POST['subbtn'])) {
                     <div class="item-value"><?= e($b['name']) ?></div>
                   </div>
                   <div class="col-sm-6 ticket-row-item">
-                    <div class="item-label">Phone Contact</div>
+                    <div class="item-label">Contact Phone</div>
                     <div class="item-value">***-***-<?= e(substr($b['contact'], -4)) ?></div>
                   </div>
                   <div class="col-sm-6 ticket-row-item">
-                    <div class="item-label">Journey Route</div>
+                    <div class="item-label">Route Journey</div>
                     <div class="item-value"><?= e($b['city1']) ?> &rarr; <?= e($b['city2']) ?></div>
                   </div>
                   <div class="col-sm-6 ticket-row-item">
                     <div class="item-label">Departure Schedule</div>
-                    <div class="item-value"><?= e($b['date']) ?> at <?= e($b['time']) ?></div>
+                    <div class="item-value"><?= e($formattedDate) ?> at <?= e($formattedTime) ?></div>
                   </div>
                   <div class="col-sm-6 ticket-row-item">
-                    <div class="item-label">Bus Assigned</div>
+                    <div class="item-label">Bus Vehicle</div>
                     <div class="item-value">Bus #<?= e($b['bus']) ?></div>
                   </div>
                   <div class="col-sm-6 ticket-row-item">
-                    <div class="item-label">Seat Number</div>
+                    <div class="item-label">Seat Assigned</div>
                     <div class="item-value text-primary font-weight-bold">Seat #<?= e((string)$b['seat']) ?></div>
                   </div>
                   <div class="col-12 pt-3 border-top d-flex justify-content-between align-items-center">
-                    <span class="text-muted font-weight-bold">Total Fare Paid:</span>
+                    <span class="text-muted font-weight-bold">Total Fare:</span>
                     <span class="font-weight-bold text-success h4 mb-0"><?= CURRENCY ?><?= e(number_format((float)$b['price'], 2)) ?></span>
                   </div>
                 </div>
               </div>
             </div>
-          <?php else: ?>
-            <div class="alert alert-warning mt-4 text-center mb-0" role="alert">
-              No booking record was found matching that PNR and phone combination, or search limit reached.
+            <script>
+              document.addEventListener('DOMContentLoaded', function() {
+                var resArea = document.getElementById('pnrResultArea');
+                if (resArea) resArea.focus();
+              });
+            </script>
+          <?php elseif ($pnr_state === 'throttled'): ?>
+            <div class="alert alert-danger mt-4 text-center mb-0" role="alert" tabindex="-1" id="pnrResultArea">
+              <strong>Lookup limit reached:</strong> Too many verification attempts have been made. Please wait 15 minutes before checking this ticket again.
             </div>
+            <script>
+              document.addEventListener('DOMContentLoaded', function() {
+                var resArea = document.getElementById('pnrResultArea');
+                if (resArea) resArea.focus();
+              });
+            </script>
+          <?php elseif ($pnr_state === 'invalid'): ?>
+            <div class="alert alert-warning mt-4 text-center mb-0" role="alert" tabindex="-1" id="pnrResultArea">
+              <strong>Invalid format:</strong> Please verify that your PNR is exactly 10 alphanumeric characters and phone digits are 4 numbers.
+            </div>
+            <script>
+              document.addEventListener('DOMContentLoaded', function() {
+                var resArea = document.getElementById('pnrResultArea');
+                if (resArea) resArea.focus();
+              });
+            </script>
+          <?php else: ?>
+            <div class="alert alert-warning mt-4 text-center mb-0" role="alert" tabindex="-1" id="pnrResultArea">
+              <strong>No matching reservation:</strong> No booking record was found matching that PNR token and phone number.
+            </div>
+            <script>
+              document.addEventListener('DOMContentLoaded', function() {
+                var resArea = document.getElementById('pnrResultArea');
+                if (resArea) resArea.focus();
+              });
+            </script>
           <?php endif;
         }
         ?>
