@@ -6,6 +6,8 @@ require_once __DIR__ . '/includes/db_con.php';
 ob_start();
 $msg = "";
 $msg_type = "info";
+$open_modal = ""; // Tracks which modal/tab to re-open on validation error or success (E1)
+$preserved_email = "";
 
 // Read-only queries for the central search & booking card (A1)
 $from_cities = db_all($link, 'SELECT DISTINCT city1 FROM route ORDER BY city1 ASC');
@@ -17,11 +19,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
   $role = isset($_POST['admin']) ? 'admin' : 'user';
   $email = strtolower(trim((string)($_POST['email'] ?? '')));
   $pwd = (string)($_POST['pwd'] ?? '');
+  $preserved_email = $email;
   $ip = client_ip();
 
   if ($email === '' || $pwd === '') {
     $msg = 'Please fill in all the required fields.';
     $msg_type = 'warning';
+    $open_modal = ($role === 'admin') ? 'admin' : 'user';
   } else {
     $acctKey = 'login:acct:' . $email;
     $ipKey   = 'login:ip:' . $ip;
@@ -30,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
     if (throttle_blocked($link, $acctKey, 5, 900) || throttle_blocked($link, $ipKey, 20, 900)) {
       $msg = 'Too many failed attempts. Please try again later.';
       $msg_type = 'danger';
+      $open_modal = ($role === 'admin') ? 'admin' : 'user';
     } else {
       $sql = $role === 'admin'
         ? 'SELECT id, name, phone, Password AS pwd FROM admin WHERE Email_id = ? LIMIT 1'
@@ -71,6 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
       throttle_hit($link, $ipKey);
       $msg = 'Invalid email or password combination.';
       $msg_type = 'danger';
+      $open_modal = ($role === 'admin') ? 'admin' : 'user';
     }
   }
 }
@@ -83,6 +89,7 @@ if (isset($_POST['userbtn'])) {
   $pwd = (string)($_POST['user_pwd'] ?? '');
   $phone = preg_replace('/\D/', '', (string)($_POST['user_no'] ?? ''));
   $addr = trim((string)($_POST['address'] ?? ''));
+  $preserved_email = $email;
   $errors = [];
 
   if ($name === '') { $errors[] = 'Full name is required.'; }
@@ -98,12 +105,14 @@ if (isset($_POST['userbtn'])) {
   if ($errors) {
     $msg = implode(' ', $errors);
     $msg_type = 'warning';
+    $open_modal = 'register';
   } else {
     db_exec($link,
       'INSERT INTO costumer (name, email, pwd, phone, address) VALUES (?,?,?,?,?)',
       'sssss', [$name, $email, password_hash($pwd, PASSWORD_DEFAULT), $phone, $addr]);
-    $msg = 'Account created successfully! You can now log in.';
+    $msg = 'Account created successfully! You can now sign in.';
     $msg_type = 'success';
+    $open_modal = 'register_success'; // Switches to sign in tab inside modal
   }
 }
 
@@ -591,21 +600,29 @@ if (isset($_POST['subbtn'])) {
       <div class="p-3 bg-light border-bottom">
         <ul class="nav nav-tabs border-0" id="authTab" role="tablist">
           <li class="nav-item flex-fill text-center">
-            <a class="nav-link active font-weight-bold" id="login-tab" data-toggle="tab" href="#user-login-pane" role="tab" aria-controls="user-login-pane" aria-selected="true">Sign In</a>
+            <a class="nav-link font-weight-bold <?= ($open_modal === 'register') ? '' : 'active' ?>" id="login-tab" data-toggle="tab" href="#user-login-pane" role="tab" aria-controls="user-login-pane" aria-selected="<?= ($open_modal === 'register') ? 'false' : 'true' ?>">Sign In</a>
           </li>
           <li class="nav-item flex-fill text-center">
-            <a class="nav-link font-weight-bold" id="register-tab" data-toggle="tab" href="#register-pane" role="tab" aria-controls="register-pane" aria-selected="false">Register</a>
+            <a class="nav-link font-weight-bold <?= ($open_modal === 'register') ? 'active' : '' ?>" id="register-tab" data-toggle="tab" href="#register-pane" role="tab" aria-controls="register-pane" aria-selected="<?= ($open_modal === 'register') ? 'true' : 'false' ?>">Register</a>
           </li>
         </ul>
       </div>
       <div class="tab-content" id="authTabContent">
         <!-- Login Pane -->
-        <div class="tab-pane fade show active p-4" id="user-login-pane" role="tabpanel" aria-labelledby="login-tab">
+        <div class="tab-pane fade <?= ($open_modal === 'register') ? '' : 'show active' ?> p-4" id="user-login-pane" role="tabpanel" aria-labelledby="login-tab">
+          <?php if (($open_modal === 'user' || $open_modal === 'register_success') && !empty($msg)): ?>
+            <div class="alert alert-<?= e($msg_type) ?> alert-dismissible fade show mb-3" role="alert">
+              <?= e($msg) ?>
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+          <?php endif; ?>
           <form action="<?= e(BASE_URL) ?>/homepage.php" method="post">
             <?= csrf_field() ?>
             <div class="form-group">
               <label for="user-email-input" class="font-weight-bold small text-muted">Email Address</label>
-              <input type="email" id="user-email-input" name="email" class="form-control" placeholder="passenger@example.com" autocomplete="username" required />
+              <input type="email" id="user-email-input" name="email" class="form-control" value="<?= e($open_modal === 'user' ? $preserved_email : '') ?>" placeholder="passenger@example.com" autocomplete="username" required />
             </div>
             <div class="form-group">
               <label for="user-pwd-input" class="font-weight-bold small text-muted">Password</label>
@@ -617,7 +634,15 @@ if (isset($_POST['subbtn'])) {
           </form>
         </div>
         <!-- Register Pane -->
-        <div class="tab-pane fade p-4" id="register-pane" role="tabpanel" aria-labelledby="register-tab">
+        <div class="tab-pane fade <?= ($open_modal === 'register') ? 'show active' : '' ?> p-4" id="register-pane" role="tabpanel" aria-labelledby="register-tab">
+          <?php if ($open_modal === 'register' && !empty($msg)): ?>
+            <div class="alert alert-<?= e($msg_type) ?> alert-dismissible fade show mb-3" role="alert">
+              <?= e($msg) ?>
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+          <?php endif; ?>
           <form action="<?= e(BASE_URL) ?>/homepage.php" method="post">
             <?= csrf_field() ?>
             <div class="form-row">
@@ -632,7 +657,7 @@ if (isset($_POST['subbtn'])) {
             </div>
             <div class="form-group">
               <label for="user_email" class="font-weight-bold small text-muted">Email Address</label>
-              <input type="email" class="form-control" name="user_email" id="user_email" placeholder="email@example.com" autocomplete="email" required />
+              <input type="email" class="form-control" name="user_email" id="user_email" value="<?= e($open_modal === 'register' ? $preserved_email : '') ?>" placeholder="email@example.com" autocomplete="email" required />
             </div>
             <div class="form-group">
               <label for="user_pwd" class="font-weight-bold small text-muted">Password</label>
@@ -668,12 +693,20 @@ if (isset($_POST['subbtn'])) {
         </button>
       </div>
       <div class="modal-body p-4">
-        <p class="text-muted small mb-4">Authorized administrative personnel sign-in.</p>
+        <p class="text-muted small mb-3">Authorized administrative personnel sign-in.</p>
+        <?php if ($open_modal === 'admin' && !empty($msg)): ?>
+          <div class="alert alert-<?= e($msg_type) ?> alert-dismissible fade show mb-3" role="alert">
+            <?= e($msg) ?>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        <?php endif; ?>
         <form action="<?= e(BASE_URL) ?>/homepage.php" method="post">
           <?= csrf_field() ?>
           <div class="form-group">
             <label for="admin-email-input" class="font-weight-bold small text-muted">Admin Email</label>
-            <input type="email" id="admin-email-input" name="email" class="form-control" placeholder="admin@domain.com" autocomplete="username" required />
+            <input type="email" id="admin-email-input" name="email" class="form-control" value="<?= e($open_modal === 'admin' ? $preserved_email : '') ?>" placeholder="admin@domain.com" autocomplete="username" required />
           </div>
           <div class="form-group">
             <label for="admin-pwd-input" class="font-weight-bold small text-muted">Password</label>
@@ -687,5 +720,34 @@ if (isset($_POST['subbtn'])) {
     </div>
   </div>
 </div>
+
+<!-- Modal Context Re-open Script (E1, E5) -->
+<?php if (!empty($open_modal)): ?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var modalTarget = <?= json_encode($open_modal) ?>;
+  if (modalTarget === 'user' || modalTarget === 'register' || modalTarget === 'register_success') {
+    $('#userlogin').modal('show');
+  } else if (modalTarget === 'admin') {
+    $('#loginModal').modal('show');
+  }
+});
+</script>
+<?php endif; ?>
+
+<script>
+// Auto-focus first input field when modals are opened (E5)
+$('#userlogin').on('shown.bs.modal', function () {
+  var activePane = document.querySelector('#authTabContent .tab-pane.active');
+  if (activePane) {
+    var firstInput = activePane.querySelector('input:not([type=hidden])');
+    if (firstInput) firstInput.focus();
+  }
+});
+$('#loginModal').on('shown.bs.modal', function () {
+  var emailField = document.getElementById('admin-email-input');
+  if (emailField) emailField.focus();
+});
+</script>
 
 <?php require_once __DIR__ . '/includes/layout/footer-public.php'; ?>
