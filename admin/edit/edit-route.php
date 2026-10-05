@@ -57,58 +57,66 @@ $buses = db_all($link, 'SELECT bus_number FROM buses ORDER BY bus_number ASC');
 $title = 'Edit Route';
 require_once __DIR__ . '/../../includes/layout/header-admin.php';
 ?>
-<div class="admin-content-wrap">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb bg-white shadow-sm">
-            <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/admin/index.php">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/admin/routes.php">Routes</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Edit Route: <?= e($row['city1'] ?? '') ?> &rarr; <?= e($row['city2'] ?? '') ?></li>
-        </ol>
-    </nav>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/admin/index.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/admin/routes.php">Routes</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><?= e($row['city1'] ?? '') ?> &rarr; <?= e($row['city2'] ?? '') ?></li>
+    </ol>
+</nav>
 
-    <div class="card shadow-sm col-lg-7 col-md-9 p-0 mx-auto mt-4">
-        <div class="card-header bg-dark text-white">
-            <h5 class="mb-0">Edit Route Details</h5>
-        </div>
-        <div class="card-body">
-            <?php if ($error): ?>
-                <div class="alert alert-danger"><?= e($error) ?></div>
-            <?php endif; ?>
-            <form action="" method="post">
-                <?= csrf_field() ?>
-                <div class="form-group">
-                    <label for="From" class="font-weight-bold">From City :</label>
-                    <input type="text" id="From" name="From" class="form-control" value="<?= e($row['city1'] ?? '') ?>" placeholder="From city" required />
-                </div>
-                <div class="form-group">
-                    <label for="To" class="font-weight-bold">To City :</label>
-                    <input type="text" id="To" name="To" class="form-control" value="<?= e($row['city2'] ?? '') ?>" placeholder="To city" required />
-                </div>
-                <div class="form-group">
-                    <label for="bus" class="font-weight-bold">Assigned Bus :</label>
-                    <select name="bus" id="bus" class="form-control" required>
-                        <option value="">Select Bus Number</option>
-                        <?php foreach ($buses as $b): ?>
-                            <option value="<?= e($b['bus_number']) ?>" <?= ($row['busno'] ?? '') === $b['bus_number'] ? 'selected' : '' ?>>
-                                <?= e($b['bus_number']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="time" class="font-weight-bold">Departure Time :</label>
-                    <input type="time" id="time" name="time" value="<?= e($row['time'] ?? '') ?>" class="form-control" required />
-                </div>
-                <div class="form-group">
-                    <label for="price" class="font-weight-bold">Ticket Price :</label>
-                    <input type="number" step="0.01" min="1" id="price" name="price" value="<?= e($row['price'] ?? '') ?>" class="form-control" required />
-                </div>
-                <div class="d-flex justify-content-between mt-4">
-                    <a href="<?= BASE_URL ?>/admin/routes.php" class="btn btn-secondary">Cancel</a>
-                    <button type="submit" name="edit" class="btn btn-success">Update Route</button>
-                </div>
-            </form>
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 font-weight-bold">Configure Route Schedule</h5>
+            </div>
+            <div class="card-body p-4">
+                <?php if ($error): ?>
+                    <div class="alert alert-danger"><?= e($error) ?></div>
+                <?php endif; ?>
+
+                <form action="" method="post">
+                    <?= csrf_field() ?>
+                    <div class="form-row">
+                        <div class="col-6 form-group">
+                            <label for="From" class="font-weight-bold small text-muted">Origin City</label>
+                            <input type="text" id="From" name="From" class="form-control" value="<?= e($row['city1'] ?? '') ?>" required />
+                        </div>
+                        <div class="col-6 form-group">
+                            <label for="To" class="font-weight-bold small text-muted">Destination City</label>
+                            <input type="text" id="To" name="To" class="form-control" value="<?= e($row['city2'] ?? '') ?>" required />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="bus" class="font-weight-bold small text-muted">Assigned Fleet Bus</label>
+                        <select name="bus" id="bus" class="form-control" required>
+                            <option value="">Select Bus Number</option>
+                            <?php foreach ($buses as $b): ?>
+                                <option value="<?= e($b['bus_number']) ?>" <?= ($row['busno'] ?? '') === $b['bus_number'] ? 'selected' : '' ?>>
+                                    <?= e($b['bus_number']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-6 form-group">
+                            <label for="time" class="font-weight-bold small text-muted">Departure Time</label>
+                            <input type="time" id="time" name="time" value="<?= e($row['time'] ?? '') ?>" class="form-control" required />
+                        </div>
+                        <div class="col-6 form-group">
+                            <label for="price" class="font-weight-bold small text-muted">Ticket Tariff (<?= CURRENCY ?>)</label>
+                            <input type="number" step="0.01" min="1" id="price" name="price" value="<?= e($row['price'] ?? '') ?>" class="form-control" required />
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-3">
+                        <a href="<?= BASE_URL ?>/admin/routes.php" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" name="edit" class="btn btn-primary px-4">Update Route</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
+
 <?php require_once __DIR__ . '/../../includes/layout/footer-admin.php'; ?>

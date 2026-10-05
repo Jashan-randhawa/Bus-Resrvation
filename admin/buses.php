@@ -50,9 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_bus'])) {
             $alert_type = 'danger';
         } else {
             $b_num = (string)$bus_row['bus_number'];
-            // Check active routes assigned to this bus
             $active_routes = db_one($link, 'SELECT COUNT(*) AS n FROM route WHERE busno = ?', 's', [$b_num]);
-            // Check active bookings for this bus
             $active_bookings = db_one($link, "SELECT COUNT(*) AS n FROM booking WHERE bus = ? AND (status IS NULL OR status != 'Cancelled')", 's', [$b_num]);
 
             if ((int)($active_routes['n'] ?? 0) > 0) {
@@ -75,90 +73,113 @@ $buses = db_all($link, 'SELECT * FROM buses ORDER BY ' . $bus_pk . ' ASC');
 $title = 'Buses';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
 ?>
-<div class="admin-content-wrap">
-  <h1 class="text-info">Bus Fleet Management</h1>
-  <br>
-
-  <?php if ($alert): ?>
-    <div class="alert alert-<?= e($alert_type) ?> alert-dismissible fade show" role="alert">
-      <?= e($alert) ?>
-      <button type="button" class="close" data-dismiss="alert">&times;</button>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Fleet Management</h1>
+        <p class="page-subtitle">Add, inspect, configure seating capacities, and maintain transit vehicles.</p>
     </div>
-  <?php endif; ?>
-
-  <button class="btn btn-danger" data-toggle="modal" data-target="#addBusModal">Add Bus Details</button>
-
-  <div class="modal fade" id="addBusModal">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <button type="button" class="close text-right pr-3 pt-2" data-dismiss="modal">
-          <span>&times;</span>
-        </button>
-        <div class="modal-header">
-          <h5 class="modal-title">Add Bus Number</h5>
-        </div>
-        <div class="modal-body">
-          <form action="" method="post">
-            <?= csrf_field() ?>
-            <div class="form-group">
-              <label for="busno">Bus Number :</label>
-              <input type="text" id="busno" name="busno" class="form-control" placeholder="Bus Number" required />
-            </div>
-            <div class="form-group">
-              <label for="capacity">Total Capacity (Seats) :</label>
-              <input type="number" id="capacity" name="capacity" class="form-control" value="36" min="10" max="60" required />
-            </div>
-            <div class="form-group">
-              <input type="submit" class="btn btn-success" name="add" value="Submit" />
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <section class="mt-4">
-    <h4 class="text-secondary mb-3">All Buses</h4>
-    <div class="table-responsive">
-      <table class="table table-bordered table-striped">
-        <thead class="thead-dark">
-          <tr>
-            <th>#</th>
-            <th>Bus Number</th>
-            <th>Capacity</th>
-            <th>Edit</th>
-            <th>Delete</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php if (empty($buses)): ?>
-            <tr><td colspan="5" class="text-center text-muted">No buses found.</td></tr>
-          <?php else: ?>
-            <?php foreach ($buses as $row): ?>
-              <?php
-              $bid = (int)($row[$bus_pk] ?? $row['id'] ?? $row['sno'] ?? 0);
-              $cap = (int)($row['capacity'] ?? 36);
-              ?>
-              <tr>
-                <td><?= e($bid) ?></td>
-                <td><?= e($row['bus_number'] ?? '') ?></td>
-                <td><span class="badge badge-info p-2"><?= $cap ?> Seats</span></td>
-                <td>
-                  <a href="<?= BASE_URL ?>/admin/edit/edit-bus.php?id=<?= e($bid) ?>" class="btn btn-warning btn-sm">Edit</a>
-                </td>
-                <td>
-                  <form method="post" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this bus?');">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="delete_id" value="<?= e($bid) ?>">
-                    <button type="submit" name="delete_bus" class="btn btn-danger btn-sm">Delete</button>
-                  </form>
-                </td>
-              </tr>
-            <?php endforeach; ?>
-          <?php endif; ?>
-        </tbody>
-      </table>
-    </div>
-  </section>
+    <button class="btn btn-primary shadow-sm" data-toggle="modal" data-target="#addBusModal">
+        + Register New Bus
+    </button>
 </div>
+
+<?php if ($alert): ?>
+    <div class="alert alert-<?= e($alert_type) ?> alert-dismissible fade show" role="alert">
+        <?= e($alert) ?>
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+<?php endif; ?>
+
+<div class="data-table-wrapper">
+    <div class="table-header">
+        <h5 class="mb-0">All Fleet Vehicles</h5>
+        <span class="record-count"><?= count($buses) ?> bus(es)</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="thead-light">
+                <tr>
+                    <th style="width: 80px;">#</th>
+                    <th>Bus Identifier / License</th>
+                    <th>Seating Capacity</th>
+                    <th class="text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($buses)): ?>
+                    <tr>
+                        <td colspan="4">
+                            <div class="empty-state py-5">
+                                <div class="empty-icon">🚌</div>
+                                <div class="empty-title">No buses in fleet</div>
+                                <div class="empty-text">Click '+ Register New Bus' above to add your first transit vehicle.</div>
+                            </div>
+                        </td>
+                    </tr>
+                <?php else: ?>
+                    <?php foreach ($buses as $row): ?>
+                        <?php
+                        $bid = (int)($row[$bus_pk] ?? $row['id'] ?? $row['sno'] ?? 0);
+                        $cap = (int)($row['capacity'] ?? 36);
+                        ?>
+                        <tr>
+                            <td><span class="text-muted small">#<?= e($bid) ?></span></td>
+                            <td>
+                                <strong class="text-dark" style="font-size: 0.95rem;"><?= e($row['bus_number'] ?? '') ?></strong>
+                            </td>
+                            <td>
+                                <span class="badge badge-light border text-dark font-weight-bold px-2 py-1">
+                                    🪑 <?= $cap ?> Passenger Seats
+                                </span>
+                            </td>
+                            <td class="text-right">
+                                <a href="<?= BASE_URL ?>/admin/edit/edit-bus.php?id=<?= e($bid) ?>" class="btn btn-outline-secondary btn-sm">
+                                    Edit
+                                </a>
+                                <form method="post" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this bus?');">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="delete_id" value="<?= e($bid) ?>">
+                                    <button type="submit" name="delete_bus" class="btn btn-outline-danger btn-sm ml-1">
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Bus Modal -->
+<div class="modal fade" id="addBusModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title font-weight-bold">Register New Bus</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body p-4">
+                <form action="" method="post">
+                    <?= csrf_field() ?>
+                    <div class="form-group">
+                        <label for="busno" class="font-weight-bold small text-muted">Bus Number / License Plate</label>
+                        <input type="text" id="busno" name="busno" class="form-control" placeholder="e.g. DL-01-AB-1234" required />
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="capacity" class="font-weight-bold small text-muted">Total Seating Capacity</label>
+                        <input type="number" id="capacity" name="capacity" class="form-control" value="36" min="10" max="60" required />
+                        <small class="form-text text-muted">Standard coaches seat between 20 and 52 passengers.</small>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-outline-secondary mr-2" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" name="add">Register Vehicle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>

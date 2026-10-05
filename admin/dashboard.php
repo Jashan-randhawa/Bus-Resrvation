@@ -11,7 +11,7 @@ $total_customers = (int)(db_one($link, 'SELECT COUNT(*) AS c FROM costumer')['c'
 $total_admins = (int)(db_one($link, 'SELECT COUNT(*) AS c FROM admin')['c'] ?? 0);
 $total_queries = (int)(db_one($link, 'SELECT COUNT(*) AS c FROM `query`')['c'] ?? 0);
 
-// P-01: Capacity-aware total seats
+// Capacity-aware total seats
 if (table_has_column($link, 'buses', 'capacity')) {
     $seats_row = db_one($link, 'SELECT COALESCE(SUM(capacity), 0) AS total FROM buses');
     $total_seats = (int)($seats_row['total'] ?? 0);
@@ -19,7 +19,7 @@ if (table_has_column($link, 'buses', 'capacity')) {
     $total_seats = $total_buses * BUS_SEATS;
 }
 
-// P-02: Earnings excluding Cancelled & Expired bookings, formatted with CURRENCY
+// Earnings excluding Cancelled & Expired bookings
 if (table_has_column($link, 'booking', 'status')) {
     $earnings_row = db_one($link, "SELECT COALESCE(SUM(price), 0) AS cost FROM booking WHERE status = 'Confirmed' OR status IS NULL");
 } else {
@@ -27,143 +27,159 @@ if (table_has_column($link, 'booking', 'status')) {
 }
 $total_earnings = number_format((float)($earnings_row['cost'] ?? 0), 2);
 ?>
-<div class="dashboard-wrapper">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="text-dark font-weight-bold mb-1">System Overview</h2>
-            <p class="text-muted mb-0">Live summary of reservations, fleet status, customer inquiries, and system health.</p>
-        </div>
-        <a href="<?= BASE_URL ?>/admin/diagnostics.php" class="btn btn-outline-info btn-sm shadow-sm">
-            <span class="badge badge-success mr-1">&bull;</span> System Diagnostics
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Executive Dashboard</h1>
+        <p class="page-subtitle">Real-time overview of ticket operations, fleet availability, user queries, and revenue.</p>
+    </div>
+    <div class="d-flex align-items-center">
+        <a href="<?= BASE_URL ?>/admin/diagnostics.php" class="btn btn-outline-primary btn-sm">
+            <span class="mr-1">⚡</span> System Health
         </a>
     </div>
+</div>
 
-    <div class="row">
-        <!-- Bookings Card -->
-        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <span class="badge badge-info p-2 mb-2 font-weight-bold">Bookings</span>
-                    <h6 class="text-muted font-weight-normal mt-2">Total Reservations</h6>
-                    <h2 class="font-weight-bold mb-0"><?= e($total_bookings) ?></h2>
+<div class="row">
+    <!-- Bookings Card -->
+    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+        <div class="stat-card stat-bookings h-100 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="stat-label">Reservations</span>
+                    <span class="badge badge-primary">Total</span>
                 </div>
-                <div class="card-footer bg-transparent border-0 text-right pb-3">
-                    <a href="<?= BASE_URL ?>/admin/bookings.php" class="text-info font-weight-bold text-decoration-none">
-                        View Details &rarr;
-                    </a>
-                </div>
+                <div class="stat-value"><?= e($total_bookings) ?></div>
+            </div>
+            <div>
+                <a href="<?= BASE_URL ?>/admin/bookings.php" class="stat-link text-primary text-decoration-none">
+                    Review Bookings &rarr;
+                </a>
             </div>
         </div>
+    </div>
 
-        <!-- Buses Card -->
-        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <span class="badge badge-success p-2 mb-2 font-weight-bold">Fleet</span>
-                    <h6 class="text-muted font-weight-normal mt-2">Active Buses</h6>
-                    <h2 class="font-weight-bold mb-0"><?= e($total_buses) ?></h2>
+    <!-- Buses Card -->
+    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+        <div class="stat-card stat-fleet h-100 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="stat-label">Fleet</span>
+                    <span class="badge badge-success">Active</span>
                 </div>
-                <div class="card-footer bg-transparent border-0 text-right pb-3">
-                    <a href="<?= BASE_URL ?>/admin/buses.php" class="text-success font-weight-bold text-decoration-none">
-                        Manage Fleet &rarr;
-                    </a>
-                </div>
+                <div class="stat-value"><?= e($total_buses) ?></div>
+            </div>
+            <div>
+                <a href="<?= BASE_URL ?>/admin/buses.php" class="stat-link text-success text-decoration-none">
+                    Fleet Catalog &rarr;
+                </a>
             </div>
         </div>
+    </div>
 
-        <!-- Routes Card -->
-        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <span class="badge badge-danger p-2 mb-2 font-weight-bold">Routes</span>
-                    <h6 class="text-muted font-weight-normal mt-2">Configured Routes</h6>
-                    <h2 class="font-weight-bold mb-0"><?= e($total_routes) ?></h2>
+    <!-- Routes Card -->
+    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+        <div class="stat-card stat-routes h-100 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="stat-label">Transit Routes</span>
+                    <span class="badge badge-warning">Active</span>
                 </div>
-                <div class="card-footer bg-transparent border-0 text-right pb-3">
-                    <a href="<?= BASE_URL ?>/admin/routes.php" class="text-danger font-weight-bold text-decoration-none">
-                        Manage Routes &rarr;
-                    </a>
-                </div>
+                <div class="stat-value"><?= e($total_routes) ?></div>
+            </div>
+            <div>
+                <a href="<?= BASE_URL ?>/admin/routes.php" class="stat-link text-warning text-decoration-none">
+                    Manage Routes &rarr;
+                </a>
             </div>
         </div>
+    </div>
 
-        <!-- Fleet Capacity Card (P-01) -->
-        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <span class="badge badge-warning p-2 mb-2 font-weight-bold text-white">Seats</span>
-                    <h6 class="text-muted font-weight-normal mt-2">Total Fleet Capacity</h6>
-                    <h2 class="font-weight-bold mb-0"><?= e($total_seats) ?></h2>
+    <!-- Seats Capacity Card -->
+    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+        <div class="stat-card stat-seats h-100 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="stat-label">Fleet Capacity</span>
+                    <span class="badge badge-info">Seats</span>
                 </div>
-                <div class="card-footer bg-transparent border-0 text-right pb-3">
-                    <a href="<?= BASE_URL ?>/admin/seats.php" class="text-warning font-weight-bold text-decoration-none">
-                        Seat Map &rarr;
-                    </a>
-                </div>
+                <div class="stat-value"><?= e($total_seats) ?></div>
+            </div>
+            <div>
+                <a href="<?= BASE_URL ?>/admin/seats.php" class="stat-link text-info text-decoration-none">
+                    Seat Visualizer &rarr;
+                </a>
             </div>
         </div>
+    </div>
 
-        <!-- Customers Card (N-03) -->
-        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <span class="badge badge-primary p-2 mb-2 font-weight-bold">Customers</span>
-                    <h6 class="text-muted font-weight-normal mt-2">Registered Accounts</h6>
-                    <h2 class="font-weight-bold mb-0"><?= e($total_customers) ?></h2>
+    <!-- Customers Card -->
+    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+        <div class="stat-card stat-customers h-100 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="stat-label">Customers</span>
+                    <span class="badge badge-light border">Registered</span>
                 </div>
-                <div class="card-footer bg-transparent border-0 text-right pb-3">
-                    <a href="<?= BASE_URL ?>/admin/customers.php" class="text-primary font-weight-bold text-decoration-none">
-                        View Customers &rarr;
-                    </a>
-                </div>
+                <div class="stat-value"><?= e($total_customers) ?></div>
+            </div>
+            <div>
+                <a href="<?= BASE_URL ?>/admin/customers.php" class="stat-link text-secondary text-decoration-none">
+                    Customer Roster &rarr;
+                </a>
             </div>
         </div>
+    </div>
 
-        <!-- Customer Queries Card (N-06) -->
-        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <span class="badge badge-secondary p-2 mb-2 font-weight-bold">Queries</span>
-                    <h6 class="text-muted font-weight-normal mt-2">Inquiries & Feedback</h6>
-                    <h2 class="font-weight-bold mb-0"><?= e($total_queries) ?></h2>
+    <!-- Customer Queries Card -->
+    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+        <div class="stat-card stat-queries h-100 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="stat-label">Inquiries</span>
+                    <span class="badge badge-secondary">Received</span>
                 </div>
-                <div class="card-footer bg-transparent border-0 text-right pb-3">
-                    <a href="<?= BASE_URL ?>/admin/queries.php" class="text-secondary font-weight-bold text-decoration-none">
-                        View Inquiries &rarr;
-                    </a>
-                </div>
+                <div class="stat-value"><?= e($total_queries) ?></div>
+            </div>
+            <div>
+                <a href="<?= BASE_URL ?>/admin/queries.php" class="stat-link text-secondary text-decoration-none">
+                    Customer Messages &rarr;
+                </a>
             </div>
         </div>
+    </div>
 
-        <!-- Administrators Card -->
-        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <span class="badge badge-dark p-2 mb-2 font-weight-bold">Administrators</span>
-                    <h6 class="text-muted font-weight-normal mt-2">Admin Accounts</h6>
-                    <h2 class="font-weight-bold mb-0"><?= e($total_admins) ?></h2>
+    <!-- Administrators Card -->
+    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+        <div class="stat-card stat-admins h-100 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="stat-label">Administrators</span>
+                    <span class="badge badge-dark">System</span>
                 </div>
-                <div class="card-footer bg-transparent border-0 text-right pb-3">
-                    <a href="<?= BASE_URL ?>/admin/add-admin.php" class="text-dark font-weight-bold text-decoration-none">
-                        Manage Admins &rarr;
-                    </a>
-                </div>
+                <div class="stat-value"><?= e($total_admins) ?></div>
+            </div>
+            <div>
+                <a href="<?= BASE_URL ?>/admin/add-admin.php" class="stat-link text-dark text-decoration-none">
+                    Admin Accounts &rarr;
+                </a>
             </div>
         </div>
+    </div>
 
-        <!-- Confirmed Revenue Card (P-02) -->
-        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100 bg-white">
-                <div class="card-body">
-                    <span class="badge badge-success p-2 mb-2 font-weight-bold">Revenue</span>
-                    <h6 class="text-muted font-weight-normal mt-2">Confirmed Revenue</h6>
-                    <h2 class="font-weight-bold text-success mb-0"><?= CURRENCY ?><?= e($total_earnings) ?></h2>
+    <!-- Revenue Card -->
+    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+        <div class="stat-card stat-revenue h-100 d-flex flex-column justify-content-between bg-white">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="stat-label">Confirmed Revenue</span>
+                    <span class="badge badge-success">Audited</span>
                 </div>
-                <div class="card-footer bg-transparent border-0 text-right pb-3">
-                    <a href="<?= BASE_URL ?>/admin/bookings.php" class="text-success font-weight-bold text-decoration-none">
-                        Sales Ledger &rarr;
-                    </a>
-                </div>
+                <div class="stat-value text-success"><?= CURRENCY ?><?= e($total_earnings) ?></div>
+            </div>
+            <div>
+                <a href="<?= BASE_URL ?>/admin/bookings.php" class="stat-link text-success text-decoration-none">
+                    Sales Ledger &rarr;
+                </a>
             </div>
         </div>
     </div>

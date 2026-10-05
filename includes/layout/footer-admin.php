@@ -1,4 +1,5 @@
-    </main>
+        </div>
+    </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
     integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
@@ -11,6 +12,25 @@
     if (typeof AOS !== 'undefined') {
         AOS.init();
     }
+
+    // Responsive Mobile Sidebar Toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        var sidebar = document.getElementById('adminSidebar');
+        var toggle = document.getElementById('sidebarToggle');
+        var overlay = document.getElementById('sidebarOverlay');
+
+        if (toggle && sidebar && overlay) {
+            toggle.addEventListener('click', function() {
+                sidebar.classList.toggle('show');
+                overlay.classList.toggle('show');
+            });
+
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('show');
+                overlay.classList.remove('show');
+            });
+        }
+    });
 </script>
 </body>
 </html>

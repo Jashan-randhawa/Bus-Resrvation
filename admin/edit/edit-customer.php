@@ -66,51 +66,55 @@ if (!$row) {
 $title = 'Edit Customer';
 require_once __DIR__ . '/../../includes/layout/header-admin.php';
 ?>
-<div class="admin-content-wrap">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb bg-white shadow-sm">
-            <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/admin/index.php">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/admin/customers.php">Customers</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Edit Customer: <?= e($row['name'] ?? '') ?></li>
-        </ol>
-    </nav>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/admin/index.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/admin/customers.php">Customers</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><?= e($row['name'] ?? 'Customer') ?></li>
+    </ol>
+</nav>
 
-    <div class="card shadow-sm col-lg-7 col-md-9 p-0 mx-auto mt-4">
-        <div class="card-header bg-dark text-white">
-            <h5 class="mb-0">Edit Customer Details</h5>
-        </div>
-        <div class="card-body">
-            <?php if ($error): ?>
-                <div class="alert alert-danger"><?= e($error) ?></div>
-            <?php endif; ?>
-            <form action="" method="post">
-                <?= csrf_field() ?>
-                <div class="form-group">
-                    <label for="unm" class="font-weight-bold">Name :</label>
-                    <input type="text" id="unm" name="unm" class="form-control" value="<?= e($row['name'] ?? '') ?>" placeholder="Enter name" required />
-                </div>
-                <div class="form-group">
-                    <label for="email" class="font-weight-bold">Email Id :</label>
-                    <input type="email" id="email" name="email" class="form-control" value="<?= e($row['email'] ?? '') ?>" placeholder="Enter email" required />
-                </div>
-                <div class="form-group">
-                    <label for="pwd" class="font-weight-bold">New Password (leave blank to keep current) :</label>
-                    <input type="password" id="pwd" name="pwd" class="form-control" placeholder="Leave blank to keep unchanged" minlength="8" />
-                </div>
-                <div class="form-group">
-                    <label for="phone" class="font-weight-bold">Phone Number :</label>
-                    <input type="tel" id="phone" name="phone" class="form-control" value="<?= e($row['phone'] ?? '') ?>" placeholder="Enter number" required />
-                </div>
-                <div class="form-group">
-                    <label for="address" class="font-weight-bold">Address :</label>
-                    <textarea id="address" name="address" class="form-control" placeholder="Enter address" rows="2"><?= e($row['address'] ?? '') ?></textarea>
-                </div>
-                <div class="d-flex justify-content-between mt-4">
-                    <a href="<?= BASE_URL ?>/admin/customers.php" class="btn btn-secondary">Cancel</a>
-                    <button type="submit" class="btn btn-success" name="edit">Update Customer</button>
-                </div>
-            </form>
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 font-weight-bold">Edit Passenger Account</h5>
+            </div>
+            <div class="card-body p-4">
+                <?php if ($error): ?>
+                    <div class="alert alert-danger"><?= e($error) ?></div>
+                <?php endif; ?>
+
+                <form action="" method="post">
+                    <?= csrf_field() ?>
+                    <div class="form-group">
+                        <label for="unm" class="font-weight-bold small text-muted">Customer Full Name</label>
+                        <input type="text" id="unm" name="unm" class="form-control" value="<?= e($row['name'] ?? '') ?>" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="email" class="font-weight-bold small text-muted">Email Address</label>
+                        <input type="email" id="email" name="email" class="form-control" value="<?= e($row['email'] ?? '') ?>" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="pwd" class="font-weight-bold small text-muted">Update Password (optional)</label>
+                        <input type="password" id="pwd" name="pwd" class="form-control" placeholder="Leave empty to keep current password" minlength="8" />
+                    </div>
+                    <div class="form-group">
+                        <label for="phone" class="font-weight-bold small text-muted">Contact Phone Number</label>
+                        <input type="tel" id="phone" name="phone" class="form-control" value="<?= e($row['phone'] ?? '') ?>" required />
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="address" class="font-weight-bold small text-muted">Physical / Mailing Address</label>
+                        <textarea id="address" name="address" class="form-control" rows="2"><?= e($row['address'] ?? '') ?></textarea>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="<?= BASE_URL ?>/admin/customers.php" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4" name="edit">Save Account Changes</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
+
 <?php require_once __DIR__ . '/../../includes/layout/footer-admin.php'; ?>

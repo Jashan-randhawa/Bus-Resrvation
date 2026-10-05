@@ -32,13 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
         $error = 'Bus number cannot be empty.';
     } else {
         $old_bus = (string)($row['bus_number'] ?? '');
-
-        // Pre-check uniqueness
         $dup = db_one($link, "SELECT `{$bus_pk}` FROM buses WHERE bus_number = ? AND `{$bus_pk}` != ?", 'si', [$busno, $id]);
         if ($dup) {
             $error = "Bus number '{$busno}' is already registered to another vehicle.";
         } else {
-            // Verify capacity is not lower than highest active booked seat
             $max_seat_row = db_one($link, "SELECT COALESCE(MAX(seat), 0) AS max_s FROM booking WHERE bus = ? AND (status IS NULL OR status IN ('Confirmed', 'Pending'))", 's', [$old_bus]);
             $max_booked_seat = (int)($max_seat_row['max_s'] ?? 0);
             if ($capacity < $max_booked_seat) {
@@ -75,40 +72,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
 $title = 'Edit Bus';
 require_once __DIR__ . '/../../includes/layout/header-admin.php';
 ?>
-<div class="admin-content-wrap">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb bg-white shadow-sm">
-            <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/admin/index.php">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/admin/buses.php">Buses</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Edit Bus: <?= e($row['bus_number'] ?? '') ?></li>
-        </ol>
-    </nav>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/admin/index.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/admin/buses.php">Buses</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Bus <?= e($row['bus_number'] ?? '') ?></li>
+    </ol>
+</nav>
 
-    <div class="card shadow-sm col-lg-7 col-md-9 p-0 mx-auto mt-4">
-        <div class="card-header bg-dark text-white">
-            <h5 class="mb-0">Edit Bus Details</h5>
-        </div>
-        <div class="card-body">
-            <?php if ($error): ?>
-                <div class="alert alert-danger"><?= e($error) ?></div>
-            <?php endif; ?>
-            <form action="" method="post">
-                <?= csrf_field() ?>
-                <div class="form-group">
-                    <label for="busno" class="font-weight-bold">Bus Number</label>
-                    <input type="text" id="busno" name="edit" value="<?= e($row['bus_number'] ?? '') ?>" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label for="capacity" class="font-weight-bold">Total Capacity (Seats)</label>
-                    <input type="number" id="capacity" name="capacity" value="<?= e((string)($row['capacity'] ?? 36)) ?>" min="10" max="60" class="form-control" required>
-                    <small class="form-text text-muted">Configurable fleet capacity (default: 36 seats).</small>
-                </div>
-                <div class="d-flex justify-content-between mt-4">
-                    <a href="<?= BASE_URL ?>/admin/buses.php" class="btn btn-secondary">Cancel</a>
-                    <button type="submit" name="subbtn" class="btn btn-success">Update Bus</button>
-                </div>
-            </form>
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 font-weight-bold">Configure Vehicle Fleet</h5>
+            </div>
+            <div class="card-body p-4">
+                <?php if ($error): ?>
+                    <div class="alert alert-danger"><?= e($error) ?></div>
+                <?php endif; ?>
+
+                <form action="" method="post">
+                    <?= csrf_field() ?>
+                    <div class="form-group">
+                        <label for="busno" class="font-weight-bold small text-muted">Bus Number / License</label>
+                        <input type="text" id="busno" name="edit" value="<?= e($row['bus_number'] ?? '') ?>" class="form-control" required>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="capacity" class="font-weight-bold small text-muted">Total Seating Capacity</label>
+                        <input type="number" id="capacity" name="capacity" value="<?= e((string)($row['capacity'] ?? 36)) ?>" min="10" max="60" class="form-control" required>
+                        <small class="form-text text-muted">Configurable vehicle passenger limits.</small>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="<?= BASE_URL ?>/admin/buses.php" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" name="subbtn" class="btn btn-primary px-4">Update Bus</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
+
 <?php require_once __DIR__ . '/../../includes/layout/footer-admin.php'; ?>

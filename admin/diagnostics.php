@@ -21,7 +21,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['run_migrations'])) {
     exit;
 }
 
-// Safe query runner for administrative/metadata queries (SHOW COLUMNS, SHOW INDEX, etc.)
 $run_query = function(string $sql) use ($link): array {
     try {
         $res = mysqli_query($link, $sql);
@@ -46,7 +45,6 @@ function run_check(string $name, callable $fn): array {
     }
 }
 
-// Compute all diagnostic checks before sending HTML header
 $checks = [];
 
 // 1. PHP Version & Extensions
@@ -61,7 +59,7 @@ $checks[] = run_check('MySQLi Extension', function() {
     $ok = extension_loaded('mysqli');
     return [
         'status' => $ok ? 'OK' : 'FAIL',
-        'message' => $ok ? 'Loaded' : 'Missing mysqli extension'
+        'message' => $ok ? 'Loaded & Active' : 'Missing mysqli extension'
     ];
 });
 
@@ -69,12 +67,12 @@ $checks[] = run_check('OpenSSL Extension', function() {
     $ok = extension_loaded('openssl');
     return [
         'status' => $ok ? 'OK' : 'FAIL',
-        'message' => $ok ? 'Loaded' : 'Missing openssl extension'
+        'message' => $ok ? 'Loaded & Active' : 'Missing openssl extension'
     ];
 });
 
-// 2. Database Connectivity & Latency (D-09)
-$checks[] = run_check('Database Round-Trip & Server Info', function() use ($link) {
+// 2. Database Connectivity & Latency
+$checks[] = run_check('Database Round-Trip & Latency', function() use ($link) {
     $start = microtime(true);
     $res = mysqli_query($link, 'SELECT VERSION() AS v');
     $duration_ms = round((microtime(true) - $start) * 1000, 2);
@@ -98,7 +96,7 @@ $checks[] = run_check('Database Round-Trip & Server Info', function() use ($link
     ];
 });
 
-// 3. Core Tables Audit (D-08)
+// 3. Core Tables Audit
 $checks[] = run_check('Core Schema Tables Presence', function() use ($run_query) {
     $required = ['admin', 'costumer', 'buses', 'route', 'booking', 'query', 'login_attempts', 'schema_migrations'];
     $raw_tables = $run_query('SHOW TABLES');
@@ -113,7 +111,7 @@ $checks[] = run_check('Core Schema Tables Presence', function() use ($run_query)
     return ['status' => 'FAIL', 'message' => 'Missing database tables: ' . implode(', ', $missing)];
 });
 
-// 4. Booking Table Schema Hardening
+// 4. Booking Table Hardening
 $checks[] = run_check('Booking Table Schema Hardening', function() use ($run_query) {
     $booking_cols = $run_query('SHOW COLUMNS FROM `booking`');
     $b_col_names = array_column($booking_cols, 'Field');
@@ -128,12 +126,12 @@ $checks[] = run_check('Booking Table Schema Hardening', function() use ($run_que
 });
 
 // 5. Fleet Capacity Modeling
-$checks[] = run_check('Fleet Capacity Modeling', function() use ($run_query) {
+$checks[] = run_check('Fleet Dynamic Capacity Modeling', function() use ($run_query) {
     $buses_cols = $run_query('SHOW COLUMNS FROM `buses`');
     $has_capacity = in_array('capacity', array_column($buses_cols, 'Field'), true);
     return [
         'status' => $has_capacity ? 'OK' : 'WARN',
-        'message' => "Capacity Column in buses: " . ($has_capacity ? 'Present (Dynamic Fleet)' : 'Missing (36 fallback)')
+        'message' => "Capacity Column: " . ($has_capacity ? 'Active (Dynamic fleet)' : 'Missing (36 fallback)')
     ];
 });
 
@@ -149,8 +147,8 @@ $checks[] = run_check('Booking Concurrency Constraints', function() use ($run_qu
     ];
 });
 
-// 7. Master Data Unique Indexes (D-08)
-$checks[] = run_check('Master Data Unique Constraints', function() use ($run_query) {
+// 7. Master Data Unique Indexes
+$checks[] = run_check('Master Data Uniqueness Constraints', function() use ($run_query) {
     $admin_idx = array_column($run_query('SHOW INDEX FROM `admin`'), 'Key_name');
     $cust_idx = array_column($run_query('SHOW INDEX FROM `costumer`'), 'Key_name');
     $buses_idx = array_column($run_query('SHOW INDEX FROM `buses`'), 'Key_name');
@@ -168,8 +166,8 @@ $checks[] = run_check('Master Data Unique Constraints', function() use ($run_que
     ];
 });
 
-// 8. Password Hashing Audit (D-08)
-$checks[] = run_check('Password Encryption Audit', function() use ($run_query) {
+// 8. Password Hashing Audit
+$checks[] = run_check('Password Cryptography Audit', function() use ($run_query) {
     $legacy_admins = 0;
     $admin_rows = $run_query('SELECT Password FROM `admin`');
     foreach ($admin_rows as $a) {
@@ -194,7 +192,7 @@ $checks[] = run_check('Password Encryption Audit', function() use ($run_query) {
 });
 
 // 9. Rate Limiting Table
-$checks[] = run_check('Rate Limiting Table (login_attempts)', function() use ($run_query) {
+$checks[] = run_check('Rate Limiting Registry', function() use ($run_query) {
     $login_attempts_check = $run_query("SHOW TABLES LIKE 'login_attempts'");
     return [
         'status' => !empty($login_attempts_check) ? 'OK' : 'FAIL',
@@ -204,117 +202,113 @@ $checks[] = run_check('Rate Limiting Table (login_attempts)', function() use ($r
 
 // 10. Migrations Status
 $m_rows = [];
-$checks[] = run_check('Schema Migrations Runner (O7 / D-08)', function() use ($run_query, &$m_rows) {
+$checks[] = run_check('Schema Migrations Status', function() use ($run_query, &$m_rows) {
     $mig_check = $run_query("SHOW TABLES LIKE 'schema_migrations'");
     $applied_count = 0;
     if (!empty($mig_check)) {
         $m_rows = $run_query('SELECT migration, applied_at FROM `schema_migrations` ORDER BY id ASC');
         $applied_count = count($m_rows);
     }
-    $expected_count = 4; // 001, 002, 003, 004
+    $expected_count = 4;
     return [
         'status' => ($applied_count >= $expected_count) ? 'OK' : 'INFO',
         'message' => "{$applied_count} of {$expected_count} migrations recorded in schema_migrations"
     ];
 });
 
-// 11. Security Configurations
-$checks[] = run_check('Session Cookie Security', function() {
-    $cookie_params = session_get_cookie_params();
-    return [
-        'status' => ($cookie_params['httponly']) ? 'OK' : 'WARN',
-        'message' => "HttpOnly: " . ($cookie_params['httponly'] ? 'Yes' : 'No') . " | SameSite: " . ($cookie_params['samesite'] ?? 'None') . " | Secure: " . ($cookie_params['secure'] ? 'Yes' : 'No')
-    ];
-});
-
-// 12. Application Timezone
-$checks[] = run_check('Application Timezone', function() {
-    $tz = date_default_timezone_get();
-    return [
-        'status' => 'OK',
-        'message' => "Timezone: {$tz} (System Time: " . date('Y-m-d H:i:s') . ")"
-    ];
-});
-
 $title = 'System Diagnostics & Health Check';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
 ?>
-<div class="admin-content-wrap">
-    <section class="mt-4 mb-5">
-        <h2 class="text-info mb-3">System Diagnostics & Integrity Checks</h2>
-        <p class="text-muted">
-            Automated verification of database schema integrity, encryption, rate limiting, and session security parameters.
-        </p>
-
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                <span class="font-weight-bold">Diagnostics Matrix</span>
-                <div>
-                    <form method="post" class="d-inline" onsubmit="return confirm('Execute all database schema migrations now?');">
-                        <?= csrf_field() ?>
-                        <button type="submit" name="run_migrations" value="1" class="btn btn-sm btn-outline-warning mr-2">
-                            Run Database Migrations
-                        </button>
-                    </form>
-                    <a href="" class="btn btn-sm btn-outline-light">Refresh Status</a>
-                </div>
-            </div>
-            <?php if (!empty($migration_log)): ?>
-                <div class="p-3 bg-secondary text-white">
-                    <h6 class="font-weight-bold mb-2 text-warning">Migration Execution Log:</h6>
-                    <pre class="bg-dark text-light p-3 rounded mb-0" style="max-height: 250px; overflow-y: auto; font-size: 0.85rem;"><?= e($migration_log) ?></pre>
-                </div>
-            <?php endif; ?>
-            <div class="table-responsive">
-                <table class="table table-hover table-bordered mb-0">
-                    <thead class="thead-light">
-                        <tr>
-                            <th style="width: 28%;">Component / Check</th>
-                            <th style="width: 15%;">Status</th>
-                            <th>Diagnostic Message</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($checks as $c): ?>
-                            <?php
-                            $badge_class = 'secondary';
-                            if ($c['status'] === 'OK') $badge_class = 'success';
-                            elseif ($c['status'] === 'WARN') $badge_class = 'warning';
-                            elseif ($c['status'] === 'FAIL') $badge_class = 'danger';
-                            elseif ($c['status'] === 'INFO') $badge_class = 'info';
-                            ?>
-                            <tr>
-                                <td class="font-weight-bold"><?= e($c['name']) ?></td>
-                                <td>
-                                    <span class="badge badge-<?= $badge_class ?> p-2 px-3">
-                                        <?= e($c['status']) ?>
-                                    </span>
-                                </td>
-                                <td><?= e($c['message']) ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <?php if (!empty($m_rows)): ?>
-            <div class="card shadow-sm">
-                <div class="card-header bg-light font-weight-bold">
-                    Applied Migrations History
-                </div>
-                <div class="card-body p-0">
-                    <ul class="list-group list-group-flush">
-                        <?php foreach ($m_rows as $mr): ?>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <code><?= e($mr['migration']) ?></code>
-                                <span class="badge badge-light border text-muted"><?= e($mr['applied_at']) ?></span>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
-            </div>
-        <?php endif; ?>
-    </section>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">System Diagnostics</h1>
+        <p class="page-subtitle">Automated verification of database schema integrity, encryption, rate limits, and security controls.</p>
+    </div>
+    <div class="d-flex align-items-center">
+        <form method="post" class="d-inline mr-2" onsubmit="return confirm('Execute all database schema migrations now?');">
+            <?= csrf_field() ?>
+            <button type="submit" name="run_migrations" value="1" class="btn btn-outline-warning btn-sm">
+                Run Migrations
+            </button>
+        </form>
+        <a href="" class="btn btn-outline-secondary btn-sm">Refresh</a>
+    </div>
 </div>
+
+<?php if (!empty($migration_log)): ?>
+    <div class="card mb-4 border-warning">
+        <div class="card-header bg-warning text-dark font-weight-bold">
+            Migration Execution Log
+        </div>
+        <div class="card-body p-0">
+            <pre class="bg-dark text-light p-3 rounded mb-0" style="max-height: 250px; overflow-y: auto; font-size: 0.85rem;"><?= e($migration_log) ?></pre>
+        </div>
+    </div>
+<?php endif; ?>
+
+<div class="data-table-wrapper mb-4">
+    <div class="table-header">
+        <h5 class="mb-0">Integrity Matrix</h5>
+        <span class="record-count"><?= count($checks) ?> checks performed</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="thead-light">
+                <tr>
+                    <th style="width: 30%;">Component / Integrity Target</th>
+                    <th style="width: 15%;">Status</th>
+                    <th>Diagnostic Telemetry</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($checks as $c): ?>
+                    <?php
+                    $badge_class = 'secondary';
+                    if ($c['status'] === 'OK') $badge_class = 'success';
+                    elseif ($c['status'] === 'WARN') $badge_class = 'warning text-white';
+                    elseif ($c['status'] === 'FAIL') $badge_class = 'danger';
+                    elseif ($c['status'] === 'INFO') $badge_class = 'info';
+                    ?>
+                    <tr>
+                        <td class="font-weight-medium text-dark"><?= e($c['name']) ?></td>
+                        <td>
+                            <span class="badge badge-<?= $badge_class ?> px-2 py-1">
+                                <?= e($c['status']) ?>
+                            </span>
+                        </td>
+                        <td><small class="text-muted"><?= e($c['message']) ?></small></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<?php if (!empty($m_rows)): ?>
+    <div class="data-table-wrapper">
+        <div class="table-header">
+            <h5 class="mb-0">Applied Migrations History</h5>
+            <span class="record-count"><?= count($m_rows) ?> applied</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Migration Script</th>
+                        <th class="text-right">Execution Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($m_rows as $mr): ?>
+                        <tr>
+                            <td><code><?= e($mr['migration']) ?></code></td>
+                            <td class="text-right text-muted small"><?= e($mr['applied_at']) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<?php endif; ?>
+
 <?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>

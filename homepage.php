@@ -14,14 +14,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
   $ip = client_ip();
 
   if ($email === '' || $pwd === '') {
-    $msg = '<p class="alert alert-warning text-center">Please fill all the fields</p>';
+    $msg = '<div class="alert alert-warning text-center mx-auto my-3" style="max-width: 600px;">Please fill in all the required fields.</div>';
   } else {
     $acctKey = 'login:acct:' . $email;
     $ipKey   = 'login:ip:' . $ip;
 
     // Rate limiting (O3: 5 failures per 15 min per account, 20 per 15 min per IP)
     if (throttle_blocked($link, $acctKey, 5, 900) || throttle_blocked($link, $ipKey, 20, 900)) {
-      $msg = '<p class="alert alert-warning text-center">Invalid Email or Password</p>';
+      $msg = '<div class="alert alert-danger text-center mx-auto my-3" style="max-width: 600px;">Too many failed attempts. Please try again later.</div>';
     } else {
       $sql = $role === 'admin'
         ? 'SELECT id, name, phone, Password AS pwd FROM admin WHERE Email_id = ? LIMIT 1'
@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
       // Record failed login attempt
       throttle_hit($link, $acctKey);
       throttle_hit($link, $ipKey);
-      $msg = '<p class="alert alert-warning text-center">Invalid Email or Password</p>';
+      $msg = '<div class="alert alert-danger text-center mx-auto my-3" style="max-width: 600px;">Invalid email or password combination.</div>';
     }
   }
 }
@@ -76,23 +76,23 @@ if (isset($_POST['userbtn'])) {
   $addr = trim((string)($_POST['address'] ?? ''));
   $errors = [];
 
-  if ($name === '') { $errors[] = 'Name is required.'; }
-  if (!filter_var($email, FILTER_VALIDATE_EMAIL)) { $errors[] = 'Enter a valid email.'; }
+  if ($name === '') { $errors[] = 'Full name is required.'; }
+  if (!filter_var($email, FILTER_VALIDATE_EMAIL)) { $errors[] = 'Enter a valid email address.'; }
   if (strlen($pwd) < 8 || !preg_match('/[A-Za-z]/', $pwd) || !preg_match('/\d/', $pwd)) {
-    $errors[] = 'Password needs 8+ characters with a letter and a number.';
+    $errors[] = 'Password must be at least 8 characters and include both letters and numbers.';
   }
   if (strlen($phone) < 10 || strlen($phone) > 15) { $errors[] = 'Enter a valid phone number.'; }
   if (!$errors && db_one($link, 'SELECT id FROM costumer WHERE email = ?', 's', [$email])) {
-    $errors[] = 'That email is already registered.';
+    $errors[] = 'That email address is already registered.';
   }
 
   if ($errors) {
-    $msg = '<p class="alert alert-warning text-center">' . e(implode(' ', $errors)) . '</p>';
+    $msg = '<div class="alert alert-warning text-center mx-auto my-3" style="max-width: 600px;">' . e(implode(' ', $errors)) . '</div>';
   } else {
     db_exec($link,
       'INSERT INTO costumer (name, email, pwd, phone, address) VALUES (?,?,?,?,?)',
       'sssss', [$name, $email, password_hash($pwd, PASSWORD_DEFAULT), $phone, $addr]);
-    $msg = '<p class="alert alert-success text-center">Account created successfully. You can log in now.</p>';
+    $msg = '<div class="alert alert-success text-center mx-auto my-3" style="max-width: 600px;">Account created successfully! You can now log in.</div>';
   }
 }
 
@@ -108,267 +108,326 @@ if (isset($_POST['subbtn'])) {
     db_exec($link,
       'INSERT INTO query (user_name, user_email, user_subject, user_qry) VALUES (?,?,?,?)',
       'ssss', [$n, $em, $s, $q]);
-    $msg = '<p class="alert alert-success text-center">Thanks, we received your message.</p>';
+    $msg = '<div class="alert alert-success text-center mx-auto my-3" style="max-width: 600px;">Thank you! Your inquiry has been submitted successfully.</div>';
   } else {
-    $msg = '<p class="alert alert-warning text-center">Please fill name, a valid email and message.</p>';
+    $msg = '<div class="alert alert-warning text-center mx-auto my-3" style="max-width: 600px;">Please provide your name, a valid email, and your query details.</div>';
   }
 }
 ?>
 <?php require_once __DIR__ . '/includes/layout/header-public.php'; ?>
-<?php if (!empty($msg)) { echo $msg; } ?>
+
+<?php if (!empty($msg)): ?>
+  <div class="container" style="margin-top: 5rem;">
+    <?= $msg ?>
+  </div>
+<?php endif; ?>
+
+<!-- Hero Section -->
 <section id="image">
-  <div class="overlay">
-    <div class="description">
-      <h1 class="text-center">Welcome to Simple Bus Ticket Booking System</h1>
-
-      <p class=" text-center ">Welcome to Simple Bus Ticket Booking System. Login now to manage bus tickets and
-        much more. OR, simply scroll down to check the Ticket status using Passenger Name Record (PNR
-        number)</p>
+  <div class="hero-overlay"></div>
+  <div class="hero-content" data-aos="fade-up" data-aos-duration="800">
+    <div class="badge badge-primary px-3 py-2 mb-3 font-weight-bold" style="letter-spacing: 0.05em; font-size: 0.8rem;">
+      FAST • SECURE • RELIABLE TRANSIT
     </div>
-    <center class="mt-3">
-      <button class="btn btn-danger " data-toggle="modal" data-target="#loginModal">Administrator Login</button>
-    </center>
-    <div class="modal fade" id="userlogin">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <button type="button" class="close text-right" data-dismiss="modal">
-            <span>&times;</span>
-          </button>
-          <ul class="nav nav-tabs">
-            <li class="btn nav-item col-6 active">
-              <a href="#user-login" aria-controls="user-login" class="btn btn-info btn-block" data-toggle="tab">Account
-                Login</a>
-            </li>
-            <li class="btn nav-item col-6">
-              <a href="#Register" aria-controls="Register" class="btn btn-info btn-block" data-toggle="tab">Create
-                Account</a>
-            </li>
-          </ul>
-          <div class="tab-content">
-            <div role="tabpanel" class="tab-pane active" id="user-login">
-              <div class="modal-header">
-                <h5>
-                  If you already have an online account, please enter your email
-                  address and password below
-                </h5>
-              </div>
-              <div class="modal-body">
-                <form action="" method="post">
-                  <?= csrf_field() ?>
-                  <div class="form-group">
-                    <label for="user-email-input">Email Address</label>
-                    <input type="email" id="user-email-input" name="email" class="form-control" placeholder="Email" required />
-                  </div>
-                  <div class="form-group">
-                    <label for="user-pwd-input">Password</label>
-                    <input type="password" id="user-pwd-input" name="pwd" class="form-control" placeholder="Password" required />
-                  </div>
-                  <div class="form-group">
-                    <input type="submit" class="btn btn-success btn-block" name="user" value="User Login" />
-                  </div>
-
-                </form>
-              </div>
-            </div>
-            <div role="tabpanel" class="tab-pane" id="Register">
-              <div class="modal-header">
-                <h5>New Registration</h5>
-              </div>
-              <div class="modal-body">
-                <form action="" method="post">
-                  <?= csrf_field() ?>
-                  <div class="row">
-                    <div class="form-group col-6">
-                      <label for="fname">First Name:</label>
-                      <input type="text" class="form-control" name="fname" id="fname" placeholder="First Name" required />
-                    </div>
-                    <div class="form-group col-6">
-                      <label for="lname">Last Name:</label>
-                      <input type="text" class="form-control" name="lname" id="lname" placeholder="Last Name" required />
-                    </div>
-                  </div>
-                  <div class="form-group col--lg-12">
-                    <label for="user_email">Email:</label>
-                    <input type="email" class="form-control" placeholder="Email" name="user_email" id="user_email" required />
-                  </div>
-                  <div class="form-group col--lg-12">
-                    <label for="user_pwd">Password:</label>
-                    <input type="password" class="form-control" name="user_pwd" id="user_pwd" placeholder="Password" minlength="8" autocomplete="new-password" required />
-                  </div>
-                  <h6>
-                    Password must be a minimum of 8 characters and contain at
-                    least 1 number and 1 letter
-                  </h6>
-                  <div class="form-group col--lg-12">
-                    <label for="user_no">Phone:</label>
-                    <input type="tel" class="form-control" name="user_no" id="user_no" placeholder="Mobile Number" required />
-                  </div>
-                  <div class="form-group col--lg-12">
-                    <label for="address">Address:</label>
-                    <textarea name="address" id="address" rows="2" placeholder="Your Address"
-                      style=" width: 100% ; "></textarea>
-                  </div>
-                  <div class="form-group col--lg-12 ">
-                    <input type="submit" class="btn btn-success btn-block" name="userbtn" value="Register Account" />
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="modal fade" id="loginModal">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <button type="button" class="close text-right" data-dismiss="modal">
-            <span>&times;</span>
-          </button>
-          <div class="tab-content">
-            <div role="tabpanel" class="tab-pane active" id="admin-login-tab">
-              <div class="modal-header">
-                <h5>
-                  Only Registered Admin Can Login
-                </h5>
-              </div>
-              <div class="modal-body">
-                <form action="" method="post">
-                  <?= csrf_field() ?>
-                  <div class="form-group">
-                    <label for="admin-email-input">Email Address</label>
-                    <input type="email" id="admin-email-input" name="email" class="form-control" placeholder="Email" required />
-                  </div>
-                  <div class="form-group">
-                    <label for="admin-pwd-input">Password</label>
-                    <input type="password" id="admin-pwd-input" name="pwd" class="form-control" placeholder="Password" required />
-                  </div>
-                  <div class="form-group">
-                    <input type="submit" class="btn btn-success btn-block" name="admin" value="Admin Login" />
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="text-center mt-3">
-      <a href="#pnr" data-value="pnr"><button class="btn btn-primary">Scroll Down <i class="fa fa-arrow-down"></i></button></a>
+    <h1 class="hero-title">Effortless Bus Ticket Reservations</h1>
+    <p class="hero-subtitle">
+      Plan journeys across top routes with instant seat allocation, live availability tracking, and transparent ticketing in just seconds.
+    </p>
+    <div class="hero-actions">
+      <a href="#pnr" class="btn btn-primary btn-lg shadow">
+        Check Ticket by PNR &darr;
+      </a>
+      <button class="btn btn-outline-light btn-lg" data-toggle="modal" data-target="#userlogin">
+        Book Bus Tickets &rarr;
+      </button>
     </div>
   </div>
 </section>
+
+<!-- PNR Lookup Section -->
 <section id="pnr">
-  <div class="pb-5 text-center">
-    <h1 class="mt-5 mb-4">Check Your Booking Details</h1>
-    <form method="get" action="<?= e(BASE_URL) ?>/homepage.php#pnr" class="form-inline justify-content-center">
-      <input class="form-control m-1" name="pnr" maxlength="10" placeholder="PNR (10 characters)" value="<?= e($_GET['pnr'] ?? '') ?>" required>
-      <input class="form-control m-1" name="phone4" maxlength="4" pattern="\d{4}" placeholder="Last 4 digits of phone" value="<?= e($_GET['phone4'] ?? '') ?>" required>
-      <button class="btn btn-info m-1" type="submit">Search Booking</button>
-    </form>
-    <?php
-    if (isset($_GET['pnr'], $_GET['phone4'])) {
-      $pnrInput = strtoupper(trim((string)$_GET['pnr']));
-      $phone4 = preg_replace('/\D/', '', (string)$_GET['phone4']);
-      $b = null;
-      $ip = client_ip();
-      $ipKey = 'pnr:ip:' . $ip;
-      $targetKey = 'pnr:target:' . $pnrInput;
+  <div class="container">
+    <div class="text-center mb-5" data-aos="fade-up">
+      <span class="badge badge-info p-2 px-3 mb-2 font-weight-bold">INSTANT VERIFICATION</span>
+      <h2 class="font-weight-bold">Check Reservation Status</h2>
+      <p class="text-muted mx-auto" style="max-width: 540px;">
+        Enter your 10-character booking PNR and the last 4 digits of your contact phone number to view ticket details.
+      </p>
+    </div>
 
-      // O1: Key rate limits on both IP and target PNR (5 attempts per 15 min per target)
-      if (!throttle_blocked($link, $ipKey, 10, 600) && !throttle_blocked($link, $targetKey, 5, 900)) {
-        throttle_hit($link, $ipKey);
-        throttle_hit($link, $targetKey);
+    <div class="pnr-card-search" data-aos="fade-up" data-aos-delay="100">
+      <form method="get" action="<?= e(BASE_URL) ?>/homepage.php#pnr" class="row">
+        <div class="col-md-5 mb-3 mb-md-0">
+          <label class="form-label font-weight-bold small text-muted">PNR Number</label>
+          <input class="form-control" name="pnr" maxlength="10" placeholder="e.g. 9B3A57EF10" value="<?= e($_GET['pnr'] ?? '') ?>" required style="text-transform: uppercase;">
+        </div>
+        <div class="col-md-4 mb-3 mb-md-0">
+          <label class="form-label font-weight-bold small text-muted">Last 4 Digits of Phone</label>
+          <input class="form-control" name="phone4" maxlength="4" pattern="\d{4}" placeholder="e.g. 5521" value="<?= e($_GET['phone4'] ?? '') ?>" required>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button class="btn btn-primary btn-block py-2" type="submit">
+            Search Ticket
+          </button>
+        </div>
+      </form>
 
-        // O1: Accept ONLY the random 10-hex character token (no sequential sno fallback)
-        if (preg_match('/^[A-F0-9]{10}$/', $pnrInput) && strlen($phone4) === 4) {
-          release_expired_holds($link);
-          $b = db_one($link,
-            'SELECT pnr, bus, name, contact, city1, city2, `date`, `time`, seat, price, sno, status
-             FROM booking
-             WHERE pnr = ? AND RIGHT(contact, 4) = ?
-             LIMIT 1',
-            'ss', [$pnrInput, $phone4]);
+      <?php
+      if (isset($_GET['pnr'], $_GET['phone4'])) {
+        $pnrInput = strtoupper(trim((string)$_GET['pnr']));
+        $phone4 = preg_replace('/\D/', '', (string)$_GET['phone4']);
+        $b = null;
+        $ip = client_ip();
+        $ipKey = 'pnr:ip:' . $ip;
+        $targetKey = 'pnr:target:' . $pnrInput;
+
+        if (!throttle_blocked($link, $ipKey, 10, 600) && !throttle_blocked($link, $targetKey, 5, 900)) {
+          throttle_hit($link, $ipKey);
+          throttle_hit($link, $targetKey);
+
+          if (preg_match('/^[A-F0-9]{10}$/', $pnrInput) && strlen($phone4) === 4) {
+            release_expired_holds($link);
+            $b = db_one($link,
+              'SELECT pnr, bus, name, contact, city1, city2, `date`, `time`, seat, price, sno, status
+               FROM booking
+               WHERE pnr = ? AND RIGHT(contact, 4) = ?
+               LIMIT 1',
+              'ss', [$pnrInput, $phone4]);
+          }
         }
-      }
 
-      if ($b): ?>
-        <div class="card mx-auto mt-4 text-left shadow-sm" style="max-width:540px;">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
-              <h4 class="card-title text-success mb-0">PNR: <?= e($b['pnr']) ?></h4>
+        if ($b): ?>
+          <div class="card mt-4 border-0 shadow-sm overflow-hidden">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+              <div>
+                <span class="text-muted small text-uppercase">PNR CODE</span>
+                <h5 class="mb-0 text-white font-weight-bold"><?= e($b['pnr']) ?></h5>
+              </div>
               <?php
               $b_status = (string)($b['status'] ?? 'Confirmed');
               $badge_color = 'success';
-              if ($b_status === 'Pending') $badge_color = 'warning';
+              if ($b_status === 'Pending') $badge_color = 'warning text-dark';
               elseif ($b_status === 'Cancelled' || $b_status === 'Expired') $badge_color = 'danger';
               ?>
-              <span class="badge badge-<?= $badge_color ?> p-2 px-3"><?= e($b_status) ?></span>
+              <span class="badge badge-<?= $badge_color ?> p-2 px-3 font-weight-bold"><?= e($b_status) ?></span>
             </div>
-            <hr>
-            <p class="mb-1"><strong>Passenger:</strong> <?= e($b['name']) ?> (Phone: ***-***-<?= e(substr($b['contact'], -4)) ?>)</p>
-            <p class="mb-1"><strong>Bus Number:</strong> <?= e($b['bus']) ?></p>
-            <p class="mb-1"><strong>Route:</strong> <?= e($b['city1']) ?> &rarr; <?= e($b['city2']) ?></p>
-            <p class="mb-1"><strong>Departure:</strong> <?= e($b['date']) ?> at <?= e($b['time']) ?></p>
-            <p class="mb-1"><strong>Seat Allocated:</strong> <span class="badge badge-info">Seat <?= e((string)$b['seat']) ?></span></p>
-            <p class="mb-0"><strong>Total Amount:</strong> $<?= e((string)$b['price']) ?></p>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-sm-6 mb-3">
+                  <div class="text-muted small">PASSENGER</div>
+                  <div class="font-weight-bold text-dark"><?= e($b['name']) ?></div>
+                </div>
+                <div class="col-sm-6 mb-3">
+                  <div class="text-muted small">CONTACT</div>
+                  <div class="font-weight-bold text-dark">***-***-<?= e(substr($b['contact'], -4)) ?></div>
+                </div>
+                <div class="col-sm-6 mb-3">
+                  <div class="text-muted small">BUS DETAILS</div>
+                  <div class="font-weight-bold text-dark">Bus #<?= e($b['bus']) ?></div>
+                </div>
+                <div class="col-sm-6 mb-3">
+                  <div class="text-muted small">SEAT ASSIGNED</div>
+                  <div><span class="badge badge-primary p-2">Seat #<?= e((string)$b['seat']) ?></span></div>
+                </div>
+                <div class="col-sm-6 mb-3">
+                  <div class="text-muted small">TRIP ROUTE</div>
+                  <div class="font-weight-bold text-dark"><?= e($b['city1']) ?> &rarr; <?= e($b['city2']) ?></div>
+                </div>
+                <div class="col-sm-6 mb-3">
+                  <div class="text-muted small">SCHEDULE</div>
+                  <div class="font-weight-bold text-dark"><?= e($b['date']) ?> at <?= e($b['time']) ?></div>
+                </div>
+                <div class="col-12 pt-2 border-top d-flex justify-content-between align-items-center">
+                  <span class="font-weight-bold text-muted">Total Fare:</span>
+                  <span class="font-weight-bold text-success h4 mb-0"><?= CURRENCY ?><?= e(number_format((float)$b['price'], 2)) ?></span>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      <?php else: ?>
-        <p class="alert alert-warning mt-4 mx-auto" style="max-width:540px;">
-          No booking found for those details, or too many attempts. Try again later.
-        </p>
-      <?php endif;
-    }
-    ?>
+        <?php else: ?>
+          <div class="alert alert-warning mt-4 text-center mb-0">
+            No booking record was found matching that PNR and phone combination, or search limit reached.
+          </div>
+        <?php endif;
+      }
+      ?>
+    </div>
   </div>
 </section>
+
+<!-- About Section -->
 <section id="about">
-  <div class="container text-center py-5">
-    <h1 class="mt-3">About Us</h1>
-    <h4 class="text-secondary mb-4">Reliable & Modern Bus Travel</h4>
-    <p class="lead text-muted mx-auto" style="max-width: 800px;">
-      Bus Reservation System is a full-stack, cloud-native ticketing and fleet management platform designed for simple booking, real-time seat selection, and reliable trip administration across regional transit routes.
+  <div class="container text-center" data-aos="fade-up">
+    <span class="badge badge-primary p-2 px-3 mb-2 font-weight-bold">WHY CHOOSE US</span>
+    <h2 class="font-weight-bold">Modern & Secure Travel Experience</h2>
+    <p class="text-muted mx-auto" style="max-width: 680px;">
+      Our platform powers automated ticket issuing, dynamic seating distribution, and unified customer reservations with real-time auditability.
     </p>
+
+    <div class="features-grid">
+      <div class="feature-box">
+        <div class="feature-icon">🛡️</div>
+        <h5 class="font-weight-bold">Guaranteed Seats</h5>
+        <p class="text-muted small mb-0">Live seat allocation prevents double-bookings with transactional database consistency.</p>
+      </div>
+      <div class="feature-box">
+        <div class="feature-icon">⚡</div>
+        <h5 class="font-weight-bold">Instant PNR</h5>
+        <p class="text-muted small mb-0">Receive a cryptographically distinct 10-character token immediately for ticket tracking.</p>
+      </div>
+      <div class="feature-box">
+        <div class="feature-icon">🚌</div>
+        <h5 class="font-weight-bold">Curated Fleet</h5>
+        <p class="text-muted small mb-0">Regularly serviced buses operating on well-timed, strictly scheduled intercity routes.</p>
+      </div>
+    </div>
   </div>
 </section>
+
+<!-- Contact Section -->
 <section id="contact">
-  <div class="contact p-5">
-    <div class="container btn page">
-      <div class="row"></div>
-      <h1 class="text-center col-lg-12 col-md-12 col-sm-12">Contact Us</h1>
-      <p class="text-center text-muted">
-        Have questions about routes or need assistance with your booking? Send us a message and our support team will get back to you promptly.
-      </p>
+  <div class="container" data-aos="fade-up">
+    <div class="contact-card">
+      <div class="text-center mb-4">
+        <span class="badge badge-info p-2 px-3 mb-2 font-weight-bold">GET IN TOUCH</span>
+        <h2 class="font-weight-bold">Contact Support</h2>
+        <p class="text-muted">Have inquiries regarding routes, fleet, or your booking? Let our team know.</p>
+      </div>
       <form action="" method="post">
         <?= csrf_field() ?>
-        <div class="input-group mt-4 mb-4">
-          <div class="input-group-append">
-            <span class="input-group-text" id="basic-addon1">Name</span>
+        <div class="form-row">
+          <div class="col-md-6 form-group">
+            <label class="form-label font-weight-bold small text-muted">Your Full Name</label>
+            <input type="text" class="form-control" name="name" placeholder="John Doe" required />
           </div>
-          <input type="text" class="form-control" placeholder="Your Name" name="name" aria-label="Username"
-            aria-describedby="basic-addon1" required />
-          <div class="input-group-append">
-            <span class="input-group-text" id="basic-addon2">Email</span>
+          <div class="col-md-6 form-group">
+            <label class="form-label font-weight-bold small text-muted">Email Address</label>
+            <input type="email" class="form-control" name="email" placeholder="john@example.com" required />
           </div>
-          <input type="email" class="form-control" name="email" placeholder="Email Address" aria-label="Email Address"
-            aria-describedby="basic-addon2" required />
         </div>
-        <div class="input-group mt-4 mb-4">
-          <div class="input-group-append">
-            <span class="input-group-text" id="basic-addon3">Subject</span>
-          </div>
-          <input type="text" class="form-control" name="subject" placeholder="Subject" aria-label="Username"
-            aria-describedby="basic-addon3" />
+        <div class="form-group">
+          <label class="form-label font-weight-bold small text-muted">Subject</label>
+          <input type="text" class="form-control" name="subject" placeholder="Question regarding ticket #..." />
         </div>
-        <div class="input-group mt-4 mb-4">
-          <textarea rows="4" class="form-control" placeholder="How We Can Help You" name="query"
-            aria-label="Username" aria-describedby="basic-addon3" required></textarea>
+        <div class="form-group">
+          <label class="form-label font-weight-bold small text-muted">Message / Inquiries</label>
+          <textarea rows="4" class="form-control" name="query" placeholder="Type your message here..." required></textarea>
         </div>
-        <div class="input-group-append">
-          <input type="submit" name="subbtn" class="btn btn-primary btn-lg btn-block" value="Send Message">
-        </div>
+        <button type="submit" name="subbtn" class="btn btn-primary btn-block btn-lg shadow-sm">
+          Send Message
+        </button>
       </form>
     </div>
   </div>
 </section>
+
+<!-- User Login / Register Modal -->
+<div class="modal fade" id="userlogin" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header d-flex justify-content-between align-items-center">
+        <h5 class="modal-title font-weight-bold">Passenger Access</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="p-3 bg-light border-bottom">
+        <ul class="nav nav-tabs border-0" id="authTab" role="tablist">
+          <li class="nav-item flex-fill text-center">
+            <a class="nav-link active font-weight-bold" id="login-tab" data-toggle="tab" href="#user-login-pane" role="tab">Sign In</a>
+          </li>
+          <li class="nav-item flex-fill text-center">
+            <a class="nav-link font-weight-bold" id="register-tab" data-toggle="tab" href="#register-pane" role="tab">Register</a>
+          </li>
+        </ul>
+      </div>
+      <div class="tab-content" id="authTabContent">
+        <!-- Login Pane -->
+        <div class="tab-pane fade show active p-4" id="user-login-pane" role="tabpanel">
+          <form action="" method="post">
+            <?= csrf_field() ?>
+            <div class="form-group">
+              <label for="user-email-input" class="font-weight-bold small text-muted">Email Address</label>
+              <input type="email" id="user-email-input" name="email" class="form-control" placeholder="passenger@example.com" required />
+            </div>
+            <div class="form-group">
+              <label for="user-pwd-input" class="font-weight-bold small text-muted">Password</label>
+              <input type="password" id="user-pwd-input" name="pwd" class="form-control" placeholder="••••••••" required />
+            </div>
+            <button type="submit" class="btn btn-primary btn-block py-2 font-weight-bold" name="user">
+              Sign In to Account
+            </button>
+          </form>
+        </div>
+        <!-- Register Pane -->
+        <div class="tab-pane fade p-4" id="register-pane" role="tabpanel">
+          <form action="" method="post">
+            <?= csrf_field() ?>
+            <div class="form-row">
+              <div class="form-group col-6">
+                <label for="fname" class="font-weight-bold small text-muted">First Name</label>
+                <input type="text" class="form-control" name="fname" id="fname" placeholder="First" required />
+              </div>
+              <div class="form-group col-6">
+                <label for="lname" class="font-weight-bold small text-muted">Last Name</label>
+                <input type="text" class="form-control" name="lname" id="lname" placeholder="Last" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="user_email" class="font-weight-bold small text-muted">Email Address</label>
+              <input type="email" class="form-control" name="user_email" id="user_email" placeholder="email@example.com" required />
+            </div>
+            <div class="form-group">
+              <label for="user_pwd" class="font-weight-bold small text-muted">Password (8+ chars, letter & number)</label>
+              <input type="password" class="form-control" name="user_pwd" id="user_pwd" placeholder="••••••••" minlength="8" autocomplete="new-password" required />
+            </div>
+            <div class="form-group">
+              <label for="user_no" class="font-weight-bold small text-muted">Phone Number</label>
+              <input type="tel" class="form-control" name="user_no" id="user_no" placeholder="10-15 digits" required />
+            </div>
+            <div class="form-group">
+              <label for="address" class="font-weight-bold small text-muted">Address</label>
+              <textarea name="address" id="address" rows="2" class="form-control" placeholder="Your street address"></textarea>
+            </div>
+            <button type="submit" class="btn btn-success btn-block py-2 font-weight-bold" name="userbtn">
+              Create New Account
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Login Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title font-weight-bold">System Administration</h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body p-4">
+        <p class="text-muted small mb-4">Authorized personnel only. Sessions are monitored and rate-limited.</p>
+        <form action="" method="post">
+          <?= csrf_field() ?>
+          <div class="form-group">
+            <label for="admin-email-input" class="font-weight-bold small text-muted">Admin Email</label>
+            <input type="email" id="admin-email-input" name="email" class="form-control" placeholder="admin@domain.com" required />
+          </div>
+          <div class="form-group">
+            <label for="admin-pwd-input" class="font-weight-bold small text-muted">Master Password</label>
+            <input type="password" id="admin-pwd-input" name="pwd" class="form-control" placeholder="••••••••" required />
+          </div>
+          <button type="submit" class="btn btn-primary btn-block py-2 font-weight-bold" name="admin">
+            Enter Admin Portal
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <?php require_once __DIR__ . '/includes/layout/footer.php'; ?>

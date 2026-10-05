@@ -55,7 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_route'])) {
             $r_bus = (string)$route_row['busno'];
             $r_time = (string)$route_row['time'];
             $today = date('Y-m-d');
-            // Check active bookings for this route's bus and departure time on/after today
             $active_bookings = db_one($link,
                 "SELECT COUNT(*) AS n FROM booking WHERE bus = ? AND `time` = ? AND `date` >= ? AND (status IS NULL OR status != 'Cancelled')",
                 'sss', [$r_bus, $r_time, $today]
@@ -79,110 +78,130 @@ $routes = db_all($link, "SELECT * FROM route ORDER BY `{$route_pk}` ASC");
 $title = 'Routes';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
 ?>
-<div class="admin-content-wrap">
-  <h1 class="text-info">Route Management</h1>
-  <br>
-
-  <?php if ($alert): ?>
-    <div class="alert alert-<?= e($alert_type) ?> alert-dismissible fade show" role="alert">
-      <?= e($alert) ?>
-      <button type="button" class="close" data-dismiss="alert">&times;</button>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Transit Route Schedules</h1>
+        <p class="page-subtitle">Configure origins, destinations, bus allocations, departures, and ticket tariffs.</p>
     </div>
-  <?php endif; ?>
-
-  <button class="btn btn-danger" data-toggle="modal" data-target="#addRouteModal">Add Route Details</button>
-
-  <div class="modal fade" id="addRouteModal">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <button type="button" class="close text-right pr-3 pt-2" data-dismiss="modal">
-          <span>&times;</span>
-        </button>
-        <div class="modal-header">
-          <h5 class="modal-title">Add Bus Route Details</h5>
-        </div>
-        <div class="modal-body">
-          <form action="" method="post">
-            <?= csrf_field() ?>
-            <div class="form-group">
-              <label for="From">From :</label>
-              <input type="text" id="From" name="From" class="form-control" placeholder="From city" required />
-            </div>
-            <div class="form-group">
-              <label for="To">To :</label>
-              <input type="text" id="To" name="To" class="form-control" placeholder="To city" required />
-            </div>
-            <div class="form-group">
-              <label for="bus">Bus no :</label>
-              <select name="bus" id="bus" class="form-control" required>
-                <option value="">Select Bus Number</option>
-                <?php foreach ($buses as $b): ?>
-                  <option value="<?= e($b['bus_number']) ?>"><?= e($b['bus_number']) ?></option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="time">Departure Time :</label>
-              <input type="time" id="time" name="time" class="form-control" required />
-            </div>
-            <div class="form-group">
-              <label for="price">Ticket Price :</label>
-              <input type="number" step="0.01" min="1" id="price" name="price" class="form-control" placeholder="Ticket Price" required />
-            </div>
-            <div class="form-group">
-              <input type="submit" class="btn btn-success" name="add" value="Submit" />
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <section class="mt-4">
-    <h4 class="text-secondary mb-3">All Routes</h4>
-    <div class="table-responsive">
-      <table class="table table-bordered table-striped">
-        <thead class="thead-dark">
-          <tr>
-            <th>#</th>
-            <th>From</th>
-            <th>To</th>
-            <th>Bus Number</th>
-            <th>Time</th>
-            <th>Price</th>
-            <th>Edit</th>
-            <th>Delete</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php if (empty($routes)): ?>
-            <tr><td colspan="8" class="text-center text-muted">No routes found.</td></tr>
-          <?php else: ?>
-            <?php foreach ($routes as $row): ?>
-              <?php $rid = (int)($row[$route_pk] ?? $row['sno'] ?? $row['id'] ?? 0); ?>
-              <tr>
-                <td><?= e($rid) ?></td>
-                <td><?= e($row['city1'] ?? '') ?></td>
-                <td><?= e($row['city2'] ?? '') ?></td>
-                <td><?= e($row['busno'] ?? '') ?></td>
-                <td><?= e($row['time'] ?? '') ?></td>
-                <td>$<?= e(number_format((float)($row['price'] ?? 0), 2)) ?></td>
-                <td>
-                  <a href="<?= BASE_URL ?>/admin/edit/edit-route.php?id=<?= e($rid) ?>" class="btn btn-warning btn-sm">Edit</a>
-                </td>
-                <td>
-                  <form method="post" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this route?');">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="delete_id" value="<?= e($rid) ?>">
-                    <button type="submit" name="delete_route" class="btn btn-danger btn-sm">Delete</button>
-                  </form>
-                </td>
-              </tr>
-            <?php endforeach; ?>
-          <?php endif; ?>
-        </tbody>
-      </table>
-    </div>
-  </section>
+    <button class="btn btn-primary shadow-sm" data-toggle="modal" data-target="#addRouteModal">
+        + Create Route Schedule
+    </button>
 </div>
+
+<?php if ($alert): ?>
+    <div class="alert alert-<?= e($alert_type) ?> alert-dismissible fade show" role="alert">
+        <?= e($alert) ?>
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+<?php endif; ?>
+
+<div class="data-table-wrapper">
+    <div class="table-header">
+        <h5 class="mb-0">Active Schedules</h5>
+        <span class="record-count"><?= count($routes) ?> route(s)</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="thead-light">
+                <tr>
+                    <th style="width: 80px;">#</th>
+                    <th>Origin City</th>
+                    <th>Destination City</th>
+                    <th>Bus Assigned</th>
+                    <th>Departure Time</th>
+                    <th>Ticket Tariff</th>
+                    <th class="text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($routes)): ?>
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state py-5">
+                                <div class="empty-icon">🗺️</div>
+                                <div class="empty-title">No routes configured</div>
+                                <div class="empty-text">Click '+ Create Route Schedule' above to connect travel cities.</div>
+                            </div>
+                        </td>
+                    </tr>
+                <?php else: ?>
+                    <?php foreach ($routes as $row): ?>
+                        <?php $rid = (int)($row[$route_pk] ?? $row['sno'] ?? $row['id'] ?? 0); ?>
+                        <tr>
+                            <td><span class="text-muted small">#<?= e($rid) ?></span></td>
+                            <td class="font-weight-medium text-dark"><?= e($row['city1'] ?? '') ?></td>
+                            <td class="font-weight-medium text-dark"><?= e($row['city2'] ?? '') ?></td>
+                            <td><span class="badge badge-light border text-dark font-weight-bold">🚌 <?= e($row['busno'] ?? '') ?></span></td>
+                            <td><?= e($row['time'] ?? '') ?></td>
+                            <td class="font-weight-bold text-success h6 mb-0"><?= CURRENCY ?><?= e(number_format((float)($row['price'] ?? 0), 2)) ?></td>
+                            <td class="text-right">
+                                <a href="<?= BASE_URL ?>/admin/edit/edit-route.php?id=<?= e($rid) ?>" class="btn btn-outline-secondary btn-sm">
+                                    Edit
+                                </a>
+                                <form method="post" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this route?');">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="delete_id" value="<?= e($rid) ?>">
+                                    <button type="submit" name="delete_route" class="btn btn-outline-danger btn-sm ml-1">
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Route Modal -->
+<div class="modal fade" id="addRouteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title font-weight-bold">Configure New Route</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body p-4">
+                <form action="" method="post">
+                    <?= csrf_field() ?>
+                    <div class="form-row">
+                        <div class="col-6 form-group">
+                            <label for="From" class="font-weight-bold small text-muted">From City</label>
+                            <input type="text" id="From" name="From" class="form-control" placeholder="Origin" required />
+                        </div>
+                        <div class="col-6 form-group">
+                            <label for="To" class="font-weight-bold small text-muted">To City</label>
+                            <input type="text" id="To" name="To" class="form-control" placeholder="Destination" required />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="bus" class="font-weight-bold small text-muted">Assigned Fleet Bus</label>
+                        <select name="bus" id="bus" class="form-control" required>
+                            <option value="">Select Fleet Bus</option>
+                            <?php foreach ($buses as $b): ?>
+                                <option value="<?= e($b['bus_number']) ?>"><?= e($b['bus_number']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-6 form-group">
+                            <label for="time" class="font-weight-bold small text-muted">Departure Time</label>
+                            <input type="time" id="time" name="time" class="form-control" required />
+                        </div>
+                        <div class="col-6 form-group">
+                            <label for="price" class="font-weight-bold small text-muted">Ticket Tariff (<?= CURRENCY ?>)</label>
+                            <input type="number" step="0.01" min="1" id="price" name="price" class="form-control" placeholder="0.00" required />
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-3">
+                        <button type="button" class="btn btn-outline-secondary mr-2" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" name="add">Save Route</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>
