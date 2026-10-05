@@ -357,6 +357,10 @@ function run_migrations(mysqli $link): array {
             $log[] = "  [!] Migration {$m5} had errors; not marked as applied.";
             $all_ok = false;
         }
+    } else {
+        $log[] = "[i] Migration {$m5} already applied.";
+    }
+
     // 8. Migration 006: 006_bus_layout (U-15)
     $m6 = '006_bus_layout';
     if (!migration_applied($link, $m6)) {
