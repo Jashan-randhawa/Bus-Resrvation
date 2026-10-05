@@ -157,54 +157,139 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                         </div>
                     </div>
 
-                    <!-- Interactive Visual Seat Selection Map -->
+                    <!-- Interactive Visual Seat Selection Map (U-15) -->
                     <div class="form-group mt-3">
-                        <label class="font-weight-bold small text-muted mb-2">Select Your Seat Number</label>
+                        <label class="font-weight-bold small text-muted mb-2 d-block text-center">Select Your Seat Number</label>
+                        
                         <div class="seat-legend mb-3">
                             <div class="legend-item">
-                                <span class="legend-swatch" style="background-color: var(--c-primary-light, #dbeafe); border: 1.5px solid var(--c-primary, #2563eb);"></span>
+                                <span class="legend-swatch" style="background-color: #eff6ff; border: 1.5px solid #3b82f6;"></span>
                                 <span>Available</span>
                             </div>
                             <div class="legend-item">
-                                <span class="legend-swatch" style="background-color: var(--c-success, #16a34a);"></span>
+                                <span class="legend-swatch" style="background-color: #16a34a; border: 1.5px solid #15803d;"></span>
                                 <span>Selected</span>
                             </div>
                             <div class="legend-item">
-                                <span class="legend-swatch" style="background-color: var(--c-error, #dc2626);"></span>
-                                <span>Already Booked</span>
+                                <span class="legend-swatch" style="background-color: #fee2e2; border: 1.5px solid #dc2626;"></span>
+                                <span>Already Booked (✕)</span>
                             </div>
                         </div>
 
-                        <div class="seat-grid">
-                            <?php for ($s = 1; $s <= $bus_capacity; $s++): ?>
-                                <?php $is_booked = isset($booked_seats[$s]); ?>
-                                <button type="button"
-                                    class="btn seat-btn <?= $is_booked ? 'btn-danger' : 'btn-outline-primary' ?>"
-                                    data-seat="<?= $s ?>"
-                                    <?= $is_booked ? 'disabled' : '' ?>
-                                    onclick="selectSeat(<?= $s ?>)">
-                                    <?= $s ?>
-                                </button>
-                            <?php endfor; ?>
+                        <!-- 2+2 Bus Cabin Layout (U-15) -->
+                        <div class="bus-cabin">
+                            <div class="bus-cabin-front">
+                                <span>🪟 Windows</span>
+                                <span>🚌 Driver &bull; Front of Bus</span>
+                                <span>🪟 Windows</span>
+                            </div>
+
+                            <?php
+                            $num_rows = (int)ceil($bus_capacity / 4);
+                            ?>
+                            <div role="radiogroup" aria-label="Bus seat selection">
+                                <?php for ($r = 1; $r <= $num_rows; $r++): ?>
+                                    <?php
+                                    $s1 = ($r - 1) * 4 + 1;
+                                    $s2 = ($r - 1) * 4 + 2;
+                                    $s3 = ($r - 1) * 4 + 3;
+                                    $s4 = ($r - 1) * 4 + 4;
+                                    ?>
+                                    <div class="seat-row">
+                                        <!-- Left Pair (Window + Aisle) -->
+                                        <div class="seat-pair">
+                                            <?php if ($s1 <= $bus_capacity): ?>
+                                                <?php $bk1 = isset($booked_seats[$s1]); ?>
+                                                <div class="seat-box">
+                                                    <input type="radio" name="seat" id="seat-<?= $s1 ?>" value="<?= $s1 ?>"
+                                                        class="seat-radio"
+                                                        <?= $bk1 ? 'disabled' : '' ?>
+                                                        aria-label="Seat <?= $s1 ?>, Window seat, <?= $bk1 ? 'Already Booked' : 'Available' ?>"
+                                                        required>
+                                                    <label for="seat-<?= $s1 ?>" class="seat-label <?= $bk1 ? 'seat-booked' : 'seat-available' ?>">
+                                                        <span class="seat-num"><?= $s1 ?></span>
+                                                        <span class="seat-type-tag"><?= $bk1 ? '<span class="seat-booked-icon">✕</span>' : 'WIN' ?></span>
+                                                    </label>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            <?php if ($s2 <= $bus_capacity): ?>
+                                                <?php $bk2 = isset($booked_seats[$s2]); ?>
+                                                <div class="seat-box">
+                                                    <input type="radio" name="seat" id="seat-<?= $s2 ?>" value="<?= $s2 ?>"
+                                                        class="seat-radio"
+                                                        <?= $bk2 ? 'disabled' : '' ?>
+                                                        aria-label="Seat <?= $s2 ?>, Aisle seat, <?= $bk2 ? 'Already Booked' : 'Available' ?>">
+                                                    <label for="seat-<?= $s2 ?>" class="seat-label <?= $bk2 ? 'seat-booked' : 'seat-available' ?>">
+                                                        <span class="seat-num"><?= $s2 ?></span>
+                                                        <span class="seat-type-tag"><?= $bk2 ? '<span class="seat-booked-icon">✕</span>' : 'AIS' ?></span>
+                                                    </label>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <!-- Aisle Gap -->
+                                        <div class="aisle-gap">
+                                            <span>|</span>
+                                        </div>
+
+                                        <!-- Right Pair (Aisle + Window) -->
+                                        <div class="seat-pair">
+                                            <?php if ($s3 <= $bus_capacity): ?>
+                                                <?php $bk3 = isset($booked_seats[$s3]); ?>
+                                                <div class="seat-box">
+                                                    <input type="radio" name="seat" id="seat-<?= $s3 ?>" value="<?= $s3 ?>"
+                                                        class="seat-radio"
+                                                        <?= $bk3 ? 'disabled' : '' ?>
+                                                        aria-label="Seat <?= $s3 ?>, Aisle seat, <?= $bk3 ? 'Already Booked' : 'Available' ?>">
+                                                    <label for="seat-<?= $s3 ?>" class="seat-label <?= $bk3 ? 'seat-booked' : 'seat-available' ?>">
+                                                        <span class="seat-num"><?= $s3 ?></span>
+                                                        <span class="seat-type-tag"><?= $bk3 ? '<span class="seat-booked-icon">✕</span>' : 'AIS' ?></span>
+                                                    </label>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            <?php if ($s4 <= $bus_capacity): ?>
+                                                <?php $bk4 = isset($booked_seats[$s4]); ?>
+                                                <div class="seat-box">
+                                                    <input type="radio" name="seat" id="seat-<?= $s4 ?>" value="<?= $s4 ?>"
+                                                        class="seat-radio"
+                                                        <?= $bk4 ? 'disabled' : '' ?>
+                                                        aria-label="Seat <?= $s4 ?>, Window seat, <?= $bk4 ? 'Already Booked' : 'Available' ?>">
+                                                    <label for="seat-<?= $s4 ?>" class="seat-label <?= $bk4 ? 'seat-booked' : 'seat-available' ?>">
+                                                        <span class="seat-num"><?= $s4 ?></span>
+                                                        <span class="seat-type-tag"><?= $bk4 ? '<span class="seat-booked-icon">✕</span>' : 'WIN' ?></span>
+                                                    </label>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                <?php endfor; ?>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="form-row align-items-end mt-4">
-                        <div class="col-md-6 form-group mb-md-0">
-                            <label for="seat_no" class="font-weight-bold small text-muted">Selected Seat Number</label>
-                            <input type="number" min="1" max="<?= $bus_capacity ?>" name="seat" class="form-control" id="seat_no" placeholder="Click seat above" readonly required>
-                        </div>
-                        <div class="col-md-6 form-group mb-md-0">
-                            <label class="font-weight-bold small text-muted">Fare Breakdown</label>
-                            <div class="h3 font-weight-bold text-success mb-0">
-                                <?= CURRENCY ?><?= e(number_format($price, 2)) ?>
+                    <!-- Sticky Summary Strip & Dynamic Submit Enable (U-04) -->
+                    <div class="card bg-light border p-3 mt-4">
+                        <div class="row align-items-center">
+                            <div class="col-sm-6 mb-2 mb-sm-0">
+                                <small class="text-muted text-uppercase d-block font-weight-bold">Selected Seat</small>
+                                <div class="h5 mb-0 text-dark" id="summary-seat-display">
+                                    <span class="text-muted font-italic font-weight-normal">None selected (click seat above)</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 text-sm-right">
+                                <small class="text-muted text-uppercase d-block font-weight-bold">Total Fare</small>
+                                <div class="h4 font-weight-bold text-success mb-0">
+                                    <?= CURRENCY ?><?= e(number_format($price, 2)) ?>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <hr class="my-4">
 
-                    <button type="submit" class="btn btn-primary btn-block btn-lg font-weight-bold shadow-sm" id="submit-booking-btn" name="check" value="1">
+                    <button type="submit" class="btn btn-primary btn-block btn-lg font-weight-bold shadow-sm" id="submit-booking-btn" name="check" value="1" disabled>
                         Confirm & Reserve Ticket
                     </button>
                 </form>
@@ -214,36 +299,42 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
 </div>
 
 <script>
-function selectSeat(seatNum) {
-    var seatInput = document.getElementById('seat_no');
-    if (seatInput) seatInput.value = seatNum;
-    
-    var allSeats = document.querySelectorAll('.seat-btn');
-    allSeats.forEach(function(btn) {
-        if (!btn.disabled) {
-            btn.classList.remove('btn-success');
-            btn.classList.add('btn-outline-primary');
-        }
-    });
-    var selected = document.querySelector('.seat-btn[data-seat="' + seatNum + '"]');
-    if (selected && !selected.disabled) {
-        selected.classList.remove('btn-outline-primary');
-        selected.classList.add('btn-success');
-    }
-}
-
-// U-05: Submit lock preventing duplicate clicks & U-04 client validation
+// U-04 & U-15: Radio selection handler, keyboard support, summary update
 document.addEventListener('DOMContentLoaded', function() {
+    var seatRadios = document.querySelectorAll('input[name="seat"]');
+    var submitBtn = document.getElementById('submit-booking-btn');
+    var summarySeat = document.getElementById('summary-seat-display');
+
+    function onSeatSelected(seatNum, seatType) {
+        if (summarySeat) {
+            summarySeat.innerHTML = '<span class="badge badge-success px-2 py-1 mr-1">Seat #' + seatNum + '</span> <small class="text-muted font-weight-normal">(' + seatType + ')</small>';
+        }
+        if (submitBtn) {
+            submitBtn.disabled = false;
+        }
+    }
+
+    seatRadios.forEach(function(radio) {
+        radio.addEventListener('change', function() {
+            if (this.checked) {
+                var label = document.querySelector('label[for="' + this.id + '"]');
+                var typeTag = label ? label.querySelector('.seat-type-tag')?.textContent : '';
+                var typeStr = typeTag === 'WIN' ? 'Window' : (typeTag === 'AIS' ? 'Aisle' : 'Standard');
+                onSeatSelected(this.value, typeStr);
+            }
+        });
+    });
+
+    // U-05: Double click lock
     var bookingForm = document.getElementById('booking-form');
     if (bookingForm) {
         bookingForm.addEventListener('submit', function(e) {
-            var seatVal = document.getElementById('seat_no').value;
-            if (!seatVal || parseInt(seatVal, 10) < 1) {
+            var selectedRadio = document.querySelector('input[name="seat"]:checked');
+            if (!selectedRadio) {
                 e.preventDefault();
                 alert('Please select an available seat from the seat map before confirming.');
                 return false;
             }
-            var submitBtn = document.getElementById('submit-booking-btn');
             if (submitBtn && !submitBtn.disabled) {
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>Booking...';
@@ -255,6 +346,43 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // U-15: Live seat refresh polling every 30 seconds
+    var pollBus = <?= json_encode($bus) ?>;
+    var pollDate = <?= json_encode($date) ?>;
+    var pollTime = <?= json_encode($time) ?>;
+
+    setInterval(function() {
+        var apiUrl = 'api-seats.php?bus=' + encodeURIComponent(pollBus) + '&date=' + encodeURIComponent(pollDate) + '&time=' + encodeURIComponent(pollTime);
+        fetch(apiUrl)
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data && data.ok && Array.isArray(data.booked_seats)) {
+                    data.booked_seats.forEach(function(sNum) {
+                        var radio = document.getElementById('seat-' + sNum);
+                        var label = document.querySelector('label[for="seat-' + sNum + '"]');
+                        if (radio && !radio.disabled) {
+                            if (radio.checked) {
+                                radio.checked = false;
+                                if (submitBtn) submitBtn.disabled = true;
+                                if (summarySeat) {
+                                    summarySeat.innerHTML = '<span class="text-danger font-weight-bold">Seat #' + sNum + ' was just taken! Please select another.</span>';
+                                }
+                                alert('Seat #' + sNum + ' was just reserved by another passenger. Please pick another seat.');
+                            }
+                            radio.disabled = true;
+                            if (label) {
+                                label.className = 'seat-label seat-booked';
+                                label.innerHTML = '<span class="seat-num">' + sNum + '</span><span class="seat-type-tag"><span class="seat-booked-icon">✕</span></span>';
+                            }
+                        }
+                    });
+                }
+            })
+            .catch(function(err) {
+                // Silently ignore network hiccup during background poll
+            });
+    }, 30000);
 });
 </script>
 

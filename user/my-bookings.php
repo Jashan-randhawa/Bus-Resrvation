@@ -66,12 +66,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_booking'])) {
     exit;
 }
 
-$bookings = db_all(
+// U-16: Fetch and categorize all user bookings into Upcoming, Past, and Cancelled
+$all_bookings = db_all(
     $link,
-    'SELECT * FROM booking WHERE id = ? ORDER BY `date` DESC, `time` DESC, sno DESC',
+    'SELECT * FROM booking WHERE id = ?',
     'i',
     [$uid]
 );
+
+$upcoming_list = [];
+$past_list = [];
+$cancelled_list = [];
+$now_ts = time();
+
+foreach ($all_bookings as $b) {
+    $raw_status = (string)($b['status'] ?? 'Confirmed');
+    $dep_time = !empty($b['time']) ? (string)$b['time'] : '00:00:00';
+    $dep_ts = strtotime($b['date'] . ' ' . $dep_time);
+
+    if ($raw_status === 'Cancelled' || $raw_status === 'Expired') {
+        $cancelled_list[] = $b;
+    } elseif ($dep_ts <= $now_ts) {
+        $past_list[] = $b;
+    } else {
+        $upcoming_list[] = $b;
+    }
+}
+
+// Sort upcoming trips ascending (nearest upcoming first)
+usort($upcoming_list, function($a, $b) {
+    $ta = strtotime($a['date'] . ' ' . ($a['time'] ?? '00:00:00'));
+    $tb = strtotime($b['date'] . ' ' . ($b['time'] ?? '00:00:00'));
+    return $ta <=> $tb;
+});
+
+// Sort past and cancelled descending (most recent first)
+usort($past_list, function($a, $b) {
+    $ta = strtotime($a['date'] . ' ' . ($a['time'] ?? '00:00:00'));
+    $tb = strtotime($b['date'] . ' ' . ($b['time'] ?? '00:00:00'));
+    return $tb <=> $ta;
+});
+
+usort($cancelled_list, function($a, $b) {
+    $ta = strtotime($a['date'] . ' ' . ($a['time'] ?? '00:00:00'));
+    $tb = strtotime($b['date'] . ' ' . ($b['time'] ?? '00:00:00'));
+    return $tb <=> $ta;
+});
+
+// Tab & Pagination resolution (U-16)
+$current_tab = in_array($_GET['tab'] ?? '', ['upcoming', 'past', 'cancelled'], true) ? $_GET['tab'] : 'upcoming';
+
+switch ($current_tab) {
+    case 'past':
+        $active_records = $past_list;
+        break;
+    case 'cancelled':
+        $active_records = $cancelled_list;
+        break;
+    case 'upcoming':
+    default:
+        $active_records = $upcoming_list;
+        break;
+}
+
+$per_page = 10;
+$total_records = count($active_records);
+$total_pages = max(1, (int)ceil($total_records / $per_page));
+$page = max(1, min($total_pages, (int)($_GET['page'] ?? 1)));
+$offset = ($page - 1) * $per_page;
+$display_records = array_slice($active_records, $offset, $per_page);
 
 $title = 'My Reservations';
 require_once __DIR__ . '/../includes/layout/header-user.php';
@@ -81,7 +144,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
         <h1 class="page-title">My Travel Bookings</h1>
         <p class="page-subtitle">Track your tickets, view PNR tokens, review route schedules, and manage active reservations.</p>
     </div>
-    <a href="<?= BASE_URL ?>/user/index.php" class="btn btn-primary shadow-sm">
+    <a href="<?= BASE_URL ?>/user/index.php" class="btn btn-primary shadow-sm font-weight-bold">
         + Book New Trip
     </a>
 </div>
@@ -93,10 +156,30 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
     </div>
 <?php endif; ?>
 
-<div class="data-table-wrapper">
+<!-- U-16: Category Tabs -->
+<ul class="nav nav-pills mb-4 border-bottom pb-3">
+    <li class="nav-item">
+        <a class="nav-link font-weight-bold <?= $current_tab === 'upcoming' ? 'active' : '' ?>" href="?tab=upcoming">
+            🕒 Upcoming Trips <span class="badge badge-light ml-1"><?= count($upcoming_list) ?></span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link font-weight-bold <?= $current_tab === 'past' ? 'active' : '' ?>" href="?tab=past">
+            📜 Past Journeys <span class="badge badge-light ml-1"><?= count($past_list) ?></span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link font-weight-bold <?= $current_tab === 'cancelled' ? 'active' : '' ?>" href="?tab=cancelled">
+            ✕ Cancelled / Expired <span class="badge badge-light ml-1"><?= count($cancelled_list) ?></span>
+        </a>
+    </li>
+</ul>
+
+<!-- Desktop Table View (Hidden on mobile <768px for zero horizontal scroll) -->
+<div class="data-table-wrapper d-none d-md-block mb-4">
     <div class="table-header">
-        <h5 class="mb-0">Your Reserved Tickets</h5>
-        <span class="record-count"><?= count($bookings) ?> ticket(s)</span>
+        <h5 class="mb-0 text-capitalize"><?= e($current_tab) ?> Reservations</h5>
+        <span class="record-count"><?= $total_records ?> record(s)</span>
     </div>
     <div class="table-responsive">
         <table class="table table-hover mb-0">
@@ -114,25 +197,24 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                 </tr>
             </thead>
             <tbody>
-                <?php if (empty($bookings)): ?>
+                <?php if (empty($display_records)): ?>
                     <tr>
                         <td colspan="9">
                             <div class="empty-state py-5">
                                 <div class="empty-icon">🎟️</div>
-                                <div class="empty-title">No travel tickets yet</div>
-                                <div class="empty-text">You haven't reserved any tickets. Click '+ Book New Trip' to browse active routes.</div>
+                                <div class="empty-title">No <?= e($current_tab) ?> bookings</div>
+                                <div class="empty-text">No travel records found in this category.</div>
                             </div>
                         </td>
                     </tr>
                 <?php else: ?>
-                    <?php foreach ($bookings as $row): ?>
+                    <?php foreach ($display_records as $row): ?>
                         <?php
                         $sno = (int)$row['sno'];
                         $display_pnr = (string)($row['pnr'] ?? ('#' . $sno));
                         $raw_status = (string)($row['status'] ?? 'Confirmed');
                         $dep_time = !empty($row['time']) ? (string)$row['time'] : '00:00:00';
                         $dep_ts = strtotime($row['date'] . ' ' . $dep_time);
-                        $now_ts = time();
                         $is_past = ($dep_ts <= $now_ts);
                         $can_cancel = false;
                         $cancel_refusal_reason = '';
@@ -179,6 +261,10 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                             </td>
                             <td class="font-weight-bold text-dark"><?= CURRENCY ?><?= e(number_format((float)($row['price'] ?? 0), 2)) ?></td>
                             <td class="text-right">
+                                <!-- U-16: Printable Ticket Link -->
+                                <a href="<?= BASE_URL ?>/user/ticket.php?pnr=<?= urlencode($display_pnr) ?>" class="btn btn-sm btn-outline-primary mr-1" title="View Boarding Ticket">
+                                    🎟️ Ticket
+                                </a>
                                 <?php if ($can_cancel): ?>
                                     <button type="button"
                                         class="btn btn-outline-danger btn-sm open-cancel-modal"
@@ -207,6 +293,107 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
         </table>
     </div>
 </div>
+
+<!-- Mobile Card View (U-16: 0 sideways scroll at 390px) -->
+<div class="d-md-none mb-4">
+    <?php if (empty($display_records)): ?>
+        <div class="card p-4 text-center">
+            <div class="empty-icon h2 mb-2">🎟️</div>
+            <div class="font-weight-bold text-dark">No <?= e($current_tab) ?> bookings</div>
+            <div class="text-muted small">No travel records found in this category.</div>
+        </div>
+    <?php else: ?>
+        <?php foreach ($display_records as $row): ?>
+            <?php
+            $sno = (int)$row['sno'];
+            $display_pnr = (string)($row['pnr'] ?? ('#' . $sno));
+            $raw_status = (string)($row['status'] ?? 'Confirmed');
+            $dep_time = !empty($row['time']) ? (string)$row['time'] : '00:00:00';
+            $dep_ts = strtotime($row['date'] . ' ' . $dep_time);
+            $is_past = ($dep_ts <= $now_ts);
+            $can_cancel = false;
+            $cancel_refusal_reason = '';
+
+            if ($raw_status === 'Cancelled') {
+                $badge_class = 'badge-danger';
+                $badge_label = 'Cancelled';
+            } elseif ($raw_status === 'Expired') {
+                $badge_class = 'badge-secondary';
+                $badge_label = 'Expired';
+            } elseif ($is_past) {
+                $badge_class = 'badge-secondary';
+                $badge_label = 'Completed';
+            } elseif ($raw_status === 'Pending') {
+                $badge_class = 'badge-warning text-dark';
+                $badge_label = 'Pending Hold';
+                if (($dep_ts - $now_ts) >= ($cutoff_min * 60)) {
+                    $can_cancel = true;
+                }
+            } else {
+                $badge_class = 'badge-success';
+                $badge_label = 'Confirmed';
+                if (($dep_ts - $now_ts) >= ($cutoff_min * 60)) {
+                    $can_cancel = true;
+                }
+            }
+            ?>
+            <div class="booking-card mb-3">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                    <span class="badge <?= $badge_class ?> text-uppercase"><?= e($badge_label) ?></span>
+                    <code class="font-weight-bold text-dark">PNR: <?= e($display_pnr) ?></code>
+                </div>
+                <div class="h6 font-weight-bold text-dark mb-1">
+                    <?= e($row['city1'] ?? '') ?> &rarr; <?= e($row['city2'] ?? '') ?>
+                </div>
+                <div class="small text-muted mb-2">
+                    📅 <?= e(fmt_date($row['date'] ?? '')) ?> at <?= e(fmt_time($row['time'] ?? '')) ?> &bull; 🚌 Bus #<?= e($row['bus'] ?? '') ?>
+                </div>
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                    <div>
+                        <span class="badge badge-info mr-1">Seat #<?= e($row['seat'] ?? '') ?></span>
+                        <strong class="text-success"><?= CURRENCY ?><?= e(number_format((float)($row['price'] ?? 0), 2)) ?></strong>
+                    </div>
+                    <div>
+                        <a href="<?= BASE_URL ?>/user/ticket.php?pnr=<?= urlencode($display_pnr) ?>" class="btn btn-outline-primary btn-sm">
+                            🎟️ Ticket
+                        </a>
+                        <?php if ($can_cancel): ?>
+                            <button type="button"
+                                class="btn btn-outline-danger btn-sm open-cancel-modal ml-1"
+                                data-id="<?= e($sno) ?>"
+                                data-pnr="<?= e($display_pnr) ?>"
+                                data-route="<?= e(($row['city1'] ?? '') . ' &rarr; ' . ($row['city2'] ?? '')) ?>"
+                                data-schedule="<?= e(fmt_date($row['date'] ?? '') . ' at ' . fmt_time($row['time'] ?? '')) ?>"
+                                data-toggle="modal"
+                                data-target="#cancelModal">
+                                Cancel
+                            </button>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
+</div>
+
+<!-- Pagination (U-16: 10 per page) -->
+<?php if ($total_pages > 1): ?>
+    <nav aria-label="Bookings pagination" class="d-flex justify-content-center">
+        <ul class="pagination pagination-sm shadow-sm">
+            <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+                <a class="page-link" href="?tab=<?= urlencode($current_tab) ?>&page=<?= $page - 1 ?>">&laquo; Prev</a>
+            </li>
+            <?php for ($p = 1; $p <= $total_pages; $p++): ?>
+                <li class="page-item <?= $p === $page ? 'active' : '' ?>">
+                    <a class="page-link" href="?tab=<?= urlencode($current_tab) ?>&page=<?= $p ?>"><?= $p ?></a>
+                </li>
+            <?php endfor; ?>
+            <li class="page-item <?= $page >= $total_pages ? 'disabled' : '' ?>">
+                <a class="page-link" href="?tab=<?= urlencode($current_tab) ?>&page=<?= $page + 1 ?>">Next &raquo;</a>
+            </li>
+        </ul>
+    </nav>
+<?php endif; ?>
 
 <!-- Bootstrap Cancellation Modal (U-10) -->
 <div class="modal fade" id="cancelModal" tabindex="-1" role="dialog" aria-labelledby="cancelModalLabel" aria-hidden="true">

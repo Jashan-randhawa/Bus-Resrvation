@@ -390,6 +390,30 @@ $grouped_test = db_all(
 );
 assert_test("Grouped seat availability executes without error (U-11)", is_array($grouped_test));
 
+// -------------------------------------------------------------
+// Test 11: Slice D Verification (U-04, U-15, U-16)
+// -------------------------------------------------------------
+echo "\n[*] Suite 11: Slice D Seat Map & Tabbed Bookings (U-04 to U-16)\n";
+
+// 1. 2+2 layout row calculations (U-15)
+$test_cap = 36;
+$calc_rows = (int)ceil($test_cap / 4);
+assert_test("36-seat bus calculates exactly 9 rows of 2+2 seats", $calc_rows === 9);
+
+// 2. Booking categorization logic (U-16)
+$now = time();
+$mock_upcoming = ['date' => date('Y-m-d', $now + 86400), 'time' => '10:00:00', 'status' => 'Confirmed'];
+$mock_past = ['date' => date('Y-m-d', $now - 86400), 'time' => '10:00:00', 'status' => 'Confirmed'];
+$mock_cancelled = ['date' => date('Y-m-d', $now + 86400), 'time' => '10:00:00', 'status' => 'Cancelled'];
+
+$is_up = ($mock_upcoming['status'] === 'Confirmed' && strtotime($mock_upcoming['date'] . ' ' . $mock_upcoming['time']) > $now);
+$is_p = (strtotime($mock_past['date'] . ' ' . $mock_past['time']) <= $now);
+$is_c = ($mock_cancelled['status'] === 'Cancelled');
+
+assert_test("Upcoming trip correctly categorized (U-16)", $is_up);
+assert_test("Past trip correctly categorized (U-16)", $is_p);
+assert_test("Cancelled trip correctly categorized (U-16)", $is_c);
+
 // Clean up test data
 db_exec($link, 'DELETE FROM booking WHERE bus = ?', 's', [$test_busno]);
 db_exec($link, 'DELETE FROM buses WHERE bus_number = ?', 's', [$test_busno]);

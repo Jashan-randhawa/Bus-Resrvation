@@ -851,28 +851,116 @@ label, .form-label {
   white-space: nowrap;
 }
 
-/* Seat Grid */
-.seat-grid {
+/* Seat Grid & Bus Cabin (U-15) */
+.bus-cabin {
+  max-width: 440px;
+  margin: 0 auto;
+  background: var(--c-surface, #ffffff);
+  border: 2px solid var(--c-border, #e2e8f0);
+  border-radius: 28px 28px 12px 12px;
+  padding: 20px 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+.bus-cabin-front {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  justify-content: center;
-  padding: var(--space-4);
-  background: #f8fafc;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--c-border);
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  margin-bottom: 20px;
+  background: var(--c-bg, #f1f5f9);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--c-text-muted, #64748b);
+  border: 1px dashed var(--c-border, #cbd5e1);
 }
-.seat-btn {
+.seat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.seat-pair {
+  display: flex;
+  gap: 8px;
+}
+.aisle-gap {
+  width: 28px;
+  text-align: center;
+  font-size: 10px;
+  color: var(--c-text-muted, #94a3b8);
+  font-weight: 600;
+  user-select: none;
+}
+.seat-box {
+  position: relative;
   width: 44px;
-  height: 40px;
-  border-radius: var(--radius-sm);
-  font-weight: var(--weight-semibold);
-  font-size: var(--text-xs);
-  transition: all var(--transition-fast);
-  border: 1.5px solid;
+  height: 44px;
 }
-.seat-btn:not(:disabled):hover {
-  transform: scale(1.1);
+.seat-radio {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 2;
+  margin: 0;
+}
+.seat-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  border: 2px solid;
+  user-select: none;
+  line-height: 1.1;
+  position: relative;
+  z-index: 1;
+}
+.seat-radio:focus-visible + .seat-label {
+  outline: 3px solid var(--c-primary, #2563eb);
+  outline-offset: 2px;
+}
+.seat-available {
+  background-color: #eff6ff;
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+.seat-available:hover {
+  background-color: #dbeafe;
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+}
+.seat-radio:checked + .seat-label {
+  background-color: #16a34a !important;
+  border-color: #15803d !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.3);
+}
+.seat-booked {
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+  color: #991b1b;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+.seat-booked-icon {
+  font-size: 10px;
+  display: block;
+}
+.seat-type-tag {
+  font-size: 8px;
+  font-weight: 600;
+  opacity: 0.75;
 }
 
 /* Seat Legend */
@@ -880,6 +968,7 @@ label, .form-label {
   display: flex;
   gap: var(--space-4);
   flex-wrap: wrap;
+  justify-content: center;
   margin-bottom: var(--space-3);
 }
 .seat-legend .legend-item {
@@ -895,6 +984,51 @@ label, .form-label {
   height: 16px;
   border-radius: var(--radius-sm);
   display: inline-block;
+}
+
+/* Mobile Booking Card Styles (U-16) */
+.booking-card {
+  background: var(--c-surface, #ffffff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--radius-md, 10px);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform var(--transition-fast, 0.15s ease);
+}
+.booking-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Printable Ticket Styles (U-16) */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .no-print,
+  .admin-sidebar,
+  .admin-topbar,
+  .breadcrumb,
+  .btn,
+  .theme-toggle-btn {
+    display: none !important;
+  }
+  .admin-layout {
+    display: block !important;
+  }
+  .admin-main,
+  .admin-content-wrap {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+  .ticket-container {
+    box-shadow: none !important;
+    border: 2px solid #000000 !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+  }
 }
 
 /* Focus visible */
