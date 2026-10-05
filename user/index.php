@@ -271,4 +271,4 @@ document.getElementById('swap-cities-btn')?.addEventListener('click', swapCities
 document.getElementById('swap-cities-btn-mobile')?.addEventListener('click', swapCities);
 </script>
 
-<?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>
+<?php require_once __DIR__ . '/../includes/layout/footer-user.php'; ?>

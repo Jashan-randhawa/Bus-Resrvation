@@ -175,4 +175,4 @@ if ($is_cancelled) {
     </div>
 </div>
 
-<?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>
+<?php require_once __DIR__ . '/../includes/layout/footer-user.php'; ?>

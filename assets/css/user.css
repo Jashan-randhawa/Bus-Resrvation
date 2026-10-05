@@ -1,0 +1,20 @@
+/* assets/css/user.css -- User Portal Shell & Customizations (U-19) */
+@import url("admin.css");
+
+/* Specific User Customer Portal Styles */
+.user-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: var(--radius-full, 9999px);
+  background-color: rgba(14, 165, 233, 0.2);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.user-nav-link.active {
+  background-color: var(--c-primary, #2563eb);
+  color: #ffffff;
+}

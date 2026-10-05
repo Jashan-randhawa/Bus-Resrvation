@@ -442,3 +442,28 @@ function create_booking(mysqli $link, array $data): array {
         return ['ok' => false, 'pnr' => '', 'error' => 'We could not complete the booking. Please try again.'];
     }
 }
+
+/**
+ * Returns badge CSS class and readable label for booking statuses (U-09).
+ *
+ * @param string $status Database status value
+ * @param bool $is_past Whether the departure timestamp is in the past
+ * @return array ['class' => string, 'label' => string]
+ */
+function get_booking_status_badge(string $status, bool $is_past = false): array {
+    $raw = trim($status);
+    if ($raw === 'Cancelled') {
+        return ['class' => 'badge-danger', 'label' => 'Cancelled'];
+    }
+    if ($raw === 'Expired') {
+        return ['class' => 'badge-secondary', 'label' => 'Expired'];
+    }
+    if ($is_past) {
+        return ['class' => 'badge-secondary', 'label' => 'Completed'];
+    }
+    if ($raw === 'Pending') {
+        return ['class' => 'badge-warning text-dark', 'label' => 'Pending Hold'];
+    }
+    return ['class' => 'badge-success', 'label' => 'Confirmed'];
+}
+

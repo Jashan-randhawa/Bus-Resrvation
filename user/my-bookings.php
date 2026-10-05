@@ -220,27 +220,12 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                         $cancel_refusal_reason = '';
 
                         // Status mapping and action permissions (U-09)
-                        if ($raw_status === 'Cancelled') {
-                            $badge_class = 'badge-danger';
-                            $badge_label = 'Cancelled';
-                        } elseif ($raw_status === 'Expired') {
-                            $badge_class = 'badge-secondary';
-                            $badge_label = 'Expired';
-                        } elseif ($is_past) {
-                            $badge_class = 'badge-secondary';
-                            $badge_label = 'Completed';
-                        } elseif ($raw_status === 'Pending') {
-                            $badge_class = 'badge-warning text-dark';
-                            $badge_label = 'Pending Hold';
-                            if (($dep_ts - $now_ts) >= ($cutoff_min * 60)) {
-                                $can_cancel = true;
-                            } else {
-                                $cancel_refusal_reason = 'Past cutoff window';
-                            }
-                        } else {
-                            $badge_class = 'badge-success';
-                            $badge_label = 'Confirmed';
-                            if (($dep_ts - $now_ts) >= ($cutoff_min * 60)) {
+                        $badge_info = get_booking_status_badge($raw_status, $is_past);
+                        $badge_class = $badge_info['class'];
+                        $badge_label = $badge_info['label'];
+
+                        if ($raw_status === 'Pending' || $raw_status === 'Confirmed') {
+                            if (!$is_past && ($dep_ts - $now_ts) >= ($cutoff_min * 60)) {
                                 $can_cancel = true;
                             } else {
                                 $cancel_refusal_reason = 'Past cutoff window';
@@ -314,25 +299,13 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
             $can_cancel = false;
             $cancel_refusal_reason = '';
 
-            if ($raw_status === 'Cancelled') {
-                $badge_class = 'badge-danger';
-                $badge_label = 'Cancelled';
-            } elseif ($raw_status === 'Expired') {
-                $badge_class = 'badge-secondary';
-                $badge_label = 'Expired';
-            } elseif ($is_past) {
-                $badge_class = 'badge-secondary';
-                $badge_label = 'Completed';
-            } elseif ($raw_status === 'Pending') {
-                $badge_class = 'badge-warning text-dark';
-                $badge_label = 'Pending Hold';
-                if (($dep_ts - $now_ts) >= ($cutoff_min * 60)) {
-                    $can_cancel = true;
-                }
-            } else {
-                $badge_class = 'badge-success';
-                $badge_label = 'Confirmed';
-                if (($dep_ts - $now_ts) >= ($cutoff_min * 60)) {
+            // Status mapping and action permissions (U-09)
+            $badge_info = get_booking_status_badge($raw_status, $is_past);
+            $badge_class = $badge_info['class'];
+            $badge_label = $badge_info['label'];
+
+            if ($raw_status === 'Pending' || $raw_status === 'Confirmed') {
+                if (!$is_past && ($dep_ts - $now_ts) >= ($cutoff_min * 60)) {
                     $can_cancel = true;
                 }
             }
@@ -451,4 +424,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>
+<?php require_once __DIR__ . '/../includes/layout/footer-user.php'; ?>

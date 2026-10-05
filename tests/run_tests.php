@@ -449,6 +449,98 @@ assert_test("Expired reset token is rejected (U-17)", $found_expired_token === n
 // Clean up reset test token
 db_exec($link, 'DELETE FROM password_resets WHERE email = ?', 's', [$test_reset_email]);
 
+// -------------------------------------------------------------
+// Test 13: Slice F Verification (U-19, U-20, U-21)
+// -------------------------------------------------------------
+echo "\n[*] Suite 13: Slice F Templates, Dead Code, & Multi-Trip Integrity (U-19 to U-21)\n";
+
+// 1. Shared bus with two departure times on the same date (U-01, U-21)
+$multi_bus = 'MULTI-BUS-' . strtoupper(bin2hex(random_bytes(3)));
+db_exec($link, 'INSERT INTO buses (bus_number, capacity) VALUES (?, ?)', 'si', [$multi_bus, 40]);
+$multi_date = date('Y-m-d', strtotime('+14 days'));
+$multi_time1 = '09:00:00';
+$multi_time2 = '18:00:00';
+
+$book1 = create_booking($link, [
+    'bus' => $multi_bus,
+    'city1' => 'CityX',
+    'city2' => 'CityY',
+    'date' => $multi_date,
+    'time' => $multi_time1,
+    'seat' => 1,
+    'price' => 25.00,
+    'name' => 'Alice Multi',
+    'contact' => '1234567890',
+    'id' => 101,
+]);
+assert_test("Booking seat 1 on departure slot 1 (09:00) succeeds (U-01, U-21)", $book1['ok'] === true, $book1['error'] ?? '');
+
+$book2 = create_booking($link, [
+    'bus' => $multi_bus,
+    'city1' => 'CityX',
+    'city2' => 'CityY',
+    'date' => $multi_date,
+    'time' => $multi_time2,
+    'seat' => 1,
+    'price' => 25.00,
+    'name' => 'Bob Multi',
+    'contact' => '9876543210',
+    'id' => 102,
+]);
+assert_test("Booking seat 1 on departure slot 2 (18:00) of same bus & date succeeds independently (U-01, U-21)", $book2['ok'] === true, $book2['error'] ?? '');
+
+// Colliding re-book of seat 1 on departure slot 1 with a different user must fail
+$book1_collision = create_booking($link, [
+    'bus' => $multi_bus,
+    'city1' => 'CityX',
+    'city2' => 'CityY',
+    'date' => $multi_date,
+    'time' => $multi_time1,
+    'seat' => 1,
+    'price' => 25.00,
+    'name' => 'Charlie Collide',
+    'contact' => '5555555555',
+    'id' => 103,
+]);
+assert_test("Duplicate booking of seat 1 on slot 1 is prevented (U-01, U-05)", $book1_collision['ok'] === false);
+
+// Clean up multi-trip test records
+db_exec($link, 'DELETE FROM booking WHERE bus = ?', 's', [$multi_bus]);
+db_exec($link, 'DELETE FROM buses WHERE bus_number = ?', 's', [$multi_bus]);
+
+// 2. Status badge lifecycle mapping helper (U-09, U-21)
+$b_conf = get_booking_status_badge('Confirmed');
+$b_pend = get_booking_status_badge('Pending');
+$b_canc = get_booking_status_badge('Cancelled');
+$b_expi = get_booking_status_badge('Expired');
+$b_past = get_booking_status_badge('Confirmed', true);
+
+assert_test("Status badge: Confirmed maps to badge-success (U-09)", $b_conf['class'] === 'badge-success' && $b_conf['label'] === 'Confirmed');
+assert_test("Status badge: Pending maps to badge-warning (U-09)", str_contains($b_pend['class'], 'badge-warning') && $b_pend['label'] === 'Pending Hold');
+assert_test("Status badge: Cancelled maps to badge-danger (U-09)", $b_canc['class'] === 'badge-danger' && $b_canc['label'] === 'Cancelled');
+assert_test("Status badge: Expired maps to badge-secondary (U-09)", $b_expi['class'] === 'badge-secondary' && $b_expi['label'] === 'Expired');
+assert_test("Status badge: Past departure maps to Completed (U-09)", $b_past['class'] === 'badge-secondary' && $b_past['label'] === 'Completed');
+
+// 3. User templates & dead code scan (U-19, U-20)
+$user_dir = realpath(__DIR__ . '/../user');
+$user_php_files = glob($user_dir . '/*.php');
+$found_footer_admin = false;
+$found_show_columns = false;
+
+foreach ($user_php_files as $fpath) {
+    $code = file_get_contents($fpath);
+    if (stripos($code, 'footer-admin') !== false) {
+        $found_footer_admin = true;
+    }
+    if (stripos($code, 'SHOW COLUMNS') !== false) {
+        $found_show_columns = true;
+    }
+}
+assert_test("Zero user pages reference footer-admin (U-19)", !$found_footer_admin);
+assert_test("Zero user pages execute SHOW COLUMNS (U-20)", !$found_show_columns);
+assert_test("Dedicated footer-user.php exists (U-19)", file_exists(__DIR__ . '/../includes/layout/footer-user.php'));
+assert_test("Dedicated user.css exists (U-19)", file_exists(__DIR__ . '/../assets/css/user.css'));
+
 // Clean up test data
 db_exec($link, 'DELETE FROM booking WHERE bus = ?', 's', [$test_busno]);
 db_exec($link, 'DELETE FROM buses WHERE bus_number = ?', 's', [$test_busno]);
