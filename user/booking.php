@@ -131,11 +131,11 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                         </div>
                         <div class="col-sm-3 col-6">
                             <small class="text-muted text-uppercase">Date</small>
-                            <div class="font-weight-bold text-dark"><?= e($date) ?></div>
+                            <div class="font-weight-bold text-dark"><?= e(fmt_date($date)) ?></div>
                         </div>
                         <div class="col-sm-3 col-6">
                             <small class="text-muted text-uppercase">Time</small>
-                            <div class="font-weight-bold text-dark"><?= e($time) ?></div>
+                            <div class="font-weight-bold text-dark"><?= e(fmt_time($time)) ?></div>
                         </div>
                     </div>
                 </div>

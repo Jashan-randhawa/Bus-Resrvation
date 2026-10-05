@@ -170,7 +170,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                             <td><strong><?= e($row['bus'] ?? '') ?></strong></td>
                             <td class="font-weight-medium text-dark"><?= e($row['name'] ?? '') ?></td>
                             <td><?= e($row['city1'] ?? '') ?> &rarr; <?= e($row['city2'] ?? '') ?></td>
-                            <td><?= e($row['date'] ?? '') ?><br><small class="text-muted"><?= e($row['time'] ?? '') ?></small></td>
+                            <td><?= e(fmt_date($row['date'] ?? '')) ?><br><small class="text-muted"><?= e(fmt_time($row['time'] ?? '')) ?></small></td>
                             <td><span class="badge badge-info px-2 py-1">Seat #<?= e($row['seat'] ?? '') ?></span></td>
                             <td>
                                 <span class="badge <?= $badge_class ?>">
@@ -185,7 +185,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                                         data-id="<?= e($sno) ?>"
                                         data-pnr="<?= e($display_pnr) ?>"
                                         data-route="<?= e(($row['city1'] ?? '') . ' &rarr; ' . ($row['city2'] ?? '')) ?>"
-                                        data-schedule="<?= e(($row['date'] ?? '') . ' at ' . ($row['time'] ?? '')) ?>"
+                                        data-schedule="<?= e(fmt_date($row['date'] ?? '') . ' at ' . fmt_time($row['time'] ?? '')) ?>"
                                         data-toggle="modal"
                                         data-target="#cancelModal">
                                         Cancel

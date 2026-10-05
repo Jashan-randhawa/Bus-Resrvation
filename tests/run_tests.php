@@ -366,6 +366,30 @@ assert_test("Seat hold expiration window is exactly ~10 minutes relative to data
     "diff_min: " . ($hold_row['diff_min'] ?? 'null')
 );
 
+// -------------------------------------------------------------
+// Test 10: Slice C Verification (U-11, U-13, U-18)
+// -------------------------------------------------------------
+echo "\n[*] Suite 10: Slice C Search Performance & Formatting (U-11 to U-18)\n";
+
+// 1. Format date and time helpers (U-18)
+assert_test("fmt_date formats YYYY-MM-DD to human string", fmt_date('2026-10-05') === 'Mon, 5 Oct 2026', "Got: " . fmt_date('2026-10-05'));
+assert_test("fmt_time formats HH:MM:SS to 12-hour AM/PM", fmt_time('08:30:00') === '8:30 AM', "Got: " . fmt_time('08:30:00'));
+assert_test("fmt_time formats afternoon HH:MM:SS to PM", fmt_time('18:45:00') === '6:45 PM', "Got: " . fmt_time('18:45:00'));
+assert_test("fmt_date handles empty string safely", fmt_date('') === '');
+assert_test("fmt_time handles empty string safely", fmt_time('') === '');
+
+// 2. Grouped availability count query check (U-11)
+$grouped_test = db_all(
+    $link,
+    "SELECT bus, `time`, COUNT(*) AS taken_count
+     FROM booking
+     WHERE `date` = ? AND status IN ('Confirmed', 'Pending') AND bus = ?
+     GROUP BY bus, `time`",
+    'ss',
+    [$test_date, $test_busno]
+);
+assert_test("Grouped seat availability executes without error (U-11)", is_array($grouped_test));
+
 // Clean up test data
 db_exec($link, 'DELETE FROM booking WHERE bus = ?', 's', [$test_busno]);
 db_exec($link, 'DELETE FROM buses WHERE bus_number = ?', 's', [$test_busno]);

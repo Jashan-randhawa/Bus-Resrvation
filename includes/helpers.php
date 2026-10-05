@@ -44,6 +44,23 @@ function flash_get(): array {
     return $f;
 }
 
+/* ---------- Date & Time Formatting (U-18) ---------- */
+function fmt_date(?string $date, string $format = 'D, j M Y'): string {
+    if ($date === null || $date === '') {
+        return '';
+    }
+    $ts = strtotime($date);
+    return $ts !== false ? date($format, $ts) : $date;
+}
+
+function fmt_time(?string $time, string $format = 'g:i A'): string {
+    if ($time === null || $time === '') {
+        return '';
+    }
+    $ts = strtotime($time);
+    return $ts !== false ? date($format, $ts) : $time;
+}
+
 /* ---------- Database helpers (prepared statements) ---------- */
 function db_one(mysqli $link, string $sql, string $types = '', array $params = []): ?array {
     $stmt = mysqli_prepare($link, $sql);
