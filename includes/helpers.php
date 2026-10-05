@@ -362,9 +362,12 @@ function create_booking(mysqli $link, array $data): array {
         $pnr = strtoupper(bin2hex(random_bytes(5)));
 
         if ($has_pnr && $has_status && $has_hold) {
-            $hold_exp = ($booking_status === 'Pending') ? date('Y-m-d H:i:s', strtotime('+10 minutes')) : null;
-            $sql = "INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr, status, hold_expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            db_exec($link, $sql, 'isssssssidsss', [$cust_id, $bus, $name, $contact, $from, $to, $date, $time, $seat, $price, $pnr, $booking_status, $hold_exp]);
+            if ($booking_status === 'Pending') {
+                $sql = "INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr, status, hold_expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))";
+            } else {
+                $sql = "INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr, status, hold_expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)";
+            }
+            db_exec($link, $sql, 'isssssssidss', [$cust_id, $bus, $name, $contact, $from, $to, $date, $time, $seat, $price, $pnr, $booking_status]);
         } elseif ($has_pnr && $has_status) {
             $sql = "INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             db_exec($link, $sql, 'isssssssidss', [$cust_id, $bus, $name, $contact, $from, $to, $date, $time, $seat, $price, $pnr, $booking_status]);

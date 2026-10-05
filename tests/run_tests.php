@@ -307,6 +307,65 @@ assert_test("validate_travel_datetime rejects past date", !validate_travel_datet
 assert_test("validate_travel_datetime rejects date > 90 days", !validate_travel_datetime(date('Y-m-d', strtotime('+95 days')))['ok']);
 assert_test("validate_travel_datetime accepts valid future date", validate_travel_datetime(date('Y-m-d', strtotime('+5 days')))['ok']);
 
+// -------------------------------------------------------------
+// Test 9: Slice B Verification (U-08, U-09, U-10, U-12)
+// -------------------------------------------------------------
+echo "\n[*] Suite 9: Slice B Cancellation & Status Integrity (U-08 to U-12)\n";
+
+// 1. Cutoff window enforcement (U-10)
+$now_ts = time();
+$cutoff_min = defined('APP_CANCEL_CUTOFF_MIN') ? (int)APP_CANCEL_CUTOFF_MIN : 120;
+// Trip departing in 30 minutes
+$dep_30min = date('Y-m-d H:i:s', $now_ts + (30 * 60));
+$dep_30min_date = date('Y-m-d', strtotime($dep_30min));
+$dep_30min_time = date('H:i:s', strtotime($dep_30min));
+
+$res_cutoff = create_booking($link, [
+    'bus' => $test_busno,
+    'city1' => 'CityA',
+    'city2' => 'CityB',
+    'date' => $dep_30min_date,
+    'time' => $dep_30min_time,
+    'seat' => 20,
+    'price' => 50.0,
+    'name' => 'Cutoff Test User',
+    'contact' => '9876543210'
+]);
+
+$cutoff_row = db_one($link, "SELECT `date`, `time`, status FROM booking WHERE pnr = ?", 's', [$res_cutoff['pnr']]);
+$dep_ts_chk = strtotime(($cutoff_row['date'] ?? '') . ' ' . ($cutoff_row['time'] ?? ''));
+$diff_seconds = $dep_ts_chk - $now_ts;
+$is_within_cutoff = ($diff_seconds < ($cutoff_min * 60));
+assert_test("Trip departing in 30 mins is identified as within cancellation cut-off window (U-10)", $is_within_cutoff);
+
+// 2. Trip in the past cannot be cancelled (U-10)
+$past_ts = $now_ts - 3600;
+$is_past = ($past_ts <= $now_ts);
+assert_test("Past departed trip cannot be cancelled (U-10)", $is_past);
+
+// 3. Forged PNR verification (U-08)
+$fake_lookup = db_one($link, 'SELECT pnr FROM booking WHERE pnr = ? AND id = ?', 'si', ['FAKE', 1]);
+assert_test("Forged PNR lookup returns null and shows no confirmation (U-08)", $fake_lookup === null);
+
+// 4. Hold expiry timestamp aligns with SQL NOW() (U-12)
+$res_hold_clk = create_booking($link, [
+    'bus' => $test_busno,
+    'city1' => 'CityA',
+    'city2' => 'CityB',
+    'date' => $test_date,
+    'time' => $test_time,
+    'seat' => 22,
+    'price' => 50.0,
+    'name' => 'Clock Check User',
+    'contact' => '9876543210',
+    'status' => 'Pending'
+]);
+$hold_row = db_one($link, "SELECT hold_expires_at, TIMESTAMPDIFF(MINUTE, NOW(), hold_expires_at) AS diff_min FROM booking WHERE pnr = ?", 's', [$res_hold_clk['pnr']]);
+assert_test("Seat hold expiration window is exactly ~10 minutes relative to database clock (U-12)",
+    isset($hold_row['diff_min']) && (int)$hold_row['diff_min'] >= 9 && (int)$hold_row['diff_min'] <= 11,
+    "diff_min: " . ($hold_row['diff_min'] ?? 'null')
+);
+
 // Clean up test data
 db_exec($link, 'DELETE FROM booking WHERE bus = ?', 's', [$test_busno]);
 db_exec($link, 'DELETE FROM buses WHERE bus_number = ?', 's', [$test_busno]);

@@ -32,6 +32,14 @@ if ($use_ssl) {
 try {
     mysqli_real_connect($link, $hostname, $username, $password, $db_name, $db_port, null, $flags);
     mysqli_set_charset($link, 'utf8mb4');
+    // Synchronize database session time zone with application timezone (U-12)
+    try {
+        $tz = new DateTimeZone(defined('APP_TZ') ? APP_TZ : 'Asia/Kolkata');
+        $offset = (new DateTime('now', $tz))->format('P');
+        mysqli_query($link, "SET time_zone = '{$offset}'");
+    } catch (Throwable $tz_err) {
+        // Silently continue if host restricts time_zone modifications
+    }
 } catch (mysqli_sql_exception $e) {
     error_log('[busres] Database connection failed: ' . $e->getMessage());
     if (!headers_sent()) {

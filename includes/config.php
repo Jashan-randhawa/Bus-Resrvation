@@ -37,7 +37,16 @@ if (!defined('CURRENCY')) {
 }
 
 // Application Timezone (F6: default Asia/Kolkata)
-date_default_timezone_set(getenv('APP_TZ') ?: 'Asia/Kolkata');
+$app_tz = getenv('APP_TZ') ?: 'Asia/Kolkata';
+date_default_timezone_set($app_tz);
+if (!defined('APP_TZ')) {
+    define('APP_TZ', $app_tz);
+}
+
+// Cancellation Cutoff Window in minutes (U-10: default 120 minutes / 2 hours)
+if (!defined('APP_CANCEL_CUTOFF_MIN')) {
+    define('APP_CANCEL_CUTOFF_MIN', (int)(getenv('APP_CANCEL_CUTOFF_MIN') ?: 120));
+}
 
 // Global exception handler (M-04 / D-02)
 if (!function_exists('busres_exception_handler')) {
