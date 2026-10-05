@@ -2,16 +2,22 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
+      // Initialize AOS safely if available and motion is preferred
       if (typeof AOS !== 'undefined') {
-        AOS.init();
+        var motionOk = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        AOS.init({
+          once: true,
+          duration: 500,
+          disable: !motionOk
+        });
       }
 
-      // Smooth scroll for in-page anchors
-      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-          const targetId = this.getAttribute('href');
+      // Smooth scroll for in-page anchors excluding Bootstrap tabs/modals
+      document.querySelectorAll('a[href^="#"]:not([data-toggle])').forEach(function(anchor) {
+        anchor.addEventListener('click', function(e) {
+          var targetId = this.getAttribute('href');
           if (targetId && targetId !== '#') {
-            const target = document.querySelector(targetId);
+            var target = document.querySelector(targetId);
             if (target) {
               e.preventDefault();
               target.scrollIntoView({

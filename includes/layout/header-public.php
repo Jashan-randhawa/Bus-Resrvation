@@ -1,43 +1,67 @@
-<?php require_once __DIR__ . '/../config.php'; ?>
+<?php
+require_once __DIR__ . '/../config.php';
+$user_role = $_SESSION['role'] ?? null;
+?>
 <!doctype html>
 <html lang="en">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="Simple and reliable bus ticket booking system. Check real-time seat availability, lookup PNR status, and reserve seats across intercity routes.">
+  <meta name="theme-color" content="#1e293b">
 
-  <!-- Google Fonts: Inter -->
+  <!-- Open Graph -->
+  <meta property="og:title" content="Bus Service - Safe &amp; Simple Ticket Booking">
+  <meta property="og:description" content="Simple and reliable bus ticket booking system. Real-time seats and instant PNR lookup.">
+  <meta property="og:type" content="website">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/assets/images/bus.svg">
+
+  <!-- Google Fonts: Inter & JetBrains Mono (400, 500, 600, 700) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
     integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
   
-  <title>Bus Service - Safe & Simple Ticket Booking</title>
+  <title>Bus Service - Safe &amp; Simple Ticket Booking</title>
   
   <!-- Design System & Custom CSS -->
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/home.css">
 </head>
 
-<body onload="<?php if(isset($_GET['pnr'])){echo "show_modal();";}?>">
-  <nav class="navbar navbar-expand-lg navbar-public fixed-top">
+<body class="home-page">
+  <!-- Skip to Main Content Link for Keyboard / Assistive Tech -->
+  <a href="#main" class="skip-link sr-only sr-only-focusable">Skip to main content</a>
+
+  <nav class="navbar navbar-expand-lg navbar-public fixed-top" id="publicNav" aria-label="Main Navigation">
     <div class="container">
-      <a href="<?= BASE_URL ?>/homepage.php" class="navbar-brand-custom">
-        <img src="<?= BASE_URL ?>/assets/images/bus.svg" alt="Bus Service Logo">
+      <a href="<?= BASE_URL ?>/homepage.php#home" class="navbar-brand-custom">
+        <img src="<?= BASE_URL ?>/assets/images/bus.svg" alt="Bus Service Logo" width="32" height="32">
         <span>Bus Service</span>
       </a>
-      <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#mycollapsediv"
+      
+      <!-- Accessible Mobile Menu Toggler (>= 44px touch target) -->
+      <button type="button" class="navbar-toggler custom-nav-toggler" data-toggle="collapse" data-target="#mycollapsediv"
         aria-controls="mycollapsediv" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon">&#9776;</span>
+        <span class="toggler-bar"></span>
+        <span class="toggler-bar"></span>
+        <span class="toggler-bar"></span>
       </button>
+
       <div class="collapse navbar-collapse" id="mycollapsediv">
         <ul class="navbar-nav ml-auto align-items-lg-center">
           <li class="nav-item">
-            <a href="#image" class="nav-link nav-link-custom">Home</a>
+            <a href="#home" class="nav-link nav-link-custom">Home</a>
+          </li>
+          <li class="nav-item">
+            <a href="#search" class="nav-link nav-link-custom">Search &amp; Book</a>
           </li>
           <li class="nav-item">
             <a href="#pnr" class="nav-link nav-link-custom">Check PNR</a>
@@ -48,16 +72,37 @@
           <li class="nav-item">
             <a href="#contact" class="nav-link nav-link-custom">Contact</a>
           </li>
-          <li class="nav-item ml-lg-2 mt-2 mt-lg-0">
-            <button type="button" class="btn btn-outline-primary btn-sm px-3" data-toggle="modal" data-target="#userlogin">
-              Passenger Login
-            </button>
-          </li>
-          <li class="nav-item ml-lg-2 mt-2 mt-lg-0">
-            <button type="button" class="btn btn-dark btn-sm px-3" data-toggle="modal" data-target="#loginModal">
-              Admin Portal
-            </button>
-          </li>
+
+          <!-- Presentation-only Session-Aware Nav Elements -->
+          <?php if ($user_role === 'user'): ?>
+            <li class="nav-item ml-lg-3 mt-2 mt-lg-0">
+              <a href="<?= BASE_URL ?>/user/my-bookings.php" class="btn btn-outline-primary btn-nav-action">
+                My Bookings
+              </a>
+            </li>
+            <li class="nav-item ml-lg-2 mt-2 mt-lg-0">
+              <a href="<?= BASE_URL ?>/user/index.php" class="btn btn-primary btn-nav-action">
+                Dashboard &rarr;
+              </a>
+            </li>
+          <?php elseif ($user_role === 'admin'): ?>
+            <li class="nav-item ml-lg-3 mt-2 mt-lg-0">
+              <a href="<?= BASE_URL ?>/admin/index.php" class="btn btn-dark btn-nav-action">
+                Admin Panel &rarr;
+              </a>
+            </li>
+          <?php else: ?>
+            <li class="nav-item ml-lg-3 mt-2 mt-lg-0">
+              <button type="button" class="btn btn-outline-primary btn-nav-action" data-toggle="modal" data-target="#userlogin">
+                Passenger Sign In
+              </button>
+            </li>
+            <li class="nav-item ml-lg-2 mt-2 mt-lg-0">
+              <button type="button" class="btn btn-dark btn-nav-action" data-toggle="modal" data-target="#loginModal">
+                Admin Portal
+              </button>
+            </li>
+          <?php endif; ?>
         </ul>
       </div>
     </div>
