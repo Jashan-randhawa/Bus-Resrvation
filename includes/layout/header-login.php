@@ -19,6 +19,9 @@
     <!-- Design System & Auth Styles -->
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/public.css">
+    
+    <!-- Global Theme Toggle (Head load to avoid FOUC) -->
+    <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>
     <title><?= e($title ?? 'Sign In') ?> - Bus Reservation</title>
 </head>
 

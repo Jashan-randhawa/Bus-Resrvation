@@ -18,6 +18,9 @@
     <!-- Design System & Shared Styles -->
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin.css">
+
+    <!-- Global Theme Toggle (Head load to avoid FOUC) -->
+    <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>
 </head>
 
 <body>
@@ -77,13 +80,19 @@
         </aside>
 
         <div class="admin-main">
-            <!-- Mobile Topbar -->
+            <!-- Top bar with toggle & theme switch -->
             <div class="admin-topbar">
                 <button type="button" class="btn btn-sm btn-outline-secondary" id="sidebarToggle">
                     &#9776; Menu
                 </button>
-                <span class="font-weight-bold text-dark"><?= e($title ?? 'Customer Area') ?></span>
-                <div></div>
+                <span class="font-weight-bold text-dark ml-2"><?= e($title ?? 'Customer Area') ?></span>
+                
+                <div class="ml-auto d-flex align-items-center">
+                    <button type="button" class="theme-toggle-btn ml-2" aria-label="Toggle dark mode" title="Toggle dark mode">
+                        <span class="theme-toggle-icon"></span>
+                        <span class="theme-toggle-text d-none d-sm-inline ml-1">Theme</span>
+                    </button>
+                </div>
             </div>
 
             <div class="admin-content-wrap">

@@ -104,6 +104,113 @@
   --sidebar-border: rgba(255,255,255,0.06);
 }
 
+/* ── Dark Theme Tokens Override (html[data-theme="dark"]) ──── */
+html[data-theme="dark"],
+html.dark-mode {
+  --c-bg:            #090d16;
+  --c-surface:       #131b2e;
+  --c-text:          #f1f5f9;
+  --c-text-muted:    #94a3b8;
+  --c-text-light:    #64748b;
+  --c-border:        #1e293b;
+  --c-border-dark:   #334155;
+
+  --c-primary-light: #1e3a8a;
+  --c-success-bg:    #064e3b;
+  --c-warning-bg:    #78350f;
+  --c-error-bg:      #7f1d1d;
+  --c-info-bg:       #164e63;
+
+  --sidebar-bg:      #0b1120;
+  --sidebar-border:  rgba(255,255,255,0.08);
+
+  --shadow-xs:  0 1px 2px rgba(0,0,0,0.3);
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md:  0 4px 6px -1px rgba(0,0,0,0.5);
+  --shadow-lg:  0 10px 15px -3px rgba(0,0,0,0.6);
+  --shadow-xl:  0 20px 25px -5px rgba(0,0,0,0.7);
+}
+
+/* Theme Toggle Button Component */
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  color: var(--c-text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  line-height: 1;
+}
+.theme-toggle-btn:hover {
+  background: var(--c-primary-light);
+  color: var(--c-primary);
+  border-color: var(--c-primary);
+  transform: translateY(-1px);
+}
+.theme-toggle-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+}
+
+/* Dark mode bootstrap tweaks */
+html[data-theme="dark"] .bg-light,
+html[data-theme="dark"] .bg-white {
+  background-color: var(--c-surface) !important;
+}
+html[data-theme="dark"] .text-dark {
+  color: #f1f5f9 !important;
+}
+html[data-theme="dark"] .text-muted {
+  color: #94a3b8 !important;
+}
+html[data-theme="dark"] .thead-light th {
+  background-color: #1a243b !important;
+  color: #cbd5e1 !important;
+  border-color: #24304d !important;
+}
+html[data-theme="dark"] .table {
+  color: #e2e8f0;
+}
+html[data-theme="dark"] .table-hover tbody tr:hover {
+  background-color: #1a253d;
+}
+html[data-theme="dark"] .card {
+  background-color: var(--c-surface);
+  border-color: var(--c-border);
+}
+html[data-theme="dark"] .form-control,
+html[data-theme="dark"] .custom-select {
+  background-color: #0f172a;
+  color: #f1f5f9;
+  border-color: var(--c-border);
+}
+html[data-theme="dark"] .form-control:focus {
+  background-color: #0f172a;
+  color: #ffffff;
+}
+html[data-theme="dark"] .modal-content {
+  background-color: var(--c-surface);
+  color: var(--c-text);
+  border: 1px solid var(--c-border);
+}
+html[data-theme="dark"] .modal-header,
+html[data-theme="dark"] .modal-footer {
+  border-color: var(--c-border);
+}
+html[data-theme="dark"] .breadcrumb {
+  background-color: var(--c-surface);
+  border-color: var(--c-border);
+}
+
+
 /* ── 2. Base Reset & Typography ────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;

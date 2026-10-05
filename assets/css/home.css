@@ -28,6 +28,51 @@ body.home-page {
   line-height: 1.6;
 }
 
+/* ── Dark Theme Scoped Overrides for Home Page ──────────────── */
+html[data-theme="dark"] body.home-page,
+html.dark-mode body.home-page {
+  --home-navy:       #f8fafc;
+  --home-navy-light: #cbd5e1;
+  --home-text-muted: #94a3b8;
+  --home-bg-warm:    #090d16;
+  --home-bg-white:   #131b2e;
+  --home-primary:    #3b82f6;
+  --home-primary-h:  #60a5fa;
+  --home-accent:     #fbbf24;
+  --home-accent-fill:#78350f;
+  --home-border:     #1e293b;
+  --home-border-subtle: rgba(30, 41, 59, 0.8);
+}
+
+html[data-theme="dark"] .navbar-public {
+  background: rgba(19, 27, 46, 0.95);
+  border-bottom-color: var(--home-border);
+}
+html[data-theme="dark"] .hero-split-section {
+  background-color: var(--home-bg-warm);
+}
+html[data-theme="dark"] .hero-image-wrapper {
+  background: var(--home-bg-white);
+  border-color: var(--home-border);
+}
+html[data-theme="dark"] .hero-image-wrapper img {
+  background: var(--home-bg-white);
+}
+html[data-theme="dark"] .booking-search-card,
+html[data-theme="dark"] .pnr-search-box,
+html[data-theme="dark"] .ticket-receipt-card,
+html[data-theme="dark"] .feature-card,
+html[data-theme="dark"] .contact-form-card,
+html[data-theme="dark"] .public-footer {
+  background-color: var(--home-bg-white) !important;
+  border-color: var(--home-border) !important;
+}
+html[data-theme="dark"] .feature-svg-icon {
+  background-color: #1e293b;
+  color: var(--home-primary);
+}
+
+
 /* ── 2. Accessibility, Skip Link, & Scroll Margins ──────────── */
 .skip-link {
   position: absolute;

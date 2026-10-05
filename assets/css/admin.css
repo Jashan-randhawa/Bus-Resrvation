@@ -162,9 +162,9 @@
 }
 
 .admin-topbar {
-  display: none;
-  padding: 0.75rem 1rem;
-  background-color: #ffffff;
+  display: flex;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--c-surface, #ffffff);
   border-bottom: 1px solid var(--c-border, #e2e8f0);
   align-items: center;
   justify-content: space-between;
@@ -193,10 +193,15 @@
 }
 
 /* Responsive adjustments */
+#sidebarToggle {
+  display: none;
+}
+
 @media (max-width: 991px) {
-  .admin-topbar {
-    display: flex;
+  #sidebarToggle {
+    display: inline-flex;
   }
+
   
   .admin-sidebar {
     position: fixed;

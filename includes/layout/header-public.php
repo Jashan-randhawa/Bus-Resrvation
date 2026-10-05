@@ -34,6 +34,9 @@ $user_role = $_SESSION['role'] ?? null;
   <!-- Design System & Custom CSS -->
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/home.css">
+  
+  <!-- Global Theme Toggle (Head load to avoid FOUC) -->
+  <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>
 </head>
 
 <body class="home-page">
@@ -103,6 +106,14 @@ $user_role = $_SESSION['role'] ?? null;
               </button>
             </li>
           <?php endif; ?>
+
+          <!-- Global Dark / Light Mode Button -->
+          <li class="nav-item ml-lg-3 mt-2 mt-lg-0">
+            <button type="button" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle dark mode">
+              <span class="theme-toggle-icon"></span>
+              <span class="theme-toggle-text d-lg-none ml-1">Theme</span>
+            </button>
+          </li>
         </ul>
       </div>
     </div>

@@ -20,6 +20,9 @@
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/edit.css">
+
+    <!-- Global Theme Toggle (Head load to avoid FOUC) -->
+    <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>
     <title><?= e($title ?? 'Edit') ?> - Bus Reservation</title>
     <script>
         function fun(val){
