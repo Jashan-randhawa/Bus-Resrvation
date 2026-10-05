@@ -1,185 +1,442 @@
-/* assets/css/home.css -- Modern Homepage & Public Styles */
+/* assets/css/home.css -- Homepage Scoped Design System & Layout */
 
-/* Sticky Glass Navbar */
+/* ── 1. Homepage Scoped Design Tokens ───────────────────────── */
+body.home-page {
+  /* Scoped colors (Section F4) */
+  --home-navy:       #0f172a;
+  --home-navy-light: #1e293b;
+  --home-text-muted: #64748b;
+  --home-bg-warm:    #f8fafc;
+  --home-bg-white:   #ffffff;
+  --home-primary:    #1d4ed8;       /* Deep rich blue */
+  --home-primary-h:  #1e40af;
+  --home-accent:     #d97706;       /* Warm amber */
+  --home-accent-fill:#fef3c7;       /* Soft amber background */
+  --home-border:     #e2e8f0;
+  --home-border-subtle: rgba(226, 232, 240, 0.8);
+  
+  /* Scoped fluid typography using clamp() (Section F1) */
+  --home-h1: clamp(2.25rem, 4vw + 1rem, 3.25rem);  /* 36px to 52px */
+  --home-h2: clamp(1.75rem, 3vw + 0.5rem, 2.25rem); /* 28px to 36px */
+  --home-h3: clamp(1.15rem, 1.5vw + 0.5rem, 1.35rem);
+  --home-lead: clamp(1rem, 1vw + 0.5rem, 1.15rem);
+  --home-body: 1rem;                                /* 16px */
+  
+  color: var(--home-navy);
+  background-color: var(--home-bg-warm);
+  font-size: var(--home-body);
+  line-height: 1.6;
+}
+
+/* ── 2. Accessibility, Skip Link, & Scroll Margins ──────────── */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 1rem;
+  background: var(--home-navy);
+  color: #ffffff !important;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-md, 6px);
+  z-index: 9999;
+  font-weight: 600;
+  transition: top 0.2s ease;
+}
+.skip-link:focus {
+  top: 1rem;
+  outline: 3px solid var(--home-primary);
+}
+
+/* Prevent fixed navbar from covering anchor targets (Section A5) */
+section[id] {
+  scroll-margin-top: 80px;
+}
+
+/* Section vertical-only padding to prevent double horizontal gutters (Section F5) */
+.home-section {
+  padding-block: clamp(3.5rem, 6vw, 5.5rem);
+}
+
+/* ── 3. Navigation Bar & Toggler ────────────────────────────── */
 .navbar-public {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--home-border-subtle);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  padding-block: 0.85rem;
   transition: all var(--transition-base, 200ms ease);
-  padding: 0.85rem 1.5rem;
 }
 
 .navbar-brand-custom {
   display: flex;
   align-items: center;
+  gap: 0.65rem;
   font-weight: 700;
   font-size: 1.25rem;
-  color: var(--c-text, #1e293b) !important;
+  color: var(--home-navy) !important;
   text-decoration: none;
-  gap: 0.6rem;
-}
-
-.navbar-brand-custom img {
-  width: 32px;
-  height: 32px;
 }
 
 .nav-link-custom {
   font-weight: 500;
-  color: var(--c-secondary, #475569) !important;
-  padding: 0.5rem 1rem !important;
+  font-size: 0.9375rem;
+  color: var(--home-navy-light) !important;
+  padding: 0.5rem 0.85rem !important;
   border-radius: var(--radius-md, 6px);
   transition: all var(--transition-fast, 150ms ease);
 }
-
 .nav-link-custom:hover {
-  color: var(--c-primary, #2563eb) !important;
-  background-color: rgba(37, 99, 235, 0.06);
+  color: var(--home-primary) !important;
+  background-color: rgba(29, 78, 216, 0.05);
 }
 
-/* Hero Section */
-#image {
-  position: relative;
-  min-height: 85vh;
-  display: flex;
+.btn-nav-action {
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.45rem 1.1rem;
+  min-height: 40px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  background-image: url(../images/sbtbsimg.jpg);
-  background-attachment: fixed;
-  background-size: cover;
-  background-position: center;
-  padding: 6rem 1rem 4rem;
 }
 
-.hero-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.75) 100%);
-  backdrop-filter: blur(2px);
+/* Accessible Mobile Hamburger Toggler (>= 44px touch target) */
+.custom-nav-toggler {
+  width: 44px;
+  height: 44px;
+  padding: 10px;
+  border: 1px solid var(--home-border);
+  border-radius: var(--radius-md, 6px);
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  cursor: pointer;
+}
+.custom-nav-toggler:focus {
+  outline: 2px solid var(--home-primary);
+  outline-offset: 2px;
+}
+.custom-nav-toggler .toggler-bar {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background-color: var(--home-navy);
+  border-radius: 2px;
+  transition: all 0.2s ease;
 }
 
-.hero-content {
+/* ── 4. Split Hero Section (Section B1, B2) ─────────────────── */
+.hero-split-section {
+  padding-top: calc(80px + clamp(2.5rem, 5vw, 4rem));
+  padding-bottom: clamp(3rem, 5vw, 5rem);
+  background-color: var(--home-bg-white);
+  border-bottom: 1px solid var(--home-border);
   position: relative;
-  z-index: 10;
-  max-width: 800px;
-  text-align: center;
-  color: #ffffff;
-  padding: 2rem 1rem;
 }
 
-.hero-title {
-  font-size: 2.75rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+.hero-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  background: var(--home-accent-fill);
+  color: #92400e;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  border-radius: var(--radius-full, 9999px);
   margin-bottom: 1.25rem;
-  color: #ffffff;
+  letter-spacing: 0.02em;
 }
 
-.hero-subtitle {
-  font-size: 1.15rem;
+.hero-heading {
+  font-size: var(--home-h1);
+  font-weight: 700;
+  line-height: 1.18;
+  color: var(--home-navy);
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.025em;
+}
+
+.hero-subheading {
+  font-size: var(--home-lead);
+  color: var(--home-text-muted);
   line-height: 1.6;
-  color: #cbd5e1;
   margin-bottom: 2rem;
-  max-width: 650px;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: 540px;
 }
 
 .hero-actions {
   display: flex;
   gap: 1rem;
-  justify-content: center;
   flex-wrap: wrap;
+  align-items: center;
 }
 
-/* PNR Lookup Section */
-#pnr {
-  background-color: #ffffff;
-  padding: 5rem 1rem;
-  border-bottom: 1px solid var(--c-border, #e2e8f0);
+.hero-actions .btn-lg {
+  min-height: 48px;
+  padding: 0.65rem 1.65rem;
+  font-size: 1rem;
 }
 
-.pnr-card-search {
-  max-width: 680px;
-  margin: 0 auto;
-  background: var(--c-bg, #f8fafc);
-  border: 1px solid var(--c-border, #e2e8f0);
-  border-radius: var(--radius-xl, 14px);
-  padding: 2rem;
-  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.06));
-}
-
-/* About Section */
-#about {
-  background: var(--c-bg, #f8fafc);
-  padding: 5rem 1rem;
-  border-bottom: 1px solid var(--c-border, #e2e8f0);
-}
-
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
-  margin-top: 3rem;
-}
-
-.feature-box {
+.hero-image-wrapper {
   background: #ffffff;
-  border: 1px solid var(--c-border, #e2e8f0);
-  border-radius: var(--radius-lg, 10px);
-  padding: 1.75rem;
-  text-align: left;
-  transition: transform var(--transition-base, 200ms ease), box-shadow var(--transition-base, 200ms ease);
-}
-
-.feature-box:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.07));
-}
-
-.feature-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md, 6px);
-  background: var(--c-primary-light, #dbeafe);
-  color: var(--c-primary, #2563eb);
+  border-radius: var(--radius-xl, 14px);
+  padding: 0.75rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--home-border);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
-  margin-bottom: 1rem;
 }
-
-/* Contact Section */
-#contact {
+.hero-image-wrapper img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg, 10px);
+  object-fit: cover;
   background: #ffffff;
-  padding: 5rem 1rem;
 }
 
-.contact-card {
-  max-width: 720px;
+/* ── 5. Central Search & Booking Card (Section A1) ──────────── */
+.booking-search-card {
+  background: #ffffff;
+  border: 1px solid var(--home-border);
+  border-radius: var(--radius-xl, 14px);
+  box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.08);
+  padding: clamp(1.5rem, 3vw, 2.25rem);
+  margin-top: -2.5rem;
+  position: relative;
+  z-index: 20;
+}
+
+.booking-search-card .card-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--home-border);
+}
+
+.booking-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+  align-items: flex-end;
+}
+
+.booking-field-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--home-navy-light);
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* ── 6. PNR Verification Ticket & Section (Section D) ───────── */
+.pnr-search-box {
+  background: #ffffff;
+  border: 1px solid var(--home-border);
+  border-radius: var(--radius-xl, 14px);
+  padding: clamp(1.5rem, 3vw, 2rem);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+}
+
+.ticket-receipt-card {
+  background: #ffffff;
+  border: 1.5px solid var(--home-border);
+  border-radius: var(--radius-xl, 14px);
+  overflow: hidden;
+  box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.08);
+  margin-top: 2rem;
+}
+
+.ticket-header {
+  background: var(--home-navy);
+  color: #ffffff;
+  padding: 1.25rem 1.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.ticket-header .pnr-label {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ticket-header .pnr-code {
+  font-family: var(--font-mono, monospace);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.05em;
+}
+
+/* Status badge color contrast fix (Section D5) */
+.badge-pnr-status {
+  padding: 0.4rem 0.85rem;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  border-radius: var(--radius-full, 9999px);
+}
+.badge-pnr-confirmed {
+  background-color: #15803d !important; /* 5.0:1 contrast ratio with white */
+  color: #ffffff !important;
+}
+.badge-pnr-pending {
+  background-color: #d97706 !important;
+  color: #ffffff !important;
+}
+.badge-pnr-cancelled {
+  background-color: #b91c1c !important;
+  color: #ffffff !important;
+}
+
+.ticket-body {
+  padding: 1.75rem;
+}
+
+.ticket-row-item {
+  margin-bottom: 1.25rem;
+}
+.ticket-row-item .item-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--home-text-muted);
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+.ticket-row-item .item-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--home-navy);
+}
+
+/* ── 7. Features & Capability Tiles (Section C1, C4) ────────── */
+.features-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.75rem;
+  margin-top: 2.5rem;
+}
+
+.feature-card {
+  background: #ffffff;
+  border: 1px solid var(--home-border);
+  border-radius: var(--radius-lg, 10px);
+  padding: 2rem 1.75rem;
+  transition: transform var(--transition-base, 200ms ease), box-shadow var(--transition-base, 200ms ease);
+}
+.feature-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px -3px rgba(15, 23, 42, 0.06);
+}
+
+.feature-svg-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md, 6px);
+  background: #eff6ff;
+  color: var(--home-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+.feature-svg-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.feature-card h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 0.65rem;
+  color: var(--home-navy);
+}
+.feature-card p {
+  color: var(--home-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+/* ── 8. Contact Card (Section C3) ───────────────────────────── */
+.contact-form-card {
+  max-width: 760px;
   margin: 0 auto;
   background: #ffffff;
-  border: 1px solid var(--c-border, #e2e8f0);
+  border: 1px solid var(--home-border);
   border-radius: var(--radius-xl, 14px);
-  padding: 2.5rem;
-  box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.07));
+  padding: clamp(1.75rem, 4vw, 2.75rem);
+  box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.06);
+}
+
+/* ── 9. CSS-First Hero Animation (Resilient without AOS - Section G1) ── */
+@keyframes heroFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-animate-in {
+  animation: heroFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── 10. Motion-Sensitivity (Section G2) ────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .hero-animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ── 11. Responsive Refinements ─────────────────────────────── */
+@media (max-width: 991px) {
+  .hero-image-wrapper {
+    margin-top: 2rem;
+  }
+  .booking-search-card {
+    margin-top: 0;
+  }
 }
 
 @media (max-width: 768px) {
-  .hero-title {
-    font-size: 2rem;
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
-  .hero-subtitle {
-    font-size: 1rem;
+  .hero-actions .btn {
+    width: 100%;
   }
-  .contact-card, .pnr-card-search {
-    padding: 1.5rem;
+  .btn-nav-action {
+    width: 100%;
+    margin-top: 0.5rem;
   }
 }
