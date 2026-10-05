@@ -223,6 +223,90 @@ assert_test("Expired hold status automatically updated to 'Expired'", ($expired_
 $booked_after_expiration = get_booked_seats($link, $test_busno, $test_date, $test_time);
 assert_test("Expired seat 7 is automatically released for new customers", !isset($booked_after_expiration[7]));
 
+// -------------------------------------------------------------
+// Test 8: Slice A Verification (U-01, U-03, U-05, U-06, U-07)
+// -------------------------------------------------------------
+echo "\n[*] Suite 8: Slice A Correctness & Hardening (U-01 to U-07)\n";
+
+// 1. Rebooking an expired hold row (U-01)
+$res_rebook_expired = create_booking($link, [
+    'bus' => $test_busno,
+    'city1' => 'CityA',
+    'city2' => 'CityB',
+    'date' => $test_date,
+    'time' => $test_time,
+    'seat' => 7,
+    'price' => 50.0,
+    'name' => 'Expired Rebooker',
+    'contact' => '9876543210'
+]);
+assert_test("Expired seat 7 can be rebooked without 1062 unique constraint error (U-01)", $res_rebook_expired['ok']);
+
+// 2. Double-submit idempotency recovery for same customer (U-05)
+$test_cust_id = 999;
+$res_first_sub = create_booking($link, [
+    'id' => $test_cust_id,
+    'bus' => $test_busno,
+    'city1' => 'CityA',
+    'city2' => 'CityB',
+    'date' => $test_date,
+    'time' => $test_time,
+    'seat' => 12,
+    'price' => 50.0,
+    'name' => 'Double Clicker',
+    'contact' => '9876543210'
+]);
+assert_test("First submission creates booking", $res_first_sub['ok']);
+
+$res_second_sub = create_booking($link, [
+    'id' => $test_cust_id,
+    'bus' => $test_busno,
+    'city1' => 'CityA',
+    'city2' => 'CityB',
+    'date' => $test_date,
+    'time' => $test_time,
+    'seat' => 12,
+    'price' => 50.0,
+    'name' => 'Double Clicker',
+    'contact' => '9876543210'
+]);
+assert_test("Rapid second submission recovers existing PNR instead of error (U-05)",
+    $res_second_sub['ok'] && $res_second_sub['pnr'] === $res_first_sub['pnr']);
+
+// 3. Name length validation (U-07)
+$res_short_name = create_booking($link, [
+    'bus' => $test_busno,
+    'city1' => 'CityA',
+    'city2' => 'CityB',
+    'date' => $test_date,
+    'time' => $test_time,
+    'seat' => 14,
+    'price' => 50.0,
+    'name' => 'J',
+    'contact' => '9876543210'
+]);
+assert_test("Passenger name under 2 chars is rejected (U-07)", !$res_short_name['ok']);
+
+// 4. Phone digits validation (U-07)
+$res_short_phone = create_booking($link, [
+    'bus' => $test_busno,
+    'city1' => 'CityA',
+    'city2' => 'CityB',
+    'date' => $test_date,
+    'time' => $test_time,
+    'seat' => 14,
+    'price' => 50.0,
+    'name' => 'Valid Name',
+    'contact' => '12345'
+]);
+assert_test("Phone number with fewer than 10 digits is rejected (U-07)", !$res_short_phone['ok']);
+
+// 5. Travel date & time validation helper (U-03)
+assert_test("validate_travel_datetime rejects invalid format", !validate_travel_datetime('2026-99-99')['ok']);
+assert_test("validate_travel_datetime rejects past date", !validate_travel_datetime(date('Y-m-d', strtotime('-1 day')))['ok']);
+assert_test("validate_travel_datetime rejects date > 90 days", !validate_travel_datetime(date('Y-m-d', strtotime('+95 days')))['ok']);
+assert_test("validate_travel_datetime accepts valid future date", validate_travel_datetime(date('Y-m-d', strtotime('+5 days')))['ok']);
+
 // Clean up test data
 db_exec($link, 'DELETE FROM booking WHERE bus = ?', 's', [$test_busno]);
 db_exec($link, 'DELETE FROM buses WHERE bus_number = ?', 's', [$test_busno]);

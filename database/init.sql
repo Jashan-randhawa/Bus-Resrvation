@@ -61,8 +61,9 @@ CREATE TABLE IF NOT EXISTS `booking` (
   `status` VARCHAR(20) NOT NULL DEFAULT 'Confirmed',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `hold_expires_at` TIMESTAMP NULL DEFAULT NULL,
+  `active_seat` INT GENERATED ALWAYS AS (IF(`status` IN ('Confirmed', 'Pending'), `seat`, NULL)) STORED,
   UNIQUE KEY `uq_booking_pnr` (`pnr`),
-  UNIQUE KEY `uq_booking_seat` (`bus`, `date`, `time`, `seat`),
+  UNIQUE KEY `uq_booking_active_seat` (`bus`, `date`, `time`, `active_seat`),
   KEY `idx_booking_customer` (`id`),
   KEY `idx_booking_hold` (`status`, `hold_expires_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

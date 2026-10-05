@@ -96,3 +96,11 @@
             </div>
 
             <div class="admin-content-wrap">
+            <?php if (function_exists('flash_get')): ?>
+                <?php foreach (flash_get() as $m): ?>
+                    <div class="alert alert-<?= e($m['type'] ?? 'info') ?> alert-dismissible fade show" role="alert">
+                        <?= e($m['msg'] ?? '') ?>
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>

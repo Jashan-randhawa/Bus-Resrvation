@@ -336,6 +336,31 @@ function run_migrations(mysqli $link): array {
         $log[] = "[i] Migration {$m4} already applied.";
     }
 
+    // 7. Migration 005: 005_rebookable_active_seats (U-01)
+    $m5 = '005_rebookable_active_seats';
+    if (!migration_applied($link, $m5)) {
+        $log[] = "[*] Running migration: {$m5}...";
+        $m5_ok = true;
+        if (!has_column($link, 'booking', 'active_seat')) {
+            $m5_ok = try_sql($link, "ALTER TABLE `booking` ADD COLUMN `active_seat` INT GENERATED ALWAYS AS (IF(`status` IN ('Confirmed', 'Pending'), `seat`, NULL)) STORED", $log) && $m5_ok;
+        }
+        if (has_index($link, 'booking', 'uq_booking_seat')) {
+            $m5_ok = try_sql($link, "ALTER TABLE `booking` DROP INDEX `uq_booking_seat`", $log) && $m5_ok;
+        }
+        if (!has_index($link, 'booking', 'uq_booking_active_seat')) {
+            $m5_ok = try_sql($link, "ALTER TABLE `booking` ADD UNIQUE KEY `uq_booking_active_seat` (`bus`, `date`, `time`, `active_seat`)", $log) && $m5_ok;
+        }
+        if ($m5_ok) {
+            record_migration($link, $m5);
+            $log[] = "  -> Completed {$m5}.";
+        } else {
+            $log[] = "  [!] Migration {$m5} had errors; not marked as applied.";
+            $all_ok = false;
+        }
+    } else {
+        $log[] = "[i] Migration {$m5} already applied.";
+    }
+
     if ($all_ok) {
         $log[] = "\n[✓] All database migrations are up to date!";
     } else {

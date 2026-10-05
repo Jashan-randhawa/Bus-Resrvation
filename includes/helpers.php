@@ -257,6 +257,42 @@ function get_bus_capacity(mysqli $link, string $bus_number): int {
  *
  * @return array ['ok' => bool, 'pnr' => string, 'error' => string]
  */
+/**
+ * Validates travel date and optional departure time against scheduling rules (U-03).
+ *
+ * @param string $date Travel date in YYYY-MM-DD format
+ * @param string|null $time Departure time (e.g., HH:MM or HH:MM:SS)
+ * @return array ['ok' => bool, 'error' => string]
+ */
+function validate_travel_datetime(string $date, ?string $time = null): array {
+    if ($date === '') {
+        return ['ok' => false, 'error' => 'Please provide a travel date.'];
+    }
+    $d = DateTime::createFromFormat('Y-m-d', $date);
+    if (!$d || $d->format('Y-m-d') !== $date) {
+        return ['ok' => false, 'error' => 'Please provide a valid travel date (YYYY-MM-DD).'];
+    }
+
+    $today = date('Y-m-d');
+    $max_date = date('Y-m-d', strtotime('+90 days'));
+    $now_time = date('H:i:s');
+
+    if ($date < $today) {
+        return ['ok' => false, 'error' => 'Travel date cannot be in the past.'];
+    }
+    if ($date > $max_date) {
+        return ['ok' => false, 'error' => 'Bookings can only be made up to 90 days in advance.'];
+    }
+    if ($time !== null && $time !== '') {
+        $t_parsed = date('H:i:s', strtotime($time));
+        if ($date === $today && $t_parsed < $now_time) {
+            return ['ok' => false, 'error' => 'This bus has already departed for today.'];
+        }
+    }
+
+    return ['ok' => true, 'error' => ''];
+}
+
 function create_booking(mysqli $link, array $data): array {
     $bus = trim((string)($data['bus'] ?? ''));
     $from = trim((string)($data['city1'] ?? ''));
@@ -269,21 +305,14 @@ function create_booking(mysqli $link, array $data): array {
     $contact = trim((string)($data['contact'] ?? ''));
     $cust_id = (int)($data['id'] ?? 0);
 
-    $today = date('Y-m-d');
-    $max_date = date('Y-m-d', strtotime('+90 days'));
-    $now_time = date('H:i:s');
-
     if ($bus === '' || $from === '' || $to === '') {
         return ['ok' => false, 'pnr' => '', 'error' => 'Incomplete route details.'];
     }
-    if ($date < $today) {
-        return ['ok' => false, 'pnr' => '', 'error' => 'Travel date cannot be in the past.'];
-    }
-    if ($date > $max_date) {
-        return ['ok' => false, 'pnr' => '', 'error' => 'Bookings can only be made up to 90 days in advance.'];
-    }
-    if ($date === $today && $time !== '' && $time < $now_time) {
-        return ['ok' => false, 'pnr' => '', 'error' => 'This bus has already departed for today.'];
+
+    // Validate travel date and departure time (U-03)
+    $dt_val = validate_travel_datetime($date, $time);
+    if (!$dt_val['ok']) {
+        return ['ok' => false, 'pnr' => '', 'error' => $dt_val['error']];
     }
 
     $capacity = get_bus_capacity($link, $bus);
@@ -291,9 +320,19 @@ function create_booking(mysqli $link, array $data): array {
     if ($seat < 1 || $seat > $capacity) {
         return ['ok' => false, 'pnr' => '', 'error' => "Please select a valid seat number between 1 and {$capacity}."];
     }
+
+    // Passenger name and phone validation (U-07)
     if ($name === '' || $contact === '') {
         return ['ok' => false, 'pnr' => '', 'error' => 'Passenger name and contact number are required.'];
     }
+    if (mb_strlen($name) < 2 || mb_strlen($name) > 100) {
+        return ['ok' => false, 'pnr' => '', 'error' => 'Passenger name must be between 2 and 100 characters.'];
+    }
+    $phone_digits = preg_replace('/\D+/', '', $contact);
+    if (strlen($phone_digits) < 10 || strlen($phone_digits) > 15) {
+        return ['ok' => false, 'pnr' => '', 'error' => 'Please enter a valid phone number (10 to 15 digits).'];
+    }
+    $contact = $phone_digits;
 
     $has_pnr = table_has_column($link, 'booking', 'pnr');
     $has_status = table_has_column($link, 'booking', 'status');
@@ -342,8 +381,20 @@ function create_booking(mysqli $link, array $data): array {
     } catch (mysqli_sql_exception $e) {
         mysqli_rollback($link);
         if ((int)$e->getCode() === 1062) {
+            // U-05: Double submit / rapid duplicate submission recovery
+            if ($cust_id > 0) {
+                $existing = db_one($link,
+                    "SELECT pnr FROM booking WHERE id = ? AND bus = ? AND `date` = ? AND `time` = ? AND seat = ? AND status IN ('Confirmed', 'Pending') LIMIT 1",
+                    'isssi', [$cust_id, $bus, $date, $time, $seat]
+                );
+                if ($existing && !empty($existing['pnr'])) {
+                    return ['ok' => true, 'pnr' => $existing['pnr'], 'status' => 'Confirmed', 'error' => '', 'duplicate' => true];
+                }
+            }
             return ['ok' => false, 'pnr' => '', 'error' => "Seat #{$seat} on bus {$bus} for date {$date} ({$time}) was just reserved by another passenger. Please pick another seat."];
         }
-        return ['ok' => false, 'pnr' => '', 'error' => 'Booking could not be completed: ' . $e->getMessage()];
+        // U-06: Log internal database error without exposing raw database exceptions to users
+        error_log("create_booking error: " . $e->getMessage());
+        return ['ok' => false, 'pnr' => '', 'error' => 'We could not complete the booking. Please try again.'];
     }
 }

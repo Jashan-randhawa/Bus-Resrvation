@@ -6,36 +6,36 @@ require_once __DIR__ . '/../includes/db_con.php';
 $alert = null;
 $alert_type = 'info';
 
-$booking_cols = db_all($link, 'SHOW COLUMNS FROM booking');
-$col_names = array_column($booking_cols, 'Field');
-$has_pnr = in_array('pnr', $col_names, true);
-$has_status = in_array('status', $col_names, true);
-
 $route_id = (int)($_GET['route_id'] ?? 0);
-$bus = trim((string)($_GET['bus'] ?? ''));
-$from = trim((string)($_GET['city1'] ?? ''));
-$to = trim((string)($_GET['city2'] ?? ''));
-$time = trim((string)($_GET['time'] ?? ''));
-$date = trim((string)($_GET['date'] ?? date('Y-m-d')));
+$date = trim((string)($_GET['date'] ?? ''));
 
-$route = null;
-if ($route_id > 0) {
-    $route = db_one($link, 'SELECT * FROM route WHERE sno = ?', 'i', [$route_id]);
-}
-if (!$route && $bus !== '' && $from !== '' && $to !== '') {
-    $route = db_one($link, 'SELECT * FROM route WHERE busno = ? AND city1 = ? AND city2 = ? LIMIT 1', 'sss', [$bus, $from, $to]);
+// U-02 / U-03: Route must be explicitly specified and valid
+if ($route_id <= 0) {
+    flash_set('danger', 'Please select a valid bus route to book.');
+    header('Location: ' . BASE_URL . '/user/index.php');
+    exit;
 }
 
-if ($route) {
-    $route_id = (int)$route['sno'];
-    $bus = (string)$route['busno'];
-    $from = (string)$route['city1'];
-    $to = (string)$route['city2'];
-    $time = (string)$route['time'];
-    $price = (float)$route['price'];
-} else {
-    $price = 0.0;
+$route = db_one($link, 'SELECT * FROM route WHERE sno = ?', 'i', [$route_id]);
+if (!$route) {
+    flash_set('danger', 'The selected route could not be found or is no longer available.');
+    header('Location: ' . BASE_URL . '/user/index.php');
+    exit;
 }
+
+// U-03: Validate travel date and departure schedule against business rules
+$date_val = validate_travel_datetime($date, (string)$route['time']);
+if (!$date_val['ok']) {
+    flash_set('danger', $date_val['error']);
+    header('Location: ' . BASE_URL . '/user/index.php');
+    exit;
+}
+
+$bus = (string)$route['busno'];
+$from = (string)$route['city1'];
+$to = (string)$route['city2'];
+$time = (string)$route['time'];
+$price = (float)$route['price'];
 
 $bus_capacity = get_bus_capacity($link, $bus);
 $booked_seats = get_booked_seats($link, $bus, $date, $time);
@@ -43,48 +43,52 @@ $booked_seats = get_booked_seats($link, $bus, $date, $time);
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
     csrf_verify();
     $post_route_id = (int)($_POST['route_id'] ?? 0);
+    $post_time = trim((string)($_POST['time'] ?? ''));
     $post_date = trim((string)($_POST['date'] ?? ''));
     $seat = (int)($_POST['seat'] ?? 0);
     $unm = trim((string)($_POST['unm'] ?? $_SESSION['name'] ?? ''));
     $num = trim((string)($_POST['num'] ?? $_SESSION['phone'] ?? ''));
     $cust_id = (int)($_SESSION['uid'] ?? 0);
 
-    $sub_route = null;
-    if ($post_route_id > 0) {
-        $sub_route = db_one($link, 'SELECT * FROM route WHERE sno = ?', 'i', [$post_route_id]);
-    }
-    if (!$sub_route) {
-        $post_bus = trim((string)($_POST['bus'] ?? ''));
-        $post_from = trim((string)($_POST['from'] ?? ''));
-        $post_to = trim((string)($_POST['to'] ?? ''));
-        if ($post_bus !== '' && $post_from !== '' && $post_to !== '') {
-            $sub_route = db_one($link, 'SELECT * FROM route WHERE busno = ? AND city1 = ? AND city2 = ? LIMIT 1', 'sss', [$post_bus, $post_from, $post_to]);
-        }
-    }
-
-    if (!$sub_route) {
-        $alert = 'Selected route is no longer available. Please select another route.';
+    if ($post_route_id <= 0) {
+        $alert = 'Invalid route selection. Please search again.';
         $alert_type = 'danger';
     } else {
-        $result = create_booking($link, [
-            'id'      => $cust_id,
-            'bus'     => $sub_route['busno'],
-            'city1'   => $sub_route['city1'],
-            'city2'   => $sub_route['city2'],
-            'date'    => $post_date,
-            'time'    => $sub_route['time'],
-            'seat'    => $seat,
-            'price'   => $sub_route['price'],
-            'name'    => $unm,
-            'contact' => $num
-        ]);
-
-        if ($result['ok']) {
-            header('Location: ' . BASE_URL . '/user/my-bookings.php?booked=1&pnr=' . urlencode($result['pnr']));
-            exit;
-        } else {
-            $alert = $result['error'];
+        $sub_route = db_one($link, 'SELECT * FROM route WHERE sno = ?', 'i', [$post_route_id]);
+        if (!$sub_route) {
+            $alert = 'Selected route is no longer available. Please select another route.';
             $alert_type = 'danger';
+        } elseif ($post_time !== '' && substr($post_time, 0, 5) !== substr((string)$sub_route['time'], 0, 5)) {
+            // U-02: Compare posted departure time with route record to prevent booking mismatched schedule
+            $alert = 'Schedule changed, please search again.';
+            $alert_type = 'danger';
+        } else {
+            $date_chk = validate_travel_datetime($post_date, (string)$sub_route['time']);
+            if (!$date_chk['ok']) {
+                $alert = $date_chk['error'];
+                $alert_type = 'danger';
+            } else {
+                $result = create_booking($link, [
+                    'id'      => $cust_id,
+                    'bus'     => $sub_route['busno'],
+                    'city1'   => $sub_route['city1'],
+                    'city2'   => $sub_route['city2'],
+                    'date'    => $post_date,
+                    'time'    => $sub_route['time'],
+                    'seat'    => $seat,
+                    'price'   => $sub_route['price'],
+                    'name'    => $unm,
+                    'contact' => $num
+                ]);
+
+                if ($result['ok']) {
+                    header('Location: ' . BASE_URL . '/user/my-bookings.php?booked=1&pnr=' . urlencode($result['pnr']));
+                    exit;
+                } else {
+                    $alert = $result['error'];
+                    $alert_type = 'danger';
+                }
+            }
         }
     }
 }
@@ -136,22 +140,20 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                     </div>
                 </div>
 
-                <form action="" method="post">
+                <form action="" method="post" id="booking-form">
                     <?= csrf_field() ?>
                     <input type="hidden" name="route_id" value="<?= e($route_id) ?>">
-                    <input type="hidden" name="bus" value="<?= e($bus) ?>">
-                    <input type="hidden" name="from" value="<?= e($from) ?>">
-                    <input type="hidden" name="to" value="<?= e($to) ?>">
                     <input type="hidden" name="date" value="<?= e($date) ?>">
+                    <input type="hidden" name="time" value="<?= e($time) ?>">
 
                     <div class="form-row">
                         <div class="col-md-6 form-group">
                             <label for="unm" class="font-weight-bold small text-muted">Passenger Full Name</label>
-                            <input type="text" id="unm" name="unm" value="<?= e($_SESSION['name'] ?? '') ?>" class="form-control" placeholder="Full name" required />
+                            <input type="text" id="unm" name="unm" value="<?= e($_SESSION['name'] ?? '') ?>" class="form-control" placeholder="Full name (2-100 characters)" minlength="2" maxlength="100" required autocomplete="name" />
                         </div>
                         <div class="col-md-6 form-group">
                             <label for="num" class="font-weight-bold small text-muted">Contact Phone Number</label>
-                            <input type="tel" id="num" name="num" value="<?= e($_SESSION['phone'] ?? '') ?>" class="form-control" placeholder="Phone" required />
+                            <input type="tel" id="num" name="num" value="<?= e($_SESSION['phone'] ?? '') ?>" class="form-control" placeholder="Phone (10-15 digits)" minlength="10" maxlength="15" pattern="[0-9]{10,15}" inputmode="numeric" required autocomplete="tel" title="Phone number must be between 10 and 15 digits" />
                         </div>
                     </div>
 
@@ -202,7 +204,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
 
                     <hr class="my-4">
 
-                    <button type="submit" class="btn btn-primary btn-block btn-lg font-weight-bold shadow-sm" name="check">
+                    <button type="submit" class="btn btn-primary btn-block btn-lg font-weight-bold shadow-sm" id="submit-booking-btn" name="check" value="1">
                         Confirm & Reserve Ticket
                     </button>
                 </form>
@@ -229,6 +231,31 @@ function selectSeat(seatNum) {
         selected.classList.add('btn-success');
     }
 }
+
+// U-05: Submit lock preventing duplicate clicks & U-04 client validation
+document.addEventListener('DOMContentLoaded', function() {
+    var bookingForm = document.getElementById('booking-form');
+    if (bookingForm) {
+        bookingForm.addEventListener('submit', function(e) {
+            var seatVal = document.getElementById('seat_no').value;
+            if (!seatVal || parseInt(seatVal, 10) < 1) {
+                e.preventDefault();
+                alert('Please select an available seat from the seat map before confirming.');
+                return false;
+            }
+            var submitBtn = document.getElementById('submit-booking-btn');
+            if (submitBtn && !submitBtn.disabled) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>Booking...';
+                var checkHidden = document.createElement('input');
+                checkHidden.type = 'hidden';
+                checkHidden.name = 'check';
+                checkHidden.value = '1';
+                bookingForm.appendChild(checkHidden);
+            }
+        });
+    }
+});
 </script>
 
 <?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>
