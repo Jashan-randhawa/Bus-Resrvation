@@ -42,8 +42,14 @@ function logout_all(): void {
 function require_role(string $role): void {
     $idle = time() - (int)($_SESSION['last_seen'] ?? 0);
     if (($_SESSION['role'] ?? '') !== $role || $idle > SESSION_IDLE_SECONDS) {
+        $req_uri = $_SERVER['REQUEST_URI'] ?? '';
         logout_all();
-        header('Location: ' . BASE_URL . '/homepage.php');
+        // U-14: Preserve relative return path for re-authentication
+        $target = BASE_URL . '/homepage.php';
+        if ($req_uri !== '' && !str_contains($req_uri, 'homepage.php') && !str_contains($req_uri, 'logout')) {
+            $target .= '?next=' . urlencode($req_uri);
+        }
+        header('Location: ' . $target);
         exit;
     }
     $_SESSION['last_seen'] = time();

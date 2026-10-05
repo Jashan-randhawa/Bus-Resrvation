@@ -62,6 +62,11 @@
                             <span class="mr-2">🎟️</span> My Reservations
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="<?= BASE_URL ?>/user/profile.php" class="nav-link <?= $current_script === 'profile.php' ? 'active' : '' ?>">
+                            <span class="mr-2">👤</span> My Profile
+                        </a>
+                    </li>
                 </ul>
             </nav>
 
@@ -104,3 +109,89 @@
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>
+
+            <!-- Idle Session Warning Modal (U-14) -->
+            <div class="modal fade" id="idleSessionModal" tabindex="-1" role="dialog" aria-labelledby="idleSessionModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header bg-warning text-dark">
+                            <h5 class="modal-title font-weight-bold" id="idleSessionModalLabel">⚠️ Session Timeout Warning</h5>
+                        </div>
+                        <div class="modal-body p-4 text-center">
+                            <div style="font-size: 48px;" class="mb-2">⏱️</div>
+                            <h5 class="font-weight-bold text-dark">Are you still there?</h5>
+                            <p class="text-muted mb-0">Your session will expire in <strong id="idle-countdown">120</strong> seconds due to inactivity. Click below to stay signed in and keep your work.</p>
+                        </div>
+                        <div class="modal-footer justify-content-center bg-light">
+                            <button type="button" class="btn btn-primary px-4 py-2 font-weight-bold shadow-sm" id="stay-signed-in-btn">
+                                Stay Signed In
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+            // U-14: 28-minute idle session detection & heartbeat
+            (function() {
+                var idleTime = 0;
+                var warningShown = false;
+                var countdownVal = 120;
+                var countdownInterval = null;
+
+                function resetIdle() {
+                    if (!warningShown) {
+                        idleTime = 0;
+                    }
+                }
+                ['mousemove', 'keydown', 'scroll', 'touchstart', 'click'].forEach(function(evt) {
+                    document.addEventListener(evt, resetIdle, { passive: true });
+                });
+
+                setInterval(function() {
+                    idleTime++;
+                    // 28 minutes = 1680 seconds
+                    if (idleTime >= 1680 && !warningShown) {
+                        warningShown = true;
+                        if (typeof $ !== 'undefined' && $('#idleSessionModal').length) {
+                            $('#idleSessionModal').modal('show');
+                        } else {
+                            var m = document.getElementById('idleSessionModal');
+                            if (m) m.classList.add('show', 'd-block');
+                        }
+                        countdownVal = 120;
+                        countdownInterval = setInterval(function() {
+                            countdownVal--;
+                            var cd = document.getElementById('idle-countdown');
+                            if (cd) cd.textContent = countdownVal;
+                            if (countdownVal <= 0) {
+                                clearInterval(countdownInterval);
+                                window.location.href = '<?= BASE_URL ?>/homepage.php?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+                            }
+                        }, 1000);
+                    }
+                }, 1000);
+
+                var stayBtn = document.getElementById('stay-signed-in-btn');
+                if (stayBtn) {
+                    stayBtn.addEventListener('click', function() {
+                        fetch('<?= BASE_URL ?>/user/api-heartbeat.php')
+                            .then(function(res) { return res.json(); })
+                            .then(function(data) {
+                                idleTime = 0;
+                                warningShown = false;
+                                clearInterval(countdownInterval);
+                                if (typeof $ !== 'undefined' && $('#idleSessionModal').length) {
+                                    $('#idleSessionModal').modal('hide');
+                                } else {
+                                    var m = document.getElementById('idleSessionModal');
+                                    if (m) m.classList.remove('show', 'd-block');
+                                }
+                            })
+                            .catch(function() {
+                                window.location.reload();
+                            });
+                    });
+                }
+            })();
+            </script>

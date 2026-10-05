@@ -23,7 +23,9 @@ function csrf_verify(): void {
     $sent = $_POST['csrf'] ?? '';
     if (!is_string($sent) || !hash_equals((string)($_SESSION['csrf'] ?? ''), $sent)) {
         http_response_code(419);
-        exit('Session expired. Please go back, refresh the page and try again.');
+        $return_url = $_SERVER['HTTP_REFERER'] ?? (defined('BASE_URL') ? BASE_URL . '/homepage.php' : '/');
+        echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Session Expired</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"><style>body{background:#f8fafc;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;font-family:system-ui,-apple-system,sans-serif;}.box{background:#fff;border-radius:12px;padding:32px;max-width:480px;width:90%;box-shadow:0 10px 25px -5px rgba(0,0,0,0.1);text-align:center;border:1px solid #e2e8f0;}</style></head><body><div class="box"><div style="font-size:48px;margin-bottom:16px;">⏱️</div><h4 class="font-weight-bold text-dark mb-2">Session Timed Out</h4><p class="text-muted mb-4">Your security token expired or became invalid. Please return to the previous page and refresh to continue safely.</p><a href="' . e($return_url) . '" class="btn btn-primary btn-block font-weight-bold py-2 shadow-sm">&larr; Return to Previous Page</a></div></body></html>';
+        exit;
     }
 }
 
@@ -140,6 +142,28 @@ function ensure_login_attempts_table(mysqli $link): void {
         $checked = true;
     } catch (mysqli_sql_exception $e) {
         error_log('[busres] ensure_login_attempts_table: ' . $e->getMessage());
+    }
+}
+
+function ensure_password_resets_table(mysqli $link): void {
+    static $checked = false;
+    if ($checked) {
+        return;
+    }
+    try {
+        mysqli_query($link, "
+            CREATE TABLE IF NOT EXISTS `password_resets` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `email` VARCHAR(100) NOT NULL,
+                `token` CHAR(64) NOT NULL,
+                `expires_at` TIMESTAMP NOT NULL,
+                `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                INDEX `idx_token` (`token`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ");
+        $checked = true;
+    } catch (Throwable $e) {
+        error_log('[busres] ensure_password_resets_table: ' . $e->getMessage());
     }
 }
 

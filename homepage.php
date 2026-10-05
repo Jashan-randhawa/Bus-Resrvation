@@ -66,7 +66,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
 
           throttle_clear($link, $acctKey);
           login_user($role, $row);
-          header('Location: ' . BASE_URL . '/' . $role . '/index.php?d=2');
+
+          // U-14: Redirect to validated next return path if present, removing unused d=2
+          $next = trim((string)($_POST['next'] ?? $_GET['next'] ?? ''));
+          $dest = BASE_URL . '/' . $role . '/index.php';
+          if ($next !== '' && str_starts_with($next, '/') && !str_starts_with($next, '//') && !str_contains($next, '://')) {
+            $dest = $next;
+          }
+          header('Location: ' . $dest);
           exit();
         }
       }
@@ -620,13 +627,17 @@ if (isset($_POST['subbtn'])) {
           <?php endif; ?>
           <form action="<?= e(BASE_URL) ?>/homepage.php" method="post">
             <?= csrf_field() ?>
+            <input type="hidden" name="next" value="<?= e($_GET['next'] ?? $_POST['next'] ?? '') ?>">
             <div class="form-group">
               <label for="user-email-input" class="font-weight-bold small text-muted">Email Address</label>
               <input type="email" id="user-email-input" name="email" class="form-control" value="<?= e($open_modal === 'user' ? $preserved_email : '') ?>" placeholder="passenger@example.com" autocomplete="username" required />
             </div>
-            <div class="form-group">
+            <div class="form-group mb-1">
               <label for="user-pwd-input" class="font-weight-bold small text-muted">Password</label>
               <input type="password" id="user-pwd-input" name="pwd" class="form-control" placeholder="••••••••" autocomplete="current-password" required />
+            </div>
+            <div class="text-right mb-3">
+              <a href="<?= BASE_URL ?>/forgot-password.php" class="small text-muted">Forgot password?</a>
             </div>
             <button type="submit" class="btn btn-primary btn-block py-2 font-weight-bold" name="user" style="min-height: 44px;">
               Sign In to Account

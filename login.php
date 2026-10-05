@@ -17,13 +17,17 @@ require_once __DIR__ . '/includes/layout/header-login.php';
         <div class="auth-body">
             <form action="homepage.php" method="post">
                 <?= csrf_field() ?>
+                <input type="hidden" name="next" value="<?= e($_GET['next'] ?? $_POST['next'] ?? '') ?>">
                 <div class="form-group mb-3">
                     <label for="email" class="font-weight-bold small text-muted">Email Address</label>
                     <input type="email" id="email" name="email" placeholder="you@example.com" class="form-control" required>
                 </div>
-                <div class="form-group mb-4">
+                <div class="form-group mb-2">
                     <label for="password" class="font-weight-bold small text-muted">Password</label>
                     <input type="password" id="password" name="pwd" placeholder="••••••••" class="form-control" required>
+                </div>
+                <div class="text-right mb-3">
+                    <a href="<?= BASE_URL ?>/forgot-password.php" class="small text-muted">Forgot password?</a>
                 </div>
                 <button type="submit" value="Login" name="user" class="btn btn-primary btn-block py-2 font-weight-bold shadow-sm">
                     Sign In

@@ -414,6 +414,41 @@ assert_test("Upcoming trip correctly categorized (U-16)", $is_up);
 assert_test("Past trip correctly categorized (U-16)", $is_p);
 assert_test("Cancelled trip correctly categorized (U-16)", $is_c);
 
+// -------------------------------------------------------------
+// Test 12: Slice E Verification (U-14, U-17)
+// -------------------------------------------------------------
+echo "\n[*] Suite 12: Slice E Session Return & Account Self-Service (U-14, U-17)\n";
+
+// 1. Safe relative return path validation (U-14)
+$valid_next = '/user/booking.php?route_id=12&date=2026-10-10';
+$is_safe_valid = (str_starts_with($valid_next, '/') && !str_starts_with($valid_next, '//') && !str_contains($valid_next, '://'));
+assert_test("Valid internal relative return path is accepted (U-14)", $is_safe_valid);
+
+$evil_protocol = '//attacker.com/phish';
+$is_safe_protocol = (str_starts_with($evil_protocol, '/') && !str_starts_with($evil_protocol, '//') && !str_contains($evil_protocol, '://'));
+assert_test("Protocol-relative open redirect is rejected (U-14)", !$is_safe_protocol);
+
+$evil_absolute = 'https://attacker.com/phish';
+$is_safe_absolute = (str_starts_with($evil_absolute, '/') && !str_starts_with($evil_absolute, '//') && !str_contains($evil_absolute, '://'));
+assert_test("Absolute external redirect is rejected (U-14)", !$is_safe_absolute);
+
+// 2. Self-service password reset token expiration (U-17)
+ensure_password_resets_table($link);
+$test_reset_email = 'testuser_' . bin2hex(random_bytes(3)) . '@example.com';
+$test_token = bin2hex(random_bytes(32));
+
+db_exec($link, 'INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 30 MINUTE))', 'ss', [$test_reset_email, $test_token]);
+$found_valid_token = db_one($link, 'SELECT * FROM password_resets WHERE token = ? AND expires_at > NOW()', 's', [$test_token]);
+assert_test("Active reset token is validated within 30-minute window (U-17)", $found_valid_token !== null);
+
+// Invalidate token by setting expiration in the past
+db_exec($link, 'UPDATE password_resets SET expires_at = DATE_SUB(NOW(), INTERVAL 1 MINUTE) WHERE token = ?', 's', [$test_token]);
+$found_expired_token = db_one($link, 'SELECT * FROM password_resets WHERE token = ? AND expires_at > NOW()', 's', [$test_token]);
+assert_test("Expired reset token is rejected (U-17)", $found_expired_token === null);
+
+// Clean up reset test token
+db_exec($link, 'DELETE FROM password_resets WHERE email = ?', 's', [$test_reset_email]);
+
 // Clean up test data
 db_exec($link, 'DELETE FROM booking WHERE bus = ?', 's', [$test_busno]);
 db_exec($link, 'DELETE FROM buses WHERE bus_number = ?', 's', [$test_busno]);
