@@ -357,8 +357,26 @@ function run_migrations(mysqli $link): array {
             $log[] = "  [!] Migration {$m5} had errors; not marked as applied.";
             $all_ok = false;
         }
+    // 8. Migration 006: 006_bus_layout (U-15)
+    $m6 = '006_bus_layout';
+    if (!migration_applied($link, $m6)) {
+        $log[] = "[*] Running migration: {$m6}...";
+        $m6_ok = true;
+        if (!has_column($link, 'buses', 'layout')) {
+            $m6_ok = try_sql($link, "ALTER TABLE `buses` ADD COLUMN `layout` VARCHAR(8) NOT NULL DEFAULT '2+2'", $log);
+            if ($m6_ok) {
+                $log[] = "  -> Added layout column to buses table (default '2+2').";
+            }
+        }
+        if ($m6_ok) {
+            record_migration($link, $m6);
+            $log[] = "  -> Completed {$m6}.";
+        } else {
+            $log[] = "  [!] Migration {$m6} had errors; not marked as applied.";
+            $all_ok = false;
+        }
     } else {
-        $log[] = "[i] Migration {$m5} already applied.";
+        $log[] = "[i] Migration {$m6} already applied.";
     }
 
     if ($all_ok) {

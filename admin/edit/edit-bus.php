@@ -28,6 +28,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
         $capacity = 36;
     }
 
+    $layout = trim((string)($_POST['layout'] ?? '2+2'));
+    if (!in_array($layout, ['2+2', '2+1', '1+2', '1+1'], true)) {
+        $layout = '2+2';
+    }
+
     if ($busno === '') {
         $error = 'Bus number cannot be empty.';
     } else {
@@ -42,10 +47,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
                 $error = "Cannot reduce capacity to {$capacity} seats because seat #{$max_booked_seat} is currently reserved.";
             } else {
                 $has_cap = table_has_column($link, 'buses', 'capacity');
+                $has_layout = table_has_column($link, 'buses', 'layout');
 
                 mysqli_begin_transaction($link);
                 try {
-                    if ($has_cap) {
+                    if ($has_cap && $has_layout) {
+                        db_exec($link, "UPDATE buses SET bus_number = ?, capacity = ?, layout = ? WHERE `{$bus_pk}` = ?", 'sisi', [$busno, $capacity, $layout, $id]);
+                    } elseif ($has_cap) {
                         db_exec($link, "UPDATE buses SET bus_number = ?, capacity = ? WHERE `{$bus_pk}` = ?", 'sii', [$busno, $capacity, $id]);
                     } else {
                         db_exec($link, "UPDATE buses SET bus_number = ? WHERE `{$bus_pk}` = ?", 'si', [$busno, $id]);
@@ -97,10 +105,21 @@ require_once __DIR__ . '/../../includes/layout/header-admin.php';
                         <label for="busno" class="font-weight-bold small text-muted">Bus Number / License</label>
                         <input type="text" id="busno" name="edit" value="<?= e($row['bus_number'] ?? '') ?>" class="form-control" required>
                     </div>
-                    <div class="form-group mb-4">
+                    <div class="form-group">
                         <label for="capacity" class="font-weight-bold small text-muted">Total Seating Capacity</label>
                         <input type="number" id="capacity" name="capacity" value="<?= e((string)($row['capacity'] ?? 36)) ?>" min="10" max="60" class="form-control" required>
                         <small class="form-text text-muted">Configurable vehicle passenger limits.</small>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="layout" class="font-weight-bold small text-muted">Seating Layout Pattern</label>
+                        <?php $cur_lyt = (string)($row['layout'] ?? '2+2'); ?>
+                        <select id="layout" name="layout" class="form-control" required>
+                            <option value="2+2" <?= $cur_lyt === '2+2' ? 'selected' : '' ?>>2+2 (Standard Coach -- 2 Left, 2 Right)</option>
+                            <option value="2+1" <?= $cur_lyt === '2+1' ? 'selected' : '' ?>>2+1 (Executive Coach -- 2 Left, 1 Right)</option>
+                            <option value="1+2" <?= $cur_lyt === '1+2' ? 'selected' : '' ?>>1+2 (Executive Coach -- 1 Left, 2 Right)</option>
+                            <option value="1+1" <?= $cur_lyt === '1+1' ? 'selected' : '' ?>>1+1 (VIP / Luxury Sleeper)</option>
+                        </select>
+                        <small class="form-text text-muted">Defines seat column distribution around central aisle.</small>
                     </div>
                     <div class="d-flex justify-content-between">
                         <a href="<?= BASE_URL ?>/admin/buses.php" class="btn btn-outline-secondary">Cancel</a>

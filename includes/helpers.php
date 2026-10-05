@@ -293,6 +293,59 @@ function get_bus_capacity(mysqli $link, string $bus_number): int {
 }
 
 /**
+ * Get seat layout pattern for a bus number (U-15).
+ * Defaults to '2+2' if column is not yet present or pattern is invalid.
+ */
+function get_bus_layout(mysqli $link, string $bus_number): string {
+    if ($bus_number === '') {
+        return '2+2';
+    }
+    if (table_has_column($link, 'buses', 'layout')) {
+        $row = db_one($link, 'SELECT layout FROM buses WHERE bus_number = ? LIMIT 1', 's', [$bus_number]);
+        $val = trim((string)($row['layout'] ?? ''));
+        if (preg_match('/^[12]\+[12]$/', $val)) {
+            return $val;
+        }
+    }
+    return '2+2';
+}
+
+/**
+ * Build matrix of seat rows based on capacity and pattern (U-15).
+ *
+ * @param int $capacity Total bus capacity
+ * @param string $pattern Column pattern ('2+2', '2+1', '1+2', '1+1')
+ * @return array ['left' => int, 'right' => int, 'rows' => array]
+ */
+function build_seat_layout(int $capacity, string $pattern = '2+2'): array {
+    if (!preg_match('/^([12])\+([12])$/', $pattern, $m)) {
+        $m = [0, 2, 2];
+    }
+    $left = (int)$m[1];
+    $right = (int)$m[2];
+    $per = $left + $right;
+    $rows = [];
+    $n = 1;
+
+    while ($n <= $capacity) {
+        $row = [];
+        for ($c = 0; $c < $per; $c++) {
+            if ($n > $capacity) {
+                $row[] = null; // placeholder for missing seat in short row
+                continue;
+            }
+            $row[] = [
+                'no' => $n++,
+                'col' => $c,
+                'type' => ($c === 0 || $c === $per - 1) ? 'Window' : 'Aisle'
+            ];
+        }
+        $rows[] = $row;
+    }
+    return ['left' => $left, 'right' => $right, 'rows' => $rows];
+}
+
+/**
  * Canonical booking helper (O6).
  * Validates travel date, seat number, and inserts atomically, catching duplicate seat reservations.
  *

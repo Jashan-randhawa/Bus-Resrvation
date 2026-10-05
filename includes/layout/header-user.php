@@ -17,6 +17,7 @@
     <!-- Design System & User Styles (U-19 / U-20) -->
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/user.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/seat-map.css">
 
     <!-- Global Theme Toggle (Head load to avoid FOUC) -->
     <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>

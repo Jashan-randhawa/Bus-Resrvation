@@ -18,6 +18,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
         $capacity = 36;
     }
 
+    $layout = trim((string)($_POST['layout'] ?? '2+2'));
+    if (!in_array($layout, ['2+2', '2+1', '1+2', '1+1'], true)) {
+        $layout = '2+2';
+    }
+
     if ($busno === '') {
         $alert = 'Bus number is required.';
         $alert_type = 'danger';
@@ -28,7 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
             $alert_type = 'danger';
         } else {
             $has_cap = table_has_column($link, 'buses', 'capacity');
-            if ($has_cap) {
+            $has_layout = table_has_column($link, 'buses', 'layout');
+            if ($has_cap && $has_layout) {
+                db_exec($link, 'INSERT INTO buses (bus_number, capacity, layout) VALUES (?, ?, ?)', 'sis', [$busno, $capacity, $layout]);
+            } elseif ($has_cap) {
                 db_exec($link, 'INSERT INTO buses (bus_number, capacity) VALUES (?, ?)', 'si', [$busno, $capacity]);
             } else {
                 db_exec($link, 'INSERT INTO buses (bus_number) VALUES (?)', 's', [$busno]);
@@ -102,13 +110,14 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                     <th style="width: 80px;">#</th>
                     <th>Bus Identifier / License</th>
                     <th>Seating Capacity</th>
+                    <th>Seating Layout</th>
                     <th class="text-right">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($buses)): ?>
                     <tr>
-                        <td colspan="4">
+                        <td colspan="5">
                             <div class="empty-state py-5">
                                 <div class="empty-icon">🚌</div>
                                 <div class="empty-title">No buses in fleet</div>
@@ -121,6 +130,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         <?php
                         $bid = (int)($row[$bus_pk] ?? $row['id'] ?? $row['sno'] ?? 0);
                         $cap = (int)($row['capacity'] ?? 36);
+                        $lyt = (string)($row['layout'] ?? '2+2');
                         ?>
                         <tr>
                             <td><span class="text-muted small">#<?= e($bid) ?></span></td>
@@ -130,6 +140,11 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                             <td>
                                 <span class="badge badge-light border text-dark font-weight-bold px-2 py-1">
                                     🪑 <?= $cap ?> Passenger Seats
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge badge-info px-2 py-1 font-weight-bold">
+                                    <?= e($lyt) ?>
                                 </span>
                             </td>
                             <td class="text-right">
@@ -167,10 +182,20 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         <label for="busno" class="font-weight-bold small text-muted">Bus Number / License Plate</label>
                         <input type="text" id="busno" name="busno" class="form-control" placeholder="e.g. DL-01-AB-1234" required />
                     </div>
-                    <div class="form-group mb-4">
+                    <div class="form-group">
                         <label for="capacity" class="font-weight-bold small text-muted">Total Seating Capacity</label>
                         <input type="number" id="capacity" name="capacity" class="form-control" value="36" min="10" max="60" required />
                         <small class="form-text text-muted">Standard coaches seat between 20 and 52 passengers.</small>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="layout" class="font-weight-bold small text-muted">Seating Layout Pattern</label>
+                        <select id="layout" name="layout" class="form-control" required>
+                            <option value="2+2" selected>2+2 (Standard Coach -- 2 Left, 2 Right)</option>
+                            <option value="2+1">2+1 (Executive Coach -- 2 Left, 1 Right)</option>
+                            <option value="1+2">1+2 (Executive Coach -- 1 Left, 2 Right)</option>
+                            <option value="1+1">1+1 (VIP / Luxury Sleeper)</option>
+                        </select>
+                        <small class="form-text text-muted">Defines seat column distribution around central aisle.</small>
                     </div>
                     <div class="d-flex justify-content-end">
                         <button type="button" class="btn btn-outline-secondary mr-2" data-dismiss="modal">Cancel</button>

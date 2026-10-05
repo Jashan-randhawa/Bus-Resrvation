@@ -541,6 +541,39 @@ assert_test("Zero user pages execute SHOW COLUMNS (U-20)", !$found_show_columns)
 assert_test("Dedicated footer-user.php exists (U-19)", file_exists(__DIR__ . '/../includes/layout/footer-user.php'));
 assert_test("Dedicated user.css exists (U-19)", file_exists(__DIR__ . '/../assets/css/user.css'));
 
+// 4. Seat layout builder unit tests (U-15)
+echo "\n[*] Suite 6: Seat Layout Engine (U-15)\n";
+$layout_36 = build_seat_layout(36, '2+2');
+assert_test("build_seat_layout 36 2+2 produces 9 rows", count($layout_36['rows']) === 9);
+assert_test("build_seat_layout 36 2+2 has left=2 and right=2", $layout_36['left'] === 2 && $layout_36['right'] === 2);
+assert_test("build_seat_layout row 1 types are W, A, A, W", 
+    $layout_36['rows'][0][0]['type'] === 'Window' &&
+    $layout_36['rows'][0][1]['type'] === 'Aisle' &&
+    $layout_36['rows'][0][2]['type'] === 'Aisle' &&
+    $layout_36['rows'][0][3]['type'] === 'Window'
+);
+assert_test("build_seat_layout seat 12 is Window", $layout_36['rows'][2][3]['no'] === 12 && $layout_36['rows'][2][3]['type'] === 'Window');
+assert_test("build_seat_layout seat 3 is Aisle", $layout_36['rows'][0][2]['no'] === 3 && $layout_36['rows'][0][2]['type'] === 'Aisle');
+
+$layout_37 = build_seat_layout(37, '2+2');
+assert_test("build_seat_layout 37 2+2 produces 10 rows", count($layout_37['rows']) === 10);
+assert_test("build_seat_layout 37 has seat 37 followed by nulls in row 10", 
+    $layout_37['rows'][9][0]['no'] === 37 &&
+    $layout_37['rows'][9][1] === null &&
+    $layout_37['rows'][9][2] === null &&
+    $layout_37['rows'][9][3] === null
+);
+
+$layout_21 = build_seat_layout(10, '2+1');
+assert_test("build_seat_layout 10 2+1 produces 4 rows with left=2 right=1", count($layout_21['rows']) === 4 && $layout_21['left'] === 2 && $layout_21['right'] === 1);
+assert_test("build_seat_layout 10 2+1 seat 3 is Window", $layout_21['rows'][0][2]['no'] === 3 && $layout_21['rows'][0][2]['type'] === 'Window');
+
+$layout_fallback = build_seat_layout(20, 'bad-pattern');
+assert_test("build_seat_layout falls back to 2+2 on invalid pattern", $layout_fallback['left'] === 2 && $layout_fallback['right'] === 2);
+
+$bus_lyt_fallback = get_bus_layout($link, 'NON_EXISTENT_BUS_xyz');
+assert_test("get_bus_layout falls back safely to 2+2", $bus_lyt_fallback === '2+2');
+
 // Clean up test data
 db_exec($link, 'DELETE FROM booking WHERE bus = ?', 's', [$test_busno]);
 db_exec($link, 'DELETE FROM buses WHERE bus_number = ?', 's', [$test_busno]);
