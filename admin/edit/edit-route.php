@@ -42,11 +42,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit'])) {
         if ($conflict) {
             $error = "Bus '{$bus}' is already scheduled to depart at {$time} on another route ({$conflict['city1']} -> {$conflict['city2']}).";
         } else {
-            db_exec($link,
-                "UPDATE route SET busno = ?, city1 = ?, city2 = ?, time = ?, price = ? WHERE `{$route_pk}` = ?",
-                'ssssdi',
-                [$bus, $from, $to, $time, $price, $id]
-            );
+            $has_bus_id = table_has_column($link, 'route', 'bus_id');
+            $bus_row = db_one($link, 'SELECT id FROM buses WHERE bus_number = ? LIMIT 1', 's', [$bus]);
+            $bus_id = $bus_row ? (int)$bus_row['id'] : null;
+
+            if ($has_bus_id && $bus_id !== null) {
+                db_exec($link,
+                    "UPDATE route SET busno = ?, city1 = ?, city2 = ?, time = ?, price = ?, bus_id = ? WHERE `{$route_pk}` = ?",
+                    'ssssdii',
+                    [$bus, $from, $to, $time, $price, $bus_id, $id]
+                );
+            } else {
+                db_exec($link,
+                    "UPDATE route SET busno = ?, city1 = ?, city2 = ?, time = ?, price = ? WHERE `{$route_pk}` = ?",
+                    'ssssdi',
+                    [$bus, $from, $to, $time, $price, $id]
+                );
+            }
+            audit($link, 'UPDATE', 'route', $id, ['busno' => $row['busno'], 'price' => $row['price']], ['busno' => $bus, 'city1' => $from, 'city2' => $to, 'time' => $time, 'price' => $price]);
             flash_set('success', 'Route updated successfully.');
             header('Location: ' . BASE_URL . '/admin/routes.php');
             exit;

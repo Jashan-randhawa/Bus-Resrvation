@@ -4,6 +4,8 @@ require_once __DIR__ . '/../../includes/auth/admin-session.php';
 require_once __DIR__ . '/../../includes/db_con.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 
+require_role('super_admin', 'operator');
+
 $bus_pk = table_has_column($link, 'buses', 'sno') ? 'sno' : 'id';
 
 $id = (int)($_GET['id'] ?? 0);
@@ -64,6 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
                         db_exec($link, 'UPDATE booking SET bus = ? WHERE bus = ?', 'ss', [$busno, $old_bus]);
                     }
 
+                    audit($link, 'UPDATE', 'bus', $id, ['bus_number' => $old_bus], ['bus_number' => $busno, 'capacity' => $capacity, 'layout' => $layout]);
                     mysqli_commit($link);
                     flash_set('success', 'Bus updated successfully.');
                     header('Location: ' . BASE_URL . '/admin/buses.php');

@@ -4,10 +4,18 @@ require_once __DIR__ . '/../../includes/auth/admin-session.php';
 require_once __DIR__ . '/../../includes/db_con.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 
+require_role('super_admin', 'operator');
+
 $cust_pk = table_has_column($link, 'costumer', 'sno') ? 'sno' : 'id';
 
 $id = (int)($_GET['id'] ?? 0);
 if ($id <= 0) {
+    header('Location: ' . BASE_URL . '/admin/customers.php');
+    exit;
+}
+
+$row = db_one($link, "SELECT * FROM costumer WHERE `{$cust_pk}` = ?", 'i', [$id]);
+if (!$row) {
     header('Location: ' . BASE_URL . '/admin/customers.php');
     exit;
 }
@@ -39,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit'])) {
                         'sssssi',
                         [$name, $email, $hashed, $phone, $address, $id]
                     );
+                    audit($link, 'UPDATE', 'customer', $id, ['name' => $row['name'], 'email' => $row['email']], ['name' => $name, 'email' => $email, 'phone' => $phone]);
                     flash_set('success', 'Customer updated successfully.');
                     header('Location: ' . BASE_URL . '/admin/customers.php');
                     exit;
@@ -49,18 +58,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit'])) {
                     'ssssi',
                     [$name, $email, $phone, $address, $id]
                 );
+                audit($link, 'UPDATE', 'customer', $id, ['name' => $row['name'], 'email' => $row['email']], ['name' => $name, 'email' => $email, 'phone' => $phone]);
                 flash_set('success', 'Customer updated successfully.');
                 header('Location: ' . BASE_URL . '/admin/customers.php');
                 exit;
             }
         }
     }
-}
-
-$row = db_one($link, "SELECT * FROM costumer WHERE `{$cust_pk}` = ?", 'i', [$id]);
-if (!$row) {
-    header('Location: ' . BASE_URL . '/admin/customers.php');
-    exit;
 }
 
 $title = 'Edit Customer';

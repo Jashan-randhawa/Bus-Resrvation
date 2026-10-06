@@ -4,8 +4,16 @@ require_once __DIR__ . '/../../includes/auth/admin-session.php';
 require_once __DIR__ . '/../../includes/db_con.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 
+require_role('super_admin', 'operator');
+
 $id = (int)($_GET['id'] ?? 0);
 if ($id <= 0) {
+    header('Location: ' . BASE_URL . '/admin/bookings.php');
+    exit;
+}
+
+$row = db_one($link, "SELECT * FROM booking WHERE sno = ?", 'i', [$id]);
+if (!$row) {
     header('Location: ' . BASE_URL . '/admin/bookings.php');
     exit;
 }
@@ -28,16 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit'])) {
             'ssssdi',
             [$name, $from, $to, $num, $amount, $id]
         );
+        audit($link, 'UPDATE', 'booking', $id, ['name' => $row['name'], 'price' => $row['price']], ['name' => $name, 'city1' => $from, 'city2' => $to, 'contact' => $num, 'price' => $amount]);
         flash_set('success', 'Booking updated successfully.');
         header('Location: ' . BASE_URL . '/admin/bookings.php');
         exit;
     }
-}
-
-$row = db_one($link, "SELECT * FROM booking WHERE sno = ?", 'i', [$id]);
-if (!$row) {
-    header('Location: ' . BASE_URL . '/admin/bookings.php');
-    exit;
 }
 
 $title = 'Edit Booking';
