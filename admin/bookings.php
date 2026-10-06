@@ -96,17 +96,80 @@ if (table_has_column($link, 'buses', 'capacity')) {
 $from_cities = db_all($link, 'SELECT DISTINCT city1 FROM route ORDER BY city1 ASC');
 $to_cities = db_all($link, 'SELECT DISTINCT city2 FROM route ORDER BY city2 ASC');
 
-// Status filtering and 25-item Pagination (P-05, P-10)
+// Multi-field search and filters (Item 8)
+$search = trim((string)($_GET['q'] ?? ''));
+$filter_bus = trim((string)($_GET['bus'] ?? ''));
+$filter_date_from = trim((string)($_GET['from_date'] ?? ''));
+$filter_date_to = trim((string)($_GET['to_date'] ?? ''));
 $selected_filter = trim((string)($_GET['filter_status'] ?? 'All'));
+
+$where_clauses = [];
+$params = [];
+$types = '';
+
 if ($has_status && in_array($selected_filter, ['Confirmed', 'Pending', 'Expired', 'Cancelled'], true)) {
-    $total_count = (int)(db_one($link, 'SELECT COUNT(*) AS c FROM booking WHERE status = ?', 's', [$selected_filter])['c'] ?? 0);
-    $pagination = paginate($total_count, 25);
-    $bookings = db_all($link, 'SELECT * FROM booking WHERE status = ? ORDER BY sno DESC LIMIT ? OFFSET ?', 'sii', [$selected_filter, $pagination['per_page'], $pagination['offset']]);
-} else {
-    $total_count = (int)(db_one($link, 'SELECT COUNT(*) AS c FROM booking')['c'] ?? 0);
-    $pagination = paginate($total_count, 25);
-    $bookings = db_all($link, 'SELECT * FROM booking ORDER BY sno DESC LIMIT ? OFFSET ?', 'ii', [$pagination['per_page'], $pagination['offset']]);
+    $where_clauses[] = 'status = ?';
+    $params[] = $selected_filter;
+    $types .= 's';
 }
+
+if ($search !== '') {
+    $where_clauses[] = '(pnr LIKE ? OR name LIKE ? OR contact LIKE ? OR city1 LIKE ? OR city2 LIKE ?)';
+    $s_param = '%' . $search . '%';
+    $params = array_merge($params, [$s_param, $s_param, $s_param, $s_param, $s_param]);
+    $types .= 'sssss';
+}
+
+if ($filter_bus !== '') {
+    $where_clauses[] = 'bus = ?';
+    $params[] = $filter_bus;
+    $types .= 's';
+}
+
+if ($filter_date_from !== '') {
+    $where_clauses[] = '`date` >= ?';
+    $params[] = $filter_date_from;
+    $types .= 's';
+}
+
+if ($filter_date_to !== '') {
+    $where_clauses[] = '`date` <= ?';
+    $params[] = $filter_date_to;
+    $types .= 's';
+}
+
+$where_sql = !empty($where_clauses) ? 'WHERE ' . implode(' AND ', $where_clauses) : '';
+
+// CSV Export (Item 7)
+if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+    audit($link, 'EXPORT', 'booking', null, null, ['format' => 'csv', 'filters' => compact('selected_filter', 'search', 'filter_bus', 'filter_date_from', 'filter_date_to')]);
+    $export_rows = !empty($params) 
+        ? db_all($link, "SELECT sno, pnr, bus, name, contact, city1, city2, `date`, `time`, seat, price, status FROM booking {$where_sql} ORDER BY sno DESC", $types, $params)
+        : db_all($link, "SELECT sno, pnr, bus, name, contact, city1, city2, `date`, `time`, seat, price, status FROM booking {$where_sql} ORDER BY sno DESC");
+
+    $headers = ['Booking ID', 'PNR', 'Bus Number', 'Passenger Name', 'Contact Phone', 'Origin', 'Destination', 'Travel Date', 'Departure Time', 'Seat Number', 'Tariff Paid', 'Status'];
+    export_csv('bookings-export-' . date('Ymd-His') . '.csv', $headers, $export_rows);
+}
+
+// 25-item Pagination (P-05, P-10)
+$count_sql = "SELECT COUNT(*) AS c FROM booking {$where_sql}";
+$count_res = !empty($params) ? db_one($link, $count_sql, $types, $params) : db_one($link, $count_sql);
+$total_count = (int)($count_res['c'] ?? 0);
+$pagination = paginate($total_count, 25);
+
+$query_sql = "SELECT * FROM booking {$where_sql} ORDER BY sno DESC LIMIT ? OFFSET ?";
+$query_params = array_merge($params, [$pagination['per_page'], $pagination['offset']]);
+$query_types = $types . 'ii';
+$bookings = db_all($link, $query_sql, $query_types, $query_params);
+
+// Retain all current filter params for pagination links
+$keep_params = array_filter([
+    'filter_status' => $selected_filter !== 'All' ? $selected_filter : null,
+    'q'             => $search !== '' ? $search : null,
+    'bus'           => $filter_bus !== '' ? $filter_bus : null,
+    'from_date'     => $filter_date_from !== '' ? $filter_date_from : null,
+    'to_date'       => $filter_date_to !== '' ? $filter_date_to : null,
+], fn($v) => $v !== null);
 
 $title = 'Bookings';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
@@ -116,11 +179,16 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <h1 class="page-title">Booking Management</h1>
         <p class="page-subtitle">Track passenger tickets, review reservation statuses, or create manual administrative bookings.</p>
     </div>
-    <?php if (can_write()): ?>
-    <button class="btn btn-primary shadow-sm" data-toggle="modal" data-target="#addBookingModal">
-        + New Reservation
-    </button>
-    <?php endif; ?>
+    <div class="d-flex align-items-center">
+        <a href="?<?= http_build_query(array_merge($keep_params, ['export' => 'csv'])) ?>" class="btn btn-outline-success btn-sm mr-2 shadow-sm font-weight-bold">
+            📥 Export CSV
+        </a>
+        <?php if (can_write()): ?>
+        <button class="btn btn-primary shadow-sm" data-toggle="modal" data-target="#addBookingModal">
+            + New Reservation
+        </button>
+        <?php endif; ?>
+    </div>
 </div>
 
 <?php if ($alert): ?>
@@ -130,15 +198,61 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </div>
 <?php endif; ?>
 
-<!-- Filter Bar -->
+<!-- Search & Filter Card (Item 8) -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-3">
+        <form action="bookings.php" method="get" class="form-row align-items-end">
+            <div class="col-md-3 mb-2 mb-md-0">
+                <label class="small font-weight-bold text-muted mb-1">Search Keyword</label>
+                <input type="text" name="q" class="form-control form-control-sm" placeholder="PNR, name, phone, city..." value="<?= e($search) ?>">
+            </div>
+            <div class="col-md-2 mb-2 mb-md-0">
+                <label class="small font-weight-bold text-muted mb-1">Fleet Bus</label>
+                <select name="bus" class="form-control form-control-sm">
+                    <option value="">All Buses</option>
+                    <?php foreach ($buses as $b_opt): ?>
+                        <option value="<?= e($b_opt['bus_number']) ?>" <?= $filter_bus === $b_opt['bus_number'] ? 'selected' : '' ?>>
+                            <?= e($b_opt['bus_number']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-2 mb-2 mb-md-0">
+                <label class="small font-weight-bold text-muted mb-1">From Date</label>
+                <input type="date" name="from_date" class="form-control form-control-sm" value="<?= e($filter_date_from) ?>">
+            </div>
+            <div class="col-md-2 mb-2 mb-md-0">
+                <label class="small font-weight-bold text-muted mb-1">To Date</label>
+                <input type="date" name="to_date" class="form-control form-control-sm" value="<?= e($filter_date_to) ?>">
+            </div>
+            <div class="col-md-3 d-flex align-items-center">
+                <button type="submit" class="btn btn-primary btn-sm px-3 mr-2">Filter</button>
+                <?php if (!empty($keep_params)): ?>
+                    <a href="bookings.php" class="btn btn-outline-secondary btn-sm">Reset</a>
+                <?php endif; ?>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Status Filter Tabs -->
 <div class="filter-bar">
     <span class="filter-label">Filter Status:</span>
     <div class="btn-group btn-group-sm" role="group">
-        <a href="bookings.php" class="btn <?= $selected_filter === 'All' ? 'btn-dark' : 'btn-outline-secondary' ?>">All</a>
-        <a href="bookings.php?filter_status=Confirmed" class="btn <?= $selected_filter === 'Confirmed' ? 'btn-success' : 'btn-outline-success' ?>">Confirmed</a>
-        <a href="bookings.php?filter_status=Pending" class="btn <?= $selected_filter === 'Pending' ? 'btn-warning text-white' : 'btn-outline-warning' ?>">Pending</a>
-        <a href="bookings.php?filter_status=Expired" class="btn <?= $selected_filter === 'Expired' ? 'btn-secondary' : 'btn-outline-secondary' ?>">Expired</a>
-        <a href="bookings.php?filter_status=Cancelled" class="btn <?= $selected_filter === 'Cancelled' ? 'btn-danger' : 'btn-outline-danger' ?>">Cancelled</a>
+        <?php foreach (['All', 'Confirmed', 'Pending', 'Expired', 'Cancelled'] as $st): ?>
+            <?php 
+            $tab_params = array_merge($keep_params, ['filter_status' => $st]);
+            $is_curr = ($selected_filter === $st);
+            $btn_style = match($st) {
+                'Confirmed' => $is_curr ? 'btn-success' : 'btn-outline-success',
+                'Pending'   => $is_curr ? 'btn-warning text-white' : 'btn-outline-warning',
+                'Expired'   => $is_curr ? 'btn-secondary' : 'btn-outline-secondary',
+                'Cancelled' => $is_curr ? 'btn-danger' : 'btn-outline-danger',
+                default     => $is_curr ? 'btn-dark' : 'btn-outline-secondary',
+            };
+            ?>
+            <a href="?<?= http_build_query($tab_params) ?>" class="btn <?= $btn_style ?>"><?= $st ?></a>
+        <?php endforeach; ?>
     </div>
 </div>
 
@@ -218,7 +332,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             </tbody>
         </table>
     </div>
-    <?= render_pagination($pagination, $selected_filter !== 'All' ? ['filter_status' => $selected_filter] : []) ?>
+    <?= render_pagination($pagination, $keep_params) ?>
 </div>
 
 <!-- Booking Modal -->

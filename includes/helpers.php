@@ -945,5 +945,56 @@ function audit(mysqli $link, string $action, string $entity_type, ?int $entity_i
     }
 }
 
+/**
+ * Streams tabular data as a downloadable CSV file (Item 7).
+ * Sanitizes fields starting with '=', '+', '-', '@' to prevent CSV Formula Injection.
+ *
+ * @param string $filename Name of exported file (e.g. 'bookings-export.csv')
+ * @param array $headers Column headers (e.g. ['PNR', 'Passenger', 'Date', ...])
+ * @param array $rows Array of associative or index arrays representing rows
+ */
+function export_csv(string $filename, array $headers, array $rows): void {
+    if (ob_get_level()) {
+        ob_end_clean();
+    }
+
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . rawurlencode($filename) . '"');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
+    $out = fopen('php://output', 'w');
+    // Write UTF-8 BOM for Excel compatibility
+    fputs($out, "\xEF\xBB\xBF");
+
+    // Write sanitized headers
+    $clean_headers = array_map(function($h) {
+        $str = (string)$h;
+        if (isset($str[0]) && in_array($str[0], ['=', '+', '-', '@'], true)) {
+            return "'" . $str;
+        }
+        return $str;
+    }, $headers);
+    fputcsv($out, $clean_headers);
+
+    // Write sanitized rows
+    foreach ($rows as $row) {
+        $clean_row = [];
+        foreach ($row as $val) {
+            $str = is_scalar($val) ? (string)$val : json_encode($val);
+            if (isset($str[0]) && in_array($str[0], ['=', '+', '-', '@'], true)) {
+                $clean_row[] = "'" . $str;
+            } else {
+                $clean_row[] = $str;
+            }
+        }
+        fputcsv($out, $clean_row);
+    }
+
+    fclose($out);
+    exit;
+}
+
+
 
 

@@ -93,12 +93,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore_customer'])) 
 
 // Tab Filter: active vs archived
 $view_tab = trim((string)($_GET['tab'] ?? 'active'));
-$where_archive = ($has_archived_col && $view_tab === 'archived') ? 'WHERE archived_at IS NOT NULL' : ($has_archived_col ? 'WHERE archived_at IS NULL' : '');
+$search = trim((string)($_GET['q'] ?? ''));
+
+$where_clauses = [];
+$params = [];
+$types = '';
+
+if ($has_archived_col) {
+    if ($view_tab === 'archived') {
+        $where_clauses[] = 'archived_at IS NOT NULL';
+    } else {
+        $where_clauses[] = 'archived_at IS NULL';
+    }
+}
+
+if ($search !== '') {
+    $where_clauses[] = '(name LIKE ? OR email LIKE ? OR phone LIKE ? OR address LIKE ?)';
+    $s_param = '%' . $search . '%';
+    $params = array_merge($params, [$s_param, $s_param, $s_param, $s_param]);
+    $types .= 'ssss';
+}
+
+$where_sql = !empty($where_clauses) ? 'WHERE ' . implode(' AND ', $where_clauses) : '';
+
+// CSV Export (Item 7)
+if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+    audit($link, 'EXPORT', 'customer', null, null, ['format' => 'csv', 'tab' => $view_tab, 'search' => $search]);
+    $export_rows = !empty($params)
+        ? db_all($link, "SELECT id, name, email, phone, address, archived_at FROM costumer {$where_sql} ORDER BY `{$cust_pk}` ASC", $types, $params)
+        : db_all($link, "SELECT id, name, email, phone, address, archived_at FROM costumer {$where_sql} ORDER BY `{$cust_pk}` ASC");
+
+    $headers = ['Customer ID', 'Full Name', 'Email Address', 'Phone Number', 'Address', 'Archived Timestamp'];
+    export_csv('customers-export-' . date('Ymd-His') . '.csv', $headers, $export_rows);
+}
 
 // 25-item Pagination (P-10)
-$total_customers = (int)(db_one($link, "SELECT COUNT(*) AS c FROM costumer {$where_archive}")['c'] ?? 0);
+$count_sql = "SELECT COUNT(*) AS c FROM costumer {$where_sql}";
+$count_res = !empty($params) ? db_one($link, $count_sql, $types, $params) : db_one($link, $count_sql);
+$total_customers = (int)($count_res['c'] ?? 0);
 $pagination = paginate($total_customers, 25);
-$customers = db_all($link, "SELECT * FROM costumer {$where_archive} ORDER BY `{$cust_pk}` ASC LIMIT ? OFFSET ?", 'ii', [$pagination['per_page'], $pagination['offset']]);
+
+$query_sql = "SELECT * FROM costumer {$where_sql} ORDER BY `{$cust_pk}` ASC LIMIT ? OFFSET ?";
+$query_params = array_merge($params, [$pagination['per_page'], $pagination['offset']]);
+$query_types = $types . 'ii';
+$customers = db_all($link, $query_sql, $query_types, $query_params);
+
+$keep_params = array_filter([
+    'tab' => $view_tab !== 'active' ? $view_tab : null,
+    'q'   => $search !== '' ? $search : null,
+], fn($v) => $v !== null);
 
 $title = 'Customers';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
@@ -108,11 +151,16 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <h1 class="page-title">Customer Accounts</h1>
         <p class="page-subtitle">Manage registered passenger profiles, credentials, contact records, and addresses.</p>
     </div>
-    <?php if (can_write()): ?>
-    <button class="btn btn-primary shadow-sm" data-toggle="modal" data-target="#addCustomerModal">
-        + Register Customer
-    </button>
-    <?php endif; ?>
+    <div class="d-flex align-items-center">
+        <a href="?<?= http_build_query(array_merge($keep_params, ['export' => 'csv'])) ?>" class="btn btn-outline-success btn-sm mr-2 shadow-sm font-weight-bold">
+            📥 Export CSV
+        </a>
+        <?php if (can_write()): ?>
+        <button class="btn btn-primary shadow-sm" data-toggle="modal" data-target="#addCustomerModal">
+            + Register Customer
+        </button>
+        <?php endif; ?>
+    </div>
 </div>
 
 <?php if ($alert): ?>
@@ -121,6 +169,24 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <button type="button" class="close" data-dismiss="alert">&times;</button>
     </div>
 <?php endif; ?>
+
+<!-- Search Bar (Item 8) -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body p-3">
+        <form action="customers.php" method="get" class="form-inline">
+            <?php if ($view_tab !== 'active'): ?>
+                <input type="hidden" name="tab" value="<?= e($view_tab) ?>">
+            <?php endif; ?>
+            <div class="form-group mr-2 mb-2 mb-sm-0">
+                <input type="text" name="q" class="form-control form-control-sm" placeholder="Search name, email, phone, city..." value="<?= e($search) ?>" style="min-width: 260px;">
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm mr-2">Search</button>
+            <?php if ($search !== ''): ?>
+                <a href="customers.php<?= $view_tab !== 'active' ? '?tab=' . urlencode($view_tab) : '' ?>" class="btn btn-outline-secondary btn-sm">Reset</a>
+            <?php endif; ?>
+        </form>
+    </div>
+</div>
 
 <?php if ($has_archived_col): ?>
 <div class="mb-3">
@@ -208,7 +274,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             </tbody>
         </table>
     </div>
-    <?= render_pagination($pagination) ?>
+    <?= render_pagination($pagination, $keep_params) ?>
 </div>
 
 <!-- Add Customer Modal -->

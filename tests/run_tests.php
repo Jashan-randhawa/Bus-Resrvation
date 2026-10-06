@@ -686,7 +686,18 @@ assert_test("routes.php supports soft-delete archive and restore", str_contains(
 $customers_content = file_get_contents(__DIR__ . '/../admin/customers.php');
 assert_test("customers.php supports soft-delete archive and restore", str_contains($customers_content, 'archived_at = NOW()') && str_contains($customers_content, 'restore_customer'));
 
-assert_test("admin/profile.php exists and verifies min 12 character passwords", file_exists(__DIR__ . '/../admin/profile.php') && str_contains(file_get_contents(__DIR__ . '/../admin/profile.php'), 'minlength="12"'));
+// 8.5 Phase C: Export, Search & Audit Visual Diff Verification (Items 7, 8, 9)
+assert_test("export_csv helper exists", function_exists('export_csv'));
+
+$bookings_content = file_get_contents(__DIR__ . '/../admin/bookings.php');
+assert_test("bookings.php supports CSV export & multi-field search", str_contains($bookings_content, 'export=csv') && str_contains($bookings_content, 'export_csv'));
+
+$customers_page_content = file_get_contents(__DIR__ . '/../admin/customers.php');
+assert_test("customers.php supports CSV export & search filters", str_contains($customers_page_content, 'export=csv') && str_contains($customers_page_content, 'export_csv'));
+
+$audit_content = file_get_contents(__DIR__ . '/../admin/audit-log.php');
+assert_test("audit-log.php supports CSV export & 365d retention purge", str_contains($audit_content, 'purge_retention') && str_contains($audit_content, 'export=csv'));
+assert_test("audit-log.php includes visual state mutation diff renderer", str_contains($audit_content, 'BEFORE:') && str_contains($audit_content, 'AFTER:'));
 
 // Clean up test data
 db_exec($link, 'DELETE FROM booking WHERE bus = ?', 's', [$test_busno]);

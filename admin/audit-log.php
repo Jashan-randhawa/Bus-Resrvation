@@ -9,6 +9,21 @@ require_role('super_admin');
 
 $filter_action = trim((string)($_GET['action'] ?? ''));
 $filter_entity = trim((string)($_GET['entity'] ?? ''));
+$filter_from_date = trim((string)($_GET['from_date'] ?? ''));
+$filter_to_date = trim((string)($_GET['to_date'] ?? ''));
+
+$alert = null;
+$alert_type = 'info';
+
+// Handle Retention Purge (Item 9: purge entries older than 365 days)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purge_retention'])) {
+    csrf_verify();
+    $cutoff = date('Y-m-d H:i:s', strtotime('-365 days'));
+    $purged = db_exec($link, "DELETE FROM audit_log WHERE `timestamp` < ?", 's', [$cutoff]);
+    audit($link, 'DELETE', 'audit_log', null, null, ['action' => 'retention_purge', 'cutoff' => $cutoff]);
+    $alert = "Retention purge completed. Historic logs older than 365 days removed.";
+    $alert_type = 'success';
+}
 
 $where_clauses = [];
 $params = [];
@@ -28,7 +43,40 @@ if ($filter_entity !== '' && in_array(strtolower($filter_entity), $available_ent
     $types .= 's';
 }
 
+if ($filter_from_date !== '') {
+    $where_clauses[] = 'DATE(a.timestamp) >= ?';
+    $params[] = $filter_from_date;
+    $types .= 's';
+}
+
+if ($filter_to_date !== '') {
+    $where_clauses[] = 'DATE(a.timestamp) <= ?';
+    $params[] = $filter_to_date;
+    $types .= 's';
+}
+
 $where_sql = !empty($where_clauses) ? 'WHERE ' . implode(' AND ', $where_clauses) : '';
+
+$keep_filter = array_filter([
+    'action'    => $filter_action !== '' ? $filter_action : null,
+    'entity'    => $filter_entity !== '' ? $filter_entity : null,
+    'from_date' => $filter_from_date !== '' ? $filter_from_date : null,
+    'to_date'   => $filter_to_date !== '' ? $filter_to_date : null,
+], fn($v) => $v !== null);
+
+// CSV Export (Item 7)
+if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+    $export_sql = "
+        SELECT a.id, a.timestamp, adm.name AS admin_name, a.action, a.entity_type, a.entity_id, a.old_value, a.new_value, a.ip_address
+        FROM audit_log a
+        LEFT JOIN `admin` adm ON a.admin_id = adm.id
+        {$where_sql}
+        ORDER BY a.id DESC
+    ";
+    $export_rows = !empty($params) ? db_all($link, $export_sql, $types, $params) : db_all($link, $export_sql);
+    $headers = ['Log ID', 'Timestamp', 'Admin Name', 'Action', 'Entity Type', 'Entity ID', 'Old Value (JSON)', 'New Value (JSON)', 'IP Address'];
+    export_csv('audit-log-export-' . date('Ymd-His') . '.csv', $headers, $export_rows);
+}
 
 $count_sql = "SELECT COUNT(*) AS c FROM audit_log a {$where_sql}";
 $count_res = !empty($params) ? db_one($link, $count_sql, $types, $params) : db_one($link, $count_sql);
@@ -57,14 +105,32 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <h1 class="page-title">Administrative Audit Log</h1>
         <p class="page-subtitle">Immutable compliance record tracking administrative mutations, cancellations, and entity modifications.</p>
     </div>
+    <div class="d-flex align-items-center">
+        <a href="?<?= http_build_query(array_merge($keep_filter, ['export' => 'csv'])) ?>" class="btn btn-outline-success btn-sm mr-2 shadow-sm font-weight-bold">
+            📥 Export CSV
+        </a>
+        <form method="post" action="" class="d-inline" onsubmit="return confirm('Purge audit log entries older than 365 days? This action cannot be undone.');">
+            <?= csrf_field() ?>
+            <button type="submit" name="purge_retention" class="btn btn-outline-danger btn-sm shadow-sm font-weight-bold">
+                🧹 Purge >365d
+            </button>
+        </form>
+    </div>
 </div>
+
+<?php if ($alert): ?>
+    <div class="alert alert-<?= e($alert_type) ?> alert-dismissible fade show" role="alert">
+        <?= e($alert) ?>
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+<?php endif; ?>
 
 <!-- Filter Bar -->
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body p-3">
-        <form action="audit-log.php" method="get" class="form-inline">
-            <div class="form-group mr-3 mb-2 mb-sm-0">
-                <label for="action" class="small text-muted font-weight-bold mr-2">Action:</label>
+        <form action="audit-log.php" method="get" class="form-row align-items-end">
+            <div class="col-md-3 mb-2 mb-md-0">
+                <label for="action" class="small text-muted font-weight-bold mb-1">Action:</label>
                 <select name="action" id="action" class="form-control form-control-sm">
                     <option value="">All Actions</option>
                     <?php foreach ($available_actions as $act): ?>
@@ -72,8 +138,8 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="form-group mr-3 mb-2 mb-sm-0">
-                <label for="entity" class="small text-muted font-weight-bold mr-2">Entity:</label>
+            <div class="col-md-3 mb-2 mb-md-0">
+                <label for="entity" class="small text-muted font-weight-bold mb-1">Entity:</label>
                 <select name="entity" id="entity" class="form-control form-control-sm">
                     <option value="">All Entities</option>
                     <?php foreach ($available_entities as $ent): ?>
@@ -81,10 +147,20 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                     <?php endforeach; ?>
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary btn-sm mr-2">Filter</button>
-            <?php if ($filter_action !== '' || $filter_entity !== ''): ?>
-                <a href="audit-log.php" class="btn btn-outline-secondary btn-sm">Clear</a>
-            <?php endif; ?>
+            <div class="col-md-2 mb-2 mb-md-0">
+                <label for="from_date" class="small text-muted font-weight-bold mb-1">From Date:</label>
+                <input type="date" name="from_date" id="from_date" class="form-control form-control-sm" value="<?= e($filter_from_date) ?>">
+            </div>
+            <div class="col-md-2 mb-2 mb-md-0">
+                <label for="to_date" class="small text-muted font-weight-bold mb-1">To Date:</label>
+                <input type="date" name="to_date" id="to_date" class="form-control form-control-sm" value="<?= e($filter_to_date) ?>">
+            </div>
+            <div class="col-md-2 d-flex align-items-center">
+                <button type="submit" class="btn btn-primary btn-sm px-3 mr-2">Filter</button>
+                <?php if (!empty($keep_filter)): ?>
+                    <a href="audit-log.php" class="btn btn-outline-secondary btn-sm">Reset</a>
+                <?php endif; ?>
+            </div>
         </form>
     </div>
 </div>
@@ -98,12 +174,12 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <table class="table table-hover mb-0">
             <thead class="thead-light">
                 <tr>
-                    <th style="width: 70px;">#</th>
+                    <th style="width: 60px;">#</th>
                     <th>Timestamp</th>
                     <th>Administrator</th>
                     <th>Action</th>
                     <th>Entity</th>
-                    <th>Change Details</th>
+                    <th style="width: 40%;">State Mutation & Diff</th>
                     <th>Origin IP</th>
                 </tr>
             </thead>
@@ -124,26 +200,13 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         $act = strtoupper((string)$row['action']);
                         $badge_class = 'secondary';
                         if ($act === 'CREATE') $badge_class = 'success';
-                        elseif ($act === 'UPDATE') $badge_class = 'primary';
+                        elseif ($act === 'UPDATE' || $act === 'ROLE_CHANGE') $badge_class = 'primary';
                         elseif ($act === 'DELETE') $badge_class = 'danger';
                         elseif ($act === 'CANCEL') $badge_class = 'warning text-dark';
+                        elseif ($act === 'RESTORE') $badge_class = 'info';
 
-                        $details = [];
-                        if (!empty($row['new_value'])) {
-                            $decoded = json_decode($row['new_value'], true);
-                            if (is_array($decoded)) {
-                                foreach ($decoded as $k => $v) {
-                                    $details[] = "<strong>" . e($k) . ":</strong> " . e(is_scalar($v) ? (string)$v : json_encode($v));
-                                }
-                            }
-                        } elseif (!empty($row['old_value'])) {
-                            $decoded = json_decode($row['old_value'], true);
-                            if (is_array($decoded)) {
-                                foreach ($decoded as $k => $v) {
-                                    $details[] = "<span class='text-muted'><strong>" . e($k) . ":</strong> " . e(is_scalar($v) ? (string)$v : json_encode($v)) . "</span>";
-                                }
-                            }
-                        }
+                        $old_arr = !empty($row['old_value']) ? json_decode($row['old_value'], true) : null;
+                        $new_arr = !empty($row['new_value']) ? json_decode($row['new_value'], true) : null;
                         ?>
                         <tr>
                             <td><span class="text-muted small">#<?= e((string)$row['id']) ?></span></td>
@@ -168,8 +231,46 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                                     <?= e(ucfirst($row['entity_type'])) ?><?= !empty($row['entity_id']) ? ' #' . e((string)$row['entity_id']) : '' ?>
                                 </span>
                             </td>
-                            <td style="max-width: 320px; font-size: 0.85rem;">
-                                <?= !empty($details) ? implode(' | ', $details) : '<span class="text-muted">-</span>' ?>
+                            <td style="font-size: 0.82rem;">
+                                <?php if ($old_arr && $new_arr): ?>
+                                    <!-- Two-column visual diff (Item 9) -->
+                                    <div class="row no-gutters border rounded p-1 bg-light">
+                                        <div class="col-6 pr-1 border-right">
+                                            <div class="text-danger font-weight-bold mb-1" style="font-size: 0.75rem;">BEFORE:</div>
+                                            <?php foreach ($old_arr as $k => $v): ?>
+                                                <?php $changed = isset($new_arr[$k]) && $new_arr[$k] !== $v; ?>
+                                                <div class="<?= $changed ? 'bg-danger text-white px-1 rounded' : '' ?>">
+                                                    <strong><?= e($k) ?>:</strong> <?= e(is_scalar($v) ? (string)$v : json_encode($v)) ?>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <div class="col-6 pl-1">
+                                            <div class="text-success font-weight-bold mb-1" style="font-size: 0.75rem;">AFTER:</div>
+                                            <?php foreach ($new_arr as $k => $v): ?>
+                                                <?php $changed = isset($old_arr[$k]) && $old_arr[$k] !== $v; ?>
+                                                <div class="<?= $changed ? 'bg-success text-white px-1 rounded' : '' ?>">
+                                                    <strong><?= e($k) ?>:</strong> <?= e(is_scalar($v) ? (string)$v : json_encode($v)) ?>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                <?php elseif ($new_arr): ?>
+                                    <div class="bg-light p-2 rounded border">
+                                        <div class="text-success font-weight-bold mb-1" style="font-size: 0.75rem;">CREATED / APPLIED:</div>
+                                        <?php foreach ($new_arr as $k => $v): ?>
+                                            <div><strong><?= e($k) ?>:</strong> <?= e(is_scalar($v) ? (string)$v : json_encode($v)) ?></div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php elseif ($old_arr): ?>
+                                    <div class="bg-light p-2 rounded border">
+                                        <div class="text-danger font-weight-bold mb-1" style="font-size: 0.75rem;">DELETED / REMOVED:</div>
+                                        <?php foreach ($old_arr as $k => $v): ?>
+                                            <div><strong><?= e($k) ?>:</strong> <?= e(is_scalar($v) ? (string)$v : json_encode($v)) ?></div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <code><?= e($row['ip_address']) ?></code>
@@ -180,11 +281,6 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             </tbody>
         </table>
     </div>
-    <?php
-    $keep_filter = [];
-    if ($filter_action !== '') $keep_filter['action'] = $filter_action;
-    if ($filter_entity !== '') $keep_filter['entity'] = $filter_entity;
-    ?>
     <?= render_pagination($pagination, $keep_filter) ?>
 </div>
 
