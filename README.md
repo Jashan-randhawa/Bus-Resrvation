@@ -176,7 +176,7 @@ Visit `http://localhost:8080` in your browser.
 Default credentials are intentionally **not hardcoded** in the schema for security. To provision your first administrator account, execute the CLI script:
 
 ```bash
-php database/create-admin.php "Admin Name" "admin@example.com" "1234567890"
+php database/create-admin.php "Admin Name" "you@example.com" "1234567890"
 ```
 
 You will be prompted for a secure password (minimum 12 characters). Customers can register directly through the public portal.

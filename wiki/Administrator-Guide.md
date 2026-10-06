@@ -9,7 +9,7 @@ The **Administrator Control Center** (`admin/`) allows transport operators to mo
 - **Login Portal:** Navigate to the public homepage and click **Administrator Login**.
 - **Credentials:** Protected with bcrypt hashing. Passwords must be at least 12 characters. New admins can be provisioned using CLI:
   ```bash
-  php database/create-admin.php "Staff Name" "admin@example.com" "1234567890"
+  php database/create-admin.php "Staff Name" "you@example.com" "1234567890"
   ```
 - **Brute-Force Rate Limiting:** Account login is throttled to 5 failures per 15 minutes per account and 20 failures per 15 minutes per IP.
 - **Session Protection:** All administrative pages verify authenticated admin session tokens with HttpOnly, SameSite, and strict timeout parameters.
