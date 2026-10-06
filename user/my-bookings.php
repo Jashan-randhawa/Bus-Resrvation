@@ -54,6 +54,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_booking'])) {
                 }
 
                 if ($updated > 0) {
+                    try {
+                        db_exec($link, 'DELETE FROM seat_lock WHERE booking_id = ?', 'i', [$cancel_id]);
+                    } catch (Throwable $e) {
+                        // Table may not exist yet
+                    }
                     flash_set('success', 'Booking cancelled successfully and seat has been liberated. Eligible refunds are processed within 3–5 business days.');
                 } else {
                     flash_set('danger', 'Failed to cancel booking. Please try again.');

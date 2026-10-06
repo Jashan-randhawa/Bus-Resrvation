@@ -21,6 +21,17 @@ if ($searched) {
     if ($selected_time !== '') {
         $booked_seats = get_booked_seats($link, $selected_bus, $selected_date, $selected_time);
     } else {
+        try {
+            $bus_row = db_one($link, 'SELECT id FROM buses WHERE bus_number = ? LIMIT 1', 's', [$selected_bus]);
+            if ($bus_row && !empty($bus_row['id'])) {
+                $bus_id = (int)$bus_row['id'];
+                $lock_rows = db_all($link, "SELECT seat_no FROM seat_lock WHERE bus_id = ? AND travel_date = ?", 'is', [$bus_id, $selected_date]);
+                foreach ($lock_rows as $lr) {
+                    $booked_seats[(int)$lr['seat_no']] = true;
+                }
+            }
+        } catch (Throwable $e) {}
+
         if (table_has_column($link, 'booking', 'status')) {
             $rows = db_all($link,
                 "SELECT seat FROM booking WHERE bus = ? AND `date` = ? AND (status IS NULL OR status IN ('Confirmed', 'Pending'))",
@@ -91,7 +102,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                 <h5 class="mb-0 font-weight-bold">Seating Layout</h5>
                 <?php if ($searched): ?>
                     <span class="badge badge-light border px-2 py-1">
-                        <?= count($booked_seats) ?> of <?= $bus_capacity ?> Booked
+                        <?= count($booked_seats) ?> of <?= $bus_capacity ?> Booked (<?= max(0, $bus_capacity - count($booked_seats)) ?> Available)
                     </span>
                 <?php endif; ?>
             </div>
@@ -114,14 +125,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         </div>
                     </div>
 
-                    <div class="seat-grid">
-                        <?php for ($i = 1; $i <= $bus_capacity; $i++): ?>
-                            <?php $is_booked = isset($booked_seats[$i]); ?>
-                            <button type="button" class="btn seat-btn <?= $is_booked ? 'btn-danger' : 'btn-outline-secondary' ?>" disabled>
-                                <?= $i ?>
-                            </button>
-                        <?php endfor; ?>
-                    </div>
+                    <?= render_seat_grid($bus_capacity, $booked_seats, 4) ?>
                 <?php endif; ?>
             </div>
         </div>

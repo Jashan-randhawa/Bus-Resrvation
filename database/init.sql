@@ -40,10 +40,13 @@ CREATE TABLE IF NOT EXISTS `route` (
   `city1` VARCHAR(100) NOT NULL,
   `city2` VARCHAR(100) NOT NULL,
   `busno` VARCHAR(50) NOT NULL,
+  `bus_id` INT NULL,
   `time` TIME NOT NULL,
   `price` DECIMAL(10,2) NOT NULL,
   KEY `idx_route_cities` (`city1`, `city2`),
-  KEY `idx_route_bus` (`busno`)
+  KEY `idx_route_bus` (`busno`),
+  KEY `idx_route_bus_id` (`bus_id`),
+  CONSTRAINT `fk_route_bus` FOREIGN KEY (`bus_id`) REFERENCES `buses` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Booking table (unique PNR and unique seat booking constraint)
@@ -51,6 +54,8 @@ CREATE TABLE IF NOT EXISTS `booking` (
   `sno` INT AUTO_INCREMENT PRIMARY KEY,
   `id` INT NOT NULL DEFAULT 0,
   `bus` VARCHAR(50) NOT NULL,
+  `bus_id` INT NULL,
+  `route_id` INT NULL,
   `name` VARCHAR(100) NOT NULL,
   `contact` VARCHAR(20) NOT NULL,
   `city1` VARCHAR(100) NOT NULL,
@@ -67,7 +72,22 @@ CREATE TABLE IF NOT EXISTS `booking` (
   UNIQUE KEY `uq_booking_pnr` (`pnr`),
   UNIQUE KEY `uq_booking_active_seat` (`bus`, `date`, `time`, `active_seat`),
   KEY `idx_booking_customer` (`id`),
-  KEY `idx_booking_hold` (`status`, `hold_expires_at`)
+  KEY `idx_booking_bus_id` (`bus_id`),
+  KEY `idx_booking_route_id` (`route_id`),
+  KEY `idx_booking_hold` (`status`, `hold_expires_at`),
+  CONSTRAINT `fk_book_bus` FOREIGN KEY (`bus_id`) REFERENCES `buses` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Dedicated Seat Lock Table (P-03)
+CREATE TABLE IF NOT EXISTS `seat_lock` (
+  `bus_id` INT NOT NULL,
+  `travel_date` DATE NOT NULL,
+  `seat_no` SMALLINT NOT NULL,
+  `booking_id` INT NOT NULL,
+  `held_until` DATETIME NULL,
+  PRIMARY KEY (`bus_id`, `travel_date`, `seat_no`),
+  KEY `idx_seat_lock_booking` (`booking_id`),
+  CONSTRAINT `fk_seat_lock_booking` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`sno`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Query / Feedback table

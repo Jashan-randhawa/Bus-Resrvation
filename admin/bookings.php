@@ -73,6 +73,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_booking'])) {
             db_exec($link, 'DELETE FROM booking WHERE sno = ?', 'i', [$delete_id]);
             $alert = 'Booking record deleted.';
         }
+        try {
+            db_exec($link, 'DELETE FROM seat_lock WHERE booking_id = ?', 'i', [$delete_id]);
+        } catch (Throwable $e) {
+            // Table may not exist yet
+        }
         $alert_type = 'success';
     }
 }

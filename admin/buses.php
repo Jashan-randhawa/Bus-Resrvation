@@ -59,8 +59,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_bus'])) {
             $alert_type = 'danger';
         } else {
             $b_num = (string)$bus_row['bus_number'];
-            $active_routes = db_one($link, 'SELECT COUNT(*) AS n FROM route WHERE busno = ?', 's', [$b_num]);
-            $active_bookings = db_one($link, "SELECT COUNT(*) AS n FROM booking WHERE bus = ? AND (status IS NULL OR status != 'Cancelled')", 's', [$b_num]);
+            $active_routes = db_one($link, 'SELECT COUNT(*) AS n FROM route WHERE busno = ? OR bus_id = ?', 'si', [$b_num, $delete_id]);
+            $active_bookings = db_one($link, "SELECT COUNT(*) AS n FROM booking WHERE (bus = ? OR bus_id = ?) AND (status IS NULL OR status NOT IN ('Cancelled', 'Expired'))", 'si', [$b_num, $delete_id]);
 
             if ((int)($active_routes['n'] ?? 0) > 0) {
                 $alert = "Cannot delete bus '{$b_num}' because it is assigned to existing routes. Remove or reassign those routes first.";

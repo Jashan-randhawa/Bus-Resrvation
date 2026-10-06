@@ -31,11 +31,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
             $alert = "Bus '{$bus}' is already scheduled to depart at {$time} ({$conflict['city1']} -> {$conflict['city2']}).";
             $alert_type = 'danger';
         } else {
-            db_exec($link,
-                "INSERT INTO route (city1, city2, busno, time, price) VALUES (?, ?, ?, ?, ?)",
-                'ssssd',
-                [$from, $to, $bus, $time, $price]
-            );
+            $has_bus_id = table_has_column($link, 'route', 'bus_id');
+            $bus_row = db_one($link, 'SELECT id FROM buses WHERE bus_number = ? LIMIT 1', 's', [$bus]);
+            $bus_id = $bus_row ? (int)$bus_row['id'] : null;
+
+            if ($has_bus_id && $bus_id !== null) {
+                db_exec($link,
+                    "INSERT INTO route (city1, city2, busno, time, price, bus_id) VALUES (?, ?, ?, ?, ?, ?)",
+                    'ssssdi',
+                    [$from, $to, $bus, $time, $price, $bus_id]
+                );
+            } else {
+                db_exec($link,
+                    "INSERT INTO route (city1, city2, busno, time, price) VALUES (?, ?, ?, ?, ?)",
+                    'ssssd',
+                    [$from, $to, $bus, $time, $price]
+                );
+            }
             $alert = 'Route added successfully.';
             $alert_type = 'success';
         }
@@ -57,8 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_route'])) {
             $r_time = (string)$route_row['time'];
             $today = date('Y-m-d');
             $active_bookings = db_one($link,
-                "SELECT COUNT(*) AS n FROM booking WHERE bus = ? AND `time` = ? AND `date` >= ? AND (status IS NULL OR status != 'Cancelled')",
-                'sss', [$r_bus, $r_time, $today]
+                "SELECT COUNT(*) AS n FROM booking WHERE (route_id = ? OR (bus = ? AND `time` = ?)) AND `date` >= ? AND (status IS NULL OR status NOT IN ('Cancelled', 'Expired'))",
+                'isss', [$delete_id, $r_bus, $r_time, $today]
             );
 
             if ((int)($active_bookings['n'] ?? 0) > 0) {

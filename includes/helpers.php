@@ -231,7 +231,7 @@ function table_has_column(mysqli $link, string $table, string $column): bool {
 }
 
 /**
- * Automatically releases seats held in 'Pending' status whose hold window has expired (O13).
+ * Automatically releases seats held in 'Pending' status whose hold window has expired (O13, P-03).
  */
 function release_expired_holds(mysqli $link): void {
     if (table_has_column($link, 'booking', 'status') && table_has_column($link, 'booking', 'hold_expires_at')) {
@@ -239,11 +239,16 @@ function release_expired_holds(mysqli $link): void {
             "UPDATE booking SET status = 'Expired' WHERE status = 'Pending' AND hold_expires_at IS NOT NULL AND hold_expires_at < NOW()"
         );
     }
+    try {
+        db_exec($link, "DELETE FROM seat_lock WHERE held_until IS NOT NULL AND held_until < NOW()");
+    } catch (Throwable $e) {
+        // Table seat_lock may not exist yet in legacy environments
+    }
 }
 
 /**
  * Returns a map of booked seat numbers [seat_no => true] for a specific bus, date, and departure time.
- * Ignores cancelled and expired bookings. Automatically sweeps expired holds.
+ * Checks dedicated seat_lock table and active booking rows. Automatically sweeps expired holds.
  */
 function get_booked_seats(mysqli $link, string $bus, string $date, string $time): array {
     $booked = [];
@@ -251,9 +256,27 @@ function get_booked_seats(mysqli $link, string $bus, string $date, string $time)
         return $booked;
     }
 
-    // Sweep expired holds first (O13)
+    // Sweep expired holds first (O13, P-03)
     release_expired_holds($link);
 
+    // 1. Check seat_lock table (P-03)
+    try {
+        $bus_row = db_one($link, 'SELECT id FROM buses WHERE bus_number = ? LIMIT 1', 's', [$bus]);
+        if ($bus_row && !empty($bus_row['id'])) {
+            $bus_id = (int)$bus_row['id'];
+            $lock_rows = db_all($link,
+                "SELECT seat_no FROM seat_lock WHERE bus_id = ? AND travel_date = ?",
+                'is', [$bus_id, $date]
+            );
+            foreach ($lock_rows as $lr) {
+                $booked[(int)$lr['seat_no']] = true;
+            }
+        }
+    } catch (Throwable $e) {
+        // Fallback gracefully if seat_lock is not yet populated
+    }
+
+    // 2. Check booking table for active bookings
     $has_status = table_has_column($link, 'booking', 'status');
 
     if ($has_status) {
@@ -346,13 +369,67 @@ function build_seat_layout(int $capacity, string $pattern = '2+2'): array {
 }
 
 /**
- * Canonical booking helper (O6).
- * Validates travel date, seat number, and inserts atomically, catching duplicate seat reservations.
+ * Render HTML seat grid based on capacity and taken seats (P-08).
  *
- * @return array ['ok' => bool, 'pnr' => string, 'error' => string]
+ * @param int $capacity Total bus seat capacity
+ * @param array $taken Array of booked seat numbers [seat_no => true] or [seat_no, ...]
+ * @param int $perRow Number of seats per row (default 4)
+ * @return string HTML grid markup
  */
+function render_seat_grid(int $capacity, array $taken, int $perRow = 4): string {
+    $capacity = max(1, $capacity);
+    $perRow = max(1, $perRow);
+    $takenMap = [];
+    foreach ($taken as $k => $v) {
+        if ($v === true) {
+            $takenMap[(int)$k] = true;
+        } elseif (is_numeric($v)) {
+            $takenMap[(int)$v] = true;
+        }
+    }
+
+    $html = '<div class="seat-grid" style="display: grid; grid-template-columns: repeat(' . $perRow . ', 1fr); gap: 10px;">';
+    for ($i = 1; $i <= $capacity; $i++) {
+        $isBooked = isset($takenMap[$i]);
+        $btnClass = $isBooked ? 'btn-danger' : 'btn-outline-secondary';
+        $statusLabel = $isBooked ? 'Booked' : 'Available';
+        $html .= '<button type="button" class="btn seat-btn ' . $btnClass . '" disabled title="Seat ' . $i . ' (' . $statusLabel . ')">';
+        $html .= $i;
+        $html .= '</button>';
+    }
+    $html .= '</div>';
+    return $html;
+}
+
 /**
- * Validates travel date and optional departure time against scheduling rules (U-03).
+ * Determines whether a departure timestamp is strictly in the future based on the configured timezone (P-07).
+ *
+ * @param string $date Travel date in YYYY-MM-DD format
+ * @param string $time Departure time (e.g. HH:MM or HH:MM:SS)
+ * @return bool True if departure is strictly in the future, false otherwise
+ */
+function departure_in_future(string $date, string $time = '00:00:00'): bool {
+    try {
+        $tz = new DateTimeZone(defined('APP_TZ') ? APP_TZ : 'Asia/Kolkata');
+        $time_clean = trim($time);
+        if ($time_clean === '') {
+            $time_clean = '00:00:00';
+        } elseif (strlen($time_clean) === 5) {
+            $time_clean .= ':00';
+        }
+        $dep = DateTime::createFromFormat('Y-m-d H:i:s', trim($date) . ' ' . $time_clean, $tz);
+        if (!$dep) {
+            $dep = new DateTime(trim($date) . ' ' . $time_clean, $tz);
+        }
+        $now = new DateTime('now', $tz);
+        return $dep > $now;
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
+/**
+ * Validates travel date and optional departure time against scheduling rules (U-03, P-07).
  *
  * @param string $date Travel date in YYYY-MM-DD format
  * @param string|null $time Departure time (e.g., HH:MM or HH:MM:SS)
@@ -362,14 +439,14 @@ function validate_travel_datetime(string $date, ?string $time = null): array {
     if ($date === '') {
         return ['ok' => false, 'error' => 'Please provide a travel date.'];
     }
-    $d = DateTime::createFromFormat('Y-m-d', $date);
+    $tz = new DateTimeZone(defined('APP_TZ') ? APP_TZ : 'Asia/Kolkata');
+    $d = DateTime::createFromFormat('Y-m-d', $date, $tz);
     if (!$d || $d->format('Y-m-d') !== $date) {
         return ['ok' => false, 'error' => 'Please provide a valid travel date (YYYY-MM-DD).'];
     }
 
-    $today = date('Y-m-d');
-    $max_date = date('Y-m-d', strtotime('+90 days'));
-    $now_time = date('H:i:s');
+    $today = (new DateTime('today', $tz))->format('Y-m-d');
+    $max_date = (new DateTime('today', $tz))->modify('+90 days')->format('Y-m-d');
 
     if ($date < $today) {
         return ['ok' => false, 'error' => 'Travel date cannot be in the past.'];
@@ -378,13 +455,19 @@ function validate_travel_datetime(string $date, ?string $time = null): array {
         return ['ok' => false, 'error' => 'Bookings can only be made up to 90 days in advance.'];
     }
     if ($time !== null && $time !== '') {
-        $travel_ts = strtotime($date . ' ' . $time);
+        $time_clean = trim($time);
+        if (strlen($time_clean) === 5) {
+            $time_clean .= ':00';
+        }
+        $dep_dt = DateTime::createFromFormat('Y-m-d H:i:s', $date . ' ' . $time_clean, $tz);
+        $now_dt = new DateTime('now', $tz);
         $cutoff_min = defined('APP_BOOKING_CUTOFF_MIN') ? (int)APP_BOOKING_CUTOFF_MIN : 30;
-        $cutoff_secs = $cutoff_min * 60;
-        if ($travel_ts !== false && $travel_ts < (time() + $cutoff_secs)) {
-            if ($travel_ts <= time()) {
-                return ['ok' => false, 'error' => 'This bus has already departed for today.'];
-            }
+        $cutoff_dt = $dep_dt ? (clone $dep_dt)->modify("-{$cutoff_min} minutes") : null;
+
+        if ($dep_dt && $dep_dt <= $now_dt) {
+            return ['ok' => false, 'error' => 'This bus has already departed for today.'];
+        }
+        if ($cutoff_dt && $now_dt > $cutoff_dt) {
             return ['ok' => false, 'error' => "Booking has closed for this departure (reservations close {$cutoff_min} minutes prior to departure)."];
         }
     }
@@ -392,6 +475,12 @@ function validate_travel_datetime(string $date, ?string $time = null): array {
     return ['ok' => true, 'error' => ''];
 }
 
+/**
+ * Canonical booking helper (O6, P-03, P-04).
+ * Validates travel date, seat number, and inserts atomically, catching duplicate seat reservations.
+ *
+ * @return array ['ok' => bool, 'pnr' => string, 'error' => string]
+ */
 function create_booking(mysqli $link, array $data): array {
     $bus = trim((string)($data['bus'] ?? ''));
     $from = trim((string)($data['city1'] ?? ''));
@@ -408,17 +497,24 @@ function create_booking(mysqli $link, array $data): array {
         return ['ok' => false, 'pnr' => '', 'error' => 'Incomplete route details.'];
     }
 
-    // Validate travel date and departure time (U-03)
+    // Validate travel date and departure time (U-03, P-07)
     $dt_val = validate_travel_datetime($date, $time);
     if (!$dt_val['ok']) {
         return ['ok' => false, 'pnr' => '', 'error' => $dt_val['error']];
     }
 
-    $capacity = get_bus_capacity($link, $bus);
+    // Lookup bus and capacity (P-04, P-08)
+    $bus_row = db_one($link, 'SELECT id, capacity FROM buses WHERE bus_number = ? LIMIT 1', 's', [$bus]);
+    $bus_id = $bus_row ? (int)$bus_row['id'] : null;
+    $capacity = $bus_row && (int)$bus_row['capacity'] > 0 ? (int)$bus_row['capacity'] : get_bus_capacity($link, $bus);
 
     if ($seat < 1 || $seat > $capacity) {
         return ['ok' => false, 'pnr' => '', 'error' => "Please select a valid seat number between 1 and {$capacity}."];
     }
+
+    // Lookup route_id (P-04)
+    $route_row = db_one($link, 'SELECT sno FROM route WHERE city1 = ? AND city2 = ? AND busno = ? AND time = ? LIMIT 1', 'ssss', [$from, $to, $bus, $time]);
+    $route_id = $route_row ? (int)$route_row['sno'] : null;
 
     // Passenger name and phone validation (U-07)
     if ($name === '' || $contact === '') {
@@ -436,16 +532,31 @@ function create_booking(mysqli $link, array $data): array {
     $has_pnr = table_has_column($link, 'booking', 'pnr');
     $has_status = table_has_column($link, 'booking', 'status');
     $has_hold = table_has_column($link, 'booking', 'hold_expires_at');
+    $has_bus_id = table_has_column($link, 'booking', 'bus_id');
+    $has_route_id = table_has_column($link, 'booking', 'route_id');
 
     $booking_status = trim((string)($data['status'] ?? 'Confirmed'));
     if (!in_array($booking_status, ['Confirmed', 'Pending'], true)) {
         $booking_status = 'Confirmed';
     }
 
-    // Release any stale holds before checking availability (O13)
+    // Release any stale holds before checking availability (O13, P-03)
     release_expired_holds($link);
 
-    // If status column exists, verify seat is not currently active
+    // Pre-check seat_lock if bus_id is known (P-03)
+    if ($bus_id !== null) {
+        try {
+            $locked = db_one($link,
+                "SELECT booking_id FROM seat_lock WHERE bus_id = ? AND travel_date = ? AND seat_no = ? LIMIT 1",
+                'isi', [$bus_id, $date, $seat]
+            );
+            if ($locked) {
+                return ['ok' => false, 'pnr' => '', 'error' => "Seat #{$seat} on bus {$bus} for date {$date} ({$time}) is already booked."];
+            }
+        } catch (Throwable $e) {}
+    }
+
+    // Pre-check booking table if status column exists
     if ($has_status) {
         $active_seat = db_one($link,
             "SELECT sno FROM booking WHERE bus = ? AND `date` = ? AND `time` = ? AND seat = ? AND status IN ('Confirmed', 'Pending') LIMIT 1",
@@ -460,22 +571,68 @@ function create_booking(mysqli $link, array $data): array {
     try {
         $pnr = strtoupper(bin2hex(random_bytes(5)));
 
-        if ($has_pnr && $has_status && $has_hold) {
+        $cols = ['id', 'bus', 'name', 'contact', 'city1', 'city2', '`date`', '`time`', 'seat', 'price'];
+        $placeholders = ['?', '?', '?', '?', '?', '?', '?', '?', '?', '?'];
+        $types = 'isssssssid';
+        $vals = [$cust_id, $bus, $name, $contact, $from, $to, $date, $time, $seat, $price];
+
+        if ($has_pnr) {
+            $cols[] = 'pnr';
+            $placeholders[] = '?';
+            $types .= 's';
+            $vals[] = $pnr;
+        }
+        if ($has_status) {
+            $cols[] = 'status';
+            $placeholders[] = '?';
+            $types .= 's';
+            $vals[] = $booking_status;
+        }
+        if ($has_hold) {
+            $cols[] = 'hold_expires_at';
             if ($booking_status === 'Pending') {
-                $sql = "INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr, status, hold_expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))";
+                $placeholders[] = 'DATE_ADD(NOW(), INTERVAL 10 MINUTE)';
             } else {
-                $sql = "INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr, status, hold_expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)";
+                $placeholders[] = 'NULL';
             }
-            db_exec($link, $sql, 'isssssssidss', [$cust_id, $bus, $name, $contact, $from, $to, $date, $time, $seat, $price, $pnr, $booking_status]);
-        } elseif ($has_pnr && $has_status) {
-            $sql = "INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            db_exec($link, $sql, 'isssssssidss', [$cust_id, $bus, $name, $contact, $from, $to, $date, $time, $seat, $price, $pnr, $booking_status]);
-        } elseif ($has_pnr) {
-            $sql = 'INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price, pnr) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-            db_exec($link, $sql, 'isssssssids', [$cust_id, $bus, $name, $contact, $from, $to, $date, $time, $seat, $price, $pnr]);
-        } else {
-            $sql = 'INSERT INTO booking (id, bus, name, contact, city1, city2, `date`, `time`, seat, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-            db_exec($link, $sql, 'isssssssid', [$cust_id, $bus, $name, $contact, $from, $to, $date, $time, $seat, $price]);
+        }
+        if ($has_bus_id && $bus_id !== null) {
+            $cols[] = 'bus_id';
+            $placeholders[] = '?';
+            $types .= 'i';
+            $vals[] = $bus_id;
+        }
+        if ($has_route_id && $route_id !== null) {
+            $cols[] = 'route_id';
+            $placeholders[] = '?';
+            $types .= 'i';
+            $vals[] = $route_id;
+        }
+
+        $sql = "INSERT INTO booking (" . implode(', ', $cols) . ") VALUES (" . implode(', ', $placeholders) . ")";
+        db_exec($link, $sql, $types, $vals);
+        $new_booking_id = (int)mysqli_insert_id($link);
+
+        // Insert atomic seat lock (P-03)
+        if ($bus_id !== null && $new_booking_id > 0) {
+            try {
+                if ($booking_status === 'Pending') {
+                    db_exec($link,
+                        "INSERT INTO seat_lock (bus_id, travel_date, seat_no, booking_id, held_until) VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))",
+                        'isis', [$bus_id, $date, $seat, $new_booking_id]
+                    );
+                } else {
+                    db_exec($link,
+                        "INSERT INTO seat_lock (bus_id, travel_date, seat_no, booking_id, held_until) VALUES (?, ?, ?, ?, NULL)",
+                        'isis', [$bus_id, $date, $seat, $new_booking_id]
+                    );
+                }
+            } catch (mysqli_sql_exception $se) {
+                if ((int)$se->getCode() === 1062) {
+                    throw $se; // Triggers outer catch to rollback and report clean race condition error
+                }
+                error_log("[busres] seat_lock insert skipped/error: " . $se->getMessage());
+            }
         }
 
         mysqli_commit($link);

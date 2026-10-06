@@ -387,6 +387,70 @@ function run_migrations(mysqli $link): array {
         $log[] = "[i] Migration {$m6} already applied.";
     }
 
+    // 9. Migration 007: 007_referential_integrity_and_seat_locks (P-03, P-04)
+    $m7 = '007_referential_integrity_and_seat_locks';
+    if (!migration_applied($link, $m7)) {
+        $log[] = "[*] Running migration: {$m7}...";
+        $m7_ok = true;
+
+        if (!has_index($link, 'buses', 'uq_bus_number')) {
+            $m7_ok = try_sql($link, "ALTER TABLE `buses` ADD UNIQUE KEY `uq_bus_number` (`bus_number`)", $log) && $m7_ok;
+        }
+
+        if (!has_column($link, 'route', 'bus_id')) {
+            $m7_ok = try_sql($link, "ALTER TABLE `route` ADD COLUMN `bus_id` INT NULL", $log) && $m7_ok;
+            try_sql($link, "UPDATE `route` r JOIN `buses` b ON b.bus_number = r.busno SET r.bus_id = b.id", $log);
+            if (!has_index($link, 'route', 'idx_route_bus_id')) {
+                try_sql($link, "ALTER TABLE `route` ADD KEY `idx_route_bus_id` (`bus_id`)", $log);
+            }
+        }
+
+        if (!has_column($link, 'booking', 'bus_id')) {
+            $m7_ok = try_sql($link, "ALTER TABLE `booking` ADD COLUMN `bus_id` INT NULL", $log) && $m7_ok;
+            try_sql($link, "UPDATE `booking` k JOIN `buses` b ON b.bus_number = k.bus SET k.bus_id = b.id", $log);
+            if (!has_index($link, 'booking', 'idx_booking_bus_id')) {
+                try_sql($link, "ALTER TABLE `booking` ADD KEY `idx_booking_bus_id` (`bus_id`)", $log);
+            }
+        }
+        if (!has_column($link, 'booking', 'route_id')) {
+            $m7_ok = try_sql($link, "ALTER TABLE `booking` ADD COLUMN `route_id` INT NULL", $log) && $m7_ok;
+            try_sql($link, "UPDATE `booking` k JOIN `route` r ON r.city1 = k.city1 AND r.city2 = k.city2 AND r.busno = k.bus AND r.time = k.time SET k.route_id = r.sno", $log);
+            if (!has_index($link, 'booking', 'idx_booking_route_id')) {
+                try_sql($link, "ALTER TABLE `booking` ADD KEY `idx_booking_route_id` (`route_id`)", $log);
+            }
+        }
+
+        $m7_ok = try_sql($link, "
+            CREATE TABLE IF NOT EXISTS `seat_lock` (
+              `bus_id` INT NOT NULL,
+              `travel_date` DATE NOT NULL,
+              `seat_no` SMALLINT NOT NULL,
+              `booking_id` INT NOT NULL,
+              `held_until` DATETIME NULL,
+              PRIMARY KEY (`bus_id`, `travel_date`, `seat_no`),
+              KEY `idx_seat_lock_booking` (`booking_id`),
+              CONSTRAINT `fk_seat_lock_booking` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`sno`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ", $log) && $m7_ok;
+
+        try_sql($link, "
+            INSERT IGNORE INTO `seat_lock` (bus_id, travel_date, seat_no, booking_id, held_until)
+            SELECT k.bus_id, k.date, k.seat, k.sno, k.hold_expires_at
+            FROM `booking` k
+            WHERE k.bus_id IS NOT NULL AND (k.status IS NULL OR k.status IN ('Confirmed', 'Pending'))
+        ", $log);
+
+        if ($m7_ok) {
+            record_migration($link, $m7);
+            $log[] = "  -> Completed {$m7}.";
+        } else {
+            $log[] = "  [!] Migration {$m7} had errors; not marked as applied.";
+            $all_ok = false;
+        }
+    } else {
+        $log[] = "[i] Migration {$m7} already applied.";
+    }
+
     if ($all_ok) {
         $log[] = "\n[✓] All database migrations are up to date!";
     } else {
