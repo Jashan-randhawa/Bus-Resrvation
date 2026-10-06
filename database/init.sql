@@ -106,3 +106,13 @@ CREATE TABLE IF NOT EXISTS `login_attempts` (
   `ts` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY `idx_attempts` (`k`, `ts`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Migration steps idempotency tracking (P-05)
+CREATE TABLE IF NOT EXISTS `migration_steps` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `migration` VARCHAR(100) NOT NULL,
+  `step` VARCHAR(100) NOT NULL,
+  `applied_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `uq_migration_step` (`migration`, `step`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

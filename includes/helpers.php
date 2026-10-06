@@ -813,3 +813,93 @@ function send_app_mail(string $to, string $subject, string $html_body): bool {
     return @mail($to, $subject, $html_body, implode("\r\n", $headers));
 }
 
+/**
+ * Resolves pagination parameters for listing pages (P-10).
+ *
+ * @param int $total_records Total number of records in table/dataset
+ * @param int $per_page Records to display per page (default 25)
+ * @param string $page_param Name of the GET query parameter (default 'page')
+ * @return array ['page' => int, 'per_page' => int, 'total_pages' => int, 'offset' => int, 'total_records' => int]
+ */
+function paginate(int $total_records, int $per_page = 25, string $page_param = 'page'): array {
+    $per_page = max(1, $per_page);
+    $total_pages = max(1, (int)ceil($total_records / $per_page));
+    $current_page = max(1, min($total_pages, (int)($_GET[$page_param] ?? 1)));
+    $offset = ($current_page - 1) * $per_page;
+
+    return [
+        'page'          => $current_page,
+        'per_page'      => $per_page,
+        'total_pages'   => $total_pages,
+        'offset'        => $offset,
+        'total_records' => $total_records
+    ];
+}
+
+/**
+ * Renders Bootstrap 4 pagination links bar (P-10).
+ *
+ * @param array $pagination Array returned from paginate()
+ * @param array $keep_params Extra query parameters to preserve in links
+ * @return string HTML pagination markup
+ */
+function render_pagination(array $pagination, array $keep_params = []): string {
+    if (($pagination['total_pages'] ?? 1) <= 1) {
+        return '';
+    }
+
+    $page = (int)$pagination['page'];
+    $total_pages = (int)$pagination['total_pages'];
+
+    $build_url = function(int $p) use ($keep_params): string {
+        $params = array_merge($keep_params, ['page' => $p]);
+        return '?' . http_build_query($params);
+    };
+
+    $html = '<nav aria-label="Page navigation" class="mt-3"><ul class="pagination pagination-sm justify-content-center mb-0">';
+
+    // Previous button
+    if ($page > 1) {
+        $html .= '<li class="page-item"><a class="page-link" href="' . e($build_url($page - 1)) . '">&laquo; Prev</a></li>';
+    } else {
+        $html .= '<li class="page-item disabled"><span class="page-link">&laquo; Prev</span></li>';
+    }
+
+    // Numbered links
+    $start = max(1, $page - 2);
+    $end = min($total_pages, $page + 2);
+
+    if ($start > 1) {
+        $html .= '<li class="page-item"><a class="page-link" href="' . e($build_url(1)) . '">1</a></li>';
+        if ($start > 2) {
+            $html .= '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        }
+    }
+
+    for ($i = $start; $i <= $end; $i++) {
+        if ($i === $page) {
+            $html .= '<li class="page-item active"><span class="page-link">' . $i . '</span></li>';
+        } else {
+            $html .= '<li class="page-item"><a class="page-link" href="' . e($build_url($i)) . '">' . $i . '</a></li>';
+        }
+    }
+
+    if ($end < $total_pages) {
+        if ($end < $total_pages - 1) {
+            $html .= '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        }
+        $html .= '<li class="page-item"><a class="page-link" href="' . e($build_url($total_pages)) . '">' . $total_pages . '</a></li>';
+    }
+
+    // Next button
+    if ($page < $total_pages) {
+        $html .= '<li class="page-item"><a class="page-link" href="' . e($build_url($page + 1)) . '">Next &raquo;</a></li>';
+    } else {
+        $html .= '<li class="page-item disabled"><span class="page-link">Next &raquo;</span></li>';
+    }
+
+    $html .= '</ul></nav>';
+    return $html;
+}
+
+

@@ -4,28 +4,33 @@ require_once __DIR__ . '/../includes/auth/admin-session.php';
 require_once __DIR__ . '/../includes/db_con.php';
 require_once __DIR__ . '/../includes/helpers.php';
 
-$total_bookings = (int)(db_one($link, 'SELECT COUNT(*) AS c FROM booking')['c'] ?? 0);
-$total_buses = (int)(db_one($link, 'SELECT COUNT(*) AS c FROM buses')['c'] ?? 0);
-$total_routes = (int)(db_one($link, 'SELECT COUNT(*) AS c FROM route')['c'] ?? 0);
-$total_customers = (int)(db_one($link, 'SELECT COUNT(*) AS c FROM costumer')['c'] ?? 0);
-$total_admins = (int)(db_one($link, 'SELECT COUNT(*) AS c FROM admin')['c'] ?? 0);
-$total_queries = (int)(db_one($link, 'SELECT COUNT(*) AS c FROM `query`')['c'] ?? 0);
+// Consolidated Executive KPIs via single DB round-trip (P-10)
+$has_status = table_has_column($link, 'booking', 'status');
+$has_cap = table_has_column($link, 'buses', 'capacity');
 
-// Capacity-aware total seats
-if (table_has_column($link, 'buses', 'capacity')) {
-    $seats_row = db_one($link, 'SELECT COALESCE(SUM(capacity), 0) AS total FROM buses');
-    $total_seats = (int)($seats_row['total'] ?? 0);
-} else {
-    $total_seats = $total_buses * BUS_SEATS;
-}
+$rev_where = $has_status ? "WHERE status = 'Confirmed' OR status IS NULL" : "";
+$cap_select = $has_cap ? "(SELECT COALESCE(SUM(capacity), 0) FROM buses) AS total_seats" : "((SELECT COUNT(*) FROM buses) * " . BUS_SEATS . ") AS total_seats";
 
-// Earnings excluding Cancelled & Expired bookings
-if (table_has_column($link, 'booking', 'status')) {
-    $earnings_row = db_one($link, "SELECT COALESCE(SUM(price), 0) AS cost FROM booking WHERE status = 'Confirmed' OR status IS NULL");
-} else {
-    $earnings_row = db_one($link, 'SELECT COALESCE(SUM(price), 0) AS cost FROM booking');
-}
-$total_earnings = number_format((float)($earnings_row['cost'] ?? 0), 2);
+$kpi = db_one($link, "
+    SELECT
+      (SELECT COUNT(*) FROM booking) AS total_bookings,
+      (SELECT COALESCE(SUM(price), 0) FROM booking {$rev_where}) AS total_revenue,
+      (SELECT COUNT(*) FROM costumer) AS total_customers,
+      (SELECT COUNT(*) FROM buses) AS total_buses,
+      (SELECT COUNT(*) FROM route) AS total_routes,
+      (SELECT COUNT(*) FROM admin) AS total_admins,
+      (SELECT COUNT(*) FROM `query`) AS total_queries,
+      {$cap_select}
+");
+
+$total_bookings = (int)($kpi['total_bookings'] ?? 0);
+$total_buses = (int)($kpi['total_buses'] ?? 0);
+$total_routes = (int)($kpi['total_routes'] ?? 0);
+$total_customers = (int)($kpi['total_customers'] ?? 0);
+$total_admins = (int)($kpi['total_admins'] ?? 0);
+$total_queries = (int)($kpi['total_queries'] ?? 0);
+$total_seats = (int)($kpi['total_seats'] ?? 0);
+$total_earnings = number_format((float)($kpi['total_revenue'] ?? 0), 2);
 ?>
 <div class="page-header">
     <div>

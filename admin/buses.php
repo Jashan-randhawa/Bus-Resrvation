@@ -77,7 +77,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_bus'])) {
     }
 }
 
-$buses = db_all($link, 'SELECT * FROM buses ORDER BY ' . $bus_pk . ' ASC');
+// 25-item Pagination (P-10)
+$total_buses = (int)(db_one($link, 'SELECT COUNT(*) AS c FROM buses')['c'] ?? 0);
+$pagination = paginate($total_buses, 25);
+$buses = db_all($link, 'SELECT * FROM buses ORDER BY ' . $bus_pk . ' ASC LIMIT ? OFFSET ?', 'ii', [$pagination['per_page'], $pagination['offset']]);
 
 $title = 'Buses';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
@@ -102,7 +105,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 <div class="data-table-wrapper">
     <div class="table-header">
         <h5 class="mb-0">All Fleet Vehicles</h5>
-        <span class="record-count"><?= count($buses) ?> bus(es)</span>
+        <span class="record-count"><?= $pagination['total_records'] ?> bus(es)</span>
     </div>
     <div class="table-responsive">
         <table class="table table-hover mb-0">
@@ -166,6 +169,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             </tbody>
         </table>
     </div>
+    <?= render_pagination($pagination) ?>
 </div>
 
 <!-- Add Bus Modal -->

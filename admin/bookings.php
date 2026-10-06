@@ -92,12 +92,16 @@ if (table_has_column($link, 'buses', 'capacity')) {
 $from_cities = db_all($link, 'SELECT DISTINCT city1 FROM route ORDER BY city1 ASC');
 $to_cities = db_all($link, 'SELECT DISTINCT city2 FROM route ORDER BY city2 ASC');
 
-// Status filtering (P-05)
+// Status filtering and 25-item Pagination (P-05, P-10)
 $selected_filter = trim((string)($_GET['filter_status'] ?? 'All'));
 if ($has_status && in_array($selected_filter, ['Confirmed', 'Pending', 'Expired', 'Cancelled'], true)) {
-    $bookings = db_all($link, 'SELECT * FROM booking WHERE status = ? ORDER BY sno DESC', 's', [$selected_filter]);
+    $total_count = (int)(db_one($link, 'SELECT COUNT(*) AS c FROM booking WHERE status = ?', 's', [$selected_filter])['c'] ?? 0);
+    $pagination = paginate($total_count, 25);
+    $bookings = db_all($link, 'SELECT * FROM booking WHERE status = ? ORDER BY sno DESC LIMIT ? OFFSET ?', 'sii', [$selected_filter, $pagination['per_page'], $pagination['offset']]);
 } else {
-    $bookings = db_all($link, 'SELECT * FROM booking ORDER BY sno DESC');
+    $total_count = (int)(db_one($link, 'SELECT COUNT(*) AS c FROM booking')['c'] ?? 0);
+    $pagination = paginate($total_count, 25);
+    $bookings = db_all($link, 'SELECT * FROM booking ORDER BY sno DESC LIMIT ? OFFSET ?', 'ii', [$pagination['per_page'], $pagination['offset']]);
 }
 
 $title = 'Bookings';
@@ -136,7 +140,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 <div class="data-table-wrapper">
     <div class="table-header">
         <h5 class="mb-0">Reservations List</h5>
-        <span class="record-count"><?= count($bookings) ?> record(s)</span>
+        <span class="record-count"><?= $pagination['total_records'] ?> record(s)</span>
     </div>
     <div class="table-responsive">
         <table class="table table-hover mb-0">
@@ -206,6 +210,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             </tbody>
         </table>
     </div>
+    <?= render_pagination($pagination, $selected_filter !== 'All' ? ['filter_status' => $selected_filter] : []) ?>
 </div>
 
 <!-- Booking Modal -->

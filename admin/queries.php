@@ -20,7 +20,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_query'])) {
     }
 }
 
-$queries = db_all($link, "SELECT * FROM `query` ORDER BY `{$query_pk}` DESC");
+// 25-item Pagination (P-10)
+$total_queries = (int)(db_one($link, 'SELECT COUNT(*) AS c FROM `query`')['c'] ?? 0);
+$pagination = paginate($total_queries, 25);
+$queries = db_all($link, "SELECT * FROM `query` ORDER BY `{$query_pk}` DESC LIMIT ? OFFSET ?", 'ii', [$pagination['per_page'], $pagination['offset']]);
 
 $title = 'Customer Queries';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
@@ -42,7 +45,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 <div class="data-table-wrapper">
     <div class="table-header">
         <h5 class="mb-0">Support Inquiries</h5>
-        <span class="record-count"><?= count($queries) ?> message(s)</span>
+        <span class="record-count"><?= $pagination['total_records'] ?> message(s)</span>
     </div>
     <div class="table-responsive">
         <table class="table table-hover mb-0">
@@ -97,6 +100,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             </tbody>
         </table>
     </div>
+    <?= render_pagination($pagination) ?>
 </div>
 
 <?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>

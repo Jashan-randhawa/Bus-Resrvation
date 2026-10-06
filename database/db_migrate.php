@@ -60,8 +60,37 @@ if (!function_exists('has_index')) {
     }
 }
 
+if (!function_exists('step_applied')) {
+    function step_applied(mysqli $link, string $migration, string $step): bool {
+        try {
+            $row = db_one($link, "SELECT id FROM migration_steps WHERE migration = ? AND step = ?", 'ss', [$migration, $step]);
+            return !empty($row);
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+}
+
+if (!function_exists('run_step')) {
+    function run_step(mysqli $link, string $migration, string $step, string $sql, array &$log): bool {
+        if (step_applied($link, $migration, $step)) {
+            return true;
+        }
+        $ok = try_sql($link, $sql, $log);
+        if ($ok) {
+            try {
+                db_exec($link, "INSERT INTO migration_steps (migration, step) VALUES (?, ?)", 'ss', [$migration, $step]);
+            } catch (Throwable $e) {
+                // Ignore if already recorded
+            }
+        }
+        return $ok;
+    }
+}
+
 /**
- * Executes all pending database schema migrations idempotently.
+ * Executes all pending database schema migrations idempotently (P-05).
+ * Uses named advisory lock to prevent concurrent execution across containers.
  * Returns structured result ['ok' => bool, 'log' => string[]].
  */
 function run_migrations(mysqli $link): array {
@@ -71,20 +100,50 @@ function run_migrations(mysqli $link): array {
     $log[] = "=== Bus Reservation Database Migration Runner ===";
     $log[] = "Database: " . (defined('DB_NAME') ? DB_NAME : 'unknown') . "@" . (defined('DB_HOST') ? DB_HOST : 'unknown');
 
-    // 1. Create migrations tracking table if not exists
-    $sm_created = try_sql($link, "
-        CREATE TABLE IF NOT EXISTS `schema_migrations` (
-            `id` INT AUTO_INCREMENT PRIMARY KEY,
-            `migration` VARCHAR(255) NOT NULL,
-            `applied_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE KEY `uq_migration` (`migration`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    ", $log);
+    // Advisory Locking (P-05: prevent multi-instance race conditions)
+    $lock_acquired = false;
+    try {
+        $lock_res = mysqli_query($link, "SELECT GET_LOCK('busres_migrate', 30) AS locked");
+        if ($lock_res) {
+            $row = mysqli_fetch_assoc($lock_res);
+            $lock_acquired = ((int)($row['locked'] ?? 0) === 1);
+            mysqli_free_result($lock_res);
+        }
+    } catch (Throwable $e) {
+        $log[] = "[i] Advisory locking check bypassed: " . $e->getMessage();
+    }
 
-    if (!$sm_created) {
-        $log[] = "[!] Failed to initialize schema_migrations tracking table.";
+    if (!$lock_acquired) {
+        $log[] = "[!] Could not acquire migration lock 'busres_migrate' within 30s. Another migration may be running.";
         return ['ok' => false, 'log' => $log];
     }
+
+    try {
+        // 1. Create migrations tracking table if not exists
+        $sm_created = try_sql($link, "
+            CREATE TABLE IF NOT EXISTS `schema_migrations` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `migration` VARCHAR(255) NOT NULL,
+                `applied_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY `uq_migration` (`migration`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ", $log);
+
+        if (!$sm_created) {
+            $log[] = "[!] Failed to initialize schema_migrations tracking table.";
+            return ['ok' => false, 'log' => $log];
+        }
+
+        // Create migration_steps tracking table for statement-level idempotency
+        try_sql($link, "
+            CREATE TABLE IF NOT EXISTS `migration_steps` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `migration` VARCHAR(100) NOT NULL,
+                `step` VARCHAR(100) NOT NULL,
+                `applied_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY `uq_migration_step` (`migration`, `step`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ", $log);
 
     // 2. Ensure base tables exist (idempotent init)
     $log[] = "[*] Verifying base schema tables...";
@@ -449,6 +508,15 @@ function run_migrations(mysqli $link): array {
         }
     } else {
         $log[] = "[i] Migration {$m7} already applied.";
+    }
+    } finally {
+        if ($lock_acquired) {
+            try {
+                mysqli_query($link, "SELECT RELEASE_LOCK('busres_migrate')");
+            } catch (Throwable $e) {
+                // Ignore release errors
+            }
+        }
     }
 
     if ($all_ok) {

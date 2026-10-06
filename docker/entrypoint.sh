@@ -2,7 +2,7 @@
 set -e
 
 # Automatically run database migrations if DB is configured
-if [ -n "$DB_HOST" ]; then
+if [ -n "$DB_HOST" ] || [ -n "$DATABASE_URL" ]; then
     echo "[busres] Running database migrations..."
     if php /var/www/html/database/db_migrate.php; then
         echo "[busres] Database migrations completed successfully (exit code 0)."

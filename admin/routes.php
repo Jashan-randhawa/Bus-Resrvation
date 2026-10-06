@@ -86,7 +86,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_route'])) {
 }
 
 $buses = db_all($link, 'SELECT bus_number FROM buses ORDER BY bus_number ASC');
-$routes = db_all($link, "SELECT * FROM route ORDER BY `{$route_pk}` ASC");
+// 25-item Pagination (P-10)
+$total_routes = (int)(db_one($link, 'SELECT COUNT(*) AS c FROM route')['c'] ?? 0);
+$pagination = paginate($total_routes, 25);
+$routes = db_all($link, "SELECT * FROM route ORDER BY `{$route_pk}` ASC LIMIT ? OFFSET ?", 'ii', [$pagination['per_page'], $pagination['offset']]);
 
 $title = 'Routes';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
@@ -111,7 +114,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 <div class="data-table-wrapper">
     <div class="table-header">
         <h5 class="mb-0">Active Schedules</h5>
-        <span class="record-count"><?= count($routes) ?> route(s)</span>
+        <span class="record-count"><?= $pagination['total_records'] ?> route(s)</span>
     </div>
     <div class="table-responsive">
         <table class="table table-hover mb-0">
@@ -165,6 +168,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             </tbody>
         </table>
     </div>
+    <?= render_pagination($pagination) ?>
 </div>
 
 <!-- Add Route Modal -->
