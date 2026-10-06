@@ -589,6 +589,37 @@ function run_migrations(mysqli $link): array {
     } else {
         $log[] = "[i] Migration {$m9} already applied.";
     }
+
+    // 12. Migration 010: 010_query_inbox_enhancements (Item 10)
+    $m10 = '010_query_inbox_enhancements';
+    if (!migration_applied($link, $m10)) {
+        $log[] = "[*] Running migration: {$m10}...";
+        $m10_ok = true;
+
+        if (!has_column($link, 'query', 'status')) {
+            $m10_ok = $m10_ok && try_sql($link, "ALTER TABLE `query` ADD COLUMN `status` ENUM('new', 'replied', 'closed') NOT NULL DEFAULT 'new'", $log);
+            $m10_ok = $m10_ok && try_sql($link, "ALTER TABLE `query` ADD KEY `idx_query_status` (`status`)", $log);
+        }
+        if (!has_column($link, 'query', 'created_at')) {
+            $m10_ok = $m10_ok && try_sql($link, "ALTER TABLE `query` ADD COLUMN `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP", $log);
+        }
+        if (!has_column($link, 'query', 'replied_at')) {
+            $m10_ok = $m10_ok && try_sql($link, "ALTER TABLE `query` ADD COLUMN `replied_at` DATETIME NULL", $log);
+        }
+        if (!has_column($link, 'query', 'reply_text')) {
+            $m10_ok = $m10_ok && try_sql($link, "ALTER TABLE `query` ADD COLUMN `reply_text` TEXT NULL", $log);
+        }
+
+        if ($m10_ok) {
+            record_migration($link, $m10);
+            $log[] = "  -> Completed {$m10}.";
+        } else {
+            $log[] = "  [!] Migration {$m10} had errors; not marked as applied.";
+            $all_ok = false;
+        }
+    } else {
+        $log[] = "[i] Migration {$m10} already applied.";
+    }
     } finally {
         if ($lock_acquired) {
             try {

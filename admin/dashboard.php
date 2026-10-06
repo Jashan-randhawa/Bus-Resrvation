@@ -189,3 +189,129 @@ $total_earnings = number_format((float)($kpi['total_revenue'] ?? 0), 2);
         </div>
     </div>
 </div>
+
+<?php
+// Item 11: 30-day Trends & Analytics
+$thirty_days_ago = date('Y-m-d', strtotime('-30 days'));
+
+// 30-day booking & revenue daily totals
+$daily_stats = db_all($link, "
+    SELECT 
+        `date`,
+        COUNT(*) AS daily_bookings,
+        SUM(CASE WHEN status = 'Confirmed' OR status IS NULL THEN price ELSE 0 END) AS daily_rev,
+        SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS daily_cancelled
+    FROM booking
+    WHERE `date` >= ?
+    GROUP BY `date`
+    ORDER BY `date` DESC
+    LIMIT 30
+", 's', [$thirty_days_ago]);
+
+// Top 5 Popular Routes
+$top_routes = db_all($link, "
+    SELECT 
+        city1, city2, bus,
+        COUNT(*) AS total_tickets,
+        SUM(price) AS route_revenue
+    FROM booking
+    WHERE status != 'Cancelled' OR status IS NULL
+    GROUP BY city1, city2, bus
+    ORDER BY total_tickets DESC
+    LIMIT 5
+");
+
+// Cancellation metrics
+$cancel_metrics = db_one($link, "
+    SELECT 
+        COUNT(*) AS total,
+        SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS cancelled
+    FROM booking
+");
+$all_bks = (int)($cancel_metrics['total'] ?? 0);
+$all_cnl = (int)($cancel_metrics['cancelled'] ?? 0);
+$cnl_rate = $all_bks > 0 ? round(($all_cnl / $all_bks) * 100, 1) : 0;
+?>
+
+<!-- Analytics Section (Item 11) -->
+<div class="row mt-2">
+    <!-- Top Routes -->
+    <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 font-weight-bold text-dark">Top Transit Corridors</h6>
+                <span class="badge badge-light border">Most Traveled</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Route Corridor</th>
+                                <th>Bus</th>
+                                <th>Bookings</th>
+                                <th class="text-right">Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($top_routes)): ?>
+                                <tr><td colspan="4" class="text-center text-muted py-4">No route booking data available yet.</td></tr>
+                            <?php else: ?>
+                                <?php foreach ($top_routes as $tr): ?>
+                                    <tr>
+                                        <td class="font-weight-medium text-dark">
+                                            <?= e($tr['city1']) ?> &rarr; <?= e($tr['city2']) ?>
+                                        </td>
+                                        <td><span class="badge badge-light border">🚌 <?= e($tr['bus']) ?></span></td>
+                                        <td><strong><?= (int)$tr['total_tickets'] ?></strong> tickets</td>
+                                        <td class="text-right font-weight-bold text-success">
+                                            <?= CURRENCY ?><?= number_format((float)$tr['route_revenue'], 2) ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 30-Day Operational Health -->
+    <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 font-weight-bold text-dark">30-Day Performance Overview</h6>
+                <span class="badge badge-info">Cancellation Rate: <?= $cnl_rate ?>%</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+                    <table class="table table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Reservations</th>
+                                <th>Cancelled</th>
+                                <th class="text-right">Daily Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($daily_stats)): ?>
+                                <tr><td colspan="4" class="text-center text-muted py-4">No reservations in the past 30 days.</td></tr>
+                            <?php else: ?>
+                                <?php foreach ($daily_stats as $ds): ?>
+                                    <tr>
+                                        <td><small class="font-weight-medium text-dark"><?= e(date('d M Y', strtotime($ds['date']))) ?></small></td>
+                                        <td><span class="badge badge-primary px-2"><?= (int)$ds['daily_bookings'] ?></span></td>
+                                        <td><span class="badge badge-danger px-2"><?= (int)$ds['daily_cancelled'] ?></span></td>
+                                        <td class="text-right font-weight-bold text-success"><?= CURRENCY ?><?= number_format((float)$ds['daily_rev'], 2) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

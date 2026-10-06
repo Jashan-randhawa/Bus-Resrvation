@@ -74,6 +74,7 @@ require_once __DIR__ . '/../config.php';
                 'Operations' => [
                     ['Bookings', 'bookings.php', 'edit-booking.php', '🎟️'],
                     ['Seat Availability', 'seats.php', null, '🪑'],
+                    ['Passenger Manifest', 'manifest.php', null, '📋'],
                 ],
                 'Fleet & Schedule' => [
                     ['Buses', 'buses.php', 'edit-bus.php', '🚌'],
@@ -97,11 +98,24 @@ require_once __DIR__ . '/../config.php';
                         <?php
                         $is_active = ($current_script === $file || ($child !== null && $current_script === $child));
                         $link_url = BASE_URL . '/admin/' . $file;
+                        $badge_html = '';
+                        if ($file === 'queries.php') {
+                            $has_q_status = isset($link) && function_exists('table_has_column') && table_has_column($link, 'query', 'status');
+                            $unread_count = 0;
+                            if ($has_q_status) {
+                                $unread_res = db_one($link, "SELECT COUNT(*) AS c FROM `query` WHERE status = 'new'");
+                                $unread_count = (int)($unread_res['c'] ?? 0);
+                            }
+                            if ($unread_count > 0) {
+                                $badge_html = ' <span class="badge badge-danger badge-pill ml-auto font-weight-bold">' . $unread_count . '</span>';
+                            }
+                        }
                         ?>
                         <li class="nav-item">
-                            <a class="nav-link <?= $is_active ? 'active' : '' ?>" href="<?= $link_url ?>" <?= $is_active ? 'aria-current="page"' : '' ?>>
+                            <a class="nav-link d-flex align-items-center <?= $is_active ? 'active' : '' ?>" href="<?= $link_url ?>" <?= $is_active ? 'aria-current="page"' : '' ?>>
                                 <span class="mr-2" style="font-size: 1rem;"><?= $icon ?></span>
                                 <span><?= e($label) ?></span>
+                                <?= $badge_html ?>
                             </a>
                         </li>
                     <?php endforeach; ?>

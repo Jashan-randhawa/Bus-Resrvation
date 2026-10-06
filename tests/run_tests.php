@@ -699,6 +699,22 @@ $audit_content = file_get_contents(__DIR__ . '/../admin/audit-log.php');
 assert_test("audit-log.php supports CSV export & 365d retention purge", str_contains($audit_content, 'purge_retention') && str_contains($audit_content, 'export=csv'));
 assert_test("audit-log.php includes visual state mutation diff renderer", str_contains($audit_content, 'BEFORE:') && str_contains($audit_content, 'AFTER:'));
 
+// 8.6 Phase D: Customer Support, Trends Dashboard & Bulk Operations (Items 10, 11, 12)
+$queries_content = file_get_contents(__DIR__ . '/../admin/queries.php');
+assert_test("queries.php supports email replies & status workflow", str_contains($queries_content, 'reply_query') && str_contains($queries_content, 'send_app_mail') && str_contains($queries_content, 'status'));
+
+$dashboard_content = file_get_contents(__DIR__ . '/../admin/dashboard.php');
+assert_test("dashboard.php includes 30-day booking & revenue trends", str_contains($dashboard_content, '30-Day Booking & Revenue Trends') && str_contains($dashboard_content, 'cancellation_rate'));
+assert_test("dashboard.php includes top 5 transit corridors query", str_contains($dashboard_content, 'Top Transit Corridors'));
+
+assert_test("bookings.php supports bulk actions", str_contains($bookings_content, 'bulk_action') && str_contains($bookings_content, 'selectAllBookings'));
+
+$manifest_path = __DIR__ . '/../admin/manifest.php';
+assert_test("manifest.php exists", file_exists($manifest_path));
+$manifest_content = file_exists($manifest_path) ? file_get_contents($manifest_path) : '';
+assert_test("manifest.php has print styles & CSV export", str_contains($manifest_content, '@media print') && str_contains($manifest_content, 'export=csv'));
+
+
 // Clean up test data
 db_exec($link, 'DELETE FROM booking WHERE bus = ?', 's', [$test_busno]);
 db_exec($link, 'DELETE FROM buses WHERE bus_number = ?', 's', [$test_busno]);

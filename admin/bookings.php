@@ -86,6 +86,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_booking'])) {
     }
 }
 
+// Handle Bulk Actions (Phase D Item 12)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
+    csrf_verify();
+    $bulk_action = (string)$_POST['bulk_action'];
+    $selected_ids = array_values(array_filter(array_map('intval', (array)($_POST['selected_ids'] ?? [])), fn($v) => $v > 0));
+
+    if (empty($selected_ids)) {
+        $alert = 'Please select at least one reservation to perform bulk operations.';
+        $alert_type = 'warning';
+    } elseif ($bulk_action === 'cancel') {
+        require_role('super_admin');
+        $cancelled_count = 0;
+        foreach ($selected_ids as $sid) {
+            $old_booking = db_one($link, "SELECT sno, pnr, bus, seat, date, time, status, name, contact FROM booking WHERE sno = ?", 'i', [$sid]);
+            if ($old_booking && ($old_booking['status'] ?? '') !== 'Cancelled') {
+                if ($has_status) {
+                    db_exec($link, "UPDATE booking SET status = 'Cancelled' WHERE sno = ?", 'i', [$sid]);
+                } else {
+                    db_exec($link, 'DELETE FROM booking WHERE sno = ?', 'i', [$sid]);
+                }
+                try {
+                    db_exec($link, 'DELETE FROM seat_lock WHERE booking_id = ?', 'i', [$sid]);
+                } catch (Throwable $e) {}
+                audit($link, 'CANCEL', 'booking', $sid, $old_booking, ['status' => 'Cancelled', 'bulk' => true]);
+                $cancelled_count++;
+            }
+        }
+        $alert = "Bulk cancel complete: {$cancelled_count} reservation(s) cancelled and seats liberated.";
+        $alert_type = 'success';
+    } elseif ($bulk_action === 'export') {
+        $placeholders = implode(',', array_fill(0, count($selected_ids), '?'));
+        $types_str = str_repeat('i', count($selected_ids));
+        $export_rows = db_all($link, "SELECT sno, pnr, bus, name, contact, city1, city2, `date`, `time`, seat, price, status FROM booking WHERE sno IN ({$placeholders}) ORDER BY sno DESC", $types_str, $selected_ids);
+        audit($link, 'EXPORT', 'booking', null, null, ['format' => 'csv', 'count' => count($export_rows), 'bulk' => true]);
+        $headers = ['Booking ID', 'PNR', 'Bus Number', 'Passenger Name', 'Contact Phone', 'Origin', 'Destination', 'Travel Date', 'Departure Time', 'Seat Number', 'Tariff Paid', 'Status'];
+        export_csv('bookings-selected-' . date('Ymd-His') . '.csv', $headers, $export_rows);
+    }
+}
+
 // Query buses with capacity (P-03)
 if (table_has_column($link, 'buses', 'capacity')) {
     $buses = db_all($link, 'SELECT bus_number, capacity FROM buses ORDER BY bus_number ASC');
@@ -256,6 +295,26 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </div>
 </div>
 
+<!-- Bulk Action Bar (Item 12) -->
+<form id="bulkBookingsForm" method="post" action="" class="mb-3 d-none">
+    <?= csrf_field() ?>
+    <div class="alert alert-light border d-flex flex-wrap align-items-center justify-content-between p-2 shadow-sm mb-0">
+        <div class="font-weight-bold text-dark my-1">
+            <span id="selectedCount" class="badge badge-primary mr-1">0</span> reservation(s) selected
+        </div>
+        <div class="my-1">
+            <button type="submit" name="bulk_action" value="export" class="btn btn-outline-success btn-sm font-weight-bold mr-2">
+                📥 Export Selected
+            </button>
+            <?php if (is_super_admin()): ?>
+            <button type="submit" name="bulk_action" value="cancel" class="btn btn-outline-danger btn-sm font-weight-bold" onclick="return confirm('Are you sure you want to cancel all selected reservations?');">
+                🚫 Bulk Cancel
+            </button>
+            <?php endif; ?>
+        </div>
+    </div>
+</form>
+
 <!-- Bookings Table Container -->
 <div class="data-table-wrapper">
     <div class="table-header">
@@ -266,6 +325,9 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <table class="table table-hover mb-0">
             <thead class="thead-light">
                 <tr>
+                    <th style="width: 40px;" class="text-center">
+                        <input type="checkbox" id="selectAllBookings" title="Select all on this page">
+                    </th>
                     <th>PNR</th>
                     <th>Bus</th>
                     <th>Passenger</th>
@@ -281,7 +343,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             <tbody>
                 <?php if (empty($bookings)): ?>
                     <tr>
-                        <td colspan="10">
+                        <td colspan="11">
                             <div class="empty-state py-5">
                                 <div class="empty-icon">🎟️</div>
                                 <div class="empty-title">No bookings found</div>
@@ -305,6 +367,9 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         elseif ($is_cancelled) $badge_class = 'danger';
                         ?>
                         <tr class="<?= ($is_cancelled || $is_expired) ? 'text-muted' : '' ?>">
+                            <td class="text-center">
+                                <input type="checkbox" name="selected_ids[]" value="<?= e($sno) ?>" form="bulkBookingsForm" class="booking-select-cb">
+                            </td>
                             <td><code><?= e($display_pnr !== '' ? $display_pnr : ('#' . $sno)) ?></code></td>
                             <td><strong><?= e($row['bus'] ?? '') ?></strong></td>
                             <td class="font-weight-medium text-dark"><?= e($row['name'] ?? '') ?></td>
@@ -334,6 +399,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </div>
     <?= render_pagination($pagination, $keep_params) ?>
 </div>
+
 
 <!-- Booking Modal -->
 <div class="modal fade" id="addBookingModal" tabindex="-1">
@@ -464,6 +530,37 @@ document.addEventListener('DOMContentLoaded', function() {
         var initialCap = parseInt(initialOpt ? initialOpt.getAttribute('data-capacity') : '36', 10) || 36;
         rebuildSeatGrid(initialCap);
     }
+
+    // Bulk selection logic
+    var selectAll = document.getElementById('selectAllBookings');
+    var checkboxes = document.querySelectorAll('.booking-select-cb');
+    var bulkForm = document.getElementById('bulkBookingsForm');
+    var countSpan = document.getElementById('selectedCount');
+
+    function updateBulkState() {
+        var checked = document.querySelectorAll('.booking-select-cb:checked');
+        if (countSpan) countSpan.textContent = checked.length;
+        if (bulkForm) {
+            if (checked.length > 0) {
+                bulkForm.classList.remove('d-none');
+            } else {
+                bulkForm.classList.add('d-none');
+            }
+        }
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            checkboxes.forEach(function(cb) {
+                cb.checked = selectAll.checked;
+            });
+            updateBulkState();
+        });
+    }
+
+    checkboxes.forEach(function(cb) {
+        cb.addEventListener('change', updateBulkState);
+    });
 });
 </script>
 

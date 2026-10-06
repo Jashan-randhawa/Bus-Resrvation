@@ -101,13 +101,18 @@ CREATE TABLE IF NOT EXISTS `seat_lock` (
   CONSTRAINT `fk_seat_lock_booking` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`sno`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Query / Feedback table
+-- Query / Feedback table (Item 10)
 CREATE TABLE IF NOT EXISTS `query` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `user_name` VARCHAR(100) NOT NULL,
   `user_email` VARCHAR(100) NOT NULL,
   `user_subject` VARCHAR(200) DEFAULT NULL,
-  `user_qry` TEXT NOT NULL
+  `user_qry` TEXT NOT NULL,
+  `status` ENUM('new', 'replied', 'closed') NOT NULL DEFAULT 'new',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `replied_at` DATETIME NULL,
+  `reply_text` TEXT NULL,
+  KEY `idx_query_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Rate limiting storage (H-05)
