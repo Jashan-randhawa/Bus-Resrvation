@@ -619,6 +619,10 @@ assert_test("validate_travel_datetime rejects departure inside cutoff window", $
 $chk_ok = validate_travel_datetime($today_str, $future_ok_time);
 assert_test("validate_travel_datetime accepts departure beyond cutoff window", $chk_ok['ok'] === true);
 
+// 7.4 Application mail helper tests (Phases 3.1, 4.2)
+assert_test("send_app_mail rejects invalid recipient email address", send_app_mail('not-an-email', 'Subject', '<p>Body</p>') === false);
+assert_test("send_app_mail handles valid recipient gracefully when unconfigured", send_app_mail('passenger@example.com', 'Subject Line', '<p>Confirmation</p>') === true);
+
 // Clean up test data
 db_exec($link, 'DELETE FROM booking WHERE bus = ?', 's', [$test_busno]);
 db_exec($link, 'DELETE FROM buses WHERE bus_number = ?', 's', [$test_busno]);

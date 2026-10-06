@@ -116,9 +116,31 @@ if (isset($_POST['userbtn'])) {
     db_exec($link,
       'INSERT INTO costumer (name, email, pwd, phone, address) VALUES (?,?,?,?,?)',
       'sssss', [$person_val['name'], $email, password_hash($pwd, PASSWORD_DEFAULT), $person_val['phone'], $person_val['address']]);
-    $msg = 'Account created successfully! You can now sign in.';
-    $msg_type = 'success';
-    $open_modal = 'register_success'; // Switches to sign in tab inside modal
+    
+    $new_uid = (int)mysqli_insert_id($link);
+
+    // Phase 4.2: Automatically sign user in upon registration
+    $_SESSION['uid'] = $new_uid;
+    $_SESSION['name'] = $person_val['name'];
+    $_SESSION['email'] = $email;
+    $_SESSION['phone'] = $person_val['phone'];
+    $_SESSION['role'] = 'user';
+    $_SESSION['last_seen'] = time();
+    session_regenerate_id(true);
+
+    // Send welcome confirmation email
+    $welcome_sub = 'Welcome to Bus Reservation!';
+    $welcome_body = '<div style="font-family:sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #e2e8f0;border-radius:8px;">'
+        . '<h2 style="color:#2563eb;margin-top:0;">Welcome, ' . htmlspecialchars($person_val['name']) . '!</h2>'
+        . '<p>Thank you for creating your account with the Bus Reservation System. You are now logged in and ready to book bus tickets.</p>'
+        . '</div>';
+    send_app_mail($email, $welcome_sub, $welcome_body);
+
+    $safe_next = safe_next_url($_POST['next'] ?? $_GET['next'] ?? null);
+    $target = $safe_next ?: (BASE_URL . '/user/index.php');
+    flash_set('success', 'Account created successfully! Welcome, ' . $person_val['name'] . '.');
+    header('Location: ' . $target);
+    exit;
   }
 }
 
@@ -655,6 +677,7 @@ if (isset($_POST['subbtn'])) {
           <?php endif; ?>
           <form action="<?= e(BASE_URL) ?>/homepage.php" method="post">
             <?= csrf_field() ?>
+            <input type="hidden" name="next" value="<?= e(safe_next_url($_GET['next'] ?? $_POST['next'] ?? null) ?? '') ?>">
             <div class="form-row">
               <div class="form-group col-6">
                 <label for="fname" class="font-weight-bold small text-muted">First Name</label>

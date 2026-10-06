@@ -96,6 +96,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
                 ]);
 
                 if ($result['ok']) {
+                    // Phase 3.1: Send confirmation email with ticket link if account email exists
+                    $cust_email = (string)($_SESSION['email'] ?? '');
+                    if ($cust_email !== '') {
+                        $ticket_url = BASE_URL . '/user/ticket.php?pnr=' . urlencode($result['pnr']);
+                        $email_subject = 'Bus Reservation Confirmation - PNR: ' . $result['pnr'];
+                        $email_body = '<div style="font-family:sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #e2e8f0;border-radius:8px;">'
+                            . '<h2 style="color:#2563eb;margin-top:0;">Your Bus Reservation is Confirmed!</h2>'
+                            . '<p>Dear <strong>' . htmlspecialchars($person_check['name']) . '</strong>,</p>'
+                            . '<p>Your bus ticket has been successfully booked. Here are your journey details:</p>'
+                            . '<table style="width:100%;border-collapse:collapse;margin:15px 0;">'
+                            . '<tr><td style="padding:6px 0;color:#64748b;">PNR:</td><td style="padding:6px 0;font-weight:bold;">' . htmlspecialchars($result['pnr']) . '</td></tr>'
+                            . '<tr><td style="padding:6px 0;color:#64748b;">Route:</td><td style="padding:6px 0;font-weight:bold;">' . htmlspecialchars($sub_route['city1']) . ' &rarr; ' . htmlspecialchars($sub_route['city2']) . '</td></tr>'
+                            . '<tr><td style="padding:6px 0;color:#64748b;">Travel Date:</td><td style="padding:6px 0;font-weight:bold;">' . htmlspecialchars(fmt_date($post_date)) . '</td></tr>'
+                            . '<tr><td style="padding:6px 0;color:#64748b;">Departure:</td><td style="padding:6px 0;font-weight:bold;">' . htmlspecialchars(fmt_time($sub_route['time'])) . '</td></tr>'
+                            . '<tr><td style="padding:6px 0;color:#64748b;">Assigned Seat:</td><td style="padding:6px 0;font-weight:bold;">Seat #' . (int)$seat . '</td></tr>'
+                            . '<tr><td style="padding:6px 0;color:#64748b;">Fare:</td><td style="padding:6px 0;font-weight:bold;">' . CURRENCY . number_format((float)$sub_route['price'], 2) . '</td></tr>'
+                            . '</table>'
+                            . '<div style="margin-top:20px;">'
+                            . '<a href="' . htmlspecialchars($ticket_url) . '" style="background:#2563eb;color:#ffffff;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block;font-weight:bold;">View &amp; Print Boarding Pass</a>'
+                            . '</div>'
+                            . '</div>';
+                        send_app_mail($cust_email, $email_subject, $email_body);
+                    }
+
                     // Phase 3.1: Redirect directly to confirmation ticket with success state
                     header('Location: ' . BASE_URL . '/user/ticket.php?pnr=' . urlencode($result['pnr']) . '&new=1');
                     exit;

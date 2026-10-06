@@ -618,3 +618,41 @@ function validate_person_fields(string $name, string $phone, string $address = '
     ];
 }
 
+/**
+ * Sends application email notification (Phases 3.1, 4.2).
+ * Gracefully handles environments without configured SMTP.
+ *
+ * @param string $to Recipient email address
+ * @param string $subject Email subject
+ * @param string $html_body HTML message body
+ * @return bool True if sent or queued, false on failure
+ */
+function send_app_mail(string $to, string $subject, string $html_body): bool {
+    $to = trim($to);
+    if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+
+    // Header injection prevention
+    $subject = str_replace(["\r", "\n"], '', trim($subject));
+
+    $mail_enabled = (getenv('MAIL_ENABLED') === '1' || strtolower((string)getenv('MAIL_ENABLED')) === 'true');
+    $from_email = getenv('MAIL_FROM') ?: 'no-reply@busreservation.local';
+    $from_name = getenv('MAIL_FROM_NAME') ?: 'Bus Reservation System';
+
+    if (!$mail_enabled) {
+        error_log(sprintf('[busres mail notice] Mail to <%s> suppressed (MAIL_ENABLED is false). Subject: %s', $to, $subject));
+        return true;
+    }
+
+    $headers = [
+        'MIME-Version: 1.0',
+        'Content-type: text/html; charset=UTF-8',
+        'From: ' . sprintf('"%s" <%s>', addcslashes($from_name, '"'), $from_email),
+        'Reply-To: ' . $from_email,
+        'X-Mailer: BusReservation-PHP/' . phpversion()
+    ];
+
+    return @mail($to, $subject, $html_body, implode("\r\n", $headers));
+}
+
