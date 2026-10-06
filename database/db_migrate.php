@@ -543,6 +543,52 @@ function run_migrations(mysqli $link): array {
     } else {
         $log[] = "[i] Migration {$m8} already applied.";
     }
+
+    // 11. Migration 009: 009_admin_accounts_and_soft_delete (Items 4, 5, 6)
+    $m9 = '009_admin_accounts_and_soft_delete';
+    if (!migration_applied($link, $m9)) {
+        $log[] = "[*] Running migration: {$m9}...";
+        $m9_ok = true;
+
+        if (!has_column($link, 'admin', 'is_active')) {
+            $m9_ok = $m9_ok && try_sql($link, "ALTER TABLE `admin` ADD COLUMN `is_active` TINYINT(1) NOT NULL DEFAULT 1 AFTER `role`", $log);
+        }
+        if (!has_column($link, 'admin', 'last_login_at')) {
+            $m9_ok = $m9_ok && try_sql($link, "ALTER TABLE `admin` ADD COLUMN `last_login_at` DATETIME NULL AFTER `is_active`", $log);
+        }
+        if (!has_column($link, 'admin', 'password_changed_at')) {
+            $m9_ok = $m9_ok && try_sql($link, "ALTER TABLE `admin` ADD COLUMN `password_changed_at` DATETIME NULL AFTER `last_login_at`", $log);
+        }
+        if (!has_column($link, 'admin', 'totp_secret')) {
+            $m9_ok = $m9_ok && try_sql($link, "ALTER TABLE `admin` ADD COLUMN `totp_secret` VARCHAR(64) NULL AFTER `password_changed_at`", $log);
+        }
+        if (!has_column($link, 'admin', 'totp_enabled')) {
+            $m9_ok = $m9_ok && try_sql($link, "ALTER TABLE `admin` ADD COLUMN `totp_enabled` TINYINT(1) NOT NULL DEFAULT 0 AFTER `totp_secret`", $log);
+        }
+
+        if (!has_column($link, 'buses', 'archived_at')) {
+            $m9_ok = $m9_ok && try_sql($link, "ALTER TABLE `buses` ADD COLUMN `archived_at` DATETIME NULL", $log);
+            $m9_ok = $m9_ok && try_sql($link, "ALTER TABLE `buses` ADD KEY `idx_buses_archived` (`archived_at`)", $log);
+        }
+        if (!has_column($link, 'route', 'archived_at')) {
+            $m9_ok = $m9_ok && try_sql($link, "ALTER TABLE `route` ADD COLUMN `archived_at` DATETIME NULL", $log);
+            $m9_ok = $m9_ok && try_sql($link, "ALTER TABLE `route` ADD KEY `idx_route_archived` (`archived_at`)", $log);
+        }
+        if (!has_column($link, 'costumer', 'archived_at')) {
+            $m9_ok = $m9_ok && try_sql($link, "ALTER TABLE `costumer` ADD COLUMN `archived_at` DATETIME NULL", $log);
+            $m9_ok = $m9_ok && try_sql($link, "ALTER TABLE `costumer` ADD KEY `idx_cust_archived` (`archived_at`)", $log);
+        }
+
+        if ($m9_ok) {
+            record_migration($link, $m9);
+            $log[] = "  -> Completed {$m9}.";
+        } else {
+            $log[] = "  [!] Migration {$m9} had errors; not marked as applied.";
+            $all_ok = false;
+        }
+    } else {
+        $log[] = "[i] Migration {$m9} already applied.";
+    }
     } finally {
         if ($lock_acquired) {
             try {

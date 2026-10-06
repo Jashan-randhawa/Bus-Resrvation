@@ -672,6 +672,21 @@ foreach ($admin_files_to_check as $filename => $checks_map) {
         assert_test("Static RBAC Scan: admin/{$filename} protects {$trigger} with {$expected_guard}", $has_guard);
     }
 }
+// 8.4 Phase B: Account Control & Soft Delete Verification
+$admin_mgmt_content = file_get_contents(__DIR__ . '/../admin/add-admin.php');
+assert_test("add-admin.php checks count_active_super_admins on role change", str_contains($admin_mgmt_content, 'count_active_super_admins'));
+assert_test("add-admin.php protects self deactivation and deletion", str_contains($admin_mgmt_content, '$target_id === $current_admin_id'));
+
+$buses_content = file_get_contents(__DIR__ . '/../admin/buses.php');
+assert_test("buses.php supports soft-delete archive and restore", str_contains($buses_content, 'archived_at = NOW()') && str_contains($buses_content, 'restore_bus'));
+
+$routes_content = file_get_contents(__DIR__ . '/../admin/routes.php');
+assert_test("routes.php supports soft-delete archive and restore", str_contains($routes_content, 'archived_at = NOW()') && str_contains($routes_content, 'restore_route'));
+
+$customers_content = file_get_contents(__DIR__ . '/../admin/customers.php');
+assert_test("customers.php supports soft-delete archive and restore", str_contains($customers_content, 'archived_at = NOW()') && str_contains($customers_content, 'restore_customer'));
+
+assert_test("admin/profile.php exists and verifies min 12 character passwords", file_exists(__DIR__ . '/../admin/profile.php') && str_contains(file_get_contents(__DIR__ . '/../admin/profile.php'), 'minlength="12"'));
 
 // Clean up test data
 db_exec($link, 'DELETE FROM booking WHERE bus = ?', 's', [$test_busno]);

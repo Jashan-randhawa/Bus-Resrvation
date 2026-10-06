@@ -3,7 +3,7 @@
 -- Run this on your selected database after deployment.
 -- ============================================================
 
--- Admin table (wider password for bcrypt, unique email)
+-- Admin table (wider password for bcrypt, unique email, role, active status, TOTP)
 CREATE TABLE IF NOT EXISTS `admin` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `name` VARCHAR(100) NOT NULL,
@@ -11,10 +11,15 @@ CREATE TABLE IF NOT EXISTS `admin` (
   `Password` VARCHAR(255) NOT NULL,
   `phone` VARCHAR(20) NOT NULL,
   `role` ENUM('super_admin', 'operator', 'viewer') NOT NULL DEFAULT 'operator',
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `last_login_at` DATETIME NULL,
+  `password_changed_at` DATETIME NULL,
+  `totp_secret` VARCHAR(64) NULL,
+  `totp_enabled` TINYINT(1) NOT NULL DEFAULT 0,
   UNIQUE KEY `uq_admin_email` (`Email_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Customer table (wider password for bcrypt, unique email)
+-- Customer table (wider password for bcrypt, unique email, soft-delete)
 CREATE TABLE IF NOT EXISTS `costumer` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `name` VARCHAR(100) NOT NULL,
@@ -22,19 +27,23 @@ CREATE TABLE IF NOT EXISTS `costumer` (
   `pwd` VARCHAR(255) NOT NULL,
   `phone` VARCHAR(20) NOT NULL,
   `address` TEXT DEFAULT NULL,
-  UNIQUE KEY `uq_customer_email` (`email`)
+  `archived_at` DATETIME NULL,
+  UNIQUE KEY `uq_customer_email` (`email`),
+  KEY `idx_cust_archived` (`archived_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Buses table (unique bus number and configurable capacity and seating layout)
+-- Buses table (unique bus number, configurable capacity, layout, soft-delete)
 CREATE TABLE IF NOT EXISTS `buses` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `bus_number` VARCHAR(50) NOT NULL,
   `capacity` INT NOT NULL DEFAULT 36,
   `layout` VARCHAR(8) NOT NULL DEFAULT '2+2',
-  UNIQUE KEY `uq_bus_number` (`bus_number`)
+  `archived_at` DATETIME NULL,
+  UNIQUE KEY `uq_bus_number` (`bus_number`),
+  KEY `idx_buses_archived` (`archived_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Route table
+-- Route table (soft-delete)
 CREATE TABLE IF NOT EXISTS `route` (
   `sno` INT AUTO_INCREMENT PRIMARY KEY,
   `city1` VARCHAR(100) NOT NULL,
@@ -43,9 +52,11 @@ CREATE TABLE IF NOT EXISTS `route` (
   `bus_id` INT NULL,
   `time` TIME NOT NULL,
   `price` DECIMAL(10,2) NOT NULL,
+  `archived_at` DATETIME NULL,
   KEY `idx_route_cities` (`city1`, `city2`),
   KEY `idx_route_bus` (`busno`),
   KEY `idx_route_bus_id` (`bus_id`),
+  KEY `idx_route_archived` (`archived_at`),
   CONSTRAINT `fk_route_bus` FOREIGN KEY (`bus_id`) REFERENCES `buses` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

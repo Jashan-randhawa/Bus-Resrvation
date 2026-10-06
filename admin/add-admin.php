@@ -9,8 +9,17 @@ require_role('super_admin');
 $admin_pk = table_has_column($link, 'admin', 'sno') ? 'sno' : 'id';
 $has_role_col = table_has_column($link, 'admin', 'role');
 
-$alert = null;
-$alert_type = 'info';
+$has_active_col = table_has_column($link, 'admin', 'is_active');
+$current_admin_id = (int)($_SESSION['admin_id'] ?? 0);
+
+// Helper to count active super admins
+function count_active_super_admins(mysqli $link): int {
+    $has_active = table_has_column($link, 'admin', 'is_active');
+    $sql = $has_active 
+        ? "SELECT COUNT(*) AS c FROM `admin` WHERE `role` = 'super_admin' AND `is_active` = 1"
+        : "SELECT COUNT(*) AS c FROM `admin` WHERE `role` = 'super_admin'";
+    return (int)(db_one($link, $sql)['c'] ?? 0);
+}
 
 // Handle Add Admin
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
@@ -50,8 +59,123 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
                     [$name, $email, $hashed, $phone]
                 );
             }
-            audit($link, 'CREATE', 'admin', (int)mysqli_insert_id($link), null, ['name' => $name, 'email' => $email, 'role' => $role]);
+            $new_id = (int)mysqli_insert_id($link);
+            audit($link, 'CREATE', 'admin', $new_id, null, ['name' => $name, 'email' => $email, 'role' => $role]);
             $alert = "New administrator created successfully with '{$role}' privileges.";
+            $alert_type = 'success';
+        }
+    }
+}
+
+// Handle Role Change (Item 5)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_role'])) {
+    csrf_verify();
+    $target_id = (int)($_POST['target_id'] ?? 0);
+    $new_role = trim((string)($_POST['new_role'] ?? ''));
+
+    if (!in_array($new_role, ['super_admin', 'operator', 'viewer'], true)) {
+        $alert = 'Invalid role specified.';
+        $alert_type = 'danger';
+    } elseif ($target_id <= 0) {
+        $alert = 'Invalid administrator ID.';
+        $alert_type = 'danger';
+    } else {
+        $target_row = db_one($link, "SELECT * FROM `admin` WHERE `{$admin_pk}` = ?", 'i', [$target_id]);
+        if (!$target_row) {
+            $alert = 'Administrator not found.';
+            $alert_type = 'danger';
+        } else {
+            $old_role = (string)($target_row['role'] ?? 'operator');
+            if ($old_role === 'super_admin' && $new_role !== 'super_admin') {
+                if (count_active_super_admins($link) <= 1) {
+                    $alert = 'Cannot demote the last remaining active Super Admin.';
+                    $alert_type = 'danger';
+                }
+            }
+
+            if (!$alert) {
+                db_exec($link, "UPDATE `admin` SET `role` = ? WHERE `{$admin_pk}` = ?", 'si', [$new_role, $target_id]);
+                audit($link, 'ROLE_CHANGE', 'admin', $target_id, ['role' => $old_role], ['role' => $new_role]);
+                $alert = "Role updated successfully to '{$new_role}'.";
+                $alert_type = 'success';
+            }
+        }
+    }
+}
+
+// Handle Toggle Active/Deactivate (Item 5)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_active'])) {
+    csrf_verify();
+    $target_id = (int)($_POST['target_id'] ?? 0);
+    if ($target_id === $current_admin_id) {
+        $alert = 'You cannot deactivate your own account.';
+        $alert_type = 'danger';
+    } else {
+        $target_row = db_one($link, "SELECT * FROM `admin` WHERE `{$admin_pk}` = ?", 'i', [$target_id]);
+        if (!$target_row) {
+            $alert = 'Administrator not found.';
+            $alert_type = 'danger';
+        } else {
+            $curr_active = (int)($target_row['is_active'] ?? 1);
+            $new_active = $curr_active === 1 ? 0 : 1;
+
+            if ($curr_active === 1 && ($target_row['role'] ?? '') === 'super_admin' && count_active_super_admins($link) <= 1) {
+                $alert = 'Cannot deactivate the last remaining active Super Admin.';
+                $alert_type = 'danger';
+            } else {
+                db_exec($link, "UPDATE `admin` SET `is_active` = ? WHERE `{$admin_pk}` = ?", 'ii', [$new_active, $target_id]);
+                audit($link, 'UPDATE', 'admin', $target_id, ['is_active' => $curr_active], ['is_active' => $new_active]);
+                $alert = ($new_active === 1) ? 'Administrator account activated.' : 'Administrator account deactivated.';
+                $alert_type = 'success';
+            }
+        }
+    }
+}
+
+// Handle Force Password Reset (Item 5)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_pwd'])) {
+    csrf_verify();
+    $target_id = (int)($_POST['target_id'] ?? 0);
+    $new_pwd = (string)($_POST['new_pwd'] ?? '');
+
+    if ($target_id <= 0 || strlen($new_pwd) < 12) {
+        $alert = 'New password must be at least 12 characters.';
+        $alert_type = 'danger';
+    } else {
+        $target_row = db_one($link, "SELECT * FROM `admin` WHERE `{$admin_pk}` = ?", 'i', [$target_id]);
+        if (!$target_row) {
+            $alert = 'Administrator not found.';
+            $alert_type = 'danger';
+        } else {
+            $hashed = password_hash($new_pwd, PASSWORD_DEFAULT);
+            db_exec($link, "UPDATE `admin` SET `Password` = ?, `password_changed_at` = NOW() WHERE `{$admin_pk}` = ?", 'si', [$hashed, $target_id]);
+            audit($link, 'UPDATE', 'admin', $target_id, null, ['action' => 'password_reset_by_admin']);
+            $alert = 'Password has been reset successfully.';
+            $alert_type = 'success';
+        }
+    }
+}
+
+// Handle Delete Admin (Item 5)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_admin'])) {
+    csrf_verify();
+    $target_id = (int)($_POST['target_id'] ?? 0);
+
+    if ($target_id === $current_admin_id) {
+        $alert = 'You cannot delete your own account.';
+        $alert_type = 'danger';
+    } else {
+        $target_row = db_one($link, "SELECT * FROM `admin` WHERE `{$admin_pk}` = ?", 'i', [$target_id]);
+        if (!$target_row) {
+            $alert = 'Administrator not found.';
+            $alert_type = 'danger';
+        } elseif (($target_row['role'] ?? '') === 'super_admin' && count_active_super_admins($link) <= 1) {
+            $alert = 'Cannot delete the last remaining active Super Admin.';
+            $alert_type = 'danger';
+        } else {
+            db_exec($link, "DELETE FROM `admin` WHERE `{$admin_pk}` = ?", 'i', [$target_id]);
+            audit($link, 'DELETE', 'admin', $target_id, ['email' => $target_row['Email_id'] ?? ''], null);
+            $alert = 'Administrator deleted successfully.';
             $alert_type = 'success';
         }
     }
@@ -129,21 +253,24 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                 <table class="table table-hover mb-0">
                     <thead class="thead-light">
                         <tr>
-                            <th style="width: 60px;">#</th>
+                            <th style="width: 50px;">#</th>
                             <th>Name</th>
-                            <th>Email Address</th>
+                            <th>Email</th>
                             <th>Role</th>
-                            <th>Phone</th>
+                            <th>Status</th>
+                            <th class="text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($admins)): ?>
-                            <tr><td colspan="5" class="text-center text-muted py-4">No admins found.</td></tr>
+                            <tr><td colspan="6" class="text-center text-muted py-4">No admins found.</td></tr>
                         <?php else: ?>
                             <?php foreach ($admins as $row): ?>
                                 <?php
                                 $aid = (int)($row[$admin_pk] ?? $row['id'] ?? $row['sno'] ?? 0);
                                 $arole = (string)($row['role'] ?? 'super_admin');
+                                $is_active = (int)($row['is_active'] ?? 1) === 1;
+                                $is_self = ($aid === $current_admin_id);
                                 $role_badge = match($arole) {
                                     'super_admin' => 'badge-danger',
                                     'operator' => 'badge-primary',
@@ -151,12 +278,59 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                                     default => 'badge-info',
                                 };
                                 ?>
-                                <tr>
+                                <tr class="<?= !$is_active ? 'text-muted bg-light' : '' ?>">
                                     <td><span class="text-muted small">#<?= e($aid) ?></span></td>
-                                    <td class="font-weight-medium text-dark"><?= e($row['name'] ?? '') ?></td>
-                                    <td><a href="mailto:<?= e($row['Email_id'] ?? '') ?>" class="text-primary"><?= e($row['Email_id'] ?? '') ?></a></td>
-                                    <td><span class="badge <?= $role_badge ?>"><?= e(ucfirst(str_replace('_', ' ', $arole))) ?></span></td>
-                                    <td><?= e($row['phone'] ?? '') ?></td>
+                                    <td>
+                                        <strong class="text-dark"><?= e($row['name'] ?? '') ?></strong>
+                                        <?php if ($is_self): ?>
+                                            <span class="badge badge-info ml-1">You</span>
+                                        <?php endif; ?>
+                                        <div class="small text-muted"><?= e($row['phone'] ?? '') ?></div>
+                                    </td>
+                                    <td><a href="mailto:<?= e($row['Email_id'] ?? '') ?>"><?= e($row['Email_id'] ?? '') ?></a></td>
+                                    <td>
+                                        <span class="badge <?= $role_badge ?> mb-1"><?= e(ucfirst(str_replace('_', ' ', $arole))) ?></span>
+                                        <form method="post" action="" class="form-inline mt-1">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="target_id" value="<?= e($aid) ?>">
+                                            <select name="new_role" class="form-control form-control-sm mr-1" style="font-size: 0.75rem; height: 26px; padding: 2px 5px;" onchange="if(confirm('Change role to ' + this.value + '?')) this.form.submit(); else this.value='<?= $arole ?>';">
+                                                <option value="super_admin" <?= $arole === 'super_admin' ? 'selected' : '' ?>>super_admin</option>
+                                                <option value="operator" <?= $arole === 'operator' ? 'selected' : '' ?>>operator</option>
+                                                <option value="viewer" <?= $arole === 'viewer' ? 'selected' : '' ?>>viewer</option>
+                                            </select>
+                                            <input type="hidden" name="update_role" value="1">
+                                        </form>
+                                    </td>
+                                    <td>
+                                        <?php if ($is_active): ?>
+                                            <span class="badge badge-success">Active</span>
+                                        <?php else: ?>
+                                            <span class="badge badge-secondary">Deactivated</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-right">
+                                        <div class="btn-group btn-group-sm">
+                                            <?php if (!$is_self): ?>
+                                                <form method="post" action="" class="d-inline" onsubmit="return confirm('<?= $is_active ? 'Deactivate this admin account?' : 'Reactivate this admin account?' ?>');">
+                                                    <?= csrf_field() ?>
+                                                    <input type="hidden" name="target_id" value="<?= e($aid) ?>">
+                                                    <button type="submit" name="toggle_active" class="btn btn-sm <?= $is_active ? 'btn-outline-warning' : 'btn-outline-success' ?> mr-1">
+                                                        <?= $is_active ? 'Deactivate' : 'Activate' ?>
+                                                    </button>
+                                                </form>
+                                                <form method="post" action="" class="d-inline" onsubmit="return confirm('Permanently remove this administrator?');">
+                                                    <?= csrf_field() ?>
+                                                    <input type="hidden" name="target_id" value="<?= e($aid) ?>">
+                                                    <button type="submit" name="delete_admin" class="btn btn-sm btn-outline-danger mr-1">
+                                                        Delete
+                                                    </button>
+                                                </form>
+                                            <?php endif; ?>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="let np = prompt('Enter new master password (min 12 chars):'); if(np && np.length >= 12) { document.getElementById('rp_id').value='<?= $aid ?>'; document.getElementById('rp_pwd').value=np; document.getElementById('rp_form').submit(); } else if(np) { alert('Password must be at least 12 characters.'); }">
+                                                Reset Pwd
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
@@ -166,5 +340,13 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         </div>
     </div>
 </div>
+
+<!-- Hidden form for reset password prompt -->
+<form id="rp_form" method="post" action="" style="display:none;">
+    <?= csrf_field() ?>
+    <input type="hidden" name="target_id" id="rp_id" value="">
+    <input type="hidden" name="new_pwd" id="rp_pwd" value="">
+    <input type="hidden" name="reset_pwd" value="1">
+</form>
 
 <?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>

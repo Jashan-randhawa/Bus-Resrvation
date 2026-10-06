@@ -59,6 +59,7 @@ require_once __DIR__ . '/../config.php';
             <?php
             $is_super = function_exists('is_super_admin') && is_super_admin();
             $people_items = [
+                ['Profile & Security', 'profile.php', null, '⚙️'],
                 ['Customers', 'customers.php', 'edit-customer.php', '👥'],
             ];
             if ($is_super) {
