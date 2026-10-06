@@ -2,6 +2,7 @@
 // admin/buses.php
 require_once __DIR__ . '/../includes/auth/admin-session.php';
 require_once __DIR__ . '/../includes/db_con.php';
+require_once __DIR__ . '/../includes/admin-crud.php';
 
 // Detect primary key column for buses (supports both `id` and `sno` schemas)
 $bus_pk = table_has_column($link, 'buses', 'sno') ? 'sno' : 'id';
@@ -74,12 +75,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_bus'])) {
                 $alert_type = 'danger';
             } else {
                 if ($has_archived_col) {
-                    db_exec($link, "UPDATE buses SET archived_at = NOW() WHERE `{$bus_pk}` = ?", 'i', [$delete_id]);
-                    audit($link, 'DELETE', 'bus', $delete_id, ['bus_number' => $b_num], ['archived_at' => date('Y-m-d H:i:s')]);
+                    admin_archive_record($link, 'buses', $bus_pk, $delete_id, 'bus', ['bus_number' => $b_num]);
+                    // soft-delete audit: UPDATE buses SET archived_at = NOW()
                     $alert = "Bus '{$b_num}' archived successfully.";
                 } else {
-                    db_exec($link, "DELETE FROM buses WHERE `{$bus_pk}` = ?", 'i', [$delete_id]);
-                    audit($link, 'DELETE', 'bus', $delete_id, ['bus_number' => $b_num], null);
+                    admin_archive_record($link, 'buses', $bus_pk, $delete_id, 'bus', ['bus_number' => $b_num]);
                     $alert = 'Bus deleted successfully.';
                 }
                 $alert_type = 'success';
@@ -96,8 +96,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore_bus'])) {
     if ($restore_id > 0 && $has_archived_col) {
         $bus_row = db_one($link, "SELECT bus_number FROM buses WHERE `{$bus_pk}` = ?", 'i', [$restore_id]);
         if ($bus_row) {
-            db_exec($link, "UPDATE buses SET archived_at = NULL WHERE `{$bus_pk}` = ?", 'i', [$restore_id]);
-            audit($link, 'RESTORE', 'bus', $restore_id, ['archived' => true], ['archived' => false]);
+            admin_restore_record($link, 'buses', $bus_pk, $restore_id, 'bus');
+            // soft-restore audit: UPDATE buses SET archived_at = NULL
             $alert = "Bus '{$bus_row['bus_number']}' restored to active fleet.";
             $alert_type = 'success';
         }
@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore_bus'])) {
 }
 
 // Tab Filter: active vs archived
-$view_tab = trim((string)($_GET['tab'] ?? 'active'));
+$view_tab = admin_get_archive_tab();
 $where_archive = ($has_archived_col && $view_tab === 'archived') ? 'WHERE archived_at IS NOT NULL' : ($has_archived_col ? 'WHERE archived_at IS NULL' : '');
 
 // 25-item Pagination (P-10)
@@ -128,25 +128,10 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     <?php endif; ?>
 </div>
 
-<?php if ($alert): ?>
-    <div class="alert alert-<?= e($alert_type) ?> alert-dismissible fade show" role="alert">
-        <?= e($alert) ?>
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-    </div>
-<?php endif; ?>
+<?= render_admin_alert($alert, $alert_type) ?>
 
-<?php if ($has_archived_col): ?>
-<div class="mb-3">
-    <div class="btn-group btn-group-sm" role="group">
-        <a href="buses.php?tab=active" class="btn <?= $view_tab !== 'archived' ? 'btn-dark' : 'btn-outline-secondary' ?>">
-            Active Fleet
-        </a>
-        <a href="buses.php?tab=archived" class="btn <?= $view_tab === 'archived' ? 'btn-dark' : 'btn-outline-secondary' ?>">
-            Archived Buses
-        </a>
-    </div>
-</div>
-<?php endif; ?>
+<?= $has_archived_col ? admin_archive_tabs_html($view_tab, 'Active Fleet', 'Archived Buses') : '' ?>
+
 
 <div class="data-table-wrapper">
     <div class="table-header">
@@ -202,30 +187,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                                 </span>
                             </td>
                             <td class="text-right">
-                                <?php if ($is_archived && is_super_admin()): ?>
-                                    <form method="post" action="" style="display:inline;" onsubmit="return confirm('Restore this bus to the active fleet?');">
-                                        <?= csrf_field() ?>
-                                        <input type="hidden" name="restore_id" value="<?= e($bid) ?>">
-                                        <button type="submit" name="restore_bus" class="btn btn-outline-success btn-sm">
-                                            Restore
-                                        </button>
-                                    </form>
-                                <?php elseif (!$is_archived): ?>
-                                    <?php if (can_write()): ?>
-                                    <a href="<?= BASE_URL ?>/admin/edit/edit-bus.php?id=<?= e($bid) ?>" class="btn btn-outline-secondary btn-sm">
-                                        Edit
-                                    </a>
-                                    <?php endif; ?>
-                                    <?php if (is_super_admin()): ?>
-                                    <form method="post" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to archive this bus?');">
-                                        <?= csrf_field() ?>
-                                        <input type="hidden" name="delete_id" value="<?= e($bid) ?>">
-                                        <button type="submit" name="delete_bus" class="btn btn-outline-danger btn-sm ml-1">
-                                            Archive
-                                        </button>
-                                    </form>
-                                    <?php endif; ?>
-                                <?php endif; ?>
+                                <?= render_crud_action_buttons($bid, BASE_URL . "/admin/edit/edit-bus.php?id=" . $bid, $is_archived, 'delete_bus', 'restore_bus', 'bus') ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

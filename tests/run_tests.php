@@ -714,6 +714,25 @@ assert_test("manifest.php exists", file_exists($manifest_path));
 $manifest_content = file_exists($manifest_path) ? file_get_contents($manifest_path) : '';
 assert_test("manifest.php has print styles & CSV export", str_contains($manifest_content, '@media print') && str_contains($manifest_content, 'export=csv'));
 
+// 8.7 Phase E: Shared CRUD Helpers & Layout Consolidation (Item 14)
+$crud_helpers_path = __DIR__ . '/../includes/admin-crud.php';
+assert_test("admin-crud.php exists", file_exists($crud_helpers_path));
+require_once $crud_helpers_path;
+assert_test("admin-crud helpers exist (admin_archive_record, admin_restore_record, admin_get_archive_tab, render_crud_action_buttons, render_admin_alert)", 
+    function_exists('admin_archive_record') && 
+    function_exists('admin_restore_record') && 
+    function_exists('admin_get_archive_tab') && 
+    function_exists('render_crud_action_buttons') && 
+    function_exists('render_admin_alert')
+);
+$buses_content_updated = file_get_contents(__DIR__ . '/../admin/buses.php');
+$routes_content_updated = file_get_contents(__DIR__ . '/../admin/routes.php');
+$customers_content_updated = file_get_contents(__DIR__ . '/../admin/customers.php');
+assert_test("buses.php utilizes admin-crud.php", str_contains($buses_content_updated, 'admin-crud.php'));
+assert_test("routes.php utilizes admin-crud.php", str_contains($routes_content_updated, 'admin-crud.php'));
+assert_test("customers.php utilizes admin-crud.php", str_contains($customers_content_updated, 'admin-crud.php'));
+
+
 
 // Clean up test data
 db_exec($link, 'DELETE FROM booking WHERE bus = ?', 's', [$test_busno]);

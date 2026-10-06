@@ -2,6 +2,7 @@
 // admin/routes.php
 require_once __DIR__ . '/../includes/auth/admin-session.php';
 require_once __DIR__ . '/../includes/db_con.php';
+require_once __DIR__ . '/../includes/admin-crud.php';
 
 // Detect primary key column for route table
 $route_pk = table_has_column($link, 'route', 'sno') ? 'sno' : 'id';
@@ -82,12 +83,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_route'])) {
                 $alert_type = 'danger';
             } else {
                 if ($has_archived_col) {
-                    db_exec($link, "UPDATE route SET archived_at = NOW() WHERE `{$route_pk}` = ?", 'i', [$delete_id]);
-                    audit($link, 'DELETE', 'route', $delete_id, ['city1' => $route_row['city1'], 'city2' => $route_row['city2'], 'busno' => $r_bus, 'time' => $r_time], ['archived_at' => date('Y-m-d H:i:s')]);
+                    admin_archive_record($link, 'route', $route_pk, $delete_id, 'route', ['city1' => $route_row['city1'], 'city2' => $route_row['city2'], 'busno' => $r_bus, 'time' => $r_time]);
+                    // soft-delete audit: UPDATE route SET archived_at = NOW()
                     $alert = 'Route archived successfully.';
                 } else {
-                    db_exec($link, "DELETE FROM route WHERE `{$route_pk}` = ?", 'i', [$delete_id]);
-                    audit($link, 'DELETE', 'route', $delete_id, ['city1' => $route_row['city1'], 'city2' => $route_row['city2'], 'busno' => $r_bus, 'time' => $r_time], null);
+                    admin_archive_record($link, 'route', $route_pk, $delete_id, 'route', ['city1' => $route_row['city1'], 'city2' => $route_row['city2'], 'busno' => $r_bus, 'time' => $r_time]);
                     $alert = 'Route deleted successfully.';
                 }
                 $alert_type = 'success';
@@ -104,8 +104,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore_route'])) {
     if ($restore_id > 0 && $has_archived_col) {
         $route_row = db_one($link, "SELECT * FROM route WHERE `{$route_pk}` = ?", 'i', [$restore_id]);
         if ($route_row) {
-            db_exec($link, "UPDATE route SET archived_at = NULL WHERE `{$route_pk}` = ?", 'i', [$restore_id]);
-            audit($link, 'RESTORE', 'route', $restore_id, ['archived' => true], ['archived' => false]);
+            admin_restore_record($link, 'route', $route_pk, $restore_id, 'route');
+            // soft-restore audit: UPDATE route SET archived_at = NULL
             $alert = "Route schedule ({$route_row['city1']} -> {$route_row['city2']}) restored successfully.";
             $alert_type = 'success';
         }
@@ -113,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore_route'])) {
 }
 
 // Tab Filter: active vs archived
-$view_tab = trim((string)($_GET['tab'] ?? 'active'));
+$view_tab = admin_get_archive_tab();
 $where_archive = ($has_archived_col && $view_tab === 'archived') ? 'WHERE archived_at IS NOT NULL' : ($has_archived_col ? 'WHERE archived_at IS NULL' : '');
 
 $buses = db_all($link, "SELECT bus_number FROM buses " . (table_has_column($link, 'buses', 'archived_at') ? "WHERE archived_at IS NULL" : "") . " ORDER BY bus_number ASC");
@@ -137,25 +137,10 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     <?php endif; ?>
 </div>
 
-<?php if ($alert): ?>
-    <div class="alert alert-<?= e($alert_type) ?> alert-dismissible fade show" role="alert">
-        <?= e($alert) ?>
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-    </div>
-<?php endif; ?>
+<?= render_admin_alert($alert, $alert_type) ?>
 
-<?php if ($has_archived_col): ?>
-<div class="mb-3">
-    <div class="btn-group btn-group-sm" role="group">
-        <a href="routes.php?tab=active" class="btn <?= $view_tab !== 'archived' ? 'btn-dark' : 'btn-outline-secondary' ?>">
-            Active Routes
-        </a>
-        <a href="routes.php?tab=archived" class="btn <?= $view_tab === 'archived' ? 'btn-dark' : 'btn-outline-secondary' ?>">
-            Archived Schedules
-        </a>
-    </div>
-</div>
-<?php endif; ?>
+<?= $has_archived_col ? admin_archive_tabs_html($view_tab, 'Active Routes', 'Archived Schedules') : '' ?>
+
 
 <div class="data-table-wrapper">
     <div class="table-header">
@@ -205,30 +190,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                             <td><?= e($row['time'] ?? '') ?></td>
                             <td class="font-weight-bold text-success h6 mb-0"><?= CURRENCY ?><?= e(number_format((float)($row['price'] ?? 0), 2)) ?></td>
                             <td class="text-right">
-                                <?php if ($is_archived && is_super_admin()): ?>
-                                    <form method="post" action="" style="display:inline;" onsubmit="return confirm('Restore this route to active schedules?');">
-                                        <?= csrf_field() ?>
-                                        <input type="hidden" name="restore_id" value="<?= e($rid) ?>">
-                                        <button type="submit" name="restore_route" class="btn btn-outline-success btn-sm">
-                                            Restore
-                                        </button>
-                                    </form>
-                                <?php elseif (!$is_archived): ?>
-                                    <?php if (can_write()): ?>
-                                    <a href="<?= BASE_URL ?>/admin/edit/edit-route.php?id=<?= e($rid) ?>" class="btn btn-outline-secondary btn-sm">
-                                        Edit
-                                    </a>
-                                    <?php endif; ?>
-                                    <?php if (is_super_admin()): ?>
-                                    <form method="post" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to archive this route?');">
-                                        <?= csrf_field() ?>
-                                        <input type="hidden" name="delete_id" value="<?= e($rid) ?>">
-                                        <button type="submit" name="delete_route" class="btn btn-outline-danger btn-sm ml-1">
-                                            Archive
-                                        </button>
-                                    </form>
-                                    <?php endif; ?>
-                                <?php endif; ?>
+                                <?= render_crud_action_buttons($rid, BASE_URL . "/admin/edit/edit-route.php?id=" . $rid, $is_archived, 'delete_route', 'restore_route', 'route schedule') ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

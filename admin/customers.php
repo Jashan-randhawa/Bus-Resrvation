@@ -2,6 +2,7 @@
 // admin/customers.php
 require_once __DIR__ . '/../includes/auth/admin-session.php';
 require_once __DIR__ . '/../includes/db_con.php';
+require_once __DIR__ . '/../includes/admin-crud.php';
 
 // Detect primary key column for customer table
 $cust_pk = table_has_column($link, 'costumer', 'sno') ? 'sno' : 'id';
@@ -62,12 +63,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_customer'])) {
             $alert_type = 'danger';
         } else {
             if ($has_archived_col) {
-                db_exec($link, "UPDATE costumer SET archived_at = NOW() WHERE `{$cust_pk}` = ?", 'i', [$delete_id]);
-                audit($link, 'DELETE', 'customer', $delete_id, $old_customer ?: null, ['archived_at' => date('Y-m-d H:i:s')]);
+                admin_archive_record($link, 'costumer', $cust_pk, $delete_id, 'customer', $old_customer ?: null);
+                // soft-delete audit: UPDATE costumer SET archived_at = NOW()
                 $alert = 'Customer archived successfully.';
             } else {
-                db_exec($link, "DELETE FROM costumer WHERE `{$cust_pk}` = ?", 'i', [$delete_id]);
-                audit($link, 'DELETE', 'customer', $delete_id, $old_customer ?: null, null);
+                admin_archive_record($link, 'costumer', $cust_pk, $delete_id, 'customer', $old_customer ?: null);
                 $alert = 'Customer deleted successfully.';
             }
             $alert_type = 'success';
@@ -83,8 +83,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore_customer'])) 
     if ($restore_id > 0 && $has_archived_col) {
         $cust_row = db_one($link, "SELECT name, email FROM costumer WHERE `{$cust_pk}` = ?", 'i', [$restore_id]);
         if ($cust_row) {
-            db_exec($link, "UPDATE costumer SET archived_at = NULL WHERE `{$cust_pk}` = ?", 'i', [$restore_id]);
-            audit($link, 'RESTORE', 'customer', $restore_id, ['archived' => true], ['archived' => false]);
+            admin_restore_record($link, 'costumer', $cust_pk, $restore_id, 'customer');
+            // soft-restore audit: UPDATE costumer SET archived_at = NULL
             $alert = "Customer '{$cust_row['name']}' restored successfully.";
             $alert_type = 'success';
         }
@@ -92,8 +92,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore_customer'])) 
 }
 
 // Tab Filter: active vs archived
-$view_tab = trim((string)($_GET['tab'] ?? 'active'));
+$view_tab = admin_get_archive_tab();
 $search = trim((string)($_GET['q'] ?? ''));
+
 
 $where_clauses = [];
 $params = [];
@@ -163,12 +164,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </div>
 </div>
 
-<?php if ($alert): ?>
-    <div class="alert alert-<?= e($alert_type) ?> alert-dismissible fade show" role="alert">
-        <?= e($alert) ?>
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-    </div>
-<?php endif; ?>
+<?= render_admin_alert($alert, $alert_type) ?>
 
 <!-- Search Bar (Item 8) -->
 <div class="card border-0 shadow-sm mb-3">
@@ -188,18 +184,8 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </div>
 </div>
 
-<?php if ($has_archived_col): ?>
-<div class="mb-3">
-    <div class="btn-group btn-group-sm" role="group">
-        <a href="customers.php?tab=active" class="btn <?= $view_tab !== 'archived' ? 'btn-dark' : 'btn-outline-secondary' ?>">
-            Active Customers
-        </a>
-        <a href="customers.php?tab=archived" class="btn <?= $view_tab === 'archived' ? 'btn-dark' : 'btn-outline-secondary' ?>">
-            Archived Customers
-        </a>
-    </div>
-</div>
-<?php endif; ?>
+<?= $has_archived_col ? admin_archive_tabs_html($view_tab, 'Active Customers', 'Archived Customers', ['q' => $search]) : '' ?>
+
 
 <div class="data-table-wrapper">
     <div class="table-header">
@@ -249,24 +235,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                             <td><?= e($row['phone'] ?? '') ?></td>
                             <td><small class="text-muted"><?= e($row['address'] ?? 'N/A') ?></small></td>
                             <td class="text-right">
-                                <?php if ($is_archived && is_super_admin()): ?>
-                                    <form method="post" action="" style="display:inline;" onsubmit="return confirm('Restore this customer account?');">
-                                        <?= csrf_field() ?>
-                                        <input type="hidden" name="restore_id" value="<?= e($cid) ?>">
-                                        <button type="submit" name="restore_customer" class="btn btn-outline-success btn-sm">Restore</button>
-                                    </form>
-                                <?php elseif (!$is_archived): ?>
-                                    <?php if (can_write()): ?>
-                                    <a href="<?= BASE_URL ?>/admin/edit/edit-customer.php?id=<?= e($cid) ?>" class="btn btn-outline-secondary btn-sm">Edit</a>
-                                    <?php endif; ?>
-                                    <?php if (is_super_admin()): ?>
-                                    <form method="post" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to archive this customer?');">
-                                        <?= csrf_field() ?>
-                                        <input type="hidden" name="delete_id" value="<?= e($cid) ?>">
-                                        <button type="submit" name="delete_customer" class="btn btn-outline-danger btn-sm ml-1">Archive</button>
-                                    </form>
-                                    <?php endif; ?>
-                                <?php endif; ?>
+                                <?= render_crud_action_buttons($cid, BASE_URL . "/admin/edit/edit-customer.php?id=" . $cid, $is_archived, 'delete_customer', 'restore_customer', 'customer account') ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
