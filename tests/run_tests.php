@@ -574,6 +574,51 @@ assert_test("build_seat_layout falls back to 2+2 on invalid pattern", $layout_fa
 $bus_lyt_fallback = get_bus_layout($link, 'NON_EXISTENT_BUS_xyz');
 assert_test("get_bus_layout falls back safely to 2+2", $bus_lyt_fallback === '2+2');
 
+// -------------------------------------------------------------
+// Suite 7: User Section Improvement Plan Validations (Phases 1-5)
+// -------------------------------------------------------------
+echo "\n[*] Suite 7: User Section Validations (Phases 1-5)\n";
+
+// 7.1 Safe Next URL open-redirect tests (Phase 1.1)
+assert_test("safe_next_url rejects backslash bypass /\\evil.com", safe_next_url('/\\evil.com') === null);
+assert_test("safe_next_url rejects protocol-relative //evil.com", safe_next_url('//evil.com') === null);
+assert_test("safe_next_url rejects url-encoded backslash /%5Cevil.com", safe_next_url('/%5Cevil.com') === null);
+assert_test("safe_next_url rejects external scheme https://evil.com", safe_next_url('https://evil.com') === null);
+assert_test("safe_next_url rejects javascript scheme", safe_next_url('javascript:alert(1)') === null);
+assert_test("safe_next_url rejects control characters and newlines", safe_next_url("/user/index.php\n\r") === null);
+assert_test("safe_next_url accepts valid internal relative url", safe_next_url('/user/booking.php?route_id=1') === '/user/booking.php?route_id=1');
+assert_test("safe_next_url accepts internal path /user/index.php", safe_next_url('/user/index.php') === '/user/index.php');
+
+// 7.2 Person fields validation & normalization (Phase 1.4)
+$val_good = validate_person_fields('Alice Traveler', '+91 98765-43210', '123 Main St');
+assert_test("validate_person_fields passes valid data and strips formatting", 
+    $val_good['ok'] === true && $val_good['phone'] === '919876543210' && $val_good['name'] === 'Alice Traveler'
+);
+
+$val_short_name = validate_person_fields('A', '9876543210');
+assert_test("validate_person_fields rejects single letter name", $val_short_name['ok'] === false);
+
+$val_bad_phone = validate_person_fields('Bob Traveler', '12345');
+assert_test("validate_person_fields rejects short phone (<10 digits)", $val_bad_phone['ok'] === false);
+
+$val_long_addr = validate_person_fields('Charlie', '9876543210', str_repeat('X', 300));
+assert_test("validate_person_fields rejects address > 255 chars", $val_long_addr['ok'] === false);
+
+// 7.3 Booking cutoff window tests (Phase 3.5)
+$today_str = date('Y-m-d');
+$past_min_time = date('H:i:s', time() - 3600);
+$cutoff_near_time = date('H:i:s', time() + 600); // 10 minutes in future (inside 30m cutoff)
+$future_ok_time = date('H:i:s', time() + 7200); // 2 hours in future
+
+$chk_past = validate_travel_datetime($today_str, $past_min_time);
+assert_test("validate_travel_datetime rejects already departed time", $chk_past['ok'] === false);
+
+$chk_cutoff = validate_travel_datetime($today_str, $cutoff_near_time);
+assert_test("validate_travel_datetime rejects departure inside cutoff window", $chk_cutoff['ok'] === false && str_contains($chk_cutoff['error'], 'Booking has closed'));
+
+$chk_ok = validate_travel_datetime($today_str, $future_ok_time);
+assert_test("validate_travel_datetime accepts departure beyond cutoff window", $chk_ok['ok'] === true);
+
 // Clean up test data
 db_exec($link, 'DELETE FROM booking WHERE bus = ?', 's', [$test_busno]);
 db_exec($link, 'DELETE FROM buses WHERE bus_number = ?', 's', [$test_busno]);

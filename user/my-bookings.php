@@ -66,75 +66,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_booking'])) {
     exit;
 }
 
-// U-16: Fetch and categorize all user bookings into Upcoming, Past, and Cancelled
-$all_bookings = db_all(
-    $link,
-    'SELECT * FROM booking WHERE id = ?',
-    'i',
-    [$uid]
-);
+// Phase 5.1: SQL-level counting and pagination
+$cancelled_cnt = (int)(db_one($link,
+    "SELECT COUNT(*) AS c FROM booking WHERE id = ? AND (status IN ('Cancelled', 'Expired'))",
+    'i', [$uid]
+)['c'] ?? 0);
 
-$upcoming_list = [];
-$past_list = [];
-$cancelled_list = [];
-$now_ts = time();
+$upcoming_cnt = (int)(db_one($link,
+    "SELECT COUNT(*) AS c FROM booking WHERE id = ? AND (status NOT IN ('Cancelled', 'Expired') OR status IS NULL) AND (date > CURDATE() OR (date = CURDATE() AND time >= CURTIME()))",
+    'i', [$uid]
+)['c'] ?? 0);
 
-foreach ($all_bookings as $b) {
-    $raw_status = (string)($b['status'] ?? 'Confirmed');
-    $dep_time = !empty($b['time']) ? (string)$b['time'] : '00:00:00';
-    $dep_ts = strtotime($b['date'] . ' ' . $dep_time);
+$past_cnt = (int)(db_one($link,
+    "SELECT COUNT(*) AS c FROM booking WHERE id = ? AND (status NOT IN ('Cancelled', 'Expired') OR status IS NULL) AND (date < CURDATE() OR (date = CURDATE() AND time < CURTIME()))",
+    'i', [$uid]
+)['c'] ?? 0);
 
-    if ($raw_status === 'Cancelled' || $raw_status === 'Expired') {
-        $cancelled_list[] = $b;
-    } elseif ($dep_ts <= $now_ts) {
-        $past_list[] = $b;
-    } else {
-        $upcoming_list[] = $b;
-    }
-}
+$counts = [
+    'upcoming'  => $upcoming_cnt,
+    'past'      => $past_cnt,
+    'cancelled' => $cancelled_cnt
+];
 
-// Sort upcoming trips ascending (nearest upcoming first)
-usort($upcoming_list, function($a, $b) {
-    $ta = strtotime($a['date'] . ' ' . ($a['time'] ?? '00:00:00'));
-    $tb = strtotime($b['date'] . ' ' . ($b['time'] ?? '00:00:00'));
-    return $ta <=> $tb;
-});
-
-// Sort past and cancelled descending (most recent first)
-usort($past_list, function($a, $b) {
-    $ta = strtotime($a['date'] . ' ' . ($a['time'] ?? '00:00:00'));
-    $tb = strtotime($b['date'] . ' ' . ($b['time'] ?? '00:00:00'));
-    return $tb <=> $ta;
-});
-
-usort($cancelled_list, function($a, $b) {
-    $ta = strtotime($a['date'] . ' ' . ($a['time'] ?? '00:00:00'));
-    $tb = strtotime($b['date'] . ' ' . ($b['time'] ?? '00:00:00'));
-    return $tb <=> $ta;
-});
-
-// Tab & Pagination resolution (U-16)
+// Tab & Pagination resolution (U-16, Phase 5.1)
 $current_tab = in_array($_GET['tab'] ?? '', ['upcoming', 'past', 'cancelled'], true) ? $_GET['tab'] : 'upcoming';
-
-switch ($current_tab) {
-    case 'past':
-        $active_records = $past_list;
-        break;
-    case 'cancelled':
-        $active_records = $cancelled_list;
-        break;
-    case 'upcoming':
-    default:
-        $active_records = $upcoming_list;
-        break;
-}
-
 $per_page = 10;
-$total_records = count($active_records);
+$total_records = $counts[$current_tab] ?? 0;
 $total_pages = max(1, (int)ceil($total_records / $per_page));
 $page = max(1, min($total_pages, (int)($_GET['page'] ?? 1)));
 $offset = ($page - 1) * $per_page;
-$display_records = array_slice($active_records, $offset, $per_page);
+
+if ($current_tab === 'cancelled') {
+    $display_records = db_all($link,
+        "SELECT * FROM booking WHERE id = ? AND (status IN ('Cancelled', 'Expired')) ORDER BY date DESC, time DESC LIMIT ? OFFSET ?",
+        'iii', [$uid, $per_page, $offset]
+    );
+} elseif ($current_tab === 'past') {
+    $display_records = db_all($link,
+        "SELECT * FROM booking WHERE id = ? AND (status NOT IN ('Cancelled', 'Expired') OR status IS NULL) AND (date < CURDATE() OR (date = CURDATE() AND time < CURTIME())) ORDER BY date DESC, time DESC LIMIT ? OFFSET ?",
+        'iii', [$uid, $per_page, $offset]
+    );
+} else {
+    $display_records = db_all($link,
+        "SELECT * FROM booking WHERE id = ? AND (status NOT IN ('Cancelled', 'Expired') OR status IS NULL) AND (date > CURDATE() OR (date = CURDATE() AND time >= CURTIME())) ORDER BY date ASC, time ASC LIMIT ? OFFSET ?",
+        'iii', [$uid, $per_page, $offset]
+    );
+}
 
 $title = 'My Reservations';
 require_once __DIR__ . '/../includes/layout/header-user.php';
@@ -160,17 +137,17 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
 <ul class="nav nav-pills mb-4 border-bottom pb-3">
     <li class="nav-item">
         <a class="nav-link font-weight-bold <?= $current_tab === 'upcoming' ? 'active' : '' ?>" href="?tab=upcoming">
-            🕒 Upcoming Trips <span class="badge badge-light ml-1"><?= count($upcoming_list) ?></span>
+            🕒 Upcoming Trips <span class="badge badge-light ml-1"><?= $counts['upcoming'] ?></span>
         </a>
     </li>
     <li class="nav-item">
         <a class="nav-link font-weight-bold <?= $current_tab === 'past' ? 'active' : '' ?>" href="?tab=past">
-            📜 Past Journeys <span class="badge badge-light ml-1"><?= count($past_list) ?></span>
+            📜 Past Journeys <span class="badge badge-light ml-1"><?= $counts['past'] ?></span>
         </a>
     </li>
     <li class="nav-item">
         <a class="nav-link font-weight-bold <?= $current_tab === 'cancelled' ? 'active' : '' ?>" href="?tab=cancelled">
-            ✕ Cancelled / Expired <span class="badge badge-light ml-1"><?= count($cancelled_list) ?></span>
+            ✕ Cancelled / Expired <span class="badge badge-light ml-1"><?= $counts['cancelled'] ?></span>
         </a>
     </li>
 </ul>
@@ -255,7 +232,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                                         class="btn btn-outline-danger btn-sm open-cancel-modal"
                                         data-id="<?= e($sno) ?>"
                                         data-pnr="<?= e($display_pnr) ?>"
-                                        data-route="<?= e(($row['city1'] ?? '') . ' &rarr; ' . ($row['city2'] ?? '')) ?>"
+                                        data-route="<?= e(($row['city1'] ?? '') . ' → ' . ($row['city2'] ?? '')) ?>"
                                         data-schedule="<?= e(fmt_date($row['date'] ?? '') . ' at ' . fmt_time($row['time'] ?? '')) ?>"
                                         data-toggle="modal"
                                         data-target="#cancelModal">
@@ -335,7 +312,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                                 class="btn btn-outline-danger btn-sm open-cancel-modal ml-1"
                                 data-id="<?= e($sno) ?>"
                                 data-pnr="<?= e($display_pnr) ?>"
-                                data-route="<?= e(($row['city1'] ?? '') . ' &rarr; ' . ($row['city2'] ?? '')) ?>"
+                                data-route="<?= e(($row['city1'] ?? '') . ' → ' . ($row['city2'] ?? '')) ?>"
                                 data-schedule="<?= e(fmt_date($row['date'] ?? '') . ' at ' . fmt_time($row['time'] ?? '')) ?>"
                                 data-toggle="modal"
                                 data-target="#cancelModal">
@@ -368,7 +345,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
     </nav>
 <?php endif; ?>
 
-<!-- Bootstrap Cancellation Modal (U-10) -->
+<!-- Bootstrap Cancellation Modal (U-10, Phase 1.2, Phase 2.3) -->
 <div class="modal fade" id="cancelModal" tabindex="-1" role="dialog" aria-labelledby="cancelModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content border-0 shadow">
@@ -392,7 +369,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                         <ul class="mb-0 pl-3">
                             <li>Cancellations are permitted up to <strong><?= e($cutoff_display) ?></strong> before departure.</li>
                             <li>The seat will immediately become available for other passengers.</li>
-                            <li>Eligible refunds will be processed to the original payment method within 3–5 business days.</li>
+                            <li>Refund handling depends on your payment arrangement with the operator.</li>
                         </ul>
                     </div>
                 </div>
@@ -417,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             document.getElementById('modal-cancel-id').value = id;
             document.getElementById('modal-cancel-pnr').textContent = pnr;
-            document.getElementById('modal-cancel-route').innerHTML = route;
+            document.getElementById('modal-cancel-route').textContent = route;
             document.getElementById('modal-cancel-schedule').textContent = schedule;
         });
     });

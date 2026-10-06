@@ -17,6 +17,7 @@ function render_seat_map(array $layout, array $booked, array $meta = []): void {
     $bus_attr = htmlspecialchars($meta['bus'] ?? '', ENT_QUOTES, 'UTF-8');
     $date_attr = htmlspecialchars($meta['date'] ?? '', ENT_QUOTES, 'UTF-8');
     $time_attr = htmlspecialchars($meta['time'] ?? '', ENT_QUOTES, 'UTF-8');
+    $preselected = (int)($meta['selected'] ?? 0);
     ?>
     <fieldset class="bus-map-card" style="--left: <?= $left ?>; --right: <?= $right ?>;">
         <legend class="seat-legend-title sr-only">Select your seat</legend>
@@ -81,6 +82,7 @@ function render_seat_map(array $layout, array $booked, array $meta = []): void {
                             $s_no = (int)$seat['no'];
                             $s_type = (string)$seat['type'];
                             $is_bk = isset($booked[$s_no]);
+                            $is_selected = ($s_no === $preselected && !$is_bk);
                             $s_tag = ($s_type === 'Window') ? 'W' : 'A';
                             $aria_state = $is_bk ? 'booked' : 'available';
                             ?>
@@ -88,7 +90,8 @@ function render_seat_map(array $layout, array $booked, array $meta = []): void {
                                 <input type="radio" name="seat" id="seat-<?= $s_no ?>" value="<?= $s_no ?>" class="seat-radio"
                                     data-seat-type="<?= e($s_type) ?>"
                                     aria-label="Seat <?= $s_no ?>, <?= e($s_type) ?>, <?= $aria_state ?>"
-                                    <?= $is_bk ? 'disabled' : 'required' ?>>
+                                    <?= $is_bk ? 'disabled' : 'required' ?>
+                                    <?= $is_selected ? 'checked' : '' ?>>
                                 <label for="seat-<?= $s_no ?>" class="seat-label" title="Seat <?= $s_no ?> (<?= e($s_type) ?> Seat - <?= ucfirst($aria_state) ?>)">
                                     <!-- Real Headrest Pillow -->
                                     <span class="seat-headrest" aria-hidden="true"></span>
@@ -123,6 +126,7 @@ function render_seat_map(array $layout, array $booked, array $meta = []): void {
                             $s_no = (int)$seat['no'];
                             $s_type = (string)$seat['type'];
                             $is_bk = isset($booked[$s_no]);
+                            $is_selected = ($s_no === $preselected && !$is_bk);
                             $s_tag = ($s_type === 'Window') ? 'W' : 'A';
                             $aria_state = $is_bk ? 'booked' : 'available';
                             ?>
@@ -130,7 +134,8 @@ function render_seat_map(array $layout, array $booked, array $meta = []): void {
                                 <input type="radio" name="seat" id="seat-<?= $s_no ?>" value="<?= $s_no ?>" class="seat-radio"
                                     data-seat-type="<?= e($s_type) ?>"
                                     aria-label="Seat <?= $s_no ?>, <?= e($s_type) ?>, <?= $aria_state ?>"
-                                    <?= $is_bk ? 'disabled' : 'required' ?>>
+                                    <?= $is_bk ? 'disabled' : 'required' ?>
+                                    <?= $is_selected ? 'checked' : '' ?>>
                                 <label for="seat-<?= $s_no ?>" class="seat-label" title="Seat <?= $s_no ?> (<?= e($s_type) ?> Seat - <?= ucfirst($aria_state) ?>)">
                                     <!-- Real Headrest Pillow -->
                                     <span class="seat-headrest" aria-hidden="true"></span>

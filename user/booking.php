@@ -43,17 +43,28 @@ $bus_layout = get_bus_layout($link, $bus);
 $seat_layout = build_seat_layout($bus_capacity, $bus_layout);
 $booked_seats = get_booked_seats($link, $bus, $date, $time);
 
+$form_name = isset($_POST['unm']) ? trim((string)$_POST['unm']) : ($_SESSION['name'] ?? '');
+$form_phone = isset($_POST['num']) ? trim((string)$_POST['num']) : ($_SESSION['phone'] ?? '');
+$form_seat = isset($_POST['seat']) ? (int)$_POST['seat'] : 0;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
     csrf_verify();
     $post_route_id = (int)($_POST['route_id'] ?? 0);
     $post_time = trim((string)($_POST['time'] ?? ''));
     $post_date = trim((string)($_POST['date'] ?? ''));
     $seat = (int)($_POST['seat'] ?? 0);
-    $unm = trim((string)($_POST['unm'] ?? $_SESSION['name'] ?? ''));
-    $num = trim((string)($_POST['num'] ?? $_SESSION['phone'] ?? ''));
+    $unm = trim((string)($_POST['unm'] ?? ''));
+    $num = trim((string)($_POST['num'] ?? ''));
     $cust_id = (int)($_SESSION['uid'] ?? 0);
 
-    if ($post_route_id <= 0) {
+    $person_check = validate_person_fields($unm, $num);
+    if (!$person_check['ok']) {
+        $alert = implode(' ', $person_check['errors']);
+        $alert_type = 'danger';
+    } elseif ($seat <= 0) {
+        $alert = 'Please choose a seat from the seating layout.';
+        $alert_type = 'danger';
+    } elseif ($post_route_id <= 0) {
         $alert = 'Invalid route selection. Please search again.';
         $alert_type = 'danger';
     } else {
@@ -80,12 +91,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
                     'time'    => $sub_route['time'],
                     'seat'    => $seat,
                     'price'   => $sub_route['price'],
-                    'name'    => $unm,
-                    'contact' => $num
+                    'name'    => $person_check['name'],
+                    'contact' => $person_check['phone']
                 ]);
 
                 if ($result['ok']) {
-                    header('Location: ' . BASE_URL . '/user/my-bookings.php?booked=1&pnr=' . urlencode($result['pnr']));
+                    // Phase 3.1: Redirect directly to confirmation ticket with success state
+                    header('Location: ' . BASE_URL . '/user/ticket.php?pnr=' . urlencode($result['pnr']) . '&new=1');
                     exit;
                 } else {
                     $alert = $result['error'];
@@ -152,29 +164,40 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                     <div class="form-row">
                         <div class="col-md-6 form-group">
                             <label for="unm" class="font-weight-bold small text-muted">Passenger Full Name</label>
-                            <input type="text" id="unm" name="unm" value="<?= e($_SESSION['name'] ?? '') ?>" class="form-control" placeholder="Full name (2-100 characters)" minlength="2" maxlength="100" required autocomplete="name" />
+                            <input type="text" id="unm" name="unm" value="<?= e($form_name) ?>" class="form-control" placeholder="Full name (2-100 characters)" minlength="2" maxlength="100" required autocomplete="name" />
                         </div>
                         <div class="col-md-6 form-group">
                             <label for="num" class="font-weight-bold small text-muted">Contact Phone Number</label>
-                            <input type="tel" id="num" name="num" value="<?= e($_SESSION['phone'] ?? '') ?>" class="form-control" placeholder="Phone (10-15 digits)" minlength="10" maxlength="15" pattern="[0-9]{10,15}" inputmode="numeric" required autocomplete="tel" title="Phone number must be between 10 and 15 digits" />
+                            <input type="tel" id="num" name="num" value="<?= e($form_phone) ?>" class="form-control" placeholder="e.g. +91 98765 43210 or 9876543210" minlength="10" maxlength="20" required autocomplete="tel" />
+                            <small class="text-muted">Enter 10 to 15 digits; spaces, + and dashes are allowed.</small>
                         </div>
                     </div>
 
-                    <!-- Interactive Visual Seat Selection Map (U-15) -->
+                    <!-- Interactive Visual Seat Selection Map (U-15, Phase 1.3) -->
                     <div class="form-group mt-3">
                         <label class="font-weight-bold small text-muted mb-2 d-block text-center">Select Your Seat Number</label>
                         <div class="bus-map-wrapper">
-                            <?php render_seat_map($seat_layout, $booked_seats, ['bus' => $bus, 'date' => $date, 'time' => $time]); ?>
+                            <?php render_seat_map($seat_layout, $booked_seats, [
+                                'bus'      => $bus,
+                                'date'     => $date,
+                                'time'     => $time,
+                                'selected' => $form_seat
+                            ]); ?>
                         </div>
                     </div>
 
-                    <!-- Sticky Summary Strip & Dynamic Submit Enable (U-04) -->
+                    <!-- Sticky Summary Strip & Dynamic Submit Enable (U-04, Phase 1.3) -->
                     <div class="card bg-light border p-3 mt-4">
                         <div class="row align-items-center">
                             <div class="col-sm-6 mb-2 mb-sm-0">
                                 <small class="text-muted text-uppercase d-block font-weight-bold">Selected Seat</small>
                                 <div class="h5 mb-0 text-dark" id="summary-seat-display">
-                                    <span class="text-muted font-italic font-weight-normal">None selected (click seat above)</span>
+                                    <?php if ($form_seat > 0 && !isset($booked_seats[$form_seat])): ?>
+                                        <span class="badge badge-success px-2 py-1 mr-1">Seat #<?= $form_seat ?></span>
+                                        <small class="text-muted">(Selected)</small>
+                                    <?php else: ?>
+                                        <span class="text-muted font-italic font-weight-normal">None selected (click seat above)</span>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                             <div class="col-sm-6 text-sm-right">
@@ -186,9 +209,12 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                         </div>
                     </div>
 
+                    <!-- Accessible inline validation error area (Phase 5.2) -->
+                    <div id="booking-validation-error" class="alert alert-danger mt-3 d-none" role="alert" aria-live="assertive"></div>
+
                     <hr class="my-4">
 
-                    <button type="submit" class="btn btn-primary btn-block btn-lg font-weight-bold shadow-sm" id="submit-booking-btn" name="check" value="1" disabled>
+                    <button type="submit" class="btn btn-primary btn-block btn-lg font-weight-bold shadow-sm" id="submit-booking-btn" name="check" value="1" <?= ($form_seat > 0 && !isset($booked_seats[$form_seat])) ? '' : 'disabled' ?>>
                         Confirm & Reserve Ticket
                     </button>
                 </form>

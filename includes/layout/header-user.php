@@ -132,12 +132,13 @@
             </div>
 
             <script>
-            // U-14: 28-minute idle session detection & heartbeat
+            // U-14, Phase 5.2: 28-minute idle session detection, focus trap & heartbeat
             (function() {
                 var idleTime = 0;
                 var warningShown = false;
                 var countdownVal = 120;
                 var countdownInterval = null;
+                var prevActiveElement = null;
 
                 function resetIdle() {
                     if (!warningShown) {
@@ -148,16 +149,43 @@
                     document.addEventListener(evt, resetIdle, { passive: true });
                 });
 
+                var stayBtn = document.getElementById('stay-signed-in-btn');
+
+                // Phase 5.2: Trap focus inside modal when active
+                document.addEventListener('keydown', function(e) {
+                    if (warningShown && e.key === 'Tab') {
+                        var modal = document.getElementById('idleSessionModal');
+                        if (modal) {
+                            var focusable = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                            if (focusable.length) {
+                                var first = focusable[0];
+                                var last = focusable[focusable.length - 1];
+                                if (e.shiftKey && document.activeElement === first) {
+                                    last.focus();
+                                    e.preventDefault();
+                                } else if (!e.shiftKey && document.activeElement === last) {
+                                    first.focus();
+                                    e.preventDefault();
+                                }
+                            }
+                        }
+                    }
+                });
+
                 setInterval(function() {
                     idleTime++;
                     // 28 minutes = 1680 seconds
                     if (idleTime >= 1680 && !warningShown) {
                         warningShown = true;
+                        prevActiveElement = document.activeElement;
                         if (typeof $ !== 'undefined' && $('#idleSessionModal').length) {
                             $('#idleSessionModal').modal('show');
                         } else {
                             var m = document.getElementById('idleSessionModal');
                             if (m) m.classList.add('show', 'd-block');
+                        }
+                        if (stayBtn) {
+                            setTimeout(function() { stayBtn.focus(); }, 100);
                         }
                         countdownVal = 120;
                         countdownInterval = setInterval(function() {
@@ -172,7 +200,6 @@
                     }
                 }, 1000);
 
-                var stayBtn = document.getElementById('stay-signed-in-btn');
                 if (stayBtn) {
                     stayBtn.addEventListener('click', function() {
                         fetch('<?= BASE_URL ?>/user/api-heartbeat.php')
@@ -186,6 +213,9 @@
                                 } else {
                                     var m = document.getElementById('idleSessionModal');
                                     if (m) m.classList.remove('show', 'd-block');
+                                }
+                                if (prevActiveElement && typeof prevActiveElement.focus === 'function') {
+                                    prevActiveElement.focus();
                                 }
                             })
                             .catch(function() {

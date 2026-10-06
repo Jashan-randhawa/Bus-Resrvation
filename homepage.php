@@ -67,12 +67,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
           throttle_clear($link, $acctKey);
           login_user($role, $row);
 
-          // U-14: Redirect to validated next return path if present, removing unused d=2
-          $next = trim((string)($_POST['next'] ?? $_GET['next'] ?? ''));
-          $dest = BASE_URL . '/' . $role . '/index.php';
-          if ($next !== '' && str_starts_with($next, '/') && !str_starts_with($next, '//') && !str_contains($next, '://')) {
-            $dest = $next;
-          }
+          // Phase 1.1: Redirect to validated next return path if present
+          $next = safe_next_url($_POST['next'] ?? $_GET['next'] ?? null);
+          $dest = $next !== null ? $next : (BASE_URL . '/' . $role . '/index.php');
           header('Location: ' . $dest);
           exit();
         }
@@ -88,23 +85,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
   }
 }
 
-// Registration handler (H-06)
+// Registration handler (H-06, Phase 1.4)
 if (isset($_POST['userbtn'])) {
   csrf_verify();
-  $name = trim(trim((string)($_POST['fname'] ?? '')) . ' ' . trim((string)($_POST['lname'] ?? '')));
+  $raw_name = trim(trim((string)($_POST['fname'] ?? '')) . ' ' . trim((string)($_POST['lname'] ?? '')));
   $email = strtolower(trim((string)($_POST['user_email'] ?? '')));
   $pwd = (string)($_POST['user_pwd'] ?? '');
-  $phone = preg_replace('/\D/', '', (string)($_POST['user_no'] ?? ''));
-  $addr = trim((string)($_POST['address'] ?? ''));
+  $raw_phone = (string)($_POST['user_no'] ?? '');
+  $raw_addr = (string)($_POST['address'] ?? '');
   $preserved_email = $email;
-  $errors = [];
 
-  if ($name === '') { $errors[] = 'Full name is required.'; }
-  if (!filter_var($email, FILTER_VALIDATE_EMAIL)) { $errors[] = 'Enter a valid email address.'; }
+  $person_val = validate_person_fields($raw_name, $raw_phone, $raw_addr);
+  $errors = $person_val['errors'];
+
+  if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $errors[] = 'Enter a valid email address.';
+  }
   if (strlen($pwd) < 8 || !preg_match('/[A-Za-z]/', $pwd) || !preg_match('/\d/', $pwd)) {
     $errors[] = 'Password must be at least 8 characters and include both letters and numbers.';
   }
-  if (strlen($phone) < 10 || strlen($phone) > 15) { $errors[] = 'Enter a valid phone number.'; }
   if (!$errors && db_one($link, 'SELECT id FROM costumer WHERE email = ?', 's', [$email])) {
     $errors[] = 'That email address is already registered.';
   }
@@ -116,7 +115,7 @@ if (isset($_POST['userbtn'])) {
   } else {
     db_exec($link,
       'INSERT INTO costumer (name, email, pwd, phone, address) VALUES (?,?,?,?,?)',
-      'sssss', [$name, $email, password_hash($pwd, PASSWORD_DEFAULT), $phone, $addr]);
+      'sssss', [$person_val['name'], $email, password_hash($pwd, PASSWORD_DEFAULT), $person_val['phone'], $person_val['address']]);
     $msg = 'Account created successfully! You can now sign in.';
     $msg_type = 'success';
     $open_modal = 'register_success'; // Switches to sign in tab inside modal
@@ -627,7 +626,7 @@ if (isset($_POST['subbtn'])) {
           <?php endif; ?>
           <form action="<?= e(BASE_URL) ?>/homepage.php" method="post">
             <?= csrf_field() ?>
-            <input type="hidden" name="next" value="<?= e($_GET['next'] ?? $_POST['next'] ?? '') ?>">
+            <input type="hidden" name="next" value="<?= e(safe_next_url($_GET['next'] ?? $_POST['next'] ?? null) ?? '') ?>">
             <div class="form-group">
               <label for="user-email-input" class="font-weight-bold small text-muted">Email Address</label>
               <input type="email" id="user-email-input" name="email" class="form-control" value="<?= e($open_modal === 'user' ? $preserved_email : '') ?>" placeholder="passenger@example.com" autocomplete="username" required />

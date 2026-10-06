@@ -1,10 +1,11 @@
 <?php
-// user/ticket.php -- Printable Boarding Pass & Ticket View (U-16)
+// user/ticket.php -- Printable Boarding Pass & Ticket View (U-16, Phase 2.1, 2.2, 2.3, 3.1)
 require_once __DIR__ . '/../includes/auth/user-session.php';
 require_once __DIR__ . '/../includes/db_con.php';
 
 $uid = (int)($_SESSION['uid'] ?? 0);
 $pnr = trim((string)($_GET['pnr'] ?? ''));
+$is_new_booking = (isset($_GET['new']) && $_GET['new'] === '1');
 
 if ($pnr === '') {
     flash_set('danger', 'Please provide a valid ticket PNR to view.');
@@ -45,22 +46,92 @@ if ($is_cancelled) {
     $status_label = 'Confirmed';
     $status_badge = 'badge-success';
 }
+
+$is_active = (!$is_cancelled && !$is_expired);
+$verify_hash = strtoupper(substr(hash('crc32b', $booking['pnr'] . $booking['date']), 0, 6));
 ?>
+
+<style>
+.ticket-container {
+    position: relative;
+    overflow: hidden;
+}
+.ticket-void-overlay {
+    position: absolute;
+    top: 36%;
+    left: 8%;
+    right: 8%;
+    text-align: center;
+    font-size: 3.2rem;
+    font-weight: 900;
+    color: rgba(220, 38, 38, 0.4);
+    border: 6px dashed rgba(220, 38, 38, 0.4);
+    border-radius: 16px;
+    padding: 16px 10px;
+    transform: rotate(-18deg);
+    pointer-events: none;
+    z-index: 10;
+    letter-spacing: 0.12em;
+    user-select: none;
+}
+@media print {
+    .ticket-void-overlay {
+        color: #dc2626 !important;
+        border-color: #dc2626 !important;
+        opacity: 0.8 !important;
+    }
+}
+</style>
+
+<!-- Phase 3.1: Celebratory Confirmation Banner for new bookings -->
+<?php if ($is_new_booking): ?>
+    <div class="alert alert-success shadow-sm p-4 mb-4 border-0 no-print" role="alert">
+        <div class="d-flex align-items-center justify-content-between flex-wrap">
+            <div class="mb-2 mb-md-0">
+                <h4 class="alert-heading font-weight-bold mb-1">🎉 Reservation Confirmed!</h4>
+                <p class="mb-0 text-dark">
+                    Your seat has been reserved. Your Booking Reference (PNR) is 
+                    <strong class="font-monospace text-success h5 mb-0"><?= e($booking['pnr']) ?></strong>.
+                </p>
+            </div>
+            <div>
+                <button type="button" onclick="window.print()" class="btn btn-success font-weight-bold shadow-sm mr-2">
+                    🖨️ Print / Save PDF
+                </button>
+                <a href="<?= BASE_URL ?>/user/my-bookings.php" class="btn btn-outline-success font-weight-bold">
+                    View My Bookings &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
 
 <div class="no-print mb-4 d-flex justify-content-between align-items-center">
     <a href="<?= BASE_URL ?>/user/my-bookings.php" class="btn btn-outline-secondary">
         &larr; Back to My Bookings
     </a>
     <div>
-        <button type="button" onclick="window.print()" class="btn btn-primary shadow-sm font-weight-bold">
-            🖨️ Print Ticket
-        </button>
+        <!-- Phase 2.2: Only show Print button if ticket is active/valid -->
+        <?php if ($is_active): ?>
+            <button type="button" onclick="window.print()" class="btn btn-primary shadow-sm font-weight-bold">
+                🖨️ Print Ticket
+            </button>
+        <?php else: ?>
+            <span class="badge badge-secondary px-3 py-2 text-uppercase">Ticket Inactive</span>
+        <?php endif; ?>
     </div>
 </div>
 
 <div class="row justify-content-center">
     <div class="col-lg-8 col-xl-7">
         <div class="card border ticket-container shadow-sm p-4 p-md-5 bg-white">
+            <!-- Phase 2.2: Watermark overlay for cancelled or expired tickets -->
+            <?php if (!$is_active): ?>
+                <div class="ticket-void-overlay font-weight-bold text-uppercase" aria-hidden="true">
+                    <?= $is_cancelled ? 'VOID &bull; CANCELLED' : 'VOID &bull; EXPIRED' ?>
+                </div>
+            <?php endif; ?>
+
             <!-- Ticket Header -->
             <div class="d-flex justify-content-between align-items-center border-bottom pb-4 mb-4">
                 <div>
@@ -116,59 +187,45 @@ if ($is_cancelled) {
                     <div class="h3 font-weight-bold text-primary mb-0">Seat #<?= e($booking['seat']) ?></div>
                 </div>
                 <div class="col-sm-6 mb-3 text-sm-right">
-                    <small class="text-muted text-uppercase font-weight-bold d-block">Fare Paid</small>
+                    <!-- Phase 2.3: Honest fare description -->
+                    <small class="text-muted text-uppercase font-weight-bold d-block">
+                        <?= $is_active ? 'Ticket Fare' : 'Fare (Void / Cancelled)' ?>
+                    </small>
                     <div class="h3 font-weight-bold text-success mb-0"><?= CURRENCY ?><?= e(number_format((float)$booking['price'], 2)) ?></div>
                 </div>
             </div>
 
-            <!-- QR Verification & Barcode representation -->
+            <!-- Instructions & Digital Verification Seal (Phase 2.1, 2.2) -->
             <div class="border-top pt-4 d-flex flex-column flex-sm-row justify-content-between align-items-center">
-                <div class="mb-3 mb-sm-0 text-center text-sm-left">
-                    <div class="font-weight-bold small text-dark mb-1">Boarding Instructions:</div>
-                    <ul class="text-muted small pl-3 mb-0 text-left">
-                        <li>Please arrive at the terminal at least 15 minutes before departure.</li>
-                        <li>Carry a valid government photo ID matching passenger name.</li>
-                        <li>Show this digital or printed pass with PNR at boarding.</li>
-                    </ul>
+                <div class="mb-3 mb-sm-0 text-center text-sm-left flex-grow-1 pr-sm-3">
+                    <?php if ($is_active): ?>
+                        <div class="font-weight-bold small text-dark mb-1">Boarding Instructions:</div>
+                        <ul class="text-muted small pl-3 mb-0 text-left">
+                            <li>Please arrive at the terminal at least 15 minutes before departure.</li>
+                            <li>Carry a valid government photo ID matching the passenger name.</li>
+                            <li>Present this digital ticket or printed pass with PNR at boarding.</li>
+                        </ul>
+                    <?php else: ?>
+                        <!-- Phase 2.2: Replaced boarding instructions for void tickets -->
+                        <div class="alert alert-danger mb-0 small text-left">
+                            <strong>Notice:</strong> This reservation was <?= strtolower($status_label) ?> and is not valid for boarding or travel.
+                        </div>
+                    <?php endif; ?>
                 </div>
-                <div class="text-center ml-sm-4">
-                    <!-- Clean SVG QR Code Representation for PNR verification -->
-                    <div style="background: #ffffff; padding: 6px; border: 1px solid #cbd5e1; border-radius: 8px; display: inline-block;">
-                        <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="100" height="100" fill="#ffffff" />
-                            <!-- Corner marker Top-Left -->
-                            <rect x="6" y="6" width="24" height="24" fill="#000000" />
-                            <rect x="9" y="9" width="18" height="18" fill="#ffffff" />
-                            <rect x="12" y="12" width="12" height="12" fill="#000000" />
-                            <!-- Corner marker Top-Right -->
-                            <rect x="70" y="6" width="24" height="24" fill="#000000" />
-                            <rect x="73" y="9" width="18" height="18" fill="#ffffff" />
-                            <rect x="76" y="12" width="12" height="12" fill="#000000" />
-                            <!-- Corner marker Bottom-Left -->
-                            <rect x="6" y="70" width="24" height="24" fill="#000000" />
-                            <rect x="9" y="73" width="18" height="18" fill="#ffffff" />
-                            <rect x="12" y="76" width="12" height="12" fill="#000000" />
-                            <!-- Data matrix pattern elements -->
-                            <rect x="36" y="8" width="6" height="6" fill="#000000" />
-                            <rect x="48" y="14" width="6" height="6" fill="#000000" />
-                            <rect x="58" y="8" width="6" height="6" fill="#000000" />
-                            <rect x="36" y="24" width="6" height="6" fill="#000000" />
-                            <rect x="44" y="32" width="12" height="12" fill="#000000" />
-                            <rect x="62" y="24" width="6" height="6" fill="#000000" />
-                            <rect x="16" y="38" width="6" height="6" fill="#000000" />
-                            <rect x="26" y="44" width="6" height="6" fill="#000000" />
-                            <rect x="70" y="38" width="8" height="8" fill="#000000" />
-                            <rect x="84" y="44" width="6" height="6" fill="#000000" />
-                            <rect x="36" y="52" width="6" height="6" fill="#000000" />
-                            <rect x="48" y="58" width="8" height="8" fill="#000000" />
-                            <rect x="62" y="52" width="6" height="6" fill="#000000" />
-                            <rect x="36" y="72" width="6" height="6" fill="#000000" />
-                            <rect x="48" y="82" width="6" height="6" fill="#000000" />
-                            <rect x="62" y="72" width="6" height="6" fill="#000000" />
-                            <rect x="74" y="78" width="14" height="14" fill="#000000" />
-                        </svg>
+                <div class="text-center ml-sm-4 mt-3 mt-sm-0">
+                    <!-- Phase 2.1: Digital Security Seal & Verification Badge -->
+                    <div class="p-3 bg-light border rounded text-center shadow-sm" style="min-width: 150px;">
+                        <div class="text-muted font-weight-bold text-uppercase" style="font-size: 10px; letter-spacing: 0.05em;">Digital Pass</div>
+                        <div class="font-weight-bold text-primary font-monospace my-1" style="font-size: 1.25rem;">
+                            <?= e($booking['pnr']) ?>
+                        </div>
+                        <div class="badge badge-light border text-muted px-2 py-1 font-monospace" style="font-size: 11px;">
+                            SEAL: <?= e($verify_hash) ?>
+                        </div>
+                        <div class="text-muted small mt-1 font-weight-medium" style="font-size: 10px;">
+                            <?= $is_active ? 'VALID PASS' : 'VOID' ?>
+                        </div>
                     </div>
-                    <div class="text-muted small mt-1 font-monospace" style="font-size: 11px;">SCAN AT GATE</div>
                 </div>
             </div>
         </div>

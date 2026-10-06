@@ -17,7 +17,7 @@ require_once __DIR__ . '/includes/layout/header-login.php';
         <div class="auth-body">
             <form action="homepage.php" method="post">
                 <?= csrf_field() ?>
-                <input type="hidden" name="next" value="<?= e($_GET['next'] ?? $_POST['next'] ?? '') ?>">
+                <input type="hidden" name="next" value="<?= e(safe_next_url($_GET['next'] ?? $_POST['next'] ?? null) ?? '') ?>">
                 <div class="form-group mb-3">
                     <label for="email" class="font-weight-bold small text-muted">Email Address</label>
                     <input type="email" id="email" name="email" placeholder="you@example.com" class="form-control" required>

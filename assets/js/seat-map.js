@@ -61,8 +61,10 @@
 
   var delay = 30000, timer;
 
+  var sessionExpired = false;
+
   function poll() {
-    if (document.hidden) return schedule();
+    if (document.hidden || sessionExpired) return schedule();
     var ctl = new AbortController();
     var kill = setTimeout(function () {
       ctl.abort();
@@ -75,10 +77,27 @@
 
     fetch('api-seats.php?' + q, { credentials: 'same-origin', signal: ctl.signal })
       .then(function (r) {
+        if (r.status === 401) {
+          sessionExpired = true;
+          return r.json().catch(function () { return { ok: false, error: 'session_expired' }; });
+        }
         if (!r.ok) throw 0;
         return r.json();
       })
       .then(function (d) {
+        if (d && d.error === 'session_expired') {
+          sessionExpired = true;
+          var errBox = document.getElementById('booking-validation-error');
+          if (errBox) {
+            var loginLink = d.login_url || 'homepage.php';
+            errBox.className = 'alert alert-warning mt-3';
+            errBox.innerHTML = 'Your session has expired. <a href="' + loginLink + '" class="alert-link font-weight-bold">Sign in again</a> to complete your reservation.';
+            errBox.classList.remove('d-none');
+          }
+          if (btn) btn.disabled = true;
+          say('Your session has expired. Please sign in again.');
+          return;
+        }
         if (d && d.ok && Array.isArray(d.booked_seats)) {
           sync(d.booked_seats);
           delay = 30000;
@@ -89,17 +108,20 @@
       })
       .finally(function () {
         clearTimeout(kill);
-        schedule();
+        if (!sessionExpired) {
+          schedule();
+        }
       });
   }
 
   function schedule() {
+    if (sessionExpired) return;
     clearTimeout(timer);
     timer = setTimeout(poll, delay);
   }
 
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden) {
+    if (!document.hidden && !sessionExpired) {
       clearTimeout(timer);
       poll();
     }
@@ -107,14 +129,29 @@
 
   schedule();
 
-  // U-05: Double click lock & form submit validation
+  // U-05, Phase 1.7, Phase 5.2: Double click lock, bfcache reset, and accessible inline error
   var bookingForm = document.getElementById('booking-form');
+  var errBox = document.getElementById('booking-validation-error');
+
+  grid.addEventListener('change', function () {
+    if (errBox) {
+      errBox.classList.add('d-none');
+      errBox.textContent = '';
+    }
+  });
+
   if (bookingForm && btn) {
     bookingForm.addEventListener('submit', function (e) {
       var selectedRadio = document.querySelector('input[name="seat"]:checked');
       if (!selectedRadio) {
         e.preventDefault();
-        alert('Please select an available seat from the seat map before confirming.');
+        if (errBox) {
+          errBox.className = 'alert alert-danger mt-3';
+          errBox.textContent = 'Please select an available seat from the seat map before confirming.';
+          errBox.classList.remove('d-none');
+          errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        say('Please select an available seat from the seat map before confirming.');
         return false;
       }
       if (!btn.disabled) {
@@ -128,4 +165,17 @@
       }
     });
   }
+
+  // Phase 1.7: Restore button state on browser Back/Forward (bfcache) navigation
+  window.addEventListener('pageshow', function () {
+    if (btn) {
+      btn.innerHTML = 'Confirm &amp; Reserve Ticket';
+      var selectedRadio = document.querySelector('input[name="seat"]:checked');
+      btn.disabled = !selectedRadio;
+    }
+    if (errBox) {
+      errBox.classList.add('d-none');
+      errBox.textContent = '';
+    }
+  });
 })();

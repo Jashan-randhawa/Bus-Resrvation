@@ -1,7 +1,8 @@
 <?php
 // user/api-seats.php -- Lightweight API for live seat availability polling (U-15)
-require_once __DIR__ . '/../includes/auth/user-session.php';
+require_once __DIR__ . '/../includes/auth/session-bootstrap.php';
 require_once __DIR__ . '/../includes/db_con.php';
+require_role('user', false);
 
 header('Content-Type: application/json; charset=utf-8');
 

@@ -39,20 +39,38 @@ function logout_all(): void {
     session_destroy();
 }
 
-function require_role(string $role): void {
+function require_role(string $role, bool $touch = true): void {
     $idle = time() - (int)($_SESSION['last_seen'] ?? 0);
     if (($_SESSION['role'] ?? '') !== $role || $idle > SESSION_IDLE_SECONDS) {
         $req_uri = $_SERVER['REQUEST_URI'] ?? '';
         logout_all();
-        // U-14: Preserve relative return path for re-authentication
+
+        // Phase 1.6: Return JSON 401 for API endpoints instead of HTML redirect
+        $is_api = str_contains($req_uri, '/api-') || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'));
+        if ($is_api) {
+            http_response_code(401);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'ok' => false,
+                'error' => 'session_expired',
+                'message' => 'Your session has expired. Please sign in again.',
+                'login_url' => BASE_URL . '/login.php'
+            ]);
+            exit;
+        }
+
+        // Phase 1.1: Preserve validated relative return path for re-authentication
         $target = BASE_URL . '/homepage.php';
-        if ($req_uri !== '' && !str_contains($req_uri, 'homepage.php') && !str_contains($req_uri, 'logout')) {
-            $target .= '?next=' . urlencode($req_uri);
+        $safe_next = function_exists('safe_next_url') ? safe_next_url($req_uri) : null;
+        if ($safe_next !== null && !str_contains($safe_next, 'homepage.php') && !str_contains($safe_next, 'logout')) {
+            $target .= '?next=' . urlencode($safe_next);
         }
         header('Location: ' . $target);
         exit;
     }
-    $_SESSION['last_seen'] = time();
+    if ($touch) {
+        $_SESSION['last_seen'] = time();
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {

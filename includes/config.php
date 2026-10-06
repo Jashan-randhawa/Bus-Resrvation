@@ -48,6 +48,11 @@ if (!defined('APP_CANCEL_CUTOFF_MIN')) {
     define('APP_CANCEL_CUTOFF_MIN', (int)(getenv('APP_CANCEL_CUTOFF_MIN') ?: 120));
 }
 
+// Booking Cutoff Window in minutes (Phase 3.5: default 30 minutes before departure)
+if (!defined('APP_BOOKING_CUTOFF_MIN')) {
+    define('APP_BOOKING_CUTOFF_MIN', (int)(getenv('APP_BOOKING_CUTOFF_MIN') ?: 30));
+}
+
 // Global exception handler (M-04 / D-02)
 if (!function_exists('busres_exception_handler')) {
     function busres_exception_handler(Throwable $t): void {

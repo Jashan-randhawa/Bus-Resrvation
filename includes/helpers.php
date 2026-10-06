@@ -378,9 +378,14 @@ function validate_travel_datetime(string $date, ?string $time = null): array {
         return ['ok' => false, 'error' => 'Bookings can only be made up to 90 days in advance.'];
     }
     if ($time !== null && $time !== '') {
-        $t_parsed = date('H:i:s', strtotime($time));
-        if ($date === $today && $t_parsed < $now_time) {
-            return ['ok' => false, 'error' => 'This bus has already departed for today.'];
+        $travel_ts = strtotime($date . ' ' . $time);
+        $cutoff_min = defined('APP_BOOKING_CUTOFF_MIN') ? (int)APP_BOOKING_CUTOFF_MIN : 30;
+        $cutoff_secs = $cutoff_min * 60;
+        if ($travel_ts !== false && $travel_ts < (time() + $cutoff_secs)) {
+            if ($travel_ts <= time()) {
+                return ['ok' => false, 'error' => 'This bus has already departed for today.'];
+            }
+            return ['ok' => false, 'error' => "Booking has closed for this departure (reservations close {$cutoff_min} minutes prior to departure)."];
         }
     }
 
@@ -518,5 +523,98 @@ function get_booking_status_badge(string $status, bool $is_past = false): array 
         return ['class' => 'badge-warning text-dark', 'label' => 'Pending Hold'];
     }
     return ['class' => 'badge-success', 'label' => 'Confirmed'];
+}
+
+/**
+ * Validates and normalizes internal redirect return paths (Phase 1.1).
+ * Prevents open-redirect attacks via backslashes (/\evil.com), protocol-relative
+ * URLs (//evil.com), encoded slashes, control chars, external schemes/hosts.
+ *
+ * @param string|null $next
+ * @return string|null Safe relative internal URL or null if invalid
+ */
+function safe_next_url(?string $next): ?string {
+    if ($next === null) {
+        return null;
+    }
+    $raw = trim($next);
+    if ($raw === '') {
+        return null;
+    }
+
+    // Reject control characters, newlines, carriage returns, tabs, null bytes
+    if (preg_match('/[\x00-\x1F\x7F]/', $raw)) {
+        return null;
+    }
+
+    // Reject backslashes in raw or url-decoded form (prevents /\evil.com, /%5Cevil.com)
+    if (str_contains($raw, '\\') || str_contains(urldecode($raw), '\\')) {
+        return null;
+    }
+
+    // Must start with a single slash and not double slash
+    if (!str_starts_with($raw, '/') || str_starts_with($raw, '//')) {
+        return null;
+    }
+
+    // Reject scheme-relative or protocol specifications
+    if (str_contains($raw, '://') || str_contains(urldecode($raw), '://')) {
+        return null;
+    }
+
+    $parsed = parse_url($raw);
+    if ($parsed === false) {
+        return null;
+    }
+
+    // Disallow scheme, host, user, pass in return path
+    if (isset($parsed['scheme']) || isset($parsed['host']) || isset($parsed['user']) || isset($parsed['pass'])) {
+        return null;
+    }
+
+    $path = $parsed['path'] ?? '';
+    if (!str_starts_with($path, '/')) {
+        return null;
+    }
+
+    return $raw;
+}
+
+/**
+ * Normalizes and validates personal contact fields across registration, profile, and booking (Phase 1.4).
+ *
+ * @param string $name Full name
+ * @param string $phone Phone number string
+ * @param string $address Optional address
+ * @return array ['ok' => bool, 'name' => string, 'phone' => string, 'address' => string, 'errors' => string[]]
+ */
+function validate_person_fields(string $name, string $phone, string $address = ''): array {
+    $clean_name = trim($name);
+    $clean_name = preg_replace('/[\x00-\x1F\x7F]/', '', $clean_name);
+
+    // Normalize phone: strip all non-digits
+    $clean_phone = preg_replace('/\D+/', '', $phone);
+
+    $clean_address = trim($address);
+    $clean_address = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $clean_address);
+
+    $errors = [];
+    if (mb_strlen($clean_name) < 2 || mb_strlen($clean_name) > 100) {
+        $errors[] = 'Full name must be between 2 and 100 characters.';
+    }
+    if (strlen($clean_phone) < 10 || strlen($clean_phone) > 15) {
+        $errors[] = 'Please provide a valid contact phone number (10 to 15 digits).';
+    }
+    if (mb_strlen($clean_address) > 255) {
+        $errors[] = 'Address cannot exceed 255 characters.';
+    }
+
+    return [
+        'ok'      => empty($errors),
+        'name'    => $clean_name,
+        'phone'   => $clean_phone,
+        'address' => $clean_address,
+        'errors'  => $errors
+    ];
 }
 
