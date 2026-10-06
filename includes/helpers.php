@@ -902,4 +902,38 @@ function render_pagination(array $pagination, array $keep_params = []): string {
     return $html;
 }
 
+/**
+ * Records an entry into the audit trail (P-09).
+ * Captures admin actor, IP, timestamp, action type, entity, and state changes.
+ * Fails silently so audit logging errors never disrupt primary operations.
+ *
+ * @param mysqli $link Database connection
+ * @param string $action Action performed (e.g. 'CREATE', 'UPDATE', 'DELETE', 'CANCEL')
+ * @param string $entity_type Entity affected (e.g. 'bus', 'route', 'booking', 'customer', 'admin')
+ * @param int|null $entity_id ID of the affected record
+ * @param mixed $old_value Previous state (string, array, or null)
+ * @param mixed $new_value New state (string, array, or null)
+ */
+function audit(mysqli $link, string $action, string $entity_type, ?int $entity_id = null, $old_value = null, $new_value = null): void {
+    try {
+        $admin_id = isset($_SESSION['admin_id']) ? (int)$_SESSION['admin_id'] : null;
+        if ($admin_id === null && isset($_SESSION['id']) && ($_SESSION['role'] ?? '') === 'admin') {
+            $admin_id = (int)$_SESSION['id'];
+        }
+        $ip = client_ip();
+        $ua = substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
+        $old_json = ($old_value !== null) ? json_encode($old_value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null;
+        $new_json = ($new_value !== null) ? json_encode($new_value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null;
+
+        db_exec($link,
+            "INSERT INTO audit_log (admin_id, action, entity_type, entity_id, old_value, new_value, ip_address, user_agent) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            'ississss',
+            [$admin_id, strtoupper(trim($action)), strtolower(trim($entity_type)), $entity_id, $old_json, $new_json, $ip, $ua]
+        );
+    } catch (Throwable $e) {
+        error_log("[busres audit error] Failed to record audit log: " . $e->getMessage());
+    }
+}
+
+
 

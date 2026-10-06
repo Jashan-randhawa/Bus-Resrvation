@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
                 'sssss',
                 [$name, $email, $hashed, $phone, $address]
             );
+            audit($link, 'CREATE', 'customer', (int)mysqli_insert_id($link), null, ['name' => $name, 'email' => $email, 'phone' => $phone]);
             $alert = 'Customer added successfully.';
             $alert_type = 'success';
         }
@@ -57,6 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_customer'])) {
             $alert_type = 'danger';
         } else {
             db_exec($link, "DELETE FROM costumer WHERE `{$cust_pk}` = ?", 'i', [$delete_id]);
+            audit($link, 'DELETE', 'customer', $delete_id, null, null);
             $alert = 'Customer deleted successfully.';
             $alert_type = 'success';
         }

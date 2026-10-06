@@ -509,6 +509,40 @@ function run_migrations(mysqli $link): array {
     } else {
         $log[] = "[i] Migration {$m7} already applied.";
     }
+
+    // 10. Migration 008: 008_audit_logging (P-09)
+    $m8 = '008_audit_logging';
+    if (!migration_applied($link, $m8)) {
+        $log[] = "[*] Running migration: {$m8}...";
+        $m8_ok = try_sql($link, "
+            CREATE TABLE IF NOT EXISTS `audit_log` (
+              `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+              `timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              `admin_id` INT NULL,
+              `action` VARCHAR(50) NOT NULL,
+              `entity_type` VARCHAR(50) NOT NULL,
+              `entity_id` INT NULL,
+              `old_value` JSON NULL,
+              `new_value` JSON NULL,
+              `ip_address` VARCHAR(45) NOT NULL,
+              `user_agent` VARCHAR(255) NULL,
+              KEY `idx_audit_admin` (`admin_id`),
+              KEY `idx_audit_action` (`action`),
+              KEY `idx_audit_entity` (`entity_type`, `entity_id`),
+              KEY `idx_audit_ts` (`timestamp`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ", $log);
+
+        if ($m8_ok) {
+            record_migration($link, $m8);
+            $log[] = "  -> Completed {$m8}.";
+        } else {
+            $log[] = "  [!] Migration {$m8} had errors; not marked as applied.";
+            $all_ok = false;
+        }
+    } else {
+        $log[] = "[i] Migration {$m8} already applied.";
+    }
     } finally {
         if ($lock_acquired) {
             try {

@@ -84,6 +84,7 @@ require_once __DIR__ . '/../config.php';
             if ($is_super) {
                 $nav_menu['System'] = [
                     ['Diagnostics', 'diagnostics.php', null, '⚡'],
+                    ['Audit Log', 'audit-log.php', null, '🛡️'],
                 ];
             }
             $current_script = basename($_SERVER['SCRIPT_NAME'] ?? '');

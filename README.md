@@ -7,7 +7,7 @@
 [![Latest Release](https://img.shields.io/badge/Release-v2.2.0-blue?style=for-the-badge&logo=github)](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/tag/v2.2.0)
 [![Docker Package](https://img.shields.io/badge/GitHub%20Package-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation)
 [![Wiki Docs](https://img.shields.io/badge/Documentation-Wiki-green?style=for-the-badge&logo=gitbook&logoColor=white)](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki)
-[![PHP](https://img.shields.io/badge/PHP-8.1-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://www.php.net/)
+[![PHP](https://img.shields.io/badge/PHP-8.3%20%7C%208.4-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://www.php.net/)
 [![TiDB Cloud](https://img.shields.io/badge/TiDB%20Cloud-MySQL%20Compatible-E30C34?style=for-the-badge&logo=mysql&logoColor=white)](https://tidb.cloud/)
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-4.6-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
 [![License](https://img.shields.io/badge/License-MIT-orange?style=for-the-badge)](LICENSE)
@@ -22,7 +22,7 @@
 
 ## 📖 Overview
 
-The **Bus Reservation System** is an end-to-end digital ticketing and fleet operations management platform. Built using **PHP 8.1** and **MySQL / TiDB Cloud Serverless**, it eliminates manual booking workflows with real-time seat availability maps, instant PNR verification, customer account management, and a centralized administrative control center.
+The **Bus Reservation System** is an end-to-end digital ticketing and fleet operations management platform. Built using **PHP 8.3 / 8.4** and **MySQL / TiDB Cloud Serverless**, it eliminates manual booking workflows with real-time seat availability maps, instant PNR verification, customer account management, and a centralized administrative control center with multi-role RBAC.
 
 Packaged with **Docker** and configured for one-click deployment on **Render**, the application is production-ready, cloud-native, and responsive across all device form factors.
 
@@ -36,29 +36,31 @@ Comprehensive architectural, operational, and development documentation is avail
 |---|---|---|
 | **[🏠 Wiki Home](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki/Home)** | Overview | Central hub and quick navigation directory |
 | **[🏗️ Architecture & System Design](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki/Architecture-and-System-Design)** | System Topology | Monolithic runtime, Docker containerization, dynamic port binding, and request flow |
-| **[🗄️ Database Schema & Models](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki/Database-Schema-and-Models)** | Data Layer | ERD, data dictionaries for all 6 tables, column constraints, and seed accounts |
-| **[👑 Administrator Guide](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki/Administrator-Guide)** | Operator Manual | 7 live KPI cards, fleet management, route scheduling, seat auditor, and inquiries |
-| **[🧑‍💼 Customer Portal & Booking Flow](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki/Customer-Portal-and-Booking-Flow)** | Passenger UX | Interactive 36-seat bus map engine (`fun(N)`), PNR lifecycle, and trip history |
+| **[🗄️ Database Schema & Models](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki/Database-Schema-and-Models)** | Data Layer | ERD, data dictionaries for all tables, column constraints, referential integrity |
+| **[👑 Administrator Guide](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki/Administrator-Guide)** | Operator Manual | RBAC roles, live KPI cards, fleet management, route scheduling, seat auditor, audit logging |
+| **[🧑‍💼 Customer Portal & Booking Flow](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki/Customer-Portal-and-Booking-Flow)** | Passenger UX | Interactive seat map picker, PNR lifecycle, and trip history |
 | **[🐳 Deployment & DevOps](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki/Deployment-and-DevOps)** | Cloud & CI/CD | Render Web Service deployment, TiDB Cloud setup, environment catalog, and GHCR builds |
-| **[🛡️ Security & Troubleshooting](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki/Security-Configuration-and-Troubleshooting)** | Hardening & Fixes | TLS/SSL enforcement, output buffering, session protection, and error runbooks |
+| **[🛡️ Security & Troubleshooting](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki/Security-Configuration-and-Troubleshooting)** | Hardening & Fixes | TLS/SSL enforcement, session protection, rate limiting, and error runbooks |
 
 ---
 
 ## ✨ Key Features
 
 ### 👤 Customer Experience
-- 🔍 **Interactive Seat Picker:** Visual 36-seat layout with live booked/available state indicators.
-- 🎫 **Instant Ticket Generation:** Auto-generated unique PNR with travel details, departure timestamps, and pricing.
+- 🔍 **Interactive Seat Picker:** Visual layout dynamically adapting to bus capacity with live booked/available state indicators.
+- 🔒 **Atomic Concurrency:** Concurrency-safe seat reservation prevents double-booking race conditions.
+- 🎫 **Instant Ticket Generation:** Auto-generated unique cryptographic PNR with travel details, departure timestamps, and pricing.
 - 🔎 **Public PNR Lookup:** Check reservation status right from the homepage without needing to log in.
 - 📱 **Customer Dashboard:** Manage profiles, view reservation history, and inspect booked trips.
 - 💬 **Inquiry Support:** Direct feedback and query submission form for user support.
 
 ### 🛡️ Administrator Operations
-- 📊 **Real-Time Analytics Dashboard:** Instant KPI cards displaying total bookings, bus counts, active routes, seat utilization, and total revenue.
-- 🚌 **Fleet & Bus Management:** Add, edit, and organize buses with custom bus IDs.
-- 🛣️ **Route Management:** Configure origin and destination hubs, bus assignment, departure schedules, and fare pricing.
-- 🎟️ **Booking Supervision:** Create reservations manually or modify/cancel existing ticket orders.
-- 👥 **Customer & Admin Access Controls:** Manage customer registries and provision secure admin credentials.
+- 👥 **Multi-Role RBAC:** Granular access tiers (`super_admin`, `operator`, `viewer`) with session segregation and 30-min idle timeouts.
+- 📊 **Real-Time Consolidated Analytics:** Single-query KPI retrieval displaying total bookings, fleet count, routes, seat utilization, and confirmed revenue.
+- 🛡️ **Immutable Audit Logging:** Every administrative mutation and cancellation is preserved in the audit log table.
+- 🚌 **Fleet & Bus Management:** Add, inspect, configure custom capacities (10–60), and manage layouts.
+- 🛣️ **Route Management:** Configure origin and destination hubs, bus assignment, departure schedules, and fare pricing with collision detection.
+- 🎟️ **Booking Supervision:** Create reservations manually or cancel existing ticket orders with instant lock liberation.
 
 ---
 
@@ -69,12 +71,12 @@ flowchart TD
     Client["🌐 Web Browser (Responsive UI)"]
     
     subgraph Render["☁️ Render Cloud Platform"]
-        Docker["🐳 Docker Container (PHP 8.1 + Apache)"]
+        Docker["🐳 Docker Container (PHP 8.3/8.4 + Apache)"]
         App["Bus Reservation App<br/>(Public Area, Admin Dashboard, Customer Portal)"]
     end
     
     subgraph Database["🗄️ TiDB Cloud / MySQL Serverless"]
-        Tables[("majorproject / test<br/>- admin<br/>- costumer<br/>- buses<br/>- route<br/>- booking<br/>- query")]
+        Tables[("Database Tables<br/>- admin (RBAC roles)<br/>- costumer<br/>- buses<br/>- route (bus_id ref)<br/>- booking (pnr, bus_id, route_id)<br/>- seat_lock (atomic concurrency)<br/>- audit_log (compliance)<br/>- migration_steps<br/>- query")]
     end
 
     Client -->|HTTPS / Port 443| Docker
@@ -89,7 +91,7 @@ flowchart TD
 | Layer | Technologies |
 |---|---|
 | **Frontend** | HTML5, CSS3, JavaScript (ES6), Bootstrap 4.6, AOS.js Animations, Font Awesome |
-| **Backend** | PHP 8.1 (Apache 2.4 runtime), Session Auth, MySQLi with TLS/SSL |
+| **Backend** | PHP 8.3 / 8.4 (Apache 2.4 runtime), Session Auth, MySQLi with TLS/SSL |
 | **Database** | TiDB Cloud (Serverless MySQL-Compatible) / MySQL 8.0+ |
 | **DevOps & Cloud** | Docker, Render Web Services, GitHub Actions CI/CD |
 | **Registries & Packages** | GitHub Container Registry (`ghcr.io`), Composer Package Manifest |

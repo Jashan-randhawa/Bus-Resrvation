@@ -48,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
                     [$from, $to, $bus, $time, $price]
                 );
             }
+            audit($link, 'CREATE', 'route', (int)mysqli_insert_id($link), null, ['city1' => $from, 'city2' => $to, 'busno' => $bus, 'time' => $time, 'price' => $price]);
             $alert = 'Route added successfully.';
             $alert_type = 'success';
         }
@@ -78,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_route'])) {
                 $alert_type = 'danger';
             } else {
                 db_exec($link, "DELETE FROM route WHERE `{$route_pk}` = ?", 'i', [$delete_id]);
+                audit($link, 'DELETE', 'route', $delete_id, ['city1' => $route_row['city1'], 'city2' => $route_row['city2'], 'busno' => $r_bus, 'time' => $r_time], null);
                 $alert = 'Route deleted successfully.';
                 $alert_type = 'success';
             }

@@ -41,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
             } else {
                 db_exec($link, 'INSERT INTO buses (bus_number) VALUES (?)', 's', [$busno]);
             }
+            audit($link, 'CREATE', 'bus', (int)mysqli_insert_id($link), null, ['bus_number' => $busno, 'capacity' => $capacity, 'layout' => $layout]);
             $alert = 'Bus added successfully.';
             $alert_type = 'success';
         }
@@ -70,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_bus'])) {
                 $alert_type = 'danger';
             } else {
                 db_exec($link, "DELETE FROM buses WHERE `{$bus_pk}` = ?", 'i', [$delete_id]);
+                audit($link, 'DELETE', 'bus', $delete_id, ['bus_number' => $b_num], null);
                 $alert = 'Bus deleted successfully.';
                 $alert_type = 'success';
             }

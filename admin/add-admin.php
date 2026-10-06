@@ -50,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
                     [$name, $email, $hashed, $phone]
                 );
             }
+            audit($link, 'CREATE', 'admin', (int)mysqli_insert_id($link), null, ['name' => $name, 'email' => $email, 'role' => $role]);
             $alert = "New administrator created successfully with '{$role}' privileges.";
             $alert_type = 'success';
         }

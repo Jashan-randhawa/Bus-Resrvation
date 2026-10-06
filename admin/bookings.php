@@ -51,6 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
         ]);
 
         if ($res['ok']) {
+            audit($link, 'CREATE', 'booking', null, null, ['pnr' => $res['pnr'], 'bus' => $bus, 'seat' => $seat, 'name' => $unm, 'date' => $date]);
             $alert = "Booking confirmed! PNR: {$res['pnr']}, Seat: #{$seat}";
             $alert_type = 'success';
         } else {
@@ -78,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_booking'])) {
         } catch (Throwable $e) {
             // Table may not exist yet
         }
+        audit($link, 'CANCEL', 'booking', $delete_id, null, ['status' => 'Cancelled']);
         $alert_type = 'success';
     }
 }
