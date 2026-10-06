@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS `admin` (
   `Email_id` VARCHAR(100) NOT NULL,
   `Password` VARCHAR(255) NOT NULL,
   `phone` VARCHAR(20) NOT NULL,
+  `role` ENUM('super_admin', 'operator', 'viewer') NOT NULL DEFAULT 'operator',
   UNIQUE KEY `uq_admin_email` (`Email_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

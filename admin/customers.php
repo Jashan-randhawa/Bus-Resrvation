@@ -45,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
 // Handle Delete Customer
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_customer'])) {
     csrf_verify();
+    require_role('super_admin');
     $delete_id = (int)($_POST['delete_id'] ?? 0);
     if ($delete_id > 0) {
         $active_bookings = db_one($link,

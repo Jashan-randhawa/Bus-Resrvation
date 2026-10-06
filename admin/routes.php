@@ -45,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
 // Handle Delete Route (O10: verify active bookings before deleting route)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_route'])) {
     csrf_verify();
+    require_role('super_admin');
     $delete_id = (int)($_POST['delete_id'] ?? 0);
     if ($delete_id > 0) {
         $route_row = db_one($link, "SELECT * FROM route WHERE `{$route_pk}` = ?", 'i', [$delete_id]);

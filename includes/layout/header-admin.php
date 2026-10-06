@@ -41,13 +41,31 @@ require_once __DIR__ . '/../config.php';
             <img src="<?= BASE_URL ?>/assets/images/userav-min.png" alt="Admin Avatar" class="profile-avatar">
             <div class="profile-info">
                 <div class="profile-name"><?= e($_SESSION['name'] ?? 'Admin') ?></div>
-                <div class="profile-role">System Administrator</div>
+                <?php
+                $admin_role = (string)($_SESSION['role'] ?? 'operator');
+                $admin_role_title = match($admin_role) {
+                    'super_admin' => 'Super Administrator',
+                    'operator' => 'Fleet Operator',
+                    'viewer' => 'Read-Only Viewer',
+                    default => 'Administrator',
+                };
+                ?>
+                <div class="profile-role"><?= e($admin_role_title) ?></div>
             </div>
         </div>
 
         <!-- Grouped Navigation -->
         <nav class="admin-nav">
             <?php
+            $is_super = function_exists('is_super_admin') && is_super_admin();
+            $people_items = [
+                ['Customers', 'customers.php', 'edit-customer.php', '👥'],
+            ];
+            if ($is_super) {
+                $people_items[] = ['Administrators', 'add-admin.php', null, '🛡️'];
+            }
+            $people_items[] = ['Customer Queries', 'queries.php', null, '💬'];
+
             $nav_menu = [
                 'Overview' => [
                     ['Dashboard', 'index.php', null, '📊'],
@@ -60,15 +78,14 @@ require_once __DIR__ . '/../config.php';
                     ['Buses', 'buses.php', 'edit-bus.php', '🚌'],
                     ['Routes', 'routes.php', 'edit-route.php', '🗺️'],
                 ],
-                'People' => [
-                    ['Customers', 'customers.php', 'edit-customer.php', '👥'],
-                    ['Administrators', 'add-admin.php', null, '🛡️'],
-                    ['Customer Queries', 'queries.php', null, '💬'],
-                ],
-                'System' => [
-                    ['Diagnostics', 'diagnostics.php', null, '⚡'],
-                ],
+                'People' => $people_items,
             ];
+
+            if ($is_super) {
+                $nav_menu['System'] = [
+                    ['Diagnostics', 'diagnostics.php', null, '⚡'],
+                ];
+            }
             $current_script = basename($_SERVER['SCRIPT_NAME'] ?? '');
             ?>
             <?php foreach ($nav_menu as $group => $items): ?>

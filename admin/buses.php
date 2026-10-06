@@ -50,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
 // Handle Delete Bus (O10: referential check before deletion)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_bus'])) {
     csrf_verify();
+    require_role('super_admin');
     $delete_id = (int)($_POST['delete_id'] ?? 0);
     if ($delete_id > 0) {
         $bus_row = db_one($link, "SELECT bus_number FROM buses WHERE `{$bus_pk}` = ?", 'i', [$delete_id]);

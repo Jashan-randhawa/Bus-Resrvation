@@ -1,8 +1,11 @@
 <?php
-// admin/diagnostics.php -- System Health & Operational Diagnostics Endpoint (O15)
+// admin/diagnostics.php -- System Health & Operational Diagnostics Endpoint (O15 / P6)
+header('Cache-Control: no-store, private');
 require_once __DIR__ . '/../includes/auth/admin-session.php';
 require_once __DIR__ . '/../includes/db_con.php';
 require_once __DIR__ . '/../includes/helpers.php';
+
+require_role('super_admin');
 
 $migration_log = $_SESSION['migration_log'] ?? null;
 unset($_SESSION['migration_log']);
@@ -88,11 +91,11 @@ $checks[] = run_check('Database Round-Trip & Latency', function() use ($link) {
     } catch (Throwable $e) {}
 
     $ssl_desc = $ssl_cipher !== '' ? "SSL: {$ssl_cipher}" : 'SSL: Plain';
-    $host_info = defined('DB_NAME') && defined('DB_HOST') ? (DB_NAME . '@' . DB_HOST) : 'configured';
+    $conn_status = ($link instanceof mysqli && !mysqli_connect_errno()) ? 'Connected: yes' : 'Connected: no';
 
     return [
         'status' => 'OK',
-        'message' => "Latency: {$duration_ms}ms | {$host_info} (v{$version}) | {$ssl_desc}"
+        'message' => "{$conn_status} | Latency: {$duration_ms}ms | {$ssl_desc} | v{$version}"
     ];
 });
 

@@ -63,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
 // Handle Cancel Booking (O4)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_booking'])) {
     csrf_verify();
+    require_role('super_admin');
     $delete_id = (int)($_POST['delete_id'] ?? 0);
     if ($delete_id > 0) {
         if ($has_status) {

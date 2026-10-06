@@ -19,13 +19,22 @@ if (session_status() === PHP_SESSION_NONE) {
 
 const SESSION_IDLE_SECONDS = 1800; // 30 minutes
 
-function login_user(string $role, array $row): void {
+function is_super_admin(): bool {
+    return ($_SESSION['role'] ?? '') === 'super_admin';
+}
+
+function login_user(string $portalRole, array $row): void {
     session_regenerate_id(true); // defeats session fixation
-    $_SESSION['role'] = $role; // 'user' | 'admin'
+    $assignedRole = !empty($row['role']) ? (string)$row['role'] : ($portalRole === 'admin' ? 'super_admin' : 'user');
+    $_SESSION['role'] = $assignedRole;
     $_SESSION['uid'] = (int)$row['id'];
-    $_SESSION['name'] = (string)$row['name'];
-    $_SESSION['phone'] = (string)$row['phone'];
+    if (in_array($assignedRole, ['super_admin', 'operator', 'viewer', 'admin'], true)) {
+        $_SESSION['admin_id'] = (int)$row['id'];
+    }
+    $_SESSION['name'] = (string)($row['name'] ?? 'User');
+    $_SESSION['phone'] = (string)($row['phone'] ?? '');
     $_SESSION['last_seen'] = time();
+    $_SESSION['last'] = time();
     // never store the password or its hash in the session
 }
 
@@ -39,13 +48,15 @@ function logout_all(): void {
     session_destroy();
 }
 
-function require_role(string $role, bool $touch = true): void {
-    $idle = time() - (int)($_SESSION['last_seen'] ?? 0);
-    if (($_SESSION['role'] ?? '') !== $role || $idle > SESSION_IDLE_SECONDS) {
+function require_role(string ...$allowed): void {
+    $idle = time() - (int)($_SESSION['last_seen'] ?? $_SESSION['last'] ?? 0);
+    $currentRole = $_SESSION['role'] ?? '';
+
+    // If session missing or timed out, redirect to login
+    if ($currentRole === '' || $idle > SESSION_IDLE_SECONDS) {
         $req_uri = $_SERVER['REQUEST_URI'] ?? '';
         logout_all();
 
-        // Phase 1.6: Return JSON 401 for API endpoints instead of HTML redirect
         $is_api = str_contains($req_uri, '/api-') || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'));
         if ($is_api) {
             http_response_code(401);
@@ -59,7 +70,6 @@ function require_role(string $role, bool $touch = true): void {
             exit;
         }
 
-        // Phase 1.1: Preserve validated relative return path for re-authentication
         $target = BASE_URL . '/homepage.php';
         $safe_next = function_exists('safe_next_url') ? safe_next_url($req_uri) : null;
         if ($safe_next !== null && !str_contains($safe_next, 'homepage.php') && !str_contains($safe_next, 'logout')) {
@@ -68,9 +78,27 @@ function require_role(string $role, bool $touch = true): void {
         header('Location: ' . $target);
         exit;
     }
-    if ($touch) {
-        $_SESSION['last_seen'] = time();
+
+    // Expand 'admin' to encompass any administrative role
+    $effective_allowed = [];
+    foreach ($allowed as $a) {
+        if ($a === 'admin') {
+            $effective_allowed[] = 'admin';
+            $effective_allowed[] = 'super_admin';
+            $effective_allowed[] = 'operator';
+            $effective_allowed[] = 'viewer';
+        } else {
+            $effective_allowed[] = $a;
+        }
     }
+
+    if (!in_array($currentRole, $effective_allowed, true)) {
+        http_response_code(403);
+        exit('Forbidden');
+    }
+
+    $_SESSION['last_seen'] = time();
+    $_SESSION['last'] = time();
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {

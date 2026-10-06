@@ -4,6 +4,8 @@ require_once __DIR__ . '/../../includes/auth/admin-session.php';
 require_once __DIR__ . '/../../includes/db_con.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 
+require_role('super_admin', 'operator');
+
 $route_pk = table_has_column($link, 'route', 'sno') ? 'sno' : 'id';
 
 $id = (int)($_GET['id'] ?? 0);

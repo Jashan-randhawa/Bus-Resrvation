@@ -32,12 +32,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
 
     // Rate limiting (O3: 5 failures per 15 min per account, 20 per 15 min per IP)
     if (throttle_blocked($link, $acctKey, 5, 900) || throttle_blocked($link, $ipKey, 20, 900)) {
+      http_response_code(429);
       $msg = 'Too many failed attempts. Please try again later.';
       $msg_type = 'danger';
       $open_modal = ($role === 'admin') ? 'admin' : 'user';
     } else {
+      $has_role_col = table_has_column($link, 'admin', 'role');
       $sql = $role === 'admin'
-        ? 'SELECT id, name, phone, Password AS pwd FROM admin WHERE Email_id = ? LIMIT 1'
+        ? ($has_role_col
+            ? 'SELECT id, name, phone, Password AS pwd, role FROM admin WHERE Email_id = ? LIMIT 1'
+            : 'SELECT id, name, phone, Password AS pwd FROM admin WHERE Email_id = ? LIMIT 1')
         : 'SELECT id, name, phone, pwd FROM costumer WHERE email = ? LIMIT 1';
       $row = db_one($link, $sql, 's', [$email]);
 

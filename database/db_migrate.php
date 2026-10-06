@@ -181,6 +181,10 @@ function run_migrations(mysqli $link): array {
             $m1_ok = try_sql($link, "ALTER TABLE `admin` ADD UNIQUE KEY `uq_admin_email` (`Email_id`)", $log) && $m1_ok;
         }
 
+        if (!has_column($link, 'admin', 'role')) {
+            $m1_ok = try_sql($link, "ALTER TABLE `admin` ADD COLUMN `role` ENUM('super_admin', 'operator', 'viewer') NOT NULL DEFAULT 'operator'", $log) && $m1_ok;
+        }
+
         if (!has_index($link, 'costumer', 'uq_customer_email')) {
             try_sql($link, "DELETE c1 FROM costumer c1 JOIN costumer c2 ON c1.email = c2.email AND c1.id > c2.id", $log);
             $m1_ok = try_sql($link, "ALTER TABLE `costumer` ADD UNIQUE KEY `uq_customer_email` (`email`)", $log) && $m1_ok;
