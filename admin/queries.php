@@ -9,12 +9,15 @@ $query_pk = table_has_column($link, 'query', 'sno') ? 'sno' : 'id';
 $alert = null;
 $alert_type = 'info';
 
-// Handle Delete Query
+// Handle Delete Query (Phase A Items 1 & 3)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_query'])) {
     csrf_verify();
+    require_role('super_admin');
     $delete_id = (int)($_POST['delete_id'] ?? 0);
     if ($delete_id > 0) {
+        $old_query = db_one($link, "SELECT * FROM `query` WHERE `{$query_pk}` = ?", 'i', [$delete_id]);
         db_exec($link, "DELETE FROM `query` WHERE `{$query_pk}` = ?", 'i', [$delete_id]);
+        audit($link, 'DELETE', 'query', $delete_id, $old_query ?: null, null);
         $alert = 'Query deleted successfully.';
         $alert_type = 'success';
     }
@@ -86,6 +89,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                             <td class="font-weight-bold text-dark"><?= e($subject ?: '(No Subject)') ?></td>
                             <td style="max-width: 380px; white-space: pre-wrap;" class="text-muted small"><?= e($comment) ?></td>
                             <td class="text-right">
+                                <?php if (is_super_admin()): ?>
                                 <form method="post" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this query?');">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="delete_id" value="<?= e($qid) ?>">
@@ -93,6 +97,9 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                                         Dismiss
                                     </button>
                                 </form>
+                                <?php else: ?>
+                                    <span class="text-muted small">View Only</span>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

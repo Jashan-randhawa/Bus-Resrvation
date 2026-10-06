@@ -916,8 +916,18 @@ function render_pagination(array $pagination, array $keep_params = []): string {
  */
 function audit(mysqli $link, string $action, string $entity_type, ?int $entity_id = null, $old_value = null, $new_value = null): void {
     try {
+        $allowed_actions = [
+            'CREATE', 'UPDATE', 'DELETE', 'CANCEL', 'LOGIN', 'LOGIN_FAILED',
+            'ROLE_CHANGE', 'EXPORT', 'RESTORE', 'DIAGNOSTICS_RUN', 'RUN_MIGRATIONS'
+        ];
+        $act = strtoupper(trim($action));
+        if (!in_array($act, $allowed_actions, true)) {
+            $act = 'OTHER';
+        }
+
+        $ent = strtolower(trim($entity_type));
         $admin_id = isset($_SESSION['admin_id']) ? (int)$_SESSION['admin_id'] : null;
-        if ($admin_id === null && isset($_SESSION['id']) && ($_SESSION['role'] ?? '') === 'admin') {
+        if ($admin_id === null && isset($_SESSION['id']) && in_array(($_SESSION['role'] ?? ''), ['admin', 'super_admin', 'operator', 'viewer'], true)) {
             $admin_id = (int)$_SESSION['id'];
         }
         $ip = client_ip();
@@ -928,7 +938,7 @@ function audit(mysqli $link, string $action, string $entity_type, ?int $entity_i
         db_exec($link,
             "INSERT INTO audit_log (admin_id, action, entity_type, entity_id, old_value, new_value, ip_address, user_agent) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             'ississss',
-            [$admin_id, strtoupper(trim($action)), strtolower(trim($entity_type)), $entity_id, $old_json, $new_json, $ip, $ua]
+            [$admin_id, $act, $ent, $entity_id, $old_json, $new_json, $ip, $ua]
         );
     } catch (Throwable $e) {
         error_log("[busres audit error] Failed to record audit log: " . $e->getMessage());

@@ -9,9 +9,10 @@ $bus_pk = table_has_column($link, 'buses', 'sno') ? 'sno' : 'id';
 $alert = null;
 $alert_type = 'info';
 
-// Handle Add Bus (O8, O12)
+// Handle Add Bus (O8, O12, Phase A Item 1)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
     csrf_verify();
+    require_role('super_admin', 'operator');
     $busno = trim((string)($_POST['busno'] ?? ''));
     $capacity = (int)($_POST['capacity'] ?? 36);
     if ($capacity < 10 || $capacity > 60) {
@@ -92,9 +93,11 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <h1 class="page-title">Fleet Management</h1>
         <p class="page-subtitle">Add, inspect, configure seating capacities, and maintain transit vehicles.</p>
     </div>
+    <?php if (can_write()): ?>
     <button class="btn btn-primary shadow-sm" data-toggle="modal" data-target="#addBusModal">
         + Register New Bus
     </button>
+    <?php endif; ?>
 </div>
 
 <?php if ($alert): ?>
@@ -154,9 +157,12 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                                 </span>
                             </td>
                             <td class="text-right">
+                                <?php if (can_write()): ?>
                                 <a href="<?= BASE_URL ?>/admin/edit/edit-bus.php?id=<?= e($bid) ?>" class="btn btn-outline-secondary btn-sm">
                                     Edit
                                 </a>
+                                <?php endif; ?>
+                                <?php if (is_super_admin()): ?>
                                 <form method="post" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this bus?');">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="delete_id" value="<?= e($bid) ?>">
@@ -164,6 +170,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                                         Delete
                                     </button>
                                 </form>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

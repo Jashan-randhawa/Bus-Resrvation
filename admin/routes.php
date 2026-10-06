@@ -9,9 +9,10 @@ $route_pk = table_has_column($link, 'route', 'sno') ? 'sno' : 'id';
 $alert = null;
 $alert_type = 'info';
 
-// Handle Add Route (O11, O12)
+// Handle Add Route (O11, O12, Phase A Item 1)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
     csrf_verify();
+    require_role('super_admin', 'operator');
     $from = trim((string)($_POST['From'] ?? ''));
     $to = trim((string)($_POST['To'] ?? ''));
     $bus = trim((string)($_POST['bus'] ?? ''));
@@ -101,9 +102,11 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <h1 class="page-title">Transit Route Schedules</h1>
         <p class="page-subtitle">Configure origins, destinations, bus allocations, departures, and ticket tariffs.</p>
     </div>
+    <?php if (can_write()): ?>
     <button class="btn btn-primary shadow-sm" data-toggle="modal" data-target="#addRouteModal">
         + Create Route Schedule
     </button>
+    <?php endif; ?>
 </div>
 
 <?php if ($alert): ?>
@@ -153,9 +156,12 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                             <td><?= e($row['time'] ?? '') ?></td>
                             <td class="font-weight-bold text-success h6 mb-0"><?= CURRENCY ?><?= e(number_format((float)($row['price'] ?? 0), 2)) ?></td>
                             <td class="text-right">
+                                <?php if (can_write()): ?>
                                 <a href="<?= BASE_URL ?>/admin/edit/edit-route.php?id=<?= e($rid) ?>" class="btn btn-outline-secondary btn-sm">
                                     Edit
                                 </a>
+                                <?php endif; ?>
+                                <?php if (is_super_admin()): ?>
                                 <form method="post" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this route?');">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="delete_id" value="<?= e($rid) ?>">
@@ -163,6 +169,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                                         Delete
                                     </button>
                                 </form>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

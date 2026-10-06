@@ -23,6 +23,10 @@ function is_super_admin(): bool {
     return ($_SESSION['role'] ?? '') === 'super_admin';
 }
 
+function can_write(): bool {
+    return in_array($_SESSION['role'] ?? '', ['super_admin', 'operator'], true);
+}
+
 function login_user(string $portalRole, array $row): void {
     session_regenerate_id(true); // defeats session fixation
     $assignedRole = !empty($row['role']) ? (string)$row['role'] : ($portalRole === 'admin' ? 'super_admin' : 'user');

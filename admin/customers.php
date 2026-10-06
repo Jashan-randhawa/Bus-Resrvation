@@ -9,9 +9,10 @@ $cust_pk = table_has_column($link, 'costumer', 'sno') ? 'sno' : 'id';
 $alert = null;
 $alert_type = 'info';
 
-// Handle Add Customer
+// Handle Add Customer (Phase A Item 1)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
     csrf_verify();
+    require_role('super_admin', 'operator');
     $name = trim((string)($_POST['unm'] ?? ''));
     $email = trim((string)($_POST['email'] ?? ''));
     $pwd = (string)($_POST['pwd'] ?? '');
@@ -49,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_customer'])) {
     require_role('super_admin');
     $delete_id = (int)($_POST['delete_id'] ?? 0);
     if ($delete_id > 0) {
+        $old_customer = db_one($link, "SELECT name, email, phone FROM costumer WHERE `{$cust_pk}` = ?", 'i', [$delete_id]);
         $active_bookings = db_one($link,
             "SELECT COUNT(*) AS c FROM booking WHERE id = ? AND (status IS NULL OR status IN ('Confirmed', 'Pending'))",
             'i', [$delete_id]
@@ -58,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_customer'])) {
             $alert_type = 'danger';
         } else {
             db_exec($link, "DELETE FROM costumer WHERE `{$cust_pk}` = ?", 'i', [$delete_id]);
-            audit($link, 'DELETE', 'customer', $delete_id, null, null);
+            audit($link, 'DELETE', 'customer', $delete_id, $old_customer ?: null, null);
             $alert = 'Customer deleted successfully.';
             $alert_type = 'success';
         }
@@ -78,9 +80,11 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <h1 class="page-title">Customer Accounts</h1>
         <p class="page-subtitle">Manage registered passenger profiles, credentials, contact records, and addresses.</p>
     </div>
+    <?php if (can_write()): ?>
     <button class="btn btn-primary shadow-sm" data-toggle="modal" data-target="#addCustomerModal">
         + Register Customer
     </button>
+    <?php endif; ?>
 </div>
 
 <?php if ($alert): ?>
@@ -130,12 +134,16 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                             <td><?= e($row['phone'] ?? '') ?></td>
                             <td><small class="text-muted"><?= e($row['address'] ?? 'N/A') ?></small></td>
                             <td class="text-right">
+                                <?php if (can_write()): ?>
                                 <a href="<?= BASE_URL ?>/admin/edit/edit-customer.php?id=<?= e($cid) ?>" class="btn btn-outline-secondary btn-sm">Edit</a>
+                                <?php endif; ?>
+                                <?php if (is_super_admin()): ?>
                                 <form method="post" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this customer?');">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="delete_id" value="<?= e($cid) ?>">
                                     <button type="submit" name="delete_customer" class="btn btn-outline-danger btn-sm ml-1">Delete</button>
                                 </form>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

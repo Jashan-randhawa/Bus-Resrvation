@@ -71,6 +71,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
           throttle_clear($link, $acctKey);
           login_user($role, $row);
 
+          if ($role === 'admin') {
+            audit($link, 'LOGIN', 'admin', (int)$row['id'], null, ['email' => $email, 'status' => 'success']);
+          }
+
           // Phase 1.1: Redirect to validated next return path if present
           $next = safe_next_url($_POST['next'] ?? $_GET['next'] ?? null);
           $dest = $next !== null ? $next : (BASE_URL . '/' . $role . '/index.php');
@@ -82,6 +86,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
       // Record failed login attempt
       throttle_hit($link, $acctKey);
       throttle_hit($link, $ipKey);
+
+      if ($role === 'admin') {
+        audit($link, 'LOGIN_FAILED', 'admin', null, null, ['email' => $email, 'reason' => 'invalid_credentials']);
+      }
+
       $msg = 'Invalid email or password combination.';
       $msg_type = 'danger';
       $open_modal = ($role === 'admin') ? 'admin' : 'user';

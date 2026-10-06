@@ -14,13 +14,15 @@ $where_clauses = [];
 $params = [];
 $types = '';
 
-if ($filter_action !== '' && in_array(strtoupper($filter_action), ['CREATE', 'UPDATE', 'DELETE', 'CANCEL'], true)) {
+$available_actions = ['CREATE', 'UPDATE', 'DELETE', 'CANCEL', 'LOGIN', 'LOGIN_FAILED', 'ROLE_CHANGE', 'EXPORT', 'RESTORE', 'DIAGNOSTICS_RUN', 'RUN_MIGRATIONS', 'OTHER'];
+if ($filter_action !== '' && in_array(strtoupper($filter_action), $available_actions, true)) {
     $where_clauses[] = 'a.action = ?';
     $params[] = strtoupper($filter_action);
     $types .= 's';
 }
 
-if ($filter_entity !== '' && in_array(strtolower($filter_entity), ['bus', 'route', 'booking', 'customer', 'admin'], true)) {
+$available_entities = ['bus', 'route', 'booking', 'customer', 'admin', 'query', 'system'];
+if ($filter_entity !== '' && in_array(strtolower($filter_entity), $available_entities, true)) {
     $where_clauses[] = 'a.entity_type = ?';
     $params[] = strtolower($filter_entity);
     $types .= 's';
@@ -65,7 +67,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                 <label for="action" class="small text-muted font-weight-bold mr-2">Action:</label>
                 <select name="action" id="action" class="form-control form-control-sm">
                     <option value="">All Actions</option>
-                    <?php foreach (['CREATE', 'UPDATE', 'DELETE', 'CANCEL'] as $act): ?>
+                    <?php foreach ($available_actions as $act): ?>
                         <option value="<?= $act ?>" <?= $filter_action === $act ? 'selected' : '' ?>><?= $act ?></option>
                     <?php endforeach; ?>
                 </select>
@@ -74,7 +76,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                 <label for="entity" class="small text-muted font-weight-bold mr-2">Entity:</label>
                 <select name="entity" id="entity" class="form-control form-control-sm">
                     <option value="">All Entities</option>
-                    <?php foreach (['bus', 'route', 'booking', 'customer', 'admin'] as $ent): ?>
+                    <?php foreach ($available_entities as $ent): ?>
                         <option value="<?= $ent ?>" <?= $filter_entity === $ent ? 'selected' : '' ?>><?= ucfirst($ent) ?></option>
                     <?php endforeach; ?>
                 </select>

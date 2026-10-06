@@ -7,6 +7,9 @@ require_once __DIR__ . '/../includes/helpers.php';
 
 require_role('super_admin');
 
+// Audit diagnostics run (Phase A Item 3)
+audit($link, 'DIAGNOSTICS_RUN', 'system', null, null, ['user_agent' => substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 100)]);
+
 $migration_log = $_SESSION['migration_log'] ?? null;
 unset($_SESSION['migration_log']);
 
@@ -14,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['run_migrations'])) {
     csrf_verify();
     require_once __DIR__ . '/../database/db_migrate.php';
     $res = run_migrations($link);
+    audit($link, 'RUN_MIGRATIONS', 'system', null, null, ['ok' => $res['ok']]);
     if ($res['ok']) {
         flash_set('success', 'Database migrations executed successfully.');
     } else {
@@ -216,6 +220,20 @@ $checks[] = run_check('Schema Migrations Status', function() use ($run_query, &$
     return [
         'status' => ($applied_count >= $expected_count) ? 'OK' : 'INFO',
         'message' => "{$applied_count} of {$expected_count} migrations recorded in schema_migrations"
+    ];
+});
+
+// 11. Audit Logging Trail (Phase A Item 3)
+$checks[] = run_check('Audit Logging System', function() use ($run_query) {
+    $audit_check = $run_query("SHOW TABLES LIKE 'audit_log'");
+    if (empty($audit_check)) {
+        return ['status' => 'FAIL', 'message' => 'Table audit_log missing'];
+    }
+    $cnt = $run_query("SELECT COUNT(*) AS c FROM audit_log");
+    $total_logs = (int)($cnt[0]['c'] ?? 0);
+    return [
+        'status' => 'OK',
+        'message' => "Audit table active ({$total_logs} recorded events)"
     ];
 });
 

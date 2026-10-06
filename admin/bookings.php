@@ -10,9 +10,10 @@ $alert_type = 'info';
 $has_pnr = table_has_column($link, 'booking', 'pnr');
 $has_status = table_has_column($link, 'booking', 'status');
 
-// Handle Add Booking (O6 / P-03 / P-04)
+// Handle Add Booking (O6 / P-03 / P-04, Phase A Item 1)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
     csrf_verify();
+    require_role('super_admin', 'operator');
     $bus = trim((string)($_POST['bus'] ?? ''));
     $unm = trim((string)($_POST['unm'] ?? ''));
     $num = trim((string)($_POST['num'] ?? ''));
@@ -61,12 +62,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
     }
 }
 
-// Handle Cancel Booking (O4)
+// Handle Cancel Booking (O4, Phase A Item 3)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_booking'])) {
     csrf_verify();
     require_role('super_admin');
     $delete_id = (int)($_POST['delete_id'] ?? 0);
     if ($delete_id > 0) {
+        $old_booking = db_one($link, "SELECT sno, pnr, bus, seat, date, time, status, name, contact FROM booking WHERE sno = ?", 'i', [$delete_id]);
         if ($has_status) {
             db_exec($link, "UPDATE booking SET status = 'Cancelled' WHERE sno = ?", 'i', [$delete_id]);
             $alert = 'Booking status marked as Cancelled (seat liberated, audit preserved).';
@@ -79,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_booking'])) {
         } catch (Throwable $e) {
             // Table may not exist yet
         }
-        audit($link, 'CANCEL', 'booking', $delete_id, null, ['status' => 'Cancelled']);
+        audit($link, 'CANCEL', 'booking', $delete_id, $old_booking ?: null, ['status' => 'Cancelled']);
         $alert_type = 'success';
     }
 }
@@ -114,9 +116,11 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <h1 class="page-title">Booking Management</h1>
         <p class="page-subtitle">Track passenger tickets, review reservation statuses, or create manual administrative bookings.</p>
     </div>
+    <?php if (can_write()): ?>
     <button class="btn btn-primary shadow-sm" data-toggle="modal" data-target="#addBookingModal">
         + New Reservation
     </button>
+    <?php endif; ?>
 </div>
 
 <?php if ($alert): ?>
@@ -197,8 +201,10 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                             <td><span class="badge badge-<?= $badge_class ?>"><?= e($status) ?></span></td>
                             <td class="font-weight-bold text-dark"><?= CURRENCY ?><?= e(number_format((float)($row['price'] ?? 0), 2)) ?></td>
                             <td class="text-right">
+                                <?php if (can_write()): ?>
                                 <a href="<?= BASE_URL ?>/admin/edit/edit-booking.php?id=<?= e($sno) ?>" class="btn btn-outline-secondary btn-sm">Edit</a>
-                                <?php if (!$is_cancelled && !$is_expired): ?>
+                                <?php endif; ?>
+                                <?php if (is_super_admin() && !$is_cancelled && !$is_expired): ?>
                                     <form method="post" action="" style="display:inline;" onsubmit="return confirm('Cancel this reservation and liberate the seat?');">
                                         <?= csrf_field() ?>
                                         <input type="hidden" name="delete_id" value="<?= e($sno) ?>">

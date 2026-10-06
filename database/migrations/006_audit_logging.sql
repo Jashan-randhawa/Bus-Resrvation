@@ -1,5 +1,5 @@
 -- database/migrations/006_audit_logging.sql
--- Migration 008: Comprehensive Audit Trail Logging (P-09)
+-- Migration 006: Comprehensive Audit Trail Logging (P-09)
 
 CREATE TABLE IF NOT EXISTS `audit_log` (
   `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
