@@ -55,12 +55,18 @@ Comprehensive architectural, operational, and development documentation is avail
 - 💬 **Inquiry Support:** Direct feedback and query submission form for user support.
 
 ### 🛡️ Administrator Operations
-- 👥 **Multi-Role RBAC:** Granular access tiers (`super_admin`, `operator`, `viewer`) with session segregation and 30-min idle timeouts.
-- 📊 **Real-Time Consolidated Analytics:** Single-query KPI retrieval displaying total bookings, fleet count, routes, seat utilization, and confirmed revenue.
-- 🛡️ **Immutable Audit Logging:** Every administrative mutation and cancellation is preserved in the audit log table.
-- 🚌 **Fleet & Bus Management:** Add, inspect, configure custom capacities (10–60), and manage layouts.
-- 🛣️ **Route Management:** Configure origin and destination hubs, bus assignment, departure schedules, and fare pricing with collision detection.
-- 🎟️ **Booking Supervision:** Create reservations manually or cancel existing ticket orders with instant lock liberation.
+- 👥 **Multi-Role RBAC & Live Session Checks:** Granular tiers (`super_admin`, `operator`, `viewer`) with live per-request role/status validation directly against the database; viewer write restrictions block unauthorized modifications across all forms.
+- 🛡️ **Account Protection & Self-Service:** Self-service profile updates with current password re-authentication (`admin/profile.php`), self-deactivation/deletion guards, and last-active `super_admin` demotion protection.
+- 🗑️ **Soft-Delete Archiving & Restoration:** Safe `archived_at` soft-delete lifecycle with Active vs Archived tab views and one-click restoration across fleet buses, routes, and customer accounts.
+- 📥 **Streaming CSV Exports:** Memory-efficient CSV downloads with spreadsheet formula injection protection (`=`, `+`, `-`, `@`) for bookings, customers, trip manifests, and audit trails.
+- 🔍 **Multi-Field Search & Date Filters:** Parameterized multi-criteria filtering across bookings, customer accounts, and audit events.
+- 📜 **Audit Trail & Visual State Diffs:** Comprehensive event logging with visual before/after state diffing and automated 365-day retention cleanup.
+- 💬 **Customer Query Inbox & Email Replies:** Support inquiry lifecycle (`new`, `replied`, `closed`), modal email replies with mail dispatch, and a live sidebar unread query counter.
+- 📈 **30-Day Trends & Corridor Analytics:** 30-day booking and revenue breakdowns, cancellation rate KPIs, and top 5 transit corridor utilization metrics.
+- 🎟️ **Bulk Booking Operations:** Multi-select checkboxes for batch reservation cancellations and selected-row CSV exports.
+- 📋 **Passenger Trip Manifest:** Dedicated printable manifest sheet (`admin/manifest.php`) by bus, date, and corridor with print-ready CSS (`@media print`) and conductor/driver sign-off fields.
+- 🚌 **Fleet & Bus Management:** Add, inspect, configure custom seating capacities (10–60), and manage layout configurations (`2+2`, `2+1`, `1+2`, `1+1`).
+- 🛣️ **Route Management:** Configure origin/destination hubs, bus assignments, departure schedules, and fare pricing with conflict/collision detection.
 
 ---
 
@@ -196,15 +202,18 @@ Bus-Resrvation/
 │
 ├── admin/                    # 👑 Administrator Panel
 │   ├── index.php             # Dashboard shell & navigation sidebar
-│   ├── dashboard.php         # Real-time metrics & earnings KPIs
-│   ├── buses.php             # Fleet & bus management (dynamic capacity)
-│   ├── routes.php            # Route schedule & fare controls (conflict checks)
-│   ├── customers.php         # Customer records management
-│   ├── bookings.php          # Booking management & seat picker
+│   ├── dashboard.php         # Real-time metrics, earnings KPIs & 30-day trends
+│   ├── buses.php             # Fleet & bus management (capacity, layouts & soft-delete)
+│   ├── routes.php            # Route schedules & tariffs (collision checks & soft-delete)
+│   ├── customers.php         # Customer directory, search, CSV export & archiving
+│   ├── bookings.php          # Booking management, multi-criteria filters & bulk actions
 │   ├── seats.php             # Live seat availability monitor & departure filter
+│   ├── manifest.php          # Passenger trip manifest (printable view & CSV export)
+│   ├── queries.php           # Customer inquiry inbox & email reply workflow
+│   ├── audit-log.php         # Immutable audit trail, visual diffs & 365d retention purge
+│   ├── add-admin.php         # Administrator provisioning & account governance
+│   ├── profile.php           # Admin profile management & password change
 │   ├── diagnostics.php       # Operational integrity & security diagnostics
-│   ├── queries.php           # Customer inquiry viewer
-│   ├── add-admin.php         # Administrator provisioning
 │   └── edit/                 # ✏️ Inline record editing subsystem
 │       ├── edit-booking.php
 │       ├── edit-bus.php
@@ -214,30 +223,31 @@ Bus-Resrvation/
 ├── user/                     # 🧑‍💼 Customer Portal
 │   ├── index.php             # Customer dashboard & live seat availability
 │   ├── booking.php           # Reservation engine & dynamic seat map
-│   └── my-bookings.php       # Personal booking history & soft cancellation
+│   └── my-bookings.php       # Personal booking history & cancellation
 │
 ├── includes/                 # 🔧 Shared Application Kernels
 │   ├── config.php            # Dynamic BASE_URL auto-detector & exception handler
 │   ├── db_con.php            # Central environment-driven database connector
-│   ├── helpers.php           # Prepared statements, create_booking(), CSRF, rate limits
+│   ├── helpers.php           # Prepared statements, create_booking(), CSRF, rate limits, CSV streaming
+│   ├── admin-crud.php        # Shared admin CRUD helpers, soft-delete & UI components
 │   ├── auth/
 │   │   ├── session-bootstrap.php # Hardened session manager & cookie policy
-│   │   ├── admin-session.php # Admin session authentication guard
+│   │   ├── admin-session.php # Admin session authentication guard & live role checks
 │   │   └── user-session.php  # Customer session authentication guard
 │   └── layout/
 │       ├── header-public.php # Homepage header
 │       ├── header-login.php  # Login page header
-│       ├── header-admin.php  # Admin sidebar navigation
+│       ├── header-admin.php  # Admin sidebar navigation & unread query counter
 │       ├── header-user.php   # Customer navigation
 │       ├── header-edit.php   # Edit pages header
 │       ├── footer.php        # Public & edit footer scripts
 │       └── footer-admin.php  # Admin & customer footer scripts
 │
 ├── tests/                    # 🧪 Automated Regression & Concurrency Tests
-│   └── run_tests.php         # Test harness (rate limits, double-booking, hold expiration)
+│   └── run_tests.php         # Test harness (RBAC, soft-deletes, CSV sanitization, manifests)
 │
 ├── assets/                   # 🎨 Static Client Assets
-│   ├── css/                  # public.css, home.css, admin.css, edit.css
+│   ├── css/                  # public.css, home.css, admin.css, edit.css, design-system.css
 │   └── images/               # Vector SVGs, icons, and hero photography
 │
 ├── database/                 # 🗄️ Relational Data Layer
@@ -245,8 +255,14 @@ Bus-Resrvation/
 │   ├── db_migrate.php        # Idempotent database schema migration runner
 │   ├── create-admin.php      # CLI administrator provisioning script
 │   └── migrations/
-│       ├── 001_hardening.sql # Security schema migration
-│       └── 002_hash_passwords.php # Password migration & rehashing script
+│       ├── 001_hardening.sql                         # Security schema migration
+│       ├── 002_hash_passwords.php                    # Password migration & rehashing script
+│       ├── 003_active_seat_unique_key.sql            # Concurrency active seat index
+│       ├── 004_bus_layout.sql                        # Fleet layout column
+│       ├── 005_referential_integrity_seat_locks.sql  # Foreign keys & cascade constraints
+│       ├── 006_audit_logging.sql                     # Compliance audit log table
+│       ├── 007_admin_accounts_and_soft_delete.sql    # Soft delete archived_at & admin roles
+│       └── 008_query_inbox_enhancements.sql          # Inquiry status, timestamps & reply fields
 │
 ├── docker/                   # 🐳 Container Configuration
 │   ├── php-extra.ini         # Hardened PHP production settings
@@ -287,9 +303,11 @@ Bus-Resrvation/
 - 🛡️ **Prepared Statements Project-Wide (C-01, C-02):** 100% of SQL queries use parameterized prepared statements (`db_one`, `db_all`, `db_exec`) with zero direct string interpolation.
 - 🔑 **Cryptographic Password Hashing (C-03, C-04):** Passwords stored using `password_hash()` with modern bcrypt algorithms (`$2y$`). All demo credentials removed.
 - 🛡️ **Cross-Site Request Forgery (CSRF) Defense (H-03):** Every state-changing form and action carries a cryptographic anti-CSRF token verified on submission.
-- 🚦 **Strict Role Isolation & Session Hardening (H-01, H-02):** Strict role guards (`admin` vs `user`), session ID regeneration on login, 30-minute idle expiration, and secure cookie attributes (`HttpOnly`, `SameSite=Lax`, HTTPS detection).
+- 🚦 **Strict Role Isolation & Live Session Validation (H-01, H-02):** Live per-request verification against the database ensures role demotions or deactivated accounts take immediate effect. Viewer role is restricted to read-only access across all operations. Session ID regeneration on login and 30-minute idle timeouts enforced.
 - 🔒 **Transactional Seat Booking & Anti-Double-Booking (H-04, H-08):** Ticket booking runs inside ACID database transactions with row-level locks and unique constraints on `(bus, date, time, seat)`. Authoritative pricing resolved server-side.
 - 🎟️ **Cryptographic PNR Privacy & Rate Limiting (C-05, H-05):** Replaced sequential integer IDs with random 10-character hex tokens. PNR lookup requires a second factor (last 4 digits of phone) and is throttled against brute-force scraping.
+- 📊 **Streaming CSV Formula Injection Defense:** All exported CSV records prepend single quotes `'` to formulas starting with `=`, `+`, `-`, or `@` to prevent spreadsheet code execution attacks.
+- 🗑️ **Soft-Delete Referential Integrity:** Archiving fleet vehicles, routes, or customer accounts is guarded against orphaned records, verifying no active upcoming bookings exist before archiving.
 - 🧼 **XSS Output Sanitization (C-06, H-07):** All dynamic outputs are escaped with `e()` HTML escaping.
 - 🐳 **Hardened Container Runtime (M-05, M-06):** Upgraded to PHP 8.4-apache with health check, production error logging, and HTTP security headers (HSTS, CSP, X-Frame-Options, X-Content-Type-Options).
 - ⚙️ **Automated CI/CD & Auditing (M-08):** Continuous integration checks PHP syntax, composer configurations, and blocks SQL string anti-patterns. Dependabot enabled for weekly maintenance.
