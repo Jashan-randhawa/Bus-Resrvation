@@ -4,6 +4,9 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- **Admin Entry Point Links (Issue 2)**: Converted the header "Admin Portal" button and footer link from JavaScript-only placeholders to accessible, bookmarkable links pointing to `homepage.php?login=admin`, preserving modal trigger attributes for progressive enhancement.
+
 ### Fixed
 - **Admin Sign-in Redirects (Issue 1, Issue 8)**: Added GET query parameter handling on `homepage.php` to automatically open the admin login modal when unauthenticated or redirected with `?login=admin`.
 - **Session Expiry & Deactivation Notices**: Added whitelist handling for `&error=expired` and `&error=deactivated` so signed-out or deactivated admins receive clear, actionable feedback.

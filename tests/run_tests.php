@@ -753,6 +753,17 @@ assert_test("admin-session.php routes deactivated admins with error=deactivated"
     str_contains($admin_session_test_content, 'error=deactivated')
 );
 
+// Phase B: Link-based triggers and progressive enhancement (Issue 2)
+$footer_test_content = file_get_contents(__DIR__ . '/../includes/layout/footer-public.php');
+assert_test("footer-public.php Admin Portal link points to homepage.php?login=admin", 
+    str_contains($footer_test_content, 'homepage.php?login=admin') && str_contains($footer_test_content, 'data-target="#loginModal"')
+);
+
+$header_test_content = file_get_contents(__DIR__ . '/../includes/layout/header-public.php');
+assert_test("header-public.php Admin Portal control is an anchor pointing to homepage.php?login=admin", 
+    str_contains($header_test_content, 'homepage.php?login=admin') && str_contains($header_test_content, 'btn-dark')
+);
+
 
 
 // Clean up test data

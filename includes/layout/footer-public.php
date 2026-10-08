@@ -26,7 +26,7 @@
             <a href="#contact" class="text-muted small">Support</a>
           </li>
           <li class="list-inline-item">
-            <a href="#" class="text-muted small" data-toggle="modal" data-target="#loginModal">Admin Portal</a>
+            <a href="<?= e(BASE_URL) ?>/homepage.php?login=admin" class="text-muted small" data-toggle="modal" data-target="#loginModal">Admin Portal</a>
           </li>
         </ul>
         <p class="text-muted small mb-0">

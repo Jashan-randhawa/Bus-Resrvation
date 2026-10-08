@@ -126,6 +126,22 @@ assert_check("homepage.php contains admin password input", str_contains($homepag
 assert_check("homepage.php contains submit button with name='admin'", str_contains($homepage, 'name="admin"'));
 assert_check("homepage.php includes auto-open script for admin modal", str_contains($homepage, "\$('#loginModal').modal('show');"));
 
+// -------------------------------------------------------------
+// 5. Entry Points & Linkable Triggers (Phase B / Issue 2)
+// -------------------------------------------------------------
+echo "\n[*] Suite 5: Entry Points & Linkable Triggers (Phase B)\n";
+$footer = file_get_contents(__DIR__ . '/../includes/layout/footer-public.php');
+$header = file_get_contents(__DIR__ . '/../includes/layout/header-public.php');
+
+assert_check("footer-public.php links to homepage.php?login=admin", 
+    str_contains($footer, 'homepage.php?login=admin'));
+assert_check("footer-public.php retains data-toggle for JS modal trigger", 
+    str_contains($footer, 'data-toggle="modal"') && str_contains($footer, 'data-target="#loginModal"'));
+assert_check("header-public.php Admin Portal is an anchor link to homepage.php?login=admin", 
+    str_contains($header, 'homepage.php?login=admin'));
+assert_check("header-public.php retains btn-dark and btn-nav-action styling", 
+    str_contains($header, 'class="btn btn-dark btn-nav-action"'));
+
 echo "\n========================================================\n";
 echo "   Test Results: {$passed} Passed, {$failed} Failed     \n";
 echo "========================================================\n";
