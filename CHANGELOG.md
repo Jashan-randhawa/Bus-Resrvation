@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Admin Section Security Remediation Plan**: Fully implemented and verified 32 findings across 4 phases:
+  - Phase 1 (Access & Auth): Session hard lifetime cap (8h), password rotation check, fail-closed role check, RFC 6238 TOTP 2FA engine with AES-256-GCM encryption, scoped rate limiting, timing equalization, append-only triggers on `audit_log`, and archival script.
+  - Phase 2 (Money & Reporting): RFC 5321 SMTP client with TLS, guarded inquiry email updates, manifest revenue confirmed-only filter with hold segregation, PII masking and export auditing, server-side tariff lookup, locked journey edit parameters, and 30-day dashboard reporting.
+  - Phase 3 (Data Integrity): Active route schedule overlap checks, route edit lockdown on active bookings, bus capacity bounds (10–60), container startup migration gating (`MIGRATE_ON_START=1`), safe migration deduping, customer foreign key linkage (`customer_id`), and migration script reconciliation.
+  - Phase 4 (Hygiene & Hardening): Diagnostics count reconciliation, double-escaping fixes, SQL `LIKE` wildcard escaping (`escape_like()`), enforced Content-Security-Policy with SRI hashes, read-only GET cleanliness, CLI hold expiration script, and strict manifest date format validation.
+- **GitHub Packages Release Automation**: Corrected GHCR metadata tagging with semver, edge, and conditional latest; release bundle archive workflow.
+
+## [2.2.0] - 2026-10-04
+
+### Added
 - **Atomic Booking Concurrency & Seat Locking (Issues 2, 4, 5)**: Added transactional `seat_lock` acquisition in `create_booking()`, rejecting uncatalogued fleet vehicles, eliminating `INSERT IGNORE`, and handling MySQL 1062 unique constraint violations with resubmission recovery.
 - **Stale Lock Eviction & Lifecycle Management (Issue 2)**: Added `purge_stale_seat_locks()` and upgraded `release_expired_holds()` to purge orphan locks associated with cancelled, expired, or deleted bookings.
 - **Atomic Cancellation Helper (Issue 3)**: Introduced `cancel_booking()` ensuring atomic status transition to `Cancelled` and deletion from `seat_lock` in a single transaction across `admin/bookings.php` and `user/my-bookings.php`.
