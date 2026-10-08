@@ -4,6 +4,11 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **Password Visibility Toggle (Issue 5)**: Added accessible Show/Hide toggle button in the admin login password group with `aria-label` and `aria-pressed` states, auto-resetting on submit and modal close.
+- **Caps Lock Detection & Live Alerts (Issue 6)**: Added real-time Caps Lock state listener with `aria-live="polite"` accessible announcement to minimize mistyped password lockout risks.
+- **Admin Password Recovery Guidance (Issue 6)**: Added clear UI recovery guidance directing administrators to super administrators for password reset procedures.
+
 ### Changed
 - **Admin Modal Visual Redesign & Palette (Issues 3, 4, 7)**: Redesigned the admin modal header with dedicated slate-900 surface (`#0f172a`), inline brand bus logo, and amber "Restricted access" badge.
 - **Accessibility & WCAG AA Contrast Compliance (Issue 7)**: Upgraded helper and label contrast to `#64748b` (4.76:1 ratio against white) and implemented full dark theme support (`html[data-theme="dark"]`).

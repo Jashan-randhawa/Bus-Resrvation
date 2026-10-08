@@ -158,6 +158,36 @@ html[data-theme="dark"] #loginModal .form-control:focus {
   box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
 }
 
+#admin-pwd-toggle {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+#admin-pwd-toggle:hover {
+  background-color: #f1f5f9;
+  color: #1e293b;
+}
+
+html[data-theme="dark"] #admin-pwd-toggle {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+html[data-theme="dark"] #admin-pwd-toggle:hover {
+  background-color: #334155;
+  color: #f8fafc;
+}
+
+#admin-caps-warning {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
 @media (max-width: 480px) {
   .admin-auth-header {
     padding: 1rem;

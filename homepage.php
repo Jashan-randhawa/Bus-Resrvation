@@ -778,11 +778,25 @@ if (isset($_POST['subbtn'])) {
           </div>
           <div class="form-group">
             <label for="admin-pwd-input" class="admin-form-label">Password</label>
-            <input type="password" id="admin-pwd-input" name="pwd" class="form-control" placeholder="••••••••" autocomplete="current-password" required />
+            <div class="input-group">
+              <input type="password" id="admin-pwd-input" name="pwd" class="form-control" placeholder="••••••••" autocomplete="current-password" required />
+              <div class="input-group-append">
+                <button class="btn btn-outline-secondary" type="button" id="admin-pwd-toggle" aria-label="Show password" aria-pressed="false">
+                  <span id="admin-pwd-toggle-text">Show</span>
+                </button>
+              </div>
+            </div>
+            <div id="admin-caps-warning" class="text-warning small mt-1 d-none" role="status" aria-live="polite">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="mr-1" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              Caps Lock is ON
+            </div>
           </div>
           <button type="submit" class="btn btn-primary btn-block py-2 font-weight-bold" name="admin" style="min-height: 44px;">
             Admin Sign In
           </button>
+          <div class="text-center mt-3 pt-2 border-top">
+            <small class="text-muted">Need a password reset? Contact a super administrator.</small>
+          </div>
         </form>
       </div>
     </div>
@@ -816,6 +830,70 @@ $('#loginModal').on('shown.bs.modal', function () {
   var emailField = document.getElementById('admin-email-input');
   if (emailField) emailField.focus();
 });
+
+// Password Visibility Toggle & Caps Lock Detection (Issues 5 & 6)
+(function() {
+  var pwdInput = document.getElementById('admin-pwd-input');
+  var pwdToggle = document.getElementById('admin-pwd-toggle');
+  var pwdToggleText = document.getElementById('admin-pwd-toggle-text');
+  var capsWarning = document.getElementById('admin-caps-warning');
+
+  function resetPasswordVisibility() {
+    if (pwdInput && pwdInput.type !== 'password') {
+      pwdInput.type = 'password';
+      if (pwdToggle) {
+        pwdToggle.setAttribute('aria-label', 'Show password');
+        pwdToggle.setAttribute('aria-pressed', 'false');
+      }
+      if (pwdToggleText) {
+        pwdToggleText.textContent = 'Show';
+      }
+    }
+  }
+
+  if (pwdToggle && pwdInput) {
+    pwdToggle.addEventListener('click', function() {
+      var isPassword = pwdInput.type === 'password';
+      pwdInput.type = isPassword ? 'text' : 'password';
+      pwdToggle.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+      pwdToggle.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
+      if (pwdToggleText) {
+        pwdToggleText.textContent = isPassword ? 'Hide' : 'Show';
+      }
+      pwdInput.focus();
+    });
+  }
+
+  if (pwdInput && capsWarning) {
+    function checkCapsLock(e) {
+      if (e.getModifierState && e.getModifierState('CapsLock')) {
+        capsWarning.classList.remove('d-none');
+      } else {
+        capsWarning.classList.add('d-none');
+      }
+    }
+    pwdInput.addEventListener('keydown', checkCapsLock);
+    pwdInput.addEventListener('keyup', checkCapsLock);
+    pwdInput.addEventListener('blur', function() {
+      capsWarning.classList.add('d-none');
+    });
+  }
+
+  // Reset visibility when form submits or modal closes
+  var adminModal = document.getElementById('loginModal');
+  if (adminModal) {
+    var adminForm = adminModal.querySelector('form');
+    if (adminForm) {
+      adminForm.addEventListener('submit', resetPasswordVisibility);
+    }
+    $('#loginModal').on('hidden.bs.modal', function() {
+      resetPasswordVisibility();
+      if (capsWarning) {
+        capsWarning.classList.add('d-none');
+      }
+    });
+  }
+})();
 </script>
 
 <?php require_once __DIR__ . '/includes/layout/footer-public.php'; ?>

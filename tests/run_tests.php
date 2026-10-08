@@ -781,6 +781,21 @@ assert_test("public.css defines admin modal color tokens and dark theme",
     str_contains($public_css_content, 'html[data-theme="dark"]')
 );
 
+// Phase D: Usability Polish - Password Toggle, Caps Lock, Recovery Path (Issues 5, 6)
+$homepage_updated = file_get_contents(__DIR__ . '/../homepage.php');
+assert_test("homepage.php admin password field has visibility toggle button", 
+    str_contains($homepage_updated, 'id="admin-pwd-toggle"') && str_contains($homepage_updated, 'aria-label="Show password"')
+);
+assert_test("homepage.php includes caps lock warning with aria-live", 
+    str_contains($homepage_updated, 'id="admin-caps-warning"') && str_contains($homepage_updated, 'aria-live="polite"')
+);
+assert_test("homepage.php includes password recovery notice for admins", 
+    str_contains($homepage_updated, 'Contact a super administrator')
+);
+assert_test("homepage.php includes password visibility reset & caps detection JS", 
+    str_contains($homepage_updated, 'resetPasswordVisibility') && str_contains($homepage_updated, "getModifierState('CapsLock')")
+);
+
 
 
 // Clean up test data

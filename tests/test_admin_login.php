@@ -166,6 +166,24 @@ assert_check("public.css includes dark theme support",
 assert_check("header-public.php links public.css", 
     str_contains($header, 'assets/css/public.css'));
 
+// -------------------------------------------------------------
+// 7. Usability Polish (Phase D / Issues 5, 6)
+// -------------------------------------------------------------
+echo "\n[*] Suite 7: Usability Polish (Phase D)\n";
+$homepage_latest = file_get_contents(__DIR__ . '/../homepage.php');
+assert_check("homepage.php has password toggle button with id='admin-pwd-toggle'", 
+    str_contains($homepage_latest, 'id="admin-pwd-toggle"'));
+assert_check("homepage.php toggle button has initial aria-label='Show password' and aria-pressed='false'", 
+    str_contains($homepage_latest, 'aria-label="Show password"') && str_contains($homepage_latest, 'aria-pressed="false"'));
+assert_check("homepage.php has caps lock warning element with aria-live='polite'", 
+    str_contains($homepage_latest, 'id="admin-caps-warning"') && str_contains($homepage_latest, 'aria-live="polite"'));
+assert_check("homepage.php includes recovery guidance directing to super administrator", 
+    str_contains($homepage_latest, 'Contact a super administrator'));
+assert_check("homepage.php script resets password visibility on submit and modal hide", 
+    str_contains($homepage_latest, 'resetPasswordVisibility') && str_contains($homepage_latest, 'hidden.bs.modal'));
+assert_check("homepage.php script detects CapsLock with getModifierState", 
+    str_contains($homepage_latest, "getModifierState('CapsLock')"));
+
 echo "\n========================================================\n";
 echo "   Test Results: {$passed} Passed, {$failed} Failed     \n";
 echo "========================================================\n";
