@@ -142,6 +142,30 @@ assert_check("header-public.php Admin Portal is an anchor link to homepage.php?l
 assert_check("header-public.php retains btn-dark and btn-nav-action styling", 
     str_contains($header, 'class="btn btn-dark btn-nav-action"'));
 
+// -------------------------------------------------------------
+// 6. Branded Presentation & Palette (Phase C / Issues 3, 4, 7)
+// -------------------------------------------------------------
+echo "\n[*] Suite 6: Branded Presentation & Palette (Phase C)\n";
+$public_css = file_get_contents(__DIR__ . '/../assets/css/public.css');
+assert_check("homepage.php admin modal uses admin-auth-header", 
+    str_contains($homepage, 'class="modal-header admin-auth-header"'));
+assert_check("homepage.php admin modal includes bus logo", 
+    str_contains($homepage, 'assets/images/bus.svg'));
+assert_check("homepage.php admin modal contains Restricted access badge", 
+    str_contains($homepage, 'class="admin-badge mr-2"') && str_contains($homepage, 'Restricted access'));
+assert_check("homepage.php admin modal uses WCAG AA subtitle and labels", 
+    str_contains($homepage, 'admin-auth-subtitle') && str_contains($homepage, 'admin-form-label'));
+assert_check("public.css defines slate-900 surface dark token (#0f172a)", 
+    str_contains($public_css, '--admin-surface-dark: #0f172a;'));
+assert_check("public.css defines amber accent token (#f59e0b)", 
+    str_contains($public_css, '--admin-accent: #f59e0b;'));
+assert_check("public.css defines WCAG AA compliant helper token (#64748b)", 
+    str_contains($public_css, '--admin-helper: #64748b;'));
+assert_check("public.css includes dark theme support", 
+    str_contains($public_css, 'html[data-theme="dark"] .admin-auth-header'));
+assert_check("header-public.php links public.css", 
+    str_contains($header, 'assets/css/public.css'));
+
 echo "\n========================================================\n";
 echo "   Test Results: {$passed} Passed, {$failed} Failed     \n";
 echo "========================================================\n";

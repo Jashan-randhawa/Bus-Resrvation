@@ -34,6 +34,7 @@ $user_role = $_SESSION['role'] ?? null;
   <!-- Design System & Custom CSS -->
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/home.css">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/public.css">
   
   <!-- Global Theme Toggle (Head load to avoid FOUC) -->
   <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>

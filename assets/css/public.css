@@ -44,3 +44,126 @@
 .auth-body {
   padding: 2rem;
 }
+
+/* ── Admin Login Modal Tokens & Styles (Issues 3, 4, 7) ─────── */
+:root {
+  --admin-surface-dark: #0f172a; /* slate-900, header background */
+  --admin-text-on-dark: #f8fafc;
+  --admin-accent: #f59e0b; /* badge only */
+  --admin-accent-text: #1e293b;
+  --admin-primary: var(--c-primary, #2563eb);
+  --admin-primary-hover: var(--c-primary-dark, #1d4ed8);
+  --admin-helper: #64748b; /* 4.76:1 on white (WCAG AA compliant) */
+}
+
+.admin-auth-header {
+  background-color: var(--admin-surface-dark);
+  color: var(--admin-text-on-dark);
+  padding: 1.25rem 1.5rem;
+  border-top-left-radius: calc(0.3rem - 1px);
+  border-top-right-radius: calc(0.3rem - 1px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.admin-modal-title {
+  color: var(--admin-text-on-dark);
+  font-weight: 700;
+  font-size: 1.125rem;
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+}
+
+.admin-badge {
+  background: var(--admin-accent);
+  color: var(--admin-accent-text);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: var(--weight-semibold, 600);
+  border-radius: 999px;
+  padding: 2px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.admin-badge svg {
+  display: inline-block;
+  vertical-align: -1px;
+}
+
+.admin-auth-subtitle {
+  color: var(--admin-helper);
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.admin-form-label {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: var(--admin-helper);
+  margin-bottom: 0.35rem;
+  display: block;
+}
+
+#loginModal .modal-content {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: var(--radius-lg, 12px);
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+#loginModal .modal-body {
+  padding: 1.5rem;
+  background-color: #ffffff;
+}
+
+/* Dark Theme Variant */
+html[data-theme="dark"] .admin-auth-header {
+  background-color: var(--admin-surface-dark);
+  color: var(--admin-text-on-dark);
+}
+
+html[data-theme="dark"] #loginModal .modal-content {
+  background-color: var(--c-surface, #1e293b);
+  border-color: var(--c-border, #334155);
+}
+
+html[data-theme="dark"] #loginModal .modal-body {
+  background-color: var(--c-surface, #1e293b);
+  color: var(--c-text, #f8fafc);
+}
+
+html[data-theme="dark"] .admin-auth-subtitle,
+html[data-theme="dark"] .admin-form-label {
+  color: var(--c-text-muted, #94a3b8);
+}
+
+html[data-theme="dark"] #loginModal .form-control {
+  background-color: #0f172a;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] #loginModal .form-control:focus {
+  border-color: var(--c-primary, #2563eb);
+  box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+}
+
+@media (max-width: 480px) {
+  .admin-auth-header {
+    padding: 1rem;
+  }
+  .admin-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+  }
+}

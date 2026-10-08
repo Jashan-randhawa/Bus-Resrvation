@@ -745,14 +745,23 @@ if (isset($_POST['subbtn'])) {
 <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="adminLoginModalTitle" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header bg-dark text-white">
-        <h5 id="adminLoginModalTitle" class="modal-title font-weight-bold">System Administration</h5>
-        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
+      <div class="modal-header admin-auth-header">
+        <div class="d-flex align-items-center">
+          <img src="<?= BASE_URL ?>/assets/images/bus.svg" alt="Bus Service Logo" width="28" height="28" class="mr-2">
+          <h5 id="adminLoginModalTitle" class="admin-modal-title">Administration Portal</h5>
+        </div>
+        <div class="d-flex align-items-center">
+          <span class="admin-badge mr-2">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Restricted access
+          </span>
+          <button type="button" class="close text-white p-0 m-0" data-dismiss="modal" aria-label="Close" style="opacity: 0.85;">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
       </div>
       <div class="modal-body p-4">
-        <p class="text-muted small mb-3">Authorized administrative personnel sign-in.</p>
+        <p class="admin-auth-subtitle mb-3">Authorized administrative personnel sign-in.</p>
         <?php if ($open_modal === 'admin' && !empty($msg)): ?>
           <div class="alert alert-<?= e($msg_type) ?> alert-dismissible fade show mb-3" role="alert">
             <?= e($msg) ?>
@@ -764,11 +773,11 @@ if (isset($_POST['subbtn'])) {
         <form action="<?= e(BASE_URL) ?>/homepage.php" method="post">
           <?= csrf_field() ?>
           <div class="form-group">
-            <label for="admin-email-input" class="font-weight-bold small text-muted">Admin Email</label>
+            <label for="admin-email-input" class="admin-form-label">Admin Email</label>
             <input type="email" id="admin-email-input" name="email" class="form-control" value="<?= e($open_modal === 'admin' ? $preserved_email : '') ?>" placeholder="admin@domain.com" autocomplete="username" required />
           </div>
           <div class="form-group">
-            <label for="admin-pwd-input" class="font-weight-bold small text-muted">Password</label>
+            <label for="admin-pwd-input" class="admin-form-label">Password</label>
             <input type="password" id="admin-pwd-input" name="pwd" class="form-control" placeholder="••••••••" autocomplete="current-password" required />
           </div>
           <button type="submit" class="btn btn-primary btn-block py-2 font-weight-bold" name="admin" style="min-height: 44px;">

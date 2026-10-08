@@ -5,6 +5,8 @@ All notable changes to this project are documented in this file.
 ## [Unreleased]
 
 ### Changed
+- **Admin Modal Visual Redesign & Palette (Issues 3, 4, 7)**: Redesigned the admin modal header with dedicated slate-900 surface (`#0f172a`), inline brand bus logo, and amber "Restricted access" badge.
+- **Accessibility & WCAG AA Contrast Compliance (Issue 7)**: Upgraded helper and label contrast to `#64748b` (4.76:1 ratio against white) and implemented full dark theme support (`html[data-theme="dark"]`).
 - **Admin Entry Point Links (Issue 2)**: Converted the header "Admin Portal" button and footer link from JavaScript-only placeholders to accessible, bookmarkable links pointing to `homepage.php?login=admin`, preserving modal trigger attributes for progressive enhancement.
 
 ### Fixed

@@ -764,6 +764,23 @@ assert_test("header-public.php Admin Portal control is an anchor pointing to hom
     str_contains($header_test_content, 'homepage.php?login=admin') && str_contains($header_test_content, 'btn-dark')
 );
 
+// Phase C: Admin Modal Branded Presentation & Palette (Issues 3, 4, 7)
+assert_test("homepage.php admin modal uses admin-auth-header and bus logo", 
+    str_contains($homepage_test_content, 'admin-auth-header') && str_contains($homepage_test_content, 'assets/images/bus.svg')
+);
+assert_test("homepage.php admin modal contains Restricted access badge", 
+    str_contains($homepage_test_content, 'admin-badge') && str_contains($homepage_test_content, 'Restricted access')
+);
+assert_test("homepage.php admin modal uses WCAG AA contrast classes", 
+    str_contains($homepage_test_content, 'admin-auth-subtitle') && str_contains($homepage_test_content, 'admin-form-label')
+);
+$public_css_content = file_get_contents(__DIR__ . '/../assets/css/public.css');
+assert_test("public.css defines admin modal color tokens and dark theme", 
+    str_contains($public_css_content, '--admin-surface-dark: #0f172a;') && 
+    str_contains($public_css_content, '--admin-accent: #f59e0b;') &&
+    str_contains($public_css_content, 'html[data-theme="dark"]')
+);
+
 
 
 // Clean up test data
