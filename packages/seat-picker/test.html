@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bus Seat Picker Standalone Test</title>
+  <link rel="stylesheet" href="dist/seat-picker.css">
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .demo-grid { display: flex; gap: 10px; margin: 15px 0; }
+  </style>
+</head>
+<body>
+  <h1>Standalone Bus Seat Picker Test</h1>
+  <div id="custom-grid" data-bus="99" data-date="2026-10-20" data-time="12:00:00" class="demo-grid">
+    <label><input type="radio" name="seat" value="1" data-seat-type="Window" aria-label="Seat 1 Window available"> Seat 1</label>
+    <label><input type="radio" name="seat" value="2" data-seat-type="Aisle" aria-label="Seat 2 Aisle available"> Seat 2</label>
+    <label><input type="radio" name="seat" value="3" data-seat-type="Window" aria-label="Seat 3 Window available"> Seat 3</label>
+  </div>
+  <div id="custom-summary"></div>
+  <button id="custom-btn" disabled>Book Now</button>
+  <div id="custom-live" aria-live="polite"></div>
+  <div id="custom-error" class="d-none"></div>
+
+  <script src="dist/seat-picker.js"></script>
+  <script>
+    var picker = BusSeatPicker.init({
+      grid: '#custom-grid',
+      submitButton: '#custom-btn',
+      summary: '#custom-summary',
+      liveRegion: '#custom-live',
+      errorBox: '#custom-error',
+      availabilityUrl: 'data:application/json,{"ok":true,"booked_seats":[]}'
+    });
+  </script>
+</body>
+</html>

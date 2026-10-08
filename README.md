@@ -106,12 +106,43 @@ flowchart TD
 
 ## 📦 Packages & Distribution Artifacts
 
-| Distribution Package | Target / Type | Description |
+| Distribution Package | Target / Registry | Description |
 |---|---|---|
-| **🐳 Docker Container** | [`ghcr.io/jashan-randhawa/bus-resrvation`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation) | Tags: `:latest`, `:2.3.0`, `:edge` |
+| **🐳 Docker App Container** | [`ghcr.io/jashan-randhawa/bus-resrvation`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation) | Production app image (`:latest`, `:2.3.0`, `:edge`) |
+| **⚡ Docker Migration Runner** | [`ghcr.io/jashan-randhawa/bus-resrvation-migrate`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation-migrate) | One-off CLI database migration runner (`:latest`, `:1.0.0`) |
+| **💺 Seat Picker Widget (npm)** | [`@jashan-randhawa/bus-seat-picker`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/npm/bus-seat-picker) | Accessible seat selection widget with live availability polling |
+| **🎨 Design Tokens & UI (npm)** | [`@jashan-randhawa/busres-ui`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/npm/busres-ui) | Design tokens, components, and dark/light theme toggle |
 | **🗜️ Release Zip Archive** | [`bus-reservation-v2.3.0.zip`](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/download/v2.3.0/bus-reservation-v2.3.0.zip) | Curated distribution bundle via GitHub Actions |
 | **📄 Implementation Plan PDF** | [`Bus_Reservation_GitHub_Packages_Plan.pdf`](https://github.com/Jashan-randhawa/Bus-Resrvation/blob/main/docs/Bus_Reservation_GitHub_Packages_Plan.pdf) | GitHub Packages Release Plan (October 2026) |
-| **🐘 Composer Manifest** | `composer.json` | Project package definition for PHP environments |
+
+### 📦 Installing npm Packages from GitHub Packages
+
+Configure your local `.npmrc`:
+```ini
+@jashan-randhawa:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+Install via npm:
+```bash
+npm install @jashan-randhawa/bus-seat-picker
+npm install @jashan-randhawa/busres-ui
+```
+
+### ⚡ Running Standalone Migration Runner
+
+```bash
+docker pull ghcr.io/jashan-randhawa/bus-resrvation-migrate:latest
+
+docker run --rm \
+  -e DB_HOST=your_host \
+  -e DB_PORT=4000 \
+  -e DB_USER=your_user \
+  -e DB_PASS=your_pass \
+  -e DB_NAME=test \
+  -e DB_SSL=true \
+  ghcr.io/jashan-randhawa/bus-resrvation-migrate:latest
+```
 
 ---
 

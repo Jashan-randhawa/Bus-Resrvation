@@ -247,6 +247,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
     </div>
 </div>
 
+<script src="<?= BASE_URL ?>/assets/js/vendor/seat-picker.js"></script>
 <script src="<?= BASE_URL ?>/assets/js/seat-map.js"></script>
 
 <?php require_once __DIR__ . '/../includes/layout/footer-user.php'; ?>

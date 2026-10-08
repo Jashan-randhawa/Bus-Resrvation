@@ -1,0 +1,21 @@
+{
+  "name": "@jashan-randhawa/bus-seat-picker",
+  "version": "1.0.0",
+  "description": "Accessible bus seat selection widget with live availability polling",
+  "main": "dist/seat-picker.js",
+  "style": "dist/seat-picker.css",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jashan-randhawa/Bus-Resrvation.git",
+    "directory": "packages/seat-picker"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
+}

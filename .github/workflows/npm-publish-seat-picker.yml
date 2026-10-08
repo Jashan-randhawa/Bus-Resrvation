@@ -1,0 +1,38 @@
+name: Publish seat picker
+
+on:
+  push:
+    tags: [ 'seat-picker-v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/seat-picker
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com
+          scope: '@jashan-randhawa'
+
+      - name: Set package version from git tag
+        run: npm version "${GITHUB_REF_NAME#seat-picker-v}" --no-git-tag-version --allow-same-version
+
+      - name: Run tests
+        run: npm test --if-present
+
+      - name: Publish to GitHub Packages npm registry
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

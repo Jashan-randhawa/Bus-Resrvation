@@ -35,3 +35,9 @@ jobs:
              | grep -iE 'select |insert |update |delete '; then
             echo "Raw request data inside a SQL string found!"; exit 1
           fi
+
+      - name: Verify package and vendored assets sync (no drift)
+        run: |
+          diff -u packages/seat-picker/dist/seat-picker.js assets/js/vendor/seat-picker.js
+          diff -u packages/ui/src/theme-toggle.js assets/js/vendor/theme-toggle.js
+

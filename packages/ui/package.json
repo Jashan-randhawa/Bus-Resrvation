@@ -1,0 +1,28 @@
+{
+  "name": "@jashan-randhawa/busres-ui",
+  "version": "1.0.0",
+  "description": "Design tokens, theme toggle, and component styles for Bus Reservation System",
+  "main": "dist/busres-ui.css",
+  "style": "dist/busres-ui.css",
+  "exports": {
+    ".": "./dist/busres-ui.css",
+    "./tokens.css": "./src/tokens.css",
+    "./components.css": "./src/components.css",
+    "./theme-toggle": "./src/theme-toggle.js"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jashan-randhawa/Bus-Resrvation.git",
+    "directory": "packages/ui"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
+}
