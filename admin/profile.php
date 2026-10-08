@@ -325,12 +325,17 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                 <?php else: ?>
                     <div class="row align-items-center">
                         <div class="col-md-4 text-center mb-4 mb-md-0">
-                            <div class="p-3 bg-light border rounded d-inline-block">
-                                <img src="<?= e($qr_image_url) ?>" alt="TOTP QR Code" width="180" height="180" class="img-fluid">
+                            <div class="p-3 bg-light border rounded d-inline-block" style="min-width: 196px; min-height: 196px;">
+                                <div id="totp-qrcode" class="d-flex justify-content-center align-items-center" style="min-width: 180px; min-height: 180px;">
+                                    <img src="<?= e($qr_image_url) ?>" id="totp-qr-img" alt="TOTP QR Code" width="180" height="180" class="img-fluid" onerror="this.style.display='none';">
+                                </div>
                             </div>
                             <div class="mt-2">
-                                <small class="text-muted d-block">Secret Key:</small>
-                                <code class="h6 font-weight-bold text-dark font-family-monospace letter-spacing-1"><?= chunk_split(e($enroll_secret), 4, ' ') ?></code>
+                                <small class="text-muted d-block font-weight-bold">Secret Key:</small>
+                                <div class="d-flex justify-content-center align-items-center mt-1">
+                                    <code id="totp-secret-key" class="h6 font-weight-bold text-dark font-family-monospace letter-spacing-1 mb-0 py-1 px-2 bg-light border rounded"><?= chunk_split(e($enroll_secret), 4, ' ') ?></code>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm ml-2" onclick="navigator.clipboard.writeText('<?= e($enroll_secret) ?>'); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy', 2000);">Copy</button>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-8">
@@ -361,7 +366,25 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                 <?php endif; ?>
             </div>
         </div>
-    </div>
 </div>
+
+<?php if (!$is_totp_enabled): ?>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var qrBox = document.getElementById("totp-qrcode");
+    var qrImg = document.getElementById("totp-qr-img");
+    if (typeof QRCode !== "undefined" && qrBox) {
+        if (qrImg) { qrImg.remove(); }
+        new QRCode(qrBox, {
+            text: "<?= addslashes($otpauth_uri) ?>",
+            width: 180,
+            height: 180,
+            correctLevel: QRCode.CorrectLevel.M
+        });
+    }
+});
+</script>
+<?php endif; ?>
 
 <?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>
