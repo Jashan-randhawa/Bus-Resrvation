@@ -108,9 +108,9 @@ flowchart TD
 
 | Distribution Package | Target / Type | Description |
 |---|---|---|
-| **🐳 Docker Container** | [`ghcr.io/jashan-randhawa/bus-resrvation`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation) | Production image tags: `:latest` & `:v2.0.0` |
-| **🗜️ Release Zip Archive** | [`bus-reservation-v2.0.0.zip`](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/download/v2.0.0/bus-reservation-v2.0.0.zip) | Standalone distribution bundle (878 KB) |
-| **📄 Implementation Plan PDF** | [`Bus_Reservation_GitHub_Packages_Plan.pdf`](https://github.com/Jashan-randhawa/Bus-Resrvation/blob/main/docs/Bus_Reservation_GitHub_Packages_Plan.pdf) | Technical feasibility report & roadmap (287 KB) |
+| **🐳 Docker Container** | [`ghcr.io/jashan-randhawa/bus-resrvation`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation) | Tags: `:latest`, `:2.2.0`, `:edge` |
+| **🗜️ Release Zip Archive** | [`bus-reservation-v2.2.0.zip`](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/download/v2.2.0/bus-reservation-v2.2.0.zip) | Curated distribution bundle via GitHub Actions |
+| **📄 Implementation Plan PDF** | [`Bus_Reservation_GitHub_Packages_Plan.pdf`](https://github.com/Jashan-randhawa/Bus-Resrvation/blob/main/docs/Bus_Reservation_GitHub_Packages_Plan.pdf) | GitHub Packages Release Plan (October 2026) |
 | **🐘 Composer Manifest** | `composer.json` | Project package definition for PHP environments |
 
 ---
@@ -149,9 +149,16 @@ flowchart TD
 
 ```bash
 # Pull the pre-built image from GitHub Container Registry
+# Latest stable release:
 docker pull ghcr.io/jashan-randhawa/bus-resrvation:latest
 
-# Run the container connecting to TiDB Cloud or local MySQL
+# Or pull a specific release tag:
+docker pull ghcr.io/jashan-randhawa/bus-resrvation:2.2.0
+
+# Or pull the cutting-edge build from main:
+docker pull ghcr.io/jashan-randhawa/bus-resrvation:edge
+
+# Run the container connecting to TiDB Cloud or local MySQL using env vars from .env.example:
 docker run -d -p 8080:80 \
   -e DB_HOST=your_host \
   -e DB_PORT=4000 \
