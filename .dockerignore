@@ -9,3 +9,4 @@ wiki/
 *.md
 LICENSE
 .dockerignore
+packages/
