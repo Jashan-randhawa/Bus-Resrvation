@@ -14,8 +14,9 @@ CREATE TABLE IF NOT EXISTS `admin` (
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
   `last_login_at` DATETIME NULL,
   `password_changed_at` DATETIME NULL,
-  `totp_secret` VARCHAR(64) NULL,
+  `totp_secret` VARCHAR(255) NULL,
   `totp_enabled` TINYINT(1) NOT NULL DEFAULT 0,
+  `last_totp_step` INT NULL,
   UNIQUE KEY `uq_admin_email` (`Email_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -149,5 +150,29 @@ CREATE TABLE IF NOT EXISTS `audit_log` (
   KEY `idx_audit_entity` (`entity_type`, `entity_id`),
   KEY `idx_audit_ts` (`timestamp`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Admin MFA single-use recovery codes (Issue 2)
+CREATE TABLE IF NOT EXISTS `admin_recovery_codes` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `admin_id` INT NOT NULL,
+  `code_hash` VARCHAR(255) NOT NULL,
+  `used_at` DATETIME NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY `idx_admin_recovery` (`admin_id`),
+  CONSTRAINT `fk_admin_recovery_admin` FOREIGN KEY (`admin_id`) REFERENCES `admin` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Append-only enforcement triggers for audit trail (Issue 16)
+DELIMITER $$
+CREATE TRIGGER IF NOT EXISTS `audit_log_no_update` BEFORE UPDATE ON `audit_log` FOR EACH ROW
+BEGIN
+  SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'audit_log is append-only';
+END$$
+CREATE TRIGGER IF NOT EXISTS `audit_log_no_delete` BEFORE DELETE ON `audit_log` FOR EACH ROW
+BEGIN
+  SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'audit_log is append-only';
+END$$
+DELIMITER ;
+
 
 

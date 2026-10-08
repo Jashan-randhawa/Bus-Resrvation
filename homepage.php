@@ -40,73 +40,124 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
     $msg_type = 'warning';
     $open_modal = ($role === 'admin') ? 'admin' : 'user';
   } else {
-    $acctKey = 'login:acct:' . $email;
+    // Scoped rate limiting keys (Issue 5: separate portal counters, pair throttling, spray brake)
+    $acctKey = 'login:' . $role . ':' . $email;
+    $pairKey = 'login:pair:' . $ip . ':' . $email;
     $ipKey   = 'login:ip:' . $ip;
 
-    // Rate limiting (O3: 5 failures per 15 min per account, 20 per 15 min per IP)
-    if (throttle_blocked($link, $acctKey, 5, 900) || throttle_blocked($link, $ipKey, 20, 900)) {
+    if (throttle_blocked($link, $pairKey, 5, 900)
+     || throttle_blocked($link, $acctKey, 20, 900)
+     || throttle_blocked($link, $ipKey, 20, 900)) {
       http_response_code(429);
+      if ($role === 'admin') {
+        try {
+          audit($link, 'LOGIN_FAILED', 'admin', null, null, ['email' => $email, 'reason' => 'throttled']);
+        } catch (Throwable $e) {}
+      }
       $msg = 'Too many failed attempts. Please try again later.';
       $msg_type = 'danger';
       $open_modal = ($role === 'admin') ? 'admin' : 'user';
     } else {
-      $has_role_col = table_has_column($link, 'admin', 'role');
       $sql = $role === 'admin'
-        ? ($has_role_col
-            ? 'SELECT id, name, phone, Password AS pwd, role FROM admin WHERE Email_id = ? LIMIT 1'
-            : 'SELECT id, name, phone, Password AS pwd FROM admin WHERE Email_id = ? LIMIT 1')
+        ? 'SELECT id, name, phone, Password AS pwd, role, is_active, last_login_at, password_changed_at, totp_secret, totp_enabled FROM admin WHERE Email_id = ? LIMIT 1'
         : 'SELECT id, name, phone, pwd FROM costumer WHERE email = ? LIMIT 1';
       $row = db_one($link, $sql, 's', [$email]);
 
+      // Timing equalization against user enumeration (Issue 28)
+      static $dummy_hash = null;
+      if ($dummy_hash === null) {
+        $dummy_hash = password_hash('busres-timing-equalizer-dummy-password', PASSWORD_DEFAULT);
+      }
+      if (!$row) {
+        password_verify($pwd, $dummy_hash);
+      }
+
+      $matched = false;
       if ($row) {
-        $matched = password_verify($pwd, $row['pwd']);
+        // Deactivated admin account check (Issue 20)
+        if ($role === 'admin' && isset($row['is_active']) && (int)$row['is_active'] === 0) {
+          try {
+            audit($link, 'LOGIN_FAILED', 'admin', (int)$row['id'], null, ['email' => $email, 'reason' => 'account_deactivated']);
+          } catch (Throwable $e) {}
+          $msg = 'This account has been deactivated.';
+          $msg_type = 'warning';
+          $open_modal = 'admin';
+        } else {
+          $matched = password_verify($pwd, $row['pwd']);
 
-        // O2: Only allow legacy migration if stored value is NOT a password hash
-        if (!$matched && password_get_info($row['pwd'])['algo'] === null && hash_equals($row['pwd'], $pwd)) {
-          $matched = true;
-          $newHash = password_hash($pwd, PASSWORD_DEFAULT);
-          $updateSql = $role === 'admin'
-            ? 'UPDATE admin SET Password = ? WHERE id = ?'
-            : 'UPDATE costumer SET pwd = ? WHERE id = ?';
-          db_exec($link, $updateSql, 'si', [$newHash, (int)$row['id']]);
-        }
-
-        if ($matched) {
-          // Rehash if password hash cost needs upgrade
-          if (password_needs_rehash($row['pwd'], PASSWORD_DEFAULT)) {
+          // O2: Only allow legacy migration if stored value is NOT a password hash
+          if (!$matched && password_get_info($row['pwd'])['algo'] === null && hash_equals($row['pwd'], $pwd)) {
+            $matched = true;
             $newHash = password_hash($pwd, PASSWORD_DEFAULT);
             $updateSql = $role === 'admin'
-              ? 'UPDATE admin SET Password = ? WHERE id = ?'
+              ? 'UPDATE admin SET Password = ?, password_changed_at = NOW() WHERE id = ?'
               : 'UPDATE costumer SET pwd = ? WHERE id = ?';
             db_exec($link, $updateSql, 'si', [$newHash, (int)$row['id']]);
           }
 
-          throttle_clear($link, $acctKey);
-          login_user($role, $row);
+          if ($matched) {
+            // Rehash if password hash cost needs upgrade
+            if (password_needs_rehash($row['pwd'], PASSWORD_DEFAULT)) {
+              $newHash = password_hash($pwd, PASSWORD_DEFAULT);
+              $updateSql = $role === 'admin'
+                ? 'UPDATE admin SET Password = ?, password_changed_at = NOW() WHERE id = ?'
+                : 'UPDATE costumer SET pwd = ? WHERE id = ?';
+              db_exec($link, $updateSql, 'si', [$newHash, (int)$row['id']]);
+            }
 
-          if ($role === 'admin') {
-            audit($link, 'LOGIN', 'admin', (int)$row['id'], null, ['email' => $email, 'status' => 'success']);
+            throttle_clear($link, $pairKey);
+            throttle_clear($link, $acctKey);
+
+            // Two-Factor Authentication check (Issue 2)
+            if ($role === 'admin' && !empty($row['totp_enabled'])) {
+              $_SESSION['mfa_admin_id'] = (int)$row['id'];
+              $_SESSION['mfa_started'] = time();
+              header('Location: ' . BASE_URL . '/admin/mfa.php');
+              exit();
+            }
+
+            $login_ok = login_user($role, $row);
+            if (!$login_ok) {
+              try {
+                audit($link, 'LOGIN_FAILED', 'admin', (int)$row['id'], null, ['email' => $email, 'reason' => 'invalid_role']);
+              } catch (Throwable $e) {}
+              $msg = 'Account configuration error. Please contact a super administrator.';
+              $msg_type = 'danger';
+              $open_modal = 'admin';
+            } else {
+              if ($role === 'admin') {
+                db_exec($link, 'UPDATE `admin` SET last_login_at = NOW() WHERE id = ?', 'i', [(int)$row['id']]);
+                try {
+                  audit($link, 'LOGIN', 'admin', (int)$row['id'], null, ['email' => $email, 'status' => 'success']);
+                } catch (Throwable $e) {}
+              }
+
+              // Phase 1.1: Redirect to validated next return path if present
+              $next = safe_next_url($_POST['next'] ?? $_GET['next'] ?? null);
+              $dest = $next !== null ? $next : (BASE_URL . '/' . $role . '/index.php');
+              header('Location: ' . $dest);
+              exit();
+            }
           }
-
-          // Phase 1.1: Redirect to validated next return path if present
-          $next = safe_next_url($_POST['next'] ?? $_GET['next'] ?? null);
-          $dest = $next !== null ? $next : (BASE_URL . '/' . $role . '/index.php');
-          header('Location: ' . $dest);
-          exit();
         }
       }
 
-      // Record failed login attempt
-      throttle_hit($link, $acctKey);
-      throttle_hit($link, $ipKey);
+      if (!$matched && empty($msg)) {
+        // Record failed login attempt
+        throttle_hit($link, $pairKey);
+        throttle_hit($link, $acctKey);
+        throttle_hit($link, $ipKey);
 
-      if ($role === 'admin') {
-        audit($link, 'LOGIN_FAILED', 'admin', null, null, ['email' => $email, 'reason' => 'invalid_credentials']);
+        if ($role === 'admin') {
+          try {
+            audit($link, 'LOGIN_FAILED', 'admin', null, null, ['email' => $email, 'reason' => 'invalid_credentials']);
+          } catch (Throwable $e) {}
+        }
+
+        $msg = 'Invalid email or password combination.';
+        $msg_type = 'danger';
+        $open_modal = ($role === 'admin') ? 'admin' : 'user';
       }
-
-      $msg = 'Invalid email or password combination.';
-      $msg_type = 'danger';
-      $open_modal = ($role === 'admin') ? 'admin' : 'user';
     }
   }
 }

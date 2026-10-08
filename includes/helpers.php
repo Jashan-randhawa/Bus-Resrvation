@@ -167,6 +167,40 @@ function ensure_password_resets_table(mysqli $link): void {
     }
 }
 
+/**
+ * Centralized password policy validation (Issues 24, 29).
+ * - Admin roles: minimum 12 characters.
+ * - Customer roles: minimum 8 characters (10 recommended for new policies).
+ * - Max 72 bytes (Bcrypt truncation limit).
+ * - Requires alphanumeric combination.
+ *
+ * @param string $pwd
+ * @param string $role
+ * @return string[]
+ */
+function validate_new_password(string $pwd, string $role = 'user'): array {
+    $errors = [];
+    $len = strlen($pwd);
+    if ($len > 72) {
+        $errors[] = 'Password cannot exceed 72 bytes.';
+    }
+    $isAdmin = in_array(strtolower($role), ['admin', 'super_admin', 'operator', 'viewer'], true);
+    $min = $isAdmin ? 12 : 8;
+    if ($len < $min) {
+        $errors[] = $isAdmin 
+            ? 'New password must be at least 12 characters.' 
+            : "Password must be at least {$min} characters.";
+    }
+    if (!preg_match('/[A-Za-z]/', $pwd) || !preg_match('/\d/', $pwd)) {
+        $errors[] = 'Password must include both letters and numbers.';
+    }
+    $weak = ['password', '12345678', 'admin123456', 'administrator'];
+    if (in_array(strtolower($pwd), $weak, true)) {
+        $errors[] = 'Password is too common or easily guessed.';
+    }
+    return $errors;
+}
+
 function throttle_hit(mysqli $link, string $key): void {
     ensure_login_attempts_table($link);
     try {
@@ -1045,7 +1079,8 @@ function audit(mysqli $link, string $action, string $entity_type, ?int $entity_i
     try {
         $allowed_actions = [
             'CREATE', 'UPDATE', 'DELETE', 'CANCEL', 'LOGIN', 'LOGIN_FAILED',
-            'ROLE_CHANGE', 'EXPORT', 'RESTORE', 'DIAGNOSTICS_RUN', 'RUN_MIGRATIONS'
+            'ROLE_CHANGE', 'EXPORT', 'RESTORE', 'DIAGNOSTICS_RUN', 'RUN_MIGRATIONS',
+            'RETENTION_PURGE', 'MFA_ENABLE', 'MFA_DISABLE'
         ];
         $act = strtoupper(trim($action));
         if (!in_array($act, $allowed_actions, true)) {
@@ -1069,6 +1104,7 @@ function audit(mysqli $link, string $action, string $entity_type, ?int $entity_i
         );
     } catch (Throwable $e) {
         error_log("[busres audit error] Failed to record audit log: " . $e->getMessage());
+        throw $e;
     }
 }
 

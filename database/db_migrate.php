@@ -593,11 +593,26 @@ function run_migrations(mysqli $link): array {
             $m9_ok = $m9_ok && try_sql($link, "ALTER TABLE `admin` ADD COLUMN `password_changed_at` DATETIME NULL AFTER `last_login_at`", $log);
         }
         if (!has_column($link, 'admin', 'totp_secret')) {
-            $m9_ok = $m9_ok && try_sql($link, "ALTER TABLE `admin` ADD COLUMN `totp_secret` VARCHAR(64) NULL AFTER `password_changed_at`", $log);
+            $m9_ok = $m9_ok && try_sql($link, "ALTER TABLE `admin` ADD COLUMN `totp_secret` VARCHAR(255) NULL AFTER `password_changed_at`", $log);
+        } else {
+            try_sql($link, "ALTER TABLE `admin` MODIFY COLUMN `totp_secret` VARCHAR(255) NULL", $log);
         }
         if (!has_column($link, 'admin', 'totp_enabled')) {
             $m9_ok = $m9_ok && try_sql($link, "ALTER TABLE `admin` ADD COLUMN `totp_enabled` TINYINT(1) NOT NULL DEFAULT 0 AFTER `totp_secret`", $log);
         }
+        if (!has_column($link, 'admin', 'last_totp_step')) {
+            $m9_ok = $m9_ok && try_sql($link, "ALTER TABLE `admin` ADD COLUMN `last_totp_step` INT NULL AFTER `totp_enabled`", $log);
+        }
+        $m9_ok = $m9_ok && try_sql($link, "
+            CREATE TABLE IF NOT EXISTS `admin_recovery_codes` (
+              `id` INT AUTO_INCREMENT PRIMARY KEY,
+              `admin_id` INT NOT NULL,
+              `code_hash` VARCHAR(255) NOT NULL,
+              `used_at` DATETIME NULL,
+              `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              KEY `idx_admin_recovery` (`admin_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ", $log);
 
         if (!has_column($link, 'buses', 'archived_at')) {
             $m9_ok = $m9_ok && try_sql($link, "ALTER TABLE `buses` ADD COLUMN `archived_at` DATETIME NULL", $log);

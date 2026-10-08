@@ -15,16 +15,6 @@ $filter_to_date = trim((string)($_GET['to_date'] ?? ''));
 $alert = null;
 $alert_type = 'info';
 
-// Handle Retention Purge (Item 9: purge entries older than 365 days)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purge_retention'])) {
-    csrf_verify();
-    $cutoff = date('Y-m-d H:i:s', strtotime('-365 days'));
-    $purged = db_exec($link, "DELETE FROM audit_log WHERE `timestamp` < ?", 's', [$cutoff]);
-    audit($link, 'DELETE', 'audit_log', null, null, ['action' => 'retention_purge', 'cutoff' => $cutoff]);
-    $alert = "Retention purge completed. Historic logs older than 365 days removed.";
-    $alert_type = 'success';
-}
-
 $where_clauses = [];
 $params = [];
 $types = '';
@@ -103,18 +93,12 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 <div class="page-header">
     <div>
         <h1 class="page-title">Administrative Audit Log</h1>
-        <p class="page-subtitle">Immutable compliance record tracking administrative mutations, cancellations, and entity modifications.</p>
+        <p class="page-subtitle">Append-only compliance audit trail tracking administrative mutations, cancellations, and entity modifications.</p>
     </div>
     <div class="d-flex align-items-center">
-        <a href="?<?= http_build_query(array_merge($keep_filter, ['export' => 'csv'])) ?>" class="btn btn-outline-success btn-sm mr-2 shadow-sm font-weight-bold">
+        <a href="?<?= http_build_query(array_merge($keep_filter, ['export' => 'csv'])) ?>" class="btn btn-outline-success btn-sm shadow-sm font-weight-bold">
             📥 Export CSV
         </a>
-        <form method="post" action="" class="d-inline" onsubmit="return confirm('Purge audit log entries older than 365 days? This action cannot be undone.');">
-            <?= csrf_field() ?>
-            <button type="submit" name="purge_retention" class="btn btn-outline-danger btn-sm shadow-sm font-weight-bold">
-                🧹 Purge >365d
-            </button>
-        </form>
     </div>
 </div>
 

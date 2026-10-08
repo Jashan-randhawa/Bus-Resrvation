@@ -42,7 +42,12 @@ $files_to_lint = [
     'user/my-bookings.php',
     'database/db_migrate.php',
     'tests/concurrency_worker.php',
-    'tests/run_tests.php'
+    'tests/run_tests.php',
+    'includes/auth/totp.php',
+    'admin/mfa.php',
+    'database/reset-mfa.php',
+    'database/purge-audit-log.php',
+    'tests/test_phase1.php'
 ];
 
 foreach ($files_to_lint as $file) {

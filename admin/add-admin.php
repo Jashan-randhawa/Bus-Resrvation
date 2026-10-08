@@ -33,11 +33,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
         $role = 'operator';
     }
 
+    $pwd_errors = validate_new_password($pwd, 'admin');
+
     if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $alert = 'Please provide a valid name and email address.';
         $alert_type = 'danger';
-    } elseif (strlen($pwd) < 12) {
-        $alert = 'Password must be at least 12 characters.';
+    } elseif (!empty($pwd_errors)) {
+        $alert = implode(' ', $pwd_errors);
         $alert_type = 'danger';
     } else {
         $existing = db_one($link, 'SELECT * FROM admin WHERE Email_id = ?', 's', [$email]);
@@ -67,13 +69,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
     }
 }
 
-// Handle Role Change (Item 5)
+// Handle Role Change (Item 5 & Issue 21: Self-demotion guard)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_role'])) {
     csrf_verify();
     $target_id = (int)($_POST['target_id'] ?? 0);
     $new_role = trim((string)($_POST['new_role'] ?? ''));
 
-    if (!in_array($new_role, ['super_admin', 'operator', 'viewer'], true)) {
+    if ($target_id === $current_admin_id) {
+        $alert = 'You cannot change your own role.';
+        $alert_type = 'danger';
+    } elseif (!in_array($new_role, ['super_admin', 'operator', 'viewer'], true)) {
         $alert = 'Invalid role specified.';
         $alert_type = 'danger';
     } elseif ($target_id <= 0) {
@@ -132,14 +137,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_active'])) {
     }
 }
 
-// Handle Force Password Reset (Item 5)
+// Handle Force Password Reset (Issues 1, 24, 29)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_pwd'])) {
     csrf_verify();
     $target_id = (int)($_POST['target_id'] ?? 0);
     $new_pwd = (string)($_POST['new_pwd'] ?? '');
+    $confirm_pwd = (string)($_POST['confirm_pwd'] ?? $new_pwd);
 
-    if ($target_id <= 0 || strlen($new_pwd) < 12) {
-        $alert = 'New password must be at least 12 characters.';
+    $pwd_errors = validate_new_password($new_pwd, 'admin');
+
+    if ($target_id <= 0) {
+        $alert = 'Invalid administrator ID.';
+        $alert_type = 'danger';
+    } elseif ($new_pwd !== $confirm_pwd) {
+        $alert = 'New password and confirmation do not match.';
+        $alert_type = 'danger';
+    } elseif (!empty($pwd_errors)) {
+        $alert = implode(' ', $pwd_errors);
         $alert_type = 'danger';
     } else {
         $target_row = db_one($link, "SELECT * FROM `admin` WHERE `{$admin_pk}` = ?", 'i', [$target_id]);
@@ -258,12 +272,13 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                             <th>Email</th>
                             <th>Role</th>
                             <th>Status</th>
+                            <th>Last Sign-In</th>
                             <th class="text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($admins)): ?>
-                            <tr><td colspan="6" class="text-center text-muted py-4">No admins found.</td></tr>
+                            <tr><td colspan="7" class="text-center text-muted py-4">No admins found.</td></tr>
                         <?php else: ?>
                             <?php foreach ($admins as $row): ?>
                                 <?php
@@ -308,6 +323,11 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                                             <span class="badge badge-secondary">Deactivated</span>
                                         <?php endif; ?>
                                     </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            <?= !empty($row['last_login_at']) ? e(date('d M Y, H:i', strtotime($row['last_login_at']))) : 'Never' ?>
+                                        </small>
+                                    </td>
                                     <td class="text-right">
                                         <div class="btn-group btn-group-sm">
                                             <?php if (!$is_self): ?>
@@ -326,7 +346,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                                                     </button>
                                                 </form>
                                             <?php endif; ?>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="let np = prompt('Enter new master password (min 12 chars):'); if(np && np.length >= 12) { document.getElementById('rp_id').value='<?= $aid ?>'; document.getElementById('rp_pwd').value=np; document.getElementById('rp_form').submit(); } else if(np) { alert('Password must be at least 12 characters.'); }">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary btn-reset-modal" data-toggle="modal" data-target="#resetPwdModal" data-id="<?= e($aid) ?>" data-name="<?= e($row['name'] ?? 'Administrator') ?>">
                                                 Reset Pwd
                                             </button>
                                         </div>
@@ -341,12 +361,53 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </div>
 </div>
 
-<!-- Hidden form for reset password prompt -->
-<form id="rp_form" method="post" action="" style="display:none;">
-    <?= csrf_field() ?>
-    <input type="hidden" name="target_id" id="rp_id" value="">
-    <input type="hidden" name="new_pwd" id="rp_pwd" value="">
-    <input type="hidden" name="reset_pwd" value="1">
-</form>
+<!-- Secure Password Reset Modal (Issue 29) -->
+<div class="modal fade" id="resetPwdModal" tabindex="-1" role="dialog" aria-labelledby="resetPwdModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title font-weight-bold" id="resetPwdModalLabel">Reset Administrator Password</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="post" action="">
+                <?= csrf_field() ?>
+                <input type="hidden" name="target_id" id="modal_target_id" value="">
+                <input type="hidden" name="reset_pwd" value="1">
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-3">
+                        Set a new password for <strong id="modal_target_name" class="text-dark">administrator</strong>. 
+                        Password must be at least 12 characters and max 72 bytes.
+                    </p>
+                    <div class="form-group">
+                        <label for="modal_new_pwd" class="small font-weight-bold text-muted">New Master Password</label>
+                        <input type="password" id="modal_new_pwd" name="new_pwd" class="form-control" minlength="12" maxlength="72" required autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_confirm_pwd" class="small font-weight-bold text-muted">Confirm New Password</label>
+                        <input type="password" id="modal_confirm_pwd" name="confirm_pwd" class="form-control" minlength="12" maxlength="72" required autocomplete="new-password">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger font-weight-bold">Apply Password Reset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    $('.btn-reset-modal').on('click', function() {
+        var id = $(this).data('id');
+        var name = $(this).data('name');
+        $('#modal_target_id').val(id);
+        $('#modal_target_name').text(name);
+        $('#modal_new_pwd').val('');
+        $('#modal_confirm_pwd').val('');
+    });
+});
+</script>
 
 <?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>

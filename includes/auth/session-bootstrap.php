@@ -27,18 +27,34 @@ function can_write(): bool {
     return in_array($_SESSION['role'] ?? '', ['super_admin', 'operator'], true);
 }
 
-function login_user(string $portalRole, array $row): void {
-    session_regenerate_id(true); // defeats session fixation
-    $assignedRole = !empty($row['role']) ? (string)$row['role'] : ($portalRole === 'admin' ? 'super_admin' : 'user');
+function login_user(string $portalRole, array $row): bool {
+    $assignedRole = !empty($row['role']) ? (string)$row['role'] : null;
+
+    if ($portalRole === 'admin') {
+        $allowed = ['super_admin', 'operator', 'viewer'];
+        if ($assignedRole === null || !in_array($assignedRole, $allowed, true)) {
+            error_log('[busres] admin login refused: invalid or missing role for id ' . ($row['id'] ?? '?'));
+            return false;
+        }
+    } else {
+        $assignedRole = 'user';
+    }
+
+    if (!headers_sent()) {
+        session_regenerate_id(true); // defeats session fixation
+    }
     $_SESSION['role'] = $assignedRole;
     $_SESSION['uid'] = (int)$row['id'];
     if (in_array($assignedRole, ['super_admin', 'operator', 'viewer', 'admin'], true)) {
         $_SESSION['admin_id'] = (int)$row['id'];
+        $_SESSION['pwd_ref'] = (string)($row['password_changed_at'] ?? '');
     }
     $_SESSION['name'] = (string)($row['name'] ?? 'User');
     $_SESSION['phone'] = (string)($row['phone'] ?? '');
+    $_SESSION['started_at'] = time();
     $_SESSION['last_seen'] = time();
     $_SESSION['last'] = time();
+    return true;
     // never store the password or its hash in the session
 }
 
