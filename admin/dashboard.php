@@ -4,21 +4,32 @@ require_once __DIR__ . '/../includes/auth/admin-session.php';
 require_once __DIR__ . '/../includes/db_con.php';
 require_once __DIR__ . '/../includes/helpers.php';
 
-// Consolidated Executive KPIs via single DB round-trip (P-10)
+// Consolidated Executive KPIs via single DB round-trip (P-10, Issues 9, 10)
 $has_status = table_has_column($link, 'booking', 'status');
 $has_cap = table_has_column($link, 'buses', 'capacity');
+$has_bus_arch = table_has_column($link, 'buses', 'archived_at');
+$has_route_arch = table_has_column($link, 'route', 'archived_at');
+$has_cust_arch = table_has_column($link, 'costumer', 'archived_at');
+$has_admin_active = table_has_column($link, 'admin', 'is_active');
 
 $rev_where = $has_status ? "WHERE status = 'Confirmed' OR status IS NULL" : "";
-$cap_select = $has_cap ? "(SELECT COALESCE(SUM(capacity), 0) FROM buses) AS total_seats" : "((SELECT COUNT(*) FROM buses) * " . BUS_SEATS . ") AS total_seats";
+$bus_where = $has_bus_arch ? "WHERE archived_at IS NULL" : "";
+$route_where = $has_route_arch ? "WHERE archived_at IS NULL" : "";
+$cust_where = $has_cust_arch ? "WHERE archived_at IS NULL" : "";
+$admin_where = $has_admin_active ? "WHERE is_active = 1" : "";
+
+$cap_select = $has_cap 
+    ? "(SELECT COALESCE(SUM(capacity), 0) FROM buses {$bus_where}) AS total_seats" 
+    : "((SELECT COUNT(*) FROM buses {$bus_where}) * " . BUS_SEATS . ") AS total_seats";
 
 $kpi = db_one($link, "
     SELECT
       (SELECT COUNT(*) FROM booking) AS total_bookings,
       (SELECT COALESCE(SUM(price), 0) FROM booking {$rev_where}) AS total_revenue,
-      (SELECT COUNT(*) FROM costumer) AS total_customers,
-      (SELECT COUNT(*) FROM buses) AS total_buses,
-      (SELECT COUNT(*) FROM route) AS total_routes,
-      (SELECT COUNT(*) FROM admin) AS total_admins,
+      (SELECT COUNT(*) FROM costumer {$cust_where}) AS total_customers,
+      (SELECT COUNT(*) FROM buses {$bus_where}) AS total_buses,
+      (SELECT COUNT(*) FROM route {$route_where}) AS total_routes,
+      (SELECT COUNT(*) FROM admin {$admin_where}) AS total_admins,
       (SELECT COUNT(*) FROM `query`) AS total_queries,
       {$cap_select}
 ");
@@ -190,11 +201,23 @@ $total_earnings = number_format((float)($kpi['total_revenue'] ?? 0), 2);
     </div>
 </div>
 
-<?php
-// Item 11: 30-day Trends & Analytics
-$thirty_days_ago = date('Y-m-d', strtotime('-30 days'));
+<!-- Definitions Footnote (Issue 10) -->
+<div class="row">
+    <div class="col-12">
+        <p class="text-muted small mt-n2 mb-4">
+            <span class="mr-1">&bull; <strong>Definitions:</strong></span>
+            Fleet, Transit Routes, and Customers count active (non-archived) records. Administrators count active system accounts. Confirmed Revenue reflects completed reservations only.
+        </p>
+    </div>
+</div>
 
-// 30-day booking & revenue daily totals
+<?php
+// Item 11 & Issue 9: 30-day Trends & Analytics
+$window_days = 30;
+$window_end = date('Y-m-d');
+$window_start = date('Y-m-d', strtotime('-' . ($window_days - 1) . ' days'));
+
+// 30-day booking & revenue daily totals with explicit date window
 $daily_stats = db_all($link, "
     SELECT 
         `date`,
@@ -202,32 +225,33 @@ $daily_stats = db_all($link, "
         SUM(CASE WHEN status = 'Confirmed' OR status IS NULL THEN price ELSE 0 END) AS daily_rev,
         SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS daily_cancelled
     FROM booking
-    WHERE `date` >= ?
+    WHERE `date` BETWEEN ? AND ?
     GROUP BY `date`
     ORDER BY `date` DESC
-    LIMIT 30
-", 's', [$thirty_days_ago]);
+", 'ss', [$window_start, $window_end]);
 
-// Top 5 Popular Routes
+// Top 5 Popular Routes (Issue 10: strictly Confirmed or NULL for legacy)
+$top_routes_where = $has_status ? "WHERE status = 'Confirmed' OR status IS NULL" : "";
 $top_routes = db_all($link, "
     SELECT 
         city1, city2, bus,
         COUNT(*) AS total_tickets,
         SUM(price) AS route_revenue
     FROM booking
-    WHERE status != 'Cancelled' OR status IS NULL
+    {$top_routes_where}
     GROUP BY city1, city2, bus
     ORDER BY total_tickets DESC
     LIMIT 5
 ");
 
-// Cancellation metrics
+// Cancellation metrics strictly within the 30-day window (Issue 9)
 $cancel_metrics = db_one($link, "
     SELECT 
         COUNT(*) AS total,
         SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS cancelled
     FROM booking
-");
+    WHERE `date` BETWEEN ? AND ?
+", 'ss', [$window_start, $window_end]);
 $all_bks = (int)($cancel_metrics['total'] ?? 0);
 $all_cnl = (int)($cancel_metrics['cancelled'] ?? 0);
 $cnl_rate = $all_bks > 0 ? round(($all_cnl / $all_bks) * 100, 1) : 0;
@@ -281,7 +305,7 @@ $cnl_rate = $all_bks > 0 ? round(($all_cnl / $all_bks) * 100, 1) : 0;
     <div class="col-lg-6 mb-4">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h6 class="mb-0 font-weight-bold text-dark">30-Day Performance Overview</h6>
+                <h6 class="mb-0 font-weight-bold text-dark">30-Day Performance Overview <small class="text-muted font-weight-normal">(<?= e(date('d M', strtotime($window_start))) ?> &ndash; <?= e(date('d M Y', strtotime($window_end))) ?>)</small></h6>
                 <span class="badge badge-info">Cancellation Rate: <?= $cnl_rate ?>%</span>
             </div>
             <div class="card-body p-0">

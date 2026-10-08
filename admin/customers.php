@@ -110,22 +110,44 @@ if ($has_archived_col) {
 
 if ($search !== '') {
     $where_clauses[] = '(name LIKE ? OR email LIKE ? OR phone LIKE ? OR address LIKE ?)';
-    $s_param = '%' . $search . '%';
+    $escaped_search = addcslashes($search, '%_\\');
+    $s_param = '%' . $escaped_search . '%';
     $params = array_merge($params, [$s_param, $s_param, $s_param, $s_param]);
     $types .= 'ssss';
 }
 
 $where_sql = !empty($where_clauses) ? 'WHERE ' . implode(' AND ', $where_clauses) : '';
 
-// CSV Export (Item 7)
+// CSV Export with Role Protection & PII Masking (Issue 7)
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
-    audit($link, 'EXPORT', 'customer', null, null, ['format' => 'csv', 'tab' => $view_tab, 'search' => $search]);
+    $is_viewer = !can_write();
     $export_rows = !empty($params)
         ? db_all($link, "SELECT id, name, email, phone, address, archived_at FROM costumer {$where_sql} ORDER BY `{$cust_pk}` ASC", $types, $params)
         : db_all($link, "SELECT id, name, email, phone, address, archived_at FROM costumer {$where_sql} ORDER BY `{$cust_pk}` ASC");
 
+    try {
+        audit($link, 'EXPORT', 'customer', null, null, [
+            'format' => 'csv',
+            'count'  => count($export_rows),
+            'masked' => $is_viewer,
+            'tab'    => $view_tab,
+            'search' => $search
+        ]);
+    } catch (Throwable $e) {}
+
     $headers = ['Customer ID', 'Full Name', 'Email Address', 'Phone Number', 'Address', 'Archived Timestamp'];
-    export_csv('customers-export-' . date('Ymd-His') . '.csv', $headers, $export_rows);
+    $cleaned_export = [];
+    foreach ($export_rows as $row) {
+        $cleaned_export[] = [
+            $row['id'],
+            $row['name'],
+            $is_viewer ? mask_email((string)($row['email'] ?? '')) : (string)($row['email'] ?? ''),
+            $is_viewer ? mask_phone((string)($row['phone'] ?? '')) : (string)($row['phone'] ?? ''),
+            $is_viewer ? '[Masked]' : ($row['address'] ?? ''),
+            $row['archived_at'] ?? 'Active'
+        ];
+    }
+    export_csv('customers-export-' . date('Ymd-His') . '.csv', $headers, $cleaned_export);
 }
 
 // 25-item Pagination (P-10)

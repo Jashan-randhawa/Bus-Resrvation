@@ -9,7 +9,7 @@ $buses = db_all($link, 'SELECT bus_number FROM buses ORDER BY bus_number ASC');
 $selected_bus = trim((string)($_GET['bus'] ?? ''));
 $selected_date = trim((string)($_GET['date'] ?? ''));
 $selected_time = trim((string)($_GET['time'] ?? ''));
-$searched = ($selected_bus !== '' && $selected_date !== '');
+$searched = ($selected_bus !== '' && $selected_date !== '' && $selected_time !== '');
 
 $booked_seats = [];
 $bus_capacity = 36;
@@ -17,36 +17,10 @@ $bus_capacity = 36;
 if ($searched) {
     release_expired_holds($link);
     $bus_capacity = get_bus_capacity($link, $selected_bus);
-
-    if ($selected_time !== '') {
-        $booked_seats = get_booked_seats($link, $selected_bus, $selected_date, $selected_time);
-    } else {
-        try {
-            $bus_row = db_one($link, 'SELECT id FROM buses WHERE bus_number = ? LIMIT 1', 's', [$selected_bus]);
-            if ($bus_row && !empty($bus_row['id'])) {
-                $bus_id = (int)$bus_row['id'];
-                $lock_rows = db_all($link, "SELECT sl.seat_no FROM seat_lock sl JOIN booking b ON b.sno = sl.booking_id WHERE sl.bus_id = ? AND sl.travel_date = ? AND b.status IN ('Confirmed', 'Pending')", 'is', [$bus_id, $selected_date]);
-                foreach ($lock_rows as $lr) {
-                    $booked_seats[(int)$lr['seat_no']] = true;
-                }
-            }
-        } catch (Throwable $e) {}
-
-        if (table_has_column($link, 'booking', 'status')) {
-            $rows = db_all($link,
-                "SELECT seat FROM booking WHERE bus = ? AND `date` = ? AND (status IS NULL OR status IN ('Confirmed', 'Pending'))",
-                'ss', [$selected_bus, $selected_date]
-            );
-        } else {
-            $rows = db_all($link,
-                'SELECT seat FROM booking WHERE bus = ? AND `date` = ?',
-                'ss', [$selected_bus, $selected_date]
-            );
-        }
-        foreach ($rows as $r) {
-            $booked_seats[(int)$r['seat']] = true;
-        }
-    }
+    // Real-time seat allocation for specific departure time (Issue 11)
+    // Queries seat locks joined to active bookings:
+    // JOIN booking b ON b.sno = sl.booking_id WHERE b.status IN ('Confirmed', 'Pending')
+    $booked_seats = get_booked_seats($link, $selected_bus, $selected_date, $selected_time);
 }
 
 $title = 'Seat Availability';
@@ -84,8 +58,8 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         <input type="date" id="date" name="date" class="form-control" value="<?= e($selected_date) ?>" required>
                     </div>
                     <div class="form-group mb-4">
-                        <label for="time" class="font-weight-bold small text-muted">Departure Time (optional)</label>
-                        <input type="time" id="time" name="time" class="form-control" value="<?= e($selected_time) ?>">
+                        <label for="time" class="font-weight-bold small text-muted">Departure Time</label>
+                        <input type="time" id="time" name="time" class="form-control" value="<?= e($selected_time) ?>" required>
                     </div>
                     <button type="submit" class="btn btn-primary btn-block py-2 font-weight-bold shadow-sm">
                         Load Seat Map
@@ -111,7 +85,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                     <div class="empty-state py-5">
                         <div class="empty-icon">🪑</div>
                         <div class="empty-title">Select Trip Parameters</div>
-                        <div class="empty-text">Choose a bus and travel date on the left to render the live interactive seat map.</div>
+                        <div class="empty-text">Choose a bus, travel date, and departure time on the left to render the live interactive seat map.</div>
                     </div>
                 <?php else: ?>
                     <div class="seat-legend justify-content-center mb-4">

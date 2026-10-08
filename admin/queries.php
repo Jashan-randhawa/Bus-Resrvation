@@ -31,14 +31,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_reply'])) {
                 <p><small style='color: #666;'>Original message:<br>" . nl2br(e($q_row['user_qry'] ?? $q_row['query'] ?? '')) . "</small></p>
             ";
 
-            $sent = send_app_mail($to_email, $subject, $mail_body);
+            $mail_result = send_app_mail($to_email, $subject, $mail_body);
 
-            if ($has_status) {
-                db_exec($link, "UPDATE `query` SET `status` = 'replied', `replied_at` = NOW(), `reply_text` = ? WHERE `{$query_pk}` = ?", 'si', [$reply_text, $reply_id]);
+            if (!$mail_result['ok']) {
+                $alert = 'Reply not sent: ' . $mail_result['error'];
+                $alert_type = 'danger';
+                try {
+                    audit($link, 'UPDATE', 'query', $reply_id, null, ['reply_sent' => false, 'error' => $mail_result['error']]);
+                } catch (Throwable $e) {}
+            } else {
+                if ($has_status) {
+                    db_exec($link, "UPDATE `query` SET `status` = 'replied', `replied_at` = NOW(), `reply_text` = ? WHERE `{$query_pk}` = ?", 'si', [$reply_text, $reply_id]);
+                }
+                try {
+                    audit($link, 'UPDATE', 'query', $reply_id, ['status' => $q_row['status'] ?? 'new'], ['status' => 'replied', 'reply_sent' => true]);
+                } catch (Throwable $e) {}
+                $alert = 'Reply sent to ' . $to_email . ' successfully.';
+                $alert_type = 'success';
             }
-            audit($link, 'UPDATE', 'query', $reply_id, ['status' => $q_row['status'] ?? 'new'], ['status' => 'replied', 'reply_sent' => $sent]);
-            $alert = 'Reply sent to ' . e($to_email) . ' successfully.';
-            $alert_type = 'success';
         }
     }
 }

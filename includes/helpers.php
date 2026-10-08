@@ -267,9 +267,34 @@ function table_has_column(mysqli $link, string $table, string $column): bool {
 /**
  * Returns SQL fragment filtering bookings that are active (Confirmed or Pending).
  */
-function booking_active_sql(string $table_alias = ''): string {
+function booking_active_sql(string $table_alias = '', bool $confirmed_only = false): string {
     $prefix = $table_alias !== '' ? rtrim($table_alias, '.') . '.' : '';
+    if ($confirmed_only) {
+        return "({$prefix}status IS NULL OR {$prefix}status = 'Confirmed')";
+    }
     return "({$prefix}status IS NULL OR {$prefix}status IN ('Confirmed', 'Pending'))";
+}
+
+/**
+ * PII masking for telephone numbers (Issue 7).
+ */
+function mask_phone(string $p): string {
+    $digits = preg_replace('/\D+/', '', $p) ?? '';
+    if (strlen($digits) <= 4) {
+        return str_repeat('*', max(1, strlen($digits) - 1)) . substr($digits, -1);
+    }
+    return str_repeat('*', max(0, strlen($digits) - 4)) . substr($digits, -4);
+}
+
+/**
+ * PII masking for email addresses (Issue 7).
+ */
+function mask_email(string $e): string {
+    $parts = explode('@', $e, 2);
+    if (count($parts) < 2) {
+        return substr($e, 0, 1) . '***';
+    }
+    return substr($parts[0], 0, 1) . '***@' . $parts[1];
 }
 
 /**
@@ -663,9 +688,24 @@ function create_booking(mysqli $link, array $data): array {
         return ['ok' => false, 'pnr' => '', 'error' => "Please select a valid seat number between 1 and {$capacity}."];
     }
 
-    // Lookup route_id (P-04)
-    $route_row = db_one($link, 'SELECT sno FROM route WHERE city1 = ? AND city2 = ? AND busno = ? AND time = ? LIMIT 1', 'ssss', [$from, $to, $bus, $time]);
-    $route_id = $route_row ? (int)$route_row['sno'] : null;
+    // Lookup route_id and server-side tariff price (Issues 8, 12, P-04)
+    $has_archived_route = table_has_column($link, 'route', 'archived_at');
+    $route_sql = $has_archived_route
+        ? 'SELECT sno, price FROM route WHERE city1 = ? AND city2 = ? AND busno = ? AND `time` = ? AND archived_at IS NULL LIMIT 1'
+        : 'SELECT sno, price FROM route WHERE city1 = ? AND city2 = ? AND busno = ? AND `time` = ? LIMIT 1';
+    $route_row = db_one($link, $route_sql, 'ssss', [$from, $to, $bus, $time]);
+    if (!$route_row) {
+        return ['ok' => false, 'pnr' => '', 'error' => "No active route schedule exists for {$from} to {$to} departing at {$time} on bus {$bus}."];
+    }
+    $route_id = (int)$route_row['sno'];
+    $official_price = (float)($route_row['price'] ?? 0);
+
+    // Enforce server tariff; only super_admin with min 10 char reason can override
+    if (function_exists('is_super_admin') && is_super_admin() && !empty($data['price_override']) && !empty($data['override_reason']) && strlen(trim((string)$data['override_reason'])) >= 10) {
+        $price = (float)$data['price_override'];
+    } else {
+        $price = $official_price;
+    }
 
     // Passenger name and phone validation (U-07)
     if ($name === '' || $contact === '') {
@@ -937,41 +977,22 @@ function validate_person_fields(string $name, string $phone, string $address = '
 }
 
 /**
- * Sends application email notification (Phases 3.1, 4.2).
- * Gracefully handles environments without configured SMTP.
+ * Sends application email notification via SMTP (Issue 3).
  *
  * @param string $to Recipient email address
  * @param string $subject Email subject
  * @param string $html_body HTML message body
- * @return bool True if sent or queued, false on failure
+ * @return array ['ok' => bool, 'error' => string]
  */
-function send_app_mail(string $to, string $subject, string $html_body): bool {
+function send_app_mail(string $to, string $subject, string $html_body): array {
     $to = trim($to);
     if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
-        return false;
+        return ['ok' => false, 'error' => 'Invalid recipient email address.'];
     }
 
-    // Header injection prevention
     $subject = str_replace(["\r", "\n"], '', trim($subject));
-
-    $mail_enabled = (getenv('MAIL_ENABLED') === '1' || strtolower((string)getenv('MAIL_ENABLED')) === 'true');
-    $from_email = getenv('MAIL_FROM') ?: 'no-reply@busreservation.local';
-    $from_name = getenv('MAIL_FROM_NAME') ?: 'Bus Reservation System';
-
-    if (!$mail_enabled) {
-        error_log(sprintf('[busres mail notice] Mail to <%s> suppressed (MAIL_ENABLED is false). Subject: %s', $to, $subject));
-        return true;
-    }
-
-    $headers = [
-        'MIME-Version: 1.0',
-        'Content-type: text/html; charset=UTF-8',
-        'From: ' . sprintf('"%s" <%s>', addcslashes($from_name, '"'), $from_email),
-        'Reply-To: ' . $from_email,
-        'X-Mailer: BusReservation-PHP/' . phpversion()
-    ];
-
-    return @mail($to, $subject, $html_body, implode("\r\n", $headers));
+    require_once __DIR__ . '/smtp.php';
+    return smtp_send_mail($to, $subject, $html_body);
 }
 
 /**

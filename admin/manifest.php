@@ -10,8 +10,22 @@ $bus_sql = $has_archived ? "SELECT bus_number, capacity FROM buses WHERE archive
 $buses = db_all($link, $bus_sql);
 
 $selected_bus = trim((string)($_GET['bus'] ?? ($buses[0]['bus_number'] ?? '')));
-$selected_date = trim((string)($_GET['date'] ?? date('Y-m-d')));
 $selected_route = trim((string)($_GET['route'] ?? ''));
+
+// Date validation (Issue 32)
+$raw_date = trim((string)($_GET['date'] ?? ''));
+$date_error = null;
+if ($raw_date !== '') {
+    $d = DateTime::createFromFormat('Y-m-d', $raw_date);
+    if ($d && $d->format('Y-m-d') === $raw_date) {
+        $selected_date = $raw_date;
+    } else {
+        $date_error = "Invalid journey date format '{$raw_date}'. Please enter date as YYYY-MM-DD.";
+        $selected_date = date('Y-m-d');
+    }
+} else {
+    $selected_date = date('Y-m-d');
+}
 
 // Get bus info
 $bus_info = null;
@@ -26,15 +40,17 @@ if ($selected_bus !== '') {
     $routes = db_all($link, "SELECT DISTINCT city1, city2, `time` FROM route WHERE busno = ? ORDER BY `time` ASC", 's', [$selected_bus]);
 }
 
-// Fetch passengers / bookings for selected bus and date
+// Fetch confirmed passengers for selected bus and date (Issue 4)
 $where_clauses = ["bus = ?", "`date` = ?"];
 $params = [$selected_bus, $selected_date];
 $types = 'ss';
 
 if (table_has_column($link, 'booking', 'status')) {
-    $where_clauses[] = "status != 'Cancelled'";
+    // Only confirmed passengers count toward manifest and revenue
+    $where_clauses[] = "(status IS NULL OR status = 'Confirmed')";
 }
 
+$parts = [];
 if ($selected_route !== '') {
     // Expected format: "City1 -> City2"
     $parts = explode(' -> ', $selected_route);
@@ -59,7 +75,27 @@ if ($selected_bus !== '') {
     );
 }
 
-// Metrics
+// Separate query for pending / unconfirmed holds (Issue 4)
+$unconfirmed_holds = [];
+if ($selected_bus !== '' && table_has_column($link, 'booking', 'status')) {
+    $hold_clauses = ["bus = ?", "`date` = ?", "status = 'Pending'"];
+    $hold_params = [$selected_bus, $selected_date];
+    $hold_types = 'ss';
+    if ($selected_route !== '' && count($parts) === 2) {
+        $hold_clauses[] = "city1 = ? AND city2 = ?";
+        $hold_params[] = trim($parts[0]);
+        $hold_params[] = trim($parts[1]);
+        $hold_types .= 'ss';
+    }
+    $unconfirmed_holds = db_all($link, 
+        "SELECT sno, seat, hold_expires_at FROM booking WHERE " . implode(' AND ', $hold_clauses),
+        $hold_types,
+        $hold_params
+    );
+}
+$unconfirmed_hold_count = count($unconfirmed_holds);
+
+// Metrics (calculated strictly on confirmed passengers)
 $booked_count = count($passengers);
 $vacant_count = max(0, $capacity - $booked_count);
 $occupancy_rate = $capacity > 0 ? round(($booked_count / $capacity) * 100, 1) : 0;
@@ -68,21 +104,26 @@ foreach ($passengers as $p) {
     $total_revenue += (float)($p['price'] ?? 0);
 }
 
-// CSV Export
+// CSV Export (Issues 4, 7)
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
-    audit($link, 'EXPORT', 'manifest', null, null, [
-        'bus' => $selected_bus,
-        'date' => $selected_date,
-        'passenger_count' => $booked_count
-    ]);
+    $is_viewer = !can_write();
+    try {
+        audit($link, 'EXPORT', 'manifest', null, null, [
+            'bus' => $selected_bus,
+            'date' => $selected_date,
+            'passenger_count' => $booked_count,
+            'masked' => $is_viewer
+        ]);
+    } catch (Throwable $e) {}
 
     $csv_headers = ['Seat #', 'Passenger Name', 'Contact Phone', 'Origin', 'Destination', 'Departure Time', 'PNR', 'Fare', 'Status'];
     $csv_rows = [];
     foreach ($passengers as $p) {
+        $contact = $is_viewer ? mask_phone((string)($p['contact'] ?? '')) : (string)($p['contact'] ?? '');
         $csv_rows[] = [
             $p['seat'],
             $p['name'],
-            $p['contact'],
+            $contact,
             $p['city1'],
             $p['city2'],
             $p['time'],
@@ -242,6 +283,21 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         </div>
 
         <!-- Passenger Table -->
+        <?php if (!empty($date_error)): ?>
+            <div class="alert alert-warning py-2 mb-3">
+                <?= e($date_error) ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($unconfirmed_hold_count > 0): ?>
+            <div class="alert alert-info py-2 px-3 mb-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Unconfirmed Holds:</strong> <?= $unconfirmed_hold_count ?> seat(s) currently held pending checkout. (Excluded from passenger sheet & revenue).
+                </div>
+                <span class="badge badge-warning text-dark font-weight-bold">Temporary Holds</span>
+            </div>
+        <?php endif; ?>
+
         <div class="table-responsive">
             <table class="table table-bordered table-sm mb-0">
                 <thead class="thead-light">

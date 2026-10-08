@@ -24,21 +24,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
     $seat = (int)($_POST['seat'] ?? 0);
     $amount = (float)($_POST['amount'] ?? 0);
 
-    // P-04: Route existence and price validation
-    $matched_route = db_one($link,
-        "SELECT price FROM route WHERE busno = ? AND city1 = ? AND city2 = ? AND `time` = ? LIMIT 1",
-        'ssss', [$bus, $from, $to, $time]
-    );
+    // Check active route and server-side tariff (Issues 8, 12)
+    $has_archived_route = table_has_column($link, 'route', 'archived_at');
+    $route_query = $has_archived_route 
+        ? "SELECT price FROM route WHERE busno = ? AND city1 = ? AND city2 = ? AND `time` = ? AND archived_at IS NULL LIMIT 1"
+        : "SELECT price FROM route WHERE busno = ? AND city1 = ? AND city2 = ? AND `time` = ? LIMIT 1";
+    $matched_route = db_one($link, $route_query, 'ssss', [$bus, $from, $to, $time]);
 
     if (!$matched_route) {
         $alert = "No active route found for bus '{$bus}' from '{$from}' to '{$to}' departing at {$time}. Please verify schedule.";
         $alert_type = 'danger';
     } else {
-        if ($amount <= 0) {
-            $amount = (float)$matched_route['price'];
-        }
+        $official_tariff = (float)$matched_route['price'];
+        $override_reason = trim((string)($_POST['override_reason'] ?? ''));
+        $price_override = isset($_POST['price_override']) && $_POST['price_override'] !== '' ? (float)$_POST['price_override'] : null;
 
-        $res = create_booking($link, [
+        $booking_params = [
             'id'      => 0, // Admin-created booking
             'bus'     => $bus,
             'city1'   => $from,
@@ -46,13 +47,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
             'date'    => $date,
             'time'    => $time,
             'seat'    => $seat,
-            'price'   => $amount,
             'name'    => $unm,
             'contact' => $num
-        ]);
+        ];
+
+        if (is_super_admin() && $price_override !== null && $price_override > 0 && strlen($override_reason) >= 10) {
+            $booking_params['price_override'] = $price_override;
+            $booking_params['override_reason'] = $override_reason;
+        }
+
+        $res = create_booking($link, $booking_params);
 
         if ($res['ok']) {
-            audit($link, 'CREATE', 'booking', null, null, ['pnr' => $res['pnr'], 'bus' => $bus, 'seat' => $seat, 'name' => $unm, 'date' => $date]);
+            $audit_payload = ['pnr' => $res['pnr'], 'bus' => $bus, 'seat' => $seat, 'name' => $unm, 'date' => $date];
+            if (!empty($booking_params['price_override'])) {
+                $audit_payload['price_override'] = $price_override;
+                $audit_payload['official_tariff'] = $official_tariff;
+                $audit_payload['override_reason'] = $override_reason;
+            }
+            try {
+                audit($link, 'CREATE', 'booking', null, null, $audit_payload);
+            } catch (Throwable $e) {}
             $alert = "Booking confirmed! PNR: {$res['pnr']}, Seat: #{$seat}";
             $alert_type = 'success';
         } else {
@@ -106,12 +121,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
         $alert = "Bulk cancel complete: {$cancelled_count} reservation(s) cancelled and seats liberated.";
         $alert_type = 'success';
     } elseif ($bulk_action === 'export') {
+        $is_viewer = !can_write();
         $placeholders = implode(',', array_fill(0, count($selected_ids), '?'));
         $types_str = str_repeat('i', count($selected_ids));
         $export_rows = db_all($link, "SELECT sno, pnr, bus, name, contact, city1, city2, `date`, `time`, seat, price, status FROM booking WHERE sno IN ({$placeholders}) ORDER BY sno DESC", $types_str, $selected_ids);
-        audit($link, 'EXPORT', 'booking', null, null, ['format' => 'csv', 'count' => count($export_rows), 'bulk' => true]);
+        try {
+            audit($link, 'EXPORT', 'booking', null, null, ['format' => 'csv', 'count' => count($export_rows), 'bulk' => true, 'masked' => $is_viewer]);
+        } catch (Throwable $e) {}
+
         $headers = ['Booking ID', 'PNR', 'Bus Number', 'Passenger Name', 'Contact Phone', 'Origin', 'Destination', 'Travel Date', 'Departure Time', 'Seat Number', 'Tariff Paid', 'Status'];
-        export_csv('bookings-selected-' . date('Ymd-His') . '.csv', $headers, $export_rows);
+        $cleaned_export = [];
+        foreach ($export_rows as $er) {
+            $contact = $is_viewer ? mask_phone((string)($er['contact'] ?? '')) : (string)($er['contact'] ?? '');
+            $cleaned_export[] = [
+                $er['sno'], $er['pnr'], $er['bus'], $er['name'], $contact,
+                $er['city1'], $er['city2'], $er['date'], $er['time'], $er['seat'],
+                $er['price'], $er['status']
+            ];
+        }
+        export_csv('bookings-selected-' . date('Ymd-His') . '.csv', $headers, $cleaned_export);
     }
 }
 
@@ -144,7 +172,8 @@ if ($has_status && in_array($selected_filter, ['Confirmed', 'Pending', 'Expired'
 
 if ($search !== '') {
     $where_clauses[] = '(pnr LIKE ? OR name LIKE ? OR contact LIKE ? OR city1 LIKE ? OR city2 LIKE ?)';
-    $s_param = '%' . $search . '%';
+    $escaped_search = addcslashes($search, '%_\\');
+    $s_param = '%' . $escaped_search . '%';
     $params = array_merge($params, [$s_param, $s_param, $s_param, $s_param, $s_param]);
     $types .= 'sssss';
 }
@@ -169,15 +198,33 @@ if ($filter_date_to !== '') {
 
 $where_sql = !empty($where_clauses) ? 'WHERE ' . implode(' AND ', $where_clauses) : '';
 
-// CSV Export (Item 7)
+// CSV Export (Issues 7, 27)
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
-    audit($link, 'EXPORT', 'booking', null, null, ['format' => 'csv', 'filters' => compact('selected_filter', 'search', 'filter_bus', 'filter_date_from', 'filter_date_to')]);
+    $is_viewer = !can_write();
     $export_rows = !empty($params) 
         ? db_all($link, "SELECT sno, pnr, bus, name, contact, city1, city2, `date`, `time`, seat, price, status FROM booking {$where_sql} ORDER BY sno DESC", $types, $params)
         : db_all($link, "SELECT sno, pnr, bus, name, contact, city1, city2, `date`, `time`, seat, price, status FROM booking {$where_sql} ORDER BY sno DESC");
 
+    try {
+        audit($link, 'EXPORT', 'booking', null, null, [
+            'format'  => 'csv',
+            'count'   => count($export_rows),
+            'masked'  => $is_viewer,
+            'filters' => compact('selected_filter', 'search', 'filter_bus', 'filter_date_from', 'filter_date_to')
+        ]);
+    } catch (Throwable $e) {}
+
     $headers = ['Booking ID', 'PNR', 'Bus Number', 'Passenger Name', 'Contact Phone', 'Origin', 'Destination', 'Travel Date', 'Departure Time', 'Seat Number', 'Tariff Paid', 'Status'];
-    export_csv('bookings-export-' . date('Ymd-His') . '.csv', $headers, $export_rows);
+    $cleaned_export = [];
+    foreach ($export_rows as $er) {
+        $contact = $is_viewer ? mask_phone((string)($er['contact'] ?? '')) : (string)($er['contact'] ?? '');
+        $cleaned_export[] = [
+            $er['sno'], $er['pnr'], $er['bus'], $er['name'], $contact,
+            $er['city1'], $er['city2'], $er['date'], $er['time'], $er['seat'],
+            $er['price'], $er['status']
+        ];
+    }
+    export_csv('bookings-export-' . date('Ymd-His') . '.csv', $headers, $cleaned_export);
 }
 
 // 25-item Pagination (P-05, P-10)
