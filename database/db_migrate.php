@@ -236,8 +236,13 @@ function run_migrations(mysqli $link): array {
         $m1_ok = try_sql($link, "ALTER TABLE `costumer` MODIFY `pwd` VARCHAR(255) NOT NULL", $log) && $m1_ok;
 
         if (!has_index($link, 'admin', 'uq_admin_email')) {
-            try_sql($link, "DELETE a1 FROM admin a1 JOIN admin a2 ON a1.Email_id = a2.Email_id AND a1.id > a2.id", $log);
-            $m1_ok = try_sql($link, "ALTER TABLE `admin` ADD UNIQUE KEY `uq_admin_email` (`Email_id`)", $log) && $m1_ok;
+            $admin_dups = db_all($link, "SELECT Email_id, COUNT(*) AS cnt FROM admin GROUP BY Email_id HAVING cnt > 1");
+            if (!empty($admin_dups)) {
+                $m1_ok = false;
+                $log[] = "  [!] Duplicate admin email(s) found. uq_admin_email was NOT created. Resolve duplicates manually.";
+            } else {
+                $m1_ok = try_sql($link, "ALTER TABLE `admin` ADD UNIQUE KEY `uq_admin_email` (`Email_id`)", $log) && $m1_ok;
+            }
         }
 
         if (!has_column($link, 'admin', 'role')) {
@@ -245,13 +250,23 @@ function run_migrations(mysqli $link): array {
         }
 
         if (!has_index($link, 'costumer', 'uq_customer_email')) {
-            try_sql($link, "DELETE c1 FROM costumer c1 JOIN costumer c2 ON c1.email = c2.email AND c1.id > c2.id", $log);
-            $m1_ok = try_sql($link, "ALTER TABLE `costumer` ADD UNIQUE KEY `uq_customer_email` (`email`)", $log) && $m1_ok;
+            $cust_dups = db_all($link, "SELECT email, COUNT(*) AS cnt FROM costumer GROUP BY email HAVING cnt > 1");
+            if (!empty($cust_dups)) {
+                $m1_ok = false;
+                $log[] = "  [!] Duplicate customer email(s) found. uq_customer_email was NOT created. Resolve duplicates manually.";
+            } else {
+                $m1_ok = try_sql($link, "ALTER TABLE `costumer` ADD UNIQUE KEY `uq_customer_email` (`email`)", $log) && $m1_ok;
+            }
         }
 
         if (!has_index($link, 'buses', 'uq_bus_number')) {
-            try_sql($link, "DELETE b1 FROM buses b1 JOIN buses b2 ON b1.bus_number = b2.bus_number AND b1.id > b2.id", $log);
-            $m1_ok = try_sql($link, "ALTER TABLE `buses` ADD UNIQUE KEY `uq_bus_number` (`bus_number`)", $log) && $m1_ok;
+            $bus_dups = db_all($link, "SELECT bus_number, COUNT(*) AS cnt FROM buses GROUP BY bus_number HAVING cnt > 1");
+            if (!empty($bus_dups)) {
+                $m1_ok = false;
+                $log[] = "  [!] Duplicate bus number(s) found. uq_bus_number was NOT created. Resolve duplicates manually.";
+            } else {
+                $m1_ok = try_sql($link, "ALTER TABLE `buses` ADD UNIQUE KEY `uq_bus_number` (`bus_number`)", $log) && $m1_ok;
+            }
         }
 
         if (!has_column($link, 'booking', 'pnr')) {
@@ -274,6 +289,12 @@ function run_migrations(mysqli $link): array {
 
         if (!has_index($link, 'booking', 'idx_booking_customer')) {
             $m1_ok = try_sql($link, "ALTER TABLE `booking` ADD KEY `idx_booking_customer` (`id`)", $log) && $m1_ok;
+        }
+        if (!has_column($link, 'booking', 'customer_id')) {
+            $m1_ok = try_sql($link, "ALTER TABLE `booking` ADD COLUMN `customer_id` INT NULL", $log) && $m1_ok;
+            if (!has_index($link, 'booking', 'idx_booking_customer_id')) {
+                try_sql($link, "ALTER TABLE `booking` ADD KEY `idx_booking_customer_id` (`customer_id`)", $log);
+            }
         }
         if (!has_index($link, 'route', 'idx_route_cities')) {
             $m1_ok = try_sql($link, "ALTER TABLE `route` ADD KEY `idx_route_cities` (`city1`, `city2`)", $log) && $m1_ok;

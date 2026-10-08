@@ -666,6 +666,17 @@ function create_booking(mysqli $link, array $data): array {
     $contact = trim((string)($data['contact'] ?? ''));
     $cust_id = (int)($data['id'] ?? 0);
 
+    // Issue 26: Resolve customer linkage by matching customer email if customer id was omitted
+    if ($cust_id <= 0 && (!empty($data['email']) || !empty($data['customer_email']))) {
+        $cust_email = trim((string)($data['email'] ?? $data['customer_email'] ?? ''));
+        if ($cust_email !== '') {
+            $c_row = db_one($link, "SELECT id FROM costumer WHERE email = ? LIMIT 1", 's', [$cust_email]);
+            if ($c_row && !empty($c_row['id'])) {
+                $cust_id = (int)$c_row['id'];
+            }
+        }
+    }
+
     if ($bus === '' || $from === '' || $to === '') {
         return ['ok' => false, 'pnr' => '', 'error' => 'Incomplete route details.'];
     }
@@ -813,6 +824,12 @@ function create_booking(mysqli $link, array $data): array {
             $placeholders[] = '?';
             $types .= 'i';
             $vals[] = $route_id;
+        }
+        if (table_has_column($link, 'booking', 'customer_id')) {
+            $cols[] = 'customer_id';
+            $placeholders[] = '?';
+            $types .= 'i';
+            $vals[] = ($cust_id > 0 ? $cust_id : null);
         }
 
         $sql = "INSERT INTO booking (" . implode(', ', $cols) . ") VALUES (" . implode(', ', $placeholders) . ")";

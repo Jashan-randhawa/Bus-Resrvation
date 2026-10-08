@@ -1,5 +1,5 @@
--- database/migrations/007_admin_accounts_and_soft_delete.sql
--- Migration 007: Admin Account Controls and Soft Delete (Items 4, 5, 6)
+-- database/migrations/009_admin_accounts_and_soft_delete.sql
+-- Migration 009: Admin Account Controls and Soft Delete (Items 4, 5, 6)
 
 -- 1. Admin account lifecycle fields (Item 5 & 6)
 ALTER TABLE `admin`
@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS `admin_recovery_codes` (
   `code_hash` VARCHAR(255) NOT NULL,
   `used_at` DATETIME NULL,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  KEY `idx_admin_recovery` (`admin_id`)
+  KEY `idx_admin_recovery` (`admin_id`),
+  CONSTRAINT `fk_admin_recovery_admin` FOREIGN KEY (`admin_id`) REFERENCES `admin` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 2. Soft-delete columns for core entities (Item 4)

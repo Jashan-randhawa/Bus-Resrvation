@@ -27,32 +27,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
         $alert = 'Origin and destination cities cannot be the same.';
         $alert_type = 'danger';
     } else {
-        // O11: Check for route conflict (same bus assigned at same departure time)
-        $conflict = db_one($link, 'SELECT * FROM route WHERE busno = ? AND `time` = ?', 'ss', [$bus, $time]);
+        $has_archived_col = table_has_column($link, 'route', 'archived_at');
+        $conflict_where = $has_archived_col ? " AND archived_at IS NULL" : "";
+        // O11 & Issue 12: Check for route conflict on active schedules only
+        $conflict = db_one($link, "SELECT * FROM route WHERE busno = ? AND `time` = ?{$conflict_where}", 'ss', [$bus, $time]);
         if ($conflict) {
             $alert = "Bus '{$bus}' is already scheduled to depart at {$time} ({$conflict['city1']} -> {$conflict['city2']}).";
             $alert_type = 'danger';
         } else {
-            $has_bus_id = table_has_column($link, 'route', 'bus_id');
-            $bus_row = db_one($link, 'SELECT id FROM buses WHERE bus_number = ? LIMIT 1', 's', [$bus]);
-            $bus_id = $bus_row ? (int)$bus_row['id'] : null;
-
-            if ($has_bus_id && $bus_id !== null) {
-                db_exec($link,
-                    "INSERT INTO route (city1, city2, busno, time, price, bus_id) VALUES (?, ?, ?, ?, ?, ?)",
-                    'ssssdi',
-                    [$from, $to, $bus, $time, $price, $bus_id]
-                );
+            // Issue 13: Bus assignment validation (must exist and not be archived)
+            $has_bus_arch = table_has_column($link, 'buses', 'archived_at');
+            $bus_where = $has_bus_arch ? " AND archived_at IS NULL" : "";
+            $bus_row = db_one($link, "SELECT id FROM buses WHERE bus_number = ?{$bus_where} LIMIT 1", 's', [$bus]);
+            if (!$bus_row || empty($bus_row['id'])) {
+                $alert = "The selected bus '{$bus}' does not exist or is inactive/archived.";
+                $alert_type = 'danger';
             } else {
-                db_exec($link,
-                    "INSERT INTO route (city1, city2, busno, time, price) VALUES (?, ?, ?, ?, ?)",
-                    'ssssd',
-                    [$from, $to, $bus, $time, $price]
-                );
+                $bus_id = (int)$bus_row['id'];
+                $has_bus_id = table_has_column($link, 'route', 'bus_id');
+
+                if ($has_bus_id) {
+                    db_exec($link,
+                        "INSERT INTO route (city1, city2, busno, time, price, bus_id) VALUES (?, ?, ?, ?, ?, ?)",
+                        'ssssdi',
+                        [$from, $to, $bus, $time, $price, $bus_id]
+                    );
+                } else {
+                    db_exec($link,
+                        "INSERT INTO route (city1, city2, busno, time, price) VALUES (?, ?, ?, ?, ?)",
+                        'ssssd',
+                        [$from, $to, $bus, $time, $price]
+                    );
+                }
+                audit($link, 'CREATE', 'route', (int)mysqli_insert_id($link), null, ['city1' => $from, 'city2' => $to, 'busno' => $bus, 'time' => $time, 'price' => $price]);
+                $alert = 'Route added successfully.';
+                $alert_type = 'success';
             }
-            audit($link, 'CREATE', 'route', (int)mysqli_insert_id($link), null, ['city1' => $from, 'city2' => $to, 'busno' => $bus, 'time' => $time, 'price' => $price]);
-            $alert = 'Route added successfully.';
-            $alert_type = 'success';
         }
     }
 }

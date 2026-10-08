@@ -25,18 +25,18 @@ $error = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
     csrf_verify();
     $busno = trim((string)($_POST['edit'] ?? ''));
-    $capacity = (int)($_POST['capacity'] ?? 36);
-    if ($capacity < 10 || $capacity > 60) {
-        $capacity = 36;
-    }
+    $capacity_input = $_POST['capacity'] ?? null;
+    $capacity = ($capacity_input !== null && $capacity_input !== '') ? (int)$capacity_input : 36;
 
     $layout = trim((string)($_POST['layout'] ?? '2+2'));
     if (!in_array($layout, ['2+2', '2+1', '1+2', '1+1'], true)) {
         $layout = '2+2';
     }
 
-    if ($busno === '') {
-        $error = 'Bus number cannot be empty.';
+    if ($busno === '' || mb_strlen($busno) < 2 || mb_strlen($busno) > 50) {
+        $error = 'Bus number must be between 2 and 50 characters.';
+    } elseif ($capacity < 10 || $capacity > 60) {
+        $error = 'Bus capacity must be between 10 and 60 seats.';
     } else {
         $old_bus = (string)($row['bus_number'] ?? '');
         $dup = db_one($link, "SELECT `{$bus_pk}` FROM buses WHERE bus_number = ? AND `{$bus_pk}` != ?", 'si', [$busno, $id]);

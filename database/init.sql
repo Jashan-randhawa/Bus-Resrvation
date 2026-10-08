@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS `route` (
 CREATE TABLE IF NOT EXISTS `booking` (
   `sno` INT AUTO_INCREMENT PRIMARY KEY,
   `id` INT NOT NULL DEFAULT 0,
+  `customer_id` INT NULL,
   `bus` VARCHAR(50) NOT NULL,
   `bus_id` INT NULL,
   `route_id` INT NULL,
@@ -84,10 +85,12 @@ CREATE TABLE IF NOT EXISTS `booking` (
   UNIQUE KEY `uq_booking_pnr` (`pnr`),
   UNIQUE KEY `uq_booking_active_seat` (`bus`, `date`, `time`, `active_seat`),
   KEY `idx_booking_customer` (`id`),
+  KEY `idx_booking_customer_id` (`customer_id`),
   KEY `idx_booking_bus_id` (`bus_id`),
   KEY `idx_booking_route_id` (`route_id`),
   KEY `idx_booking_hold` (`status`, `hold_expires_at`),
-  CONSTRAINT `fk_book_bus` FOREIGN KEY (`bus_id`) REFERENCES `buses` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+  CONSTRAINT `fk_book_bus` FOREIGN KEY (`bus_id`) REFERENCES `buses` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_booking_cust` FOREIGN KEY (`customer_id`) REFERENCES `costumer` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Dedicated Seat Lock Table (P-03)
