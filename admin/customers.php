@@ -110,7 +110,7 @@ if ($has_archived_col) {
 
 if ($search !== '') {
     $where_clauses[] = '(name LIKE ? OR email LIKE ? OR phone LIKE ? OR address LIKE ?)';
-    $escaped_search = addcslashes($search, '%_\\');
+    $escaped_search = escape_like($search);
     $s_param = '%' . $escaped_search . '%';
     $params = array_merge($params, [$s_param, $s_param, $s_param, $s_param]);
     $types .= 'ssss';

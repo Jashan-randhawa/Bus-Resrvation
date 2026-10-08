@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     if ($qid > 0 && in_array($new_st, ['new', 'replied', 'closed'], true) && $has_status) {
         db_exec($link, "UPDATE `query` SET `status` = ? WHERE `{$query_pk}` = ?", 'si', [$new_st, $qid]);
         audit($link, 'UPDATE', 'query', $qid, null, ['status' => $new_st]);
-        $alert = "Status updated to '" . e($new_st) . "'.";
+        $alert = "Status updated to '{$new_st}'.";
         $alert_type = 'success';
     }
 }

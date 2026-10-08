@@ -298,6 +298,13 @@ function mask_email(string $e): string {
 }
 
 /**
+ * Safely escapes characters for use within SQL LIKE clauses (Issue 27).
+ */
+function escape_like(string $s): string {
+    return addcslashes($s, '%_\\');
+}
+
+/**
  * Purges stale seat locks whose referenced booking is missing or no longer Confirmed/Pending (Issue 2).
  */
 function purge_stale_seat_locks(mysqli $link, ?int $bus_id = null, ?string $date = null, ?int $seat = null): int {

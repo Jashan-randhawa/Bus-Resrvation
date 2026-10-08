@@ -7,8 +7,14 @@ require_once __DIR__ . '/../includes/helpers.php';
 
 require_role('super_admin');
 
-// Audit diagnostics run (Phase A Item 3)
-audit($link, 'DIAGNOSTICS_RUN', 'system', null, null, ['user_agent' => substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 100)]);
+// Audit diagnostics run on explicit trigger only (Issue 19)
+$is_explicit_run = (isset($_GET['run']) && $_GET['run'] === '1') || (isset($_POST['run_diagnostics']));
+if ($is_explicit_run) {
+    audit($link, 'DIAGNOSTICS_RUN', 'system', null, null, [
+        'user_agent' => substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 100),
+        'explicit'   => true
+    ]);
+}
 
 $migration_log = $_SESSION['migration_log'] ?? null;
 unset($_SESSION['migration_log']);
@@ -210,7 +216,7 @@ $checks[] = run_check('Schema Migrations Status', function() use ($run_query, &$
         $m_rows = $run_query('SELECT migration, applied_at FROM `schema_migrations` ORDER BY id ASC');
         $applied_count = count($m_rows);
     }
-    $expected_count = 4;
+    $expected_count = 10;
     return [
         'status' => ($applied_count >= $expected_count) ? 'OK' : 'INFO',
         'message' => "{$applied_count} of {$expected_count} migrations recorded in schema_migrations"
@@ -240,13 +246,14 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <p class="page-subtitle">Automated verification of database schema integrity, encryption, rate limits, and security controls.</p>
     </div>
     <div class="d-flex align-items-center">
+        <a href="?run=1" class="btn btn-outline-primary btn-sm mr-2">⚡ Run Diagnostics</a>
         <form method="post" class="d-inline mr-2" onsubmit="return confirm('Execute all database schema migrations now?');">
             <?= csrf_field() ?>
             <button type="submit" name="run_migrations" value="1" class="btn btn-outline-warning btn-sm">
                 Run Migrations
             </button>
         </form>
-        <a href="" class="btn btn-outline-secondary btn-sm">Refresh</a>
+        <a href="diagnostics.php" class="btn btn-outline-secondary btn-sm">Refresh</a>
     </div>
 </div>
 

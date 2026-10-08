@@ -172,7 +172,7 @@ if ($has_status && in_array($selected_filter, ['Confirmed', 'Pending', 'Expired'
 
 if ($search !== '') {
     $where_clauses[] = '(pnr LIKE ? OR name LIKE ? OR contact LIKE ? OR city1 LIKE ? OR city2 LIKE ?)';
-    $escaped_search = addcslashes($search, '%_\\');
+    $escaped_search = escape_like($search);
     $s_param = '%' . $escaped_search . '%';
     $params = array_merge($params, [$s_param, $s_param, $s_param, $s_param, $s_param]);
     $types .= 'sssss';

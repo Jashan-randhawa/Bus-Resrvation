@@ -15,7 +15,7 @@ $booked_seats = [];
 $bus_capacity = 36;
 
 if ($searched) {
-    release_expired_holds($link);
+    // Read-only seat visualizer; hold release handled via background cron database/expire-holds.php (Issue 31)
     $bus_capacity = get_bus_capacity($link, $selected_bus);
     // Real-time seat allocation for specific departure time (Issue 11)
     // Queries seat locks joined to active bookings:
