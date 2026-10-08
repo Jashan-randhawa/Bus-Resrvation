@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## [Unreleased]
+
+### Fixed
+- **Admin Sign-in Redirects (Issue 1, Issue 8)**: Added GET query parameter handling on `homepage.php` to automatically open the admin login modal when unauthenticated or redirected with `?login=admin`.
+- **Session Expiry & Deactivation Notices**: Added whitelist handling for `&error=expired` and `&error=deactivated` so signed-out or deactivated admins receive clear, actionable feedback.
+- **Session Guard Expiry Flagging**: Updated `admin-session.php` to distinguish expired active sessions from unauthenticated visits when redirecting.
+- **Test Coverage**: Added automated regression checks in `tests/run_tests.php`, standalone test harness in `tests/test_admin_login.php`, and manual test verification checklist in `docs/admin-login-test-checklist.md`.
+
 ## [2.1.0] - 2026-10-04
 
 ### Security & Hardening

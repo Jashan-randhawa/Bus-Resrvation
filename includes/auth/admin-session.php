@@ -3,10 +3,12 @@
 require_once __DIR__ . '/session-bootstrap.php';
 
 $idle = defined('SESSION_IDLE_SECONDS') ? SESSION_IDLE_SECONDS : 1800; // 30 minutes
+$wasLoggedIn = !empty($_SESSION['admin_id']);
 if (empty($_SESSION['admin_id']) || (time() - ($_SESSION['last'] ?? $_SESSION['last_seen'] ?? 0)) > $idle) {
     session_unset();
     session_destroy();
-    header('Location: ' . BASE_URL . '/homepage.php?login=admin');
+    $reason = $wasLoggedIn ? '&error=expired' : '';
+    header('Location: ' . BASE_URL . '/homepage.php?login=admin' . $reason);
     exit;
 }
 $_SESSION['last'] = time();

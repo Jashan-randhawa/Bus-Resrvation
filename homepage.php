@@ -9,6 +9,19 @@ $msg_type = "info";
 $open_modal = ""; // Tracks which modal/tab to re-open on validation error or success (E1)
 $preserved_email = "";
 
+// Admin login modal & session-status GET handling (Issue 1)
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && (($_GET['login'] ?? '') === 'admin')) {
+  $open_modal = 'admin';
+  $reason = $_GET['error'] ?? '';
+  if ($reason === 'deactivated') {
+    $msg = 'This admin account has been deactivated. Please contact a super administrator.';
+    $msg_type = 'warning';
+  } elseif ($reason === 'expired') {
+    $msg = 'Your admin session has expired. Please sign in again.';
+    $msg_type = 'info';
+  }
+}
+
 // Read-only queries for the central search & booking card (A1)
 $from_cities = db_all($link, 'SELECT DISTINCT city1 FROM route ORDER BY city1 ASC');
 $to_cities = db_all($link, 'SELECT DISTINCT city2 FROM route ORDER BY city2 ASC');

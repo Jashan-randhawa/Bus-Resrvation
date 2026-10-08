@@ -732,6 +732,27 @@ assert_test("buses.php utilizes admin-crud.php", str_contains($buses_content_upd
 assert_test("routes.php utilizes admin-crud.php", str_contains($routes_content_updated, 'admin-crud.php'));
 assert_test("customers.php utilizes admin-crud.php", str_contains($customers_content_updated, 'admin-crud.php'));
 
+// 8.8 Phase A: Admin Sign-in & Modal Redirect Regression (Issues 1 & 8)
+echo "\n[*] Suite 8.8: Admin Sign-in & Modal Redirect Regression (Issues 1 & 8)\n";
+$homepage_test_content = file_get_contents(__DIR__ . '/../homepage.php');
+assert_test("homepage.php contains GET handler for login=admin", 
+    str_contains($homepage_test_content, "\$_GET['login']") && str_contains($homepage_test_content, "'admin'")
+);
+assert_test("homepage.php handles deactivated and expired session error codes", 
+    str_contains($homepage_test_content, 'deactivated') && str_contains($homepage_test_content, 'expired')
+);
+assert_test("homepage.php sets open_modal to admin on matching GET request", 
+    str_contains($homepage_test_content, "\$open_modal = 'admin';")
+);
+
+$admin_session_test_content = file_get_contents(__DIR__ . '/../includes/auth/admin-session.php');
+assert_test("admin-session.php distinguishes expired session redirect with error=expired", 
+    str_contains($admin_session_test_content, 'error=expired') && str_contains($admin_session_test_content, '$wasLoggedIn')
+);
+assert_test("admin-session.php routes deactivated admins with error=deactivated", 
+    str_contains($admin_session_test_content, 'error=deactivated')
+);
+
 
 
 // Clean up test data
