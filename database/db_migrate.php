@@ -267,7 +267,8 @@ function run_migrations(mysqli $link): array {
             $m1_ok = try_sql($link, "ALTER TABLE `booking` ADD COLUMN `status` VARCHAR(20) NOT NULL DEFAULT 'Confirmed'", $log) && $m1_ok;
         }
 
-        if (!has_index($link, 'booking', 'uq_booking_seat')) {
+        $m5_applied = migration_applied($link, '005_rebookable_active_seats');
+        if (!$m5_applied && !has_index($link, 'booking', 'uq_booking_seat')) {
             $m1_ok = try_sql($link, "ALTER TABLE `booking` ADD UNIQUE KEY `uq_booking_seat` (`bus`, `date`, `time`, `seat`)", $log) && $m1_ok;
         }
 
@@ -411,7 +412,23 @@ function run_migrations(mysqli $link): array {
             $m5_ok = try_sql($link, "ALTER TABLE `booking` DROP INDEX `uq_booking_seat`", $log) && $m5_ok;
         }
         if (!has_index($link, 'booking', 'uq_booking_active_seat')) {
-            $m5_ok = try_sql($link, "ALTER TABLE `booking` ADD UNIQUE KEY `uq_booking_active_seat` (`bus`, `date`, `time`, `active_seat`)", $log) && $m5_ok;
+            $dup_groups = db_all($link, "
+                SELECT bus, `date`, `time`, seat, COUNT(*) AS cnt, GROUP_CONCAT(pnr SEPARATOR ', ') AS pnrs
+                FROM `booking`
+                WHERE (`status` IS NULL OR `status` IN ('Confirmed', 'Pending'))
+                GROUP BY bus, `date`, `time`, seat
+                HAVING cnt > 1
+            ");
+            if (!empty($dup_groups)) {
+                $m5_ok = false;
+                $log[] = "  [!] " . count($dup_groups) . " conflicting active seat group(s) found. uq_booking_active_seat was NOT created.";
+                foreach ($dup_groups as $g) {
+                    $log[] = "      bus={$g['bus']} date={$g['date']} time={$g['time']} seat={$g['seat']} rows={$g['cnt']} pnrs={$g['pnrs']}";
+                }
+                $log[] = "  [!] Resolve these bookings manually (cancel the duplicate), then re-run migrations.";
+            } else {
+                $m5_ok = try_sql($link, "ALTER TABLE `booking` ADD UNIQUE KEY `uq_booking_active_seat` (`bus`, `date`, `time`, `active_seat`)", $log) && $m5_ok;
+            }
         }
         if ($m5_ok) {
             record_migration($link, $m5);
@@ -492,12 +509,28 @@ function run_migrations(mysqli $link): array {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ", $log) && $m7_ok;
 
-        try_sql($link, "
-            INSERT IGNORE INTO `seat_lock` (bus_id, travel_date, seat_no, booking_id, held_until)
-            SELECT k.bus_id, k.date, k.seat, k.sno, k.hold_expires_at
+        $lock_dups = db_all($link, "
+            SELECT k.bus_id, k.`date`, k.seat, COUNT(*) AS cnt, GROUP_CONCAT(k.pnr SEPARATOR ', ') AS pnrs
             FROM `booking` k
-            WHERE k.bus_id IS NOT NULL AND (k.status IS NULL OR k.status IN ('Confirmed', 'Pending'))
-        ", $log);
+            WHERE k.bus_id IS NOT NULL AND (k.`status` IS NULL OR k.`status` IN ('Confirmed', 'Pending'))
+            GROUP BY k.bus_id, k.`date`, k.seat
+            HAVING cnt > 1
+        ");
+        if (!empty($lock_dups)) {
+            $m7_ok = false;
+            $log[] = "  [!] " . count($lock_dups) . " conflicting seat lock group(s) found. seat_lock was NOT backfilled.";
+            foreach ($lock_dups as $ld) {
+                $log[] = "      bus_id={$ld['bus_id']} date={$ld['date']} seat={$ld['seat']} rows={$ld['cnt']} pnrs={$ld['pnrs']}";
+            }
+            $log[] = "  [!] Resolve conflicting bookings before applying seat_lock backfill.";
+        } else {
+            try_sql($link, "
+                INSERT IGNORE INTO `seat_lock` (bus_id, travel_date, seat_no, booking_id, held_until)
+                SELECT k.bus_id, k.date, k.seat, k.sno, k.hold_expires_at
+                FROM `booking` k
+                WHERE k.bus_id IS NOT NULL AND (k.status IS NULL OR k.status IN ('Confirmed', 'Pending'))
+            ", $log);
+        }
 
         if ($m7_ok) {
             record_migration($link, $m7);

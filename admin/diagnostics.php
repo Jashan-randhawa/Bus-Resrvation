@@ -143,15 +143,9 @@ $checks[] = run_check('Fleet Dynamic Capacity Modeling', function() use ($run_qu
 });
 
 // 6. Concurrency & Unique Indexes
-$checks[] = run_check('Booking Concurrency Constraints', function() use ($run_query) {
-    $indexes = $run_query('SHOW INDEX FROM `booking`');
-    $idx_names = array_column($indexes, 'Key_name');
-    $has_uq_seat = in_array('uq_booking_seat', $idx_names, true);
-    $has_uq_pnr = in_array('uq_booking_pnr', $idx_names, true);
-    return [
-        'status' => ($has_uq_seat && $has_uq_pnr) ? 'OK' : 'WARN',
-        'message' => "uq_booking_seat: " . ($has_uq_seat ? 'Active' : 'Missing') . " | uq_booking_pnr: " . ($has_uq_pnr ? 'Active' : 'Missing')
-    ];
+$checks[] = run_check('Booking Concurrency Constraints', function() use ($link) {
+    $c = booking_concurrency_status($link);
+    return ['status' => $c['status'], 'message' => $c['message']];
 });
 
 // 7. Master Data Unique Indexes

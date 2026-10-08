@@ -231,64 +231,178 @@ function table_has_column(mysqli $link, string $table, string $column): bool {
 }
 
 /**
- * Automatically releases seats held in 'Pending' status whose hold window has expired (O13, P-03).
+ * Returns SQL fragment filtering bookings that are active (Confirmed or Pending).
  */
-function release_expired_holds(mysqli $link): void {
-    if (table_has_column($link, 'booking', 'status') && table_has_column($link, 'booking', 'hold_expires_at')) {
-        db_exec($link,
-            "UPDATE booking SET status = 'Expired' WHERE status = 'Pending' AND hold_expires_at IS NOT NULL AND hold_expires_at < NOW()"
-        );
-    }
+function booking_active_sql(string $table_alias = ''): string {
+    $prefix = $table_alias !== '' ? rtrim($table_alias, '.') . '.' : '';
+    return "({$prefix}status IS NULL OR {$prefix}status IN ('Confirmed', 'Pending'))";
+}
+
+/**
+ * Purges stale seat locks whose referenced booking is missing or no longer Confirmed/Pending (Issue 2).
+ */
+function purge_stale_seat_locks(mysqli $link, ?int $bus_id = null, ?string $date = null, ?int $seat = null): int {
     try {
-        db_exec($link, "DELETE FROM seat_lock WHERE held_until IS NOT NULL AND held_until < NOW()");
+        $sql = "DELETE sl FROM seat_lock sl LEFT JOIN booking b ON b.sno = sl.booking_id
+                WHERE (b.sno IS NULL OR COALESCE(b.status, '') NOT IN ('Confirmed', 'Pending'))";
+        $types = '';
+        $params = [];
+        if ($bus_id !== null) {
+            $sql .= " AND sl.bus_id = ?";
+            $types .= 'i';
+            $params[] = $bus_id;
+        }
+        if ($date !== null) {
+            $sql .= " AND sl.travel_date = ?";
+            $types .= 's';
+            $params[] = $date;
+        }
+        if ($seat !== null) {
+            $sql .= " AND sl.seat_no = ?";
+            $types .= 'i';
+            $params[] = $seat;
+        }
+        return db_exec($link, $sql, $types, $params);
     } catch (Throwable $e) {
-        // Table seat_lock may not exist yet in legacy environments
+        return 0;
     }
 }
 
 /**
- * Returns a map of booked seat numbers [seat_no => true] for a specific bus, date, and departure time.
- * Checks dedicated seat_lock table and active booking rows. Automatically sweeps expired holds.
+ * Atomically cancels a booking and liberates its seat lock (Issue 3).
+ *
+ * @param mysqli $link Database connection
+ * @param int $sno Booking primary key (sno)
+ * @param int|null $owner_id Optional customer ID for tenant isolation
+ * @return int Number of affected booking rows
  */
-function get_booked_seats(mysqli $link, string $bus, string $date, string $time): array {
+function cancel_booking(mysqli $link, int $sno, ?int $owner_id = null): int {
+    mysqli_begin_transaction($link);
+    try {
+        $has_status = table_has_column($link, 'booking', 'status');
+        $changed = 0;
+        if ($has_status) {
+            $sql = "UPDATE booking SET status = 'Cancelled' WHERE sno = ? AND status <> 'Cancelled'";
+            $types = 'i';
+            $params = [$sno];
+            if ($owner_id !== null) {
+                $sql .= " AND id = ?";
+                $types .= 'i';
+                $params[] = $owner_id;
+            }
+            $changed = db_exec($link, $sql, $types, $params);
+        } else {
+            $sql = "DELETE FROM booking WHERE sno = ?";
+            $types = 'i';
+            $params = [$sno];
+            if ($owner_id !== null) {
+                $sql .= " AND id = ?";
+                $types .= 'i';
+                $params[] = $owner_id;
+            }
+            $changed = db_exec($link, $sql, $types, $params);
+        }
+
+        if ($changed > 0) {
+            try {
+                db_exec($link, 'DELETE FROM seat_lock WHERE booking_id = ?', 'i', [$sno]);
+            } catch (Throwable $e) {
+                // Table may not exist yet
+            }
+        }
+        mysqli_commit($link);
+        return $changed;
+    } catch (Throwable $e) {
+        mysqli_rollback($link);
+        throw $e;
+    }
+}
+
+/**
+ * Automatically releases seats held in 'Pending' status whose hold window has expired (O13, P-03, Issue 2).
+ * Expires Pending bookings first, then purges stale seat locks.
+ */
+function release_expired_holds(mysqli $link): int {
+    $updated = 0;
+    if (table_has_column($link, 'booking', 'status') && table_has_column($link, 'booking', 'hold_expires_at')) {
+        $updated = db_exec($link,
+            "UPDATE booking SET status = 'Expired' WHERE status = 'Pending' AND hold_expires_at IS NOT NULL AND hold_expires_at < NOW()"
+        );
+    }
+    purge_stale_seat_locks($link);
+    return $updated;
+}
+
+/**
+ * Returns a map of booked seat numbers [seat_no => true] for a specific bus, date, and optional departure time (Issue 2).
+ * Checks dedicated seat_lock table joined to active bookings, and active booking rows directly.
+ */
+function get_booked_seats(mysqli $link, string $bus, string $date, ?string $time = null): array {
     $booked = [];
-    if ($bus === '' || $date === '' || $time === '') {
+    if ($bus === '' || $date === '') {
         return $booked;
     }
 
-    // Sweep expired holds first (O13, P-03)
+    // Sweep expired holds first
     release_expired_holds($link);
 
-    // 1. Check seat_lock table (P-03)
+    // 1. Check seat_lock table joined to booking requiring active status (Confirmed or Pending)
     try {
         $bus_row = db_one($link, 'SELECT id FROM buses WHERE bus_number = ? LIMIT 1', 's', [$bus]);
         if ($bus_row && !empty($bus_row['id'])) {
             $bus_id = (int)$bus_row['id'];
-            $lock_rows = db_all($link,
-                "SELECT seat_no FROM seat_lock WHERE bus_id = ? AND travel_date = ?",
-                'is', [$bus_id, $date]
-            );
+            if ($time !== null && $time !== '') {
+                $lock_rows = db_all($link,
+                    "SELECT sl.seat_no
+                     FROM seat_lock sl
+                     JOIN booking b ON b.sno = sl.booking_id
+                     WHERE sl.bus_id = ? AND sl.travel_date = ? AND b.`time` = ?
+                       AND b.status IN ('Confirmed', 'Pending')",
+                    'iss', [$bus_id, $date, $time]
+                );
+            } else {
+                $lock_rows = db_all($link,
+                    "SELECT sl.seat_no
+                     FROM seat_lock sl
+                     JOIN booking b ON b.sno = sl.booking_id
+                     WHERE sl.bus_id = ? AND sl.travel_date = ?
+                       AND b.status IN ('Confirmed', 'Pending')",
+                    'is', [$bus_id, $date]
+                );
+            }
             foreach ($lock_rows as $lr) {
                 $booked[(int)$lr['seat_no']] = true;
             }
         }
-    } catch (Throwable $e) {
-        // Fallback gracefully if seat_lock is not yet populated
-    }
+    } catch (Throwable $e) {}
 
     // 2. Check booking table for active bookings
     $has_status = table_has_column($link, 'booking', 'status');
 
-    if ($has_status) {
-        $rows = db_all($link,
-            "SELECT seat FROM booking WHERE bus = ? AND `date` = ? AND `time` = ? AND (status IS NULL OR status IN ('Confirmed', 'Pending'))",
-            'sss', [$bus, $date, $time]
-        );
+    if ($time !== null && $time !== '') {
+        if ($has_status) {
+            $rows = db_all($link,
+                "SELECT seat FROM booking WHERE bus = ? AND `date` = ? AND `time` = ? AND (status IS NULL OR status IN ('Confirmed', 'Pending'))",
+                'sss', [$bus, $date, $time]
+            );
+        } else {
+            $rows = db_all($link,
+                'SELECT seat FROM booking WHERE bus = ? AND `date` = ? AND `time` = ?',
+                'sss', [$bus, $date, $time]
+            );
+        }
     } else {
-        $rows = db_all($link,
-            'SELECT seat FROM booking WHERE bus = ? AND `date` = ? AND `time` = ?',
-            'sss', [$bus, $date, $time]
-        );
+        if ($has_status) {
+            $rows = db_all($link,
+                "SELECT seat FROM booking WHERE bus = ? AND `date` = ? AND (status IS NULL OR status IN ('Confirmed', 'Pending'))",
+                'ss', [$bus, $date]
+            );
+        } else {
+            $rows = db_all($link,
+                'SELECT seat FROM booking WHERE bus = ? AND `date` = ?',
+                'ss', [$bus, $date]
+            );
+        }
     }
 
     foreach ($rows as $r) {
@@ -503,9 +617,12 @@ function create_booking(mysqli $link, array $data): array {
         return ['ok' => false, 'pnr' => '', 'error' => $dt_val['error']];
     }
 
-    // Lookup bus and capacity (P-04, P-08)
+    // Lookup bus and capacity (P-04, P-08, Issue 4)
     $bus_row = db_one($link, 'SELECT id, capacity FROM buses WHERE bus_number = ? LIMIT 1', 's', [$bus]);
-    $bus_id = $bus_row ? (int)$bus_row['id'] : null;
+    if (!$bus_row || empty($bus_row['id'])) {
+        return ['ok' => false, 'pnr' => '', 'error' => "Bus {$bus} is not registered in the system."];
+    }
+    $bus_id = (int)$bus_row['id'];
     $capacity = $bus_row && (int)$bus_row['capacity'] > 0 ? (int)$bus_row['capacity'] : get_bus_capacity($link, $bus);
 
     if ($seat < 1 || $seat > $capacity) {
@@ -540,35 +657,50 @@ function create_booking(mysqli $link, array $data): array {
         $booking_status = 'Confirmed';
     }
 
-    // Release any stale holds before checking availability (O13, P-03)
+    // Release any stale holds before checking availability (O13, P-03, Issue 2)
     release_expired_holds($link);
+    purge_stale_seat_locks($link, $bus_id, $date, $seat);
 
-    // Pre-check seat_lock if bus_id is known (P-03)
-    if ($bus_id !== null) {
-        try {
-            $locked = db_one($link,
-                "SELECT booking_id FROM seat_lock WHERE bus_id = ? AND travel_date = ? AND seat_no = ? LIMIT 1",
-                'isi', [$bus_id, $date, $seat]
-            );
-            if ($locked) {
-                return ['ok' => false, 'pnr' => '', 'error' => "Seat #{$seat} on bus {$bus} for date {$date} ({$time}) is already booked."];
+    // Pre-check seat_lock if bus_id is known (P-03, Issue 2, Issue 5)
+    try {
+        $locked = db_one($link,
+            "SELECT sl.booking_id, b.id AS owner_id, b.pnr, b.status 
+             FROM seat_lock sl 
+             JOIN booking b ON b.sno = sl.booking_id 
+             WHERE sl.bus_id = ? AND sl.travel_date = ? AND sl.seat_no = ? 
+               AND b.status IN ('Confirmed', 'Pending') 
+             LIMIT 1",
+            'isi', [$bus_id, $date, $seat]
+        );
+        if ($locked) {
+            if ($cust_id > 0 && (int)($locked['owner_id'] ?? 0) === $cust_id) {
+                return ['ok' => true, 'pnr' => $locked['pnr'], 'status' => $locked['status'] ?? 'Confirmed', 'error' => '', 'duplicate' => true];
             }
-        } catch (Throwable $e) {}
-    }
+            return ['ok' => false, 'pnr' => '', 'error' => "Seat #{$seat} on bus {$bus} for date {$date} ({$time}) is already booked."];
+        }
+    } catch (Throwable $e) {}
 
-    // Pre-check booking table if status column exists
+    // Pre-check booking table if status column exists (Issue 5)
     if ($has_status) {
         $active_seat = db_one($link,
-            "SELECT sno FROM booking WHERE bus = ? AND `date` = ? AND `time` = ? AND seat = ? AND status IN ('Confirmed', 'Pending') LIMIT 1",
+            "SELECT sno, id AS owner_id, pnr, status 
+             FROM booking 
+             WHERE bus = ? AND `date` = ? AND `time` = ? AND seat = ? 
+               AND status IN ('Confirmed', 'Pending') 
+             LIMIT 1",
             'sssi', [$bus, $date, $time, $seat]
         );
         if ($active_seat) {
+            if ($cust_id > 0 && (int)($active_seat['owner_id'] ?? 0) === $cust_id) {
+                return ['ok' => true, 'pnr' => $active_seat['pnr'], 'status' => $active_seat['status'] ?? 'Confirmed', 'error' => '', 'duplicate' => true];
+            }
             return ['ok' => false, 'pnr' => '', 'error' => "Seat #{$seat} on bus {$bus} for date {$date} ({$time}) is already booked."];
         }
     }
 
     mysqli_begin_transaction($link);
     try {
+        purge_stale_seat_locks($link, $bus_id, $date, $seat);
         $pnr = strtoupper(bin2hex(random_bytes(5)));
 
         $cols = ['id', 'bus', 'name', 'contact', 'city1', 'city2', '`date`', '`time`', 'seat', 'price'];
@@ -596,7 +728,7 @@ function create_booking(mysqli $link, array $data): array {
                 $placeholders[] = 'NULL';
             }
         }
-        if ($has_bus_id && $bus_id !== null) {
+        if ($has_bus_id) {
             $cols[] = 'bus_id';
             $placeholders[] = '?';
             $types .= 'i';
@@ -613,47 +745,42 @@ function create_booking(mysqli $link, array $data): array {
         db_exec($link, $sql, $types, $vals);
         $new_booking_id = (int)mysqli_insert_id($link);
 
-        // Insert atomic seat lock (P-03)
-        if ($bus_id !== null && $new_booking_id > 0) {
-            try {
-                if ($booking_status === 'Pending') {
-                    db_exec($link,
-                        "INSERT INTO seat_lock (bus_id, travel_date, seat_no, booking_id, held_until) VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))",
-                        'isis', [$bus_id, $date, $seat, $new_booking_id]
-                    );
-                } else {
-                    db_exec($link,
-                        "INSERT INTO seat_lock (bus_id, travel_date, seat_no, booking_id, held_until) VALUES (?, ?, ?, ?, NULL)",
-                        'isis', [$bus_id, $date, $seat, $new_booking_id]
-                    );
-                }
-            } catch (mysqli_sql_exception $se) {
-                if ((int)$se->getCode() === 1062) {
-                    throw $se; // Triggers outer catch to rollback and report clean race condition error
-                }
-                error_log("[busres] seat_lock insert skipped/error: " . $se->getMessage());
-            }
+        if ($new_booking_id <= 0) {
+            throw new Exception("Failed to insert booking record.");
+        }
+
+        // Insert atomic seat lock - mandatory, failure rolls back (Issue 4)
+        if ($booking_status === 'Pending') {
+            db_exec($link,
+                "INSERT INTO seat_lock (bus_id, travel_date, seat_no, booking_id, held_until) VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))",
+                'isis', [$bus_id, $date, $seat, $new_booking_id]
+            );
+        } else {
+            db_exec($link,
+                "INSERT INTO seat_lock (bus_id, travel_date, seat_no, booking_id, held_until) VALUES (?, ?, ?, ?, NULL)",
+                'isis', [$bus_id, $date, $seat, $new_booking_id]
+            );
         }
 
         mysqli_commit($link);
         return ['ok' => true, 'pnr' => $pnr, 'status' => $booking_status, 'error' => ''];
-    } catch (mysqli_sql_exception $e) {
+    } catch (Throwable $e) {
         mysqli_rollback($link);
         if ((int)$e->getCode() === 1062) {
-            // U-05: Double submit / rapid duplicate submission recovery
+            // U-05, Issue 5: Double submit / rapid duplicate submission recovery
             if ($cust_id > 0) {
                 $existing = db_one($link,
-                    "SELECT pnr FROM booking WHERE id = ? AND bus = ? AND `date` = ? AND `time` = ? AND seat = ? AND status IN ('Confirmed', 'Pending') LIMIT 1",
+                    "SELECT pnr, status FROM booking WHERE id = ? AND bus = ? AND `date` = ? AND `time` = ? AND seat = ? AND status IN ('Confirmed', 'Pending') LIMIT 1",
                     'isssi', [$cust_id, $bus, $date, $time, $seat]
                 );
                 if ($existing && !empty($existing['pnr'])) {
-                    return ['ok' => true, 'pnr' => $existing['pnr'], 'status' => 'Confirmed', 'error' => '', 'duplicate' => true];
+                    return ['ok' => true, 'pnr' => $existing['pnr'], 'status' => $existing['status'] ?? 'Confirmed', 'error' => '', 'duplicate' => true];
                 }
             }
             return ['ok' => false, 'pnr' => '', 'error' => "Seat #{$seat} on bus {$bus} for date {$date} ({$time}) was just reserved by another passenger. Please pick another seat."];
         }
         // U-06: Log internal database error without exposing raw database exceptions to users
-        error_log("create_booking error: " . $e->getMessage());
+        error_log("[busres] create_booking error: " . $e->getMessage());
         return ['ok' => false, 'pnr' => '', 'error' => 'We could not complete the booking. Please try again.'];
     }
 }
@@ -994,6 +1121,170 @@ function export_csv(string $filename, array $headers, array $rows): void {
     fclose($out);
     exit;
 }
+
+/**
+ * Executes an unprepared SQL query and returns all associative rows.
+ * Safe for schema introspection (SHOW INDEX, SHOW COLUMNS).
+ */
+function query_rows_unprepared(mysqli $link, string $sql): array {
+    $res = mysqli_query($link, $sql);
+    if (!$res) {
+        return [];
+    }
+    $rows = [];
+    while ($row = mysqli_fetch_assoc($res)) {
+        $rows[] = $row;
+    }
+    mysqli_free_result($res);
+    return $rows;
+}
+
+/**
+ * Reads SHOW INDEX FROM a table and returns detailed ordered column index maps (Issue 1).
+ */
+function table_index_definitions(mysqli $link, string $table): array {
+    $safe_table = preg_replace('/[^a-zA-Z0-9_]/', '', $table);
+    $rows = query_rows_unprepared($link, "SHOW INDEX FROM `{$safe_table}`");
+    $indexes = [];
+    foreach ($rows as $r) {
+        $key_name = $r['Key_name'] ?? '';
+        $col_name = $r['Column_name'] ?? '';
+        $seq = (int)($r['Seq_in_index'] ?? 1);
+        $unique = ((int)($r['Non_unique'] ?? 1) === 0);
+        if (!isset($indexes[$key_name])) {
+            $indexes[$key_name] = [
+                'name' => $key_name,
+                'unique' => $unique,
+                'columns' => []
+            ];
+        }
+        $indexes[$key_name]['columns'][$seq] = $col_name;
+    }
+    foreach ($indexes as $k => $idx) {
+        ksort($indexes[$k]['columns']);
+        $indexes[$k]['columns'] = array_values($indexes[$k]['columns']);
+    }
+    return $indexes;
+}
+
+/**
+ * Validates active booking concurrency indexes and seat lock constraints (Issue 1, Appendix A1).
+ *
+ * @return array ['status' => 'OK'|'WARN'|'FAIL', 'message' => string]
+ */
+function booking_concurrency_status(mysqli $link): array {
+    try {
+        $booking_indexes = table_index_definitions($link, 'booking');
+        $lock_indexes = table_index_definitions($link, 'seat_lock');
+    } catch (Throwable $e) {
+        return [
+            'status' => 'FAIL',
+            'message' => 'Failed to introspect table indexes: ' . $e->getMessage()
+        ];
+    }
+
+    $errors = [];
+    $warnings = [];
+
+    // 1. Check uq_booking_pnr on (pnr)
+    $pnr_ok = false;
+    if (isset($booking_indexes['uq_booking_pnr'])) {
+        $idx = $booking_indexes['uq_booking_pnr'];
+        if ($idx['unique'] && $idx['columns'] === ['pnr']) {
+            $pnr_ok = true;
+        } else {
+            $warnings[] = "uq_booking_pnr has wrong columns (expected pnr)";
+        }
+    } else {
+        $warnings[] = "uq_booking_pnr is missing";
+    }
+
+    // 2. Check uq_booking_active_seat on (bus, date, time, active_seat)
+    $active_seat_ok = false;
+    $expected_cols = ['bus', 'date', 'time', 'active_seat'];
+    if (isset($booking_indexes['uq_booking_active_seat'])) {
+        $idx = $booking_indexes['uq_booking_active_seat'];
+        if ($idx['unique'] && $idx['columns'] === $expected_cols) {
+            $active_seat_ok = true;
+        } else {
+            $warnings[] = "Active-seat uniqueness has wrong columns (expected " . implode(', ', $expected_cols) . ")";
+        }
+    } else {
+        $warnings[] = "Active-seat uniqueness missing";
+    }
+
+    // Check if active_seat is a generated column
+    $gen_col_ok = false;
+    try {
+        $col_rows = query_rows_unprepared($link, "SHOW COLUMNS FROM `booking` LIKE 'active_seat'");
+        if (!empty($col_rows)) {
+            $extra = strtolower($col_rows[0]['Extra'] ?? '');
+            if (str_contains($extra, 'generated')) {
+                $gen_col_ok = true;
+            }
+        }
+    } catch (Throwable $e) {}
+    if (!$gen_col_ok && $active_seat_ok) {
+        $errors[] = "active_seat is not a generated column";
+    }
+
+    // Flag legacy uq_booking_seat if it reappears
+    if (isset($booking_indexes['uq_booking_seat'])) {
+        $warnings[] = "Legacy uq_booking_seat index present (blocks rebooking of cancelled/expired seats)";
+    }
+
+    // 3. Check seat_lock PRIMARY KEY on (bus_id, travel_date, seat_no)
+    $lock_ok = false;
+    $expected_pk = ['bus_id', 'travel_date', 'seat_no'];
+    if (isset($lock_indexes['PRIMARY'])) {
+        $idx = $lock_indexes['PRIMARY'];
+        if ($idx['columns'] === $expected_pk) {
+            $lock_ok = true;
+        } else {
+            $errors[] = "seat_lock primary key mismatch (expected " . implode(', ', $expected_pk) . ")";
+        }
+    } else {
+        $errors[] = "seat_lock primary key missing";
+    }
+
+    // Check for lock and booking drift (stale orphan locks)
+    try {
+        $drift = db_one($link,
+            "SELECT COUNT(*) AS c FROM seat_lock sl LEFT JOIN booking b ON b.sno = sl.booking_id
+             WHERE b.sno IS NULL OR COALESCE(b.status, '') NOT IN ('Confirmed', 'Pending')"
+        );
+        $drift_count = (int)($drift['c'] ?? 0);
+        if ($drift_count > 0) {
+            $warnings[] = "{$drift_count} stale seat locks detected without active booking";
+        }
+    } catch (Throwable $e) {}
+
+    $msg_parts = [
+        "PNR uniqueness: " . ($pnr_ok ? "Active" : "Issue"),
+        "Active-seat uniqueness: " . ($active_seat_ok ? "Active" : "Issue"),
+        "Seat lock: " . ($lock_ok ? "Active" : "Issue"),
+    ];
+    $base_msg = implode(" | ", $msg_parts);
+
+    if (!empty($errors)) {
+        return [
+            'status' => 'FAIL',
+            'message' => $base_msg . " | " . implode("; ", $errors)
+        ];
+    }
+    if (!empty($warnings)) {
+        return [
+            'status' => 'WARN',
+            'message' => $base_msg . " | " . implode("; ", $warnings)
+        ];
+    }
+
+    return [
+        'status' => 'OK',
+        'message' => $base_msg
+    ];
+}
+
 
 
 

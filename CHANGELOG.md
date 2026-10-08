@@ -5,16 +5,25 @@ All notable changes to this project are documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Atomic Booking Concurrency & Seat Locking (Issues 2, 4, 5)**: Added transactional `seat_lock` acquisition in `create_booking()`, rejecting uncatalogued fleet vehicles, eliminating `INSERT IGNORE`, and handling MySQL 1062 unique constraint violations with resubmission recovery.
+- **Stale Lock Eviction & Lifecycle Management (Issue 2)**: Added `purge_stale_seat_locks()` and upgraded `release_expired_holds()` to purge orphan locks associated with cancelled, expired, or deleted bookings.
+- **Atomic Cancellation Helper (Issue 3)**: Introduced `cancel_booking()` ensuring atomic status transition to `Cancelled` and deletion from `seat_lock` in a single transaction across `admin/bookings.php` and `user/my-bookings.php`.
+- **Booking Concurrency Diagnostics (Issue 1)**: Added `booking_concurrency_status()` evaluating modern `seat_lock` integrity and active-seat partial constraints without checking deprecated `uq_booking_seat`.
+- **Concurrent Test Harness & Suite 14 (Issue 11)**: Created synchronized worker `tests/concurrency_worker.php` and added Suite 14 (Tests A to I) covering same-departure races, day-level lock constraints, hold release, atomic rollback, and 8-worker parallel competition.
 - **Password Visibility Toggle (Issue 5)**: Added accessible Show/Hide toggle button in the admin login password group with `aria-label` and `aria-pressed` states, auto-resetting on submit and modal close.
 - **Caps Lock Detection & Live Alerts (Issue 6)**: Added real-time Caps Lock state listener with `aria-live="polite"` accessible announcement to minimize mistyped password lockout risks.
 - **Admin Password Recovery Guidance (Issue 6)**: Added clear UI recovery guidance directing administrators to super administrators for password reset procedures.
 
 ### Changed
+- **Migration Conflict Guards (Issues 6, 7, 8)**: Guarded migration 001 against recreating retired `uq_booking_seat`, added pre-migration conflict detection to migration 005 prior to `uq_booking_active_seat` creation, and added conflict checks prior to migration 007 `seat_lock` backfill.
+- **Seat Occupancy Visualizer (Issue 10)**: Updated `admin/seats.php` all-departures lock query to join `seat_lock` with `booking` filtering for active statuses (`Confirmed`, `Pending`).
 - **Admin Modal Visual Redesign & Palette (Issues 3, 4, 7)**: Redesigned the admin modal header with dedicated slate-900 surface (`#0f172a`), inline brand bus logo, and amber "Restricted access" badge.
 - **Accessibility & WCAG AA Contrast Compliance (Issue 7)**: Upgraded helper and label contrast to `#64748b` (4.76:1 ratio against white) and implemented full dark theme support (`html[data-theme="dark"]`).
 - **Admin Entry Point Links (Issue 2)**: Converted the header "Admin Portal" button and footer link from JavaScript-only placeholders to accessible, bookmarkable links pointing to `homepage.php?login=admin`, preserving modal trigger attributes for progressive enhancement.
 
 ### Fixed
+- **Diagnostics False Alarms (Issue 1)**: Replaced retired index check on `uq_booking_seat` with comprehensive table constraint diagnostics in `admin/diagnostics.php`.
+- **Session Bootstrap CLI Warning**: Added null coalescing check to `$_SERVER['REQUEST_METHOD']` in `includes/auth/session-bootstrap.php` for seamless CLI test execution.
 - **Admin Sign-in Redirects (Issue 1, Issue 8)**: Added GET query parameter handling on `homepage.php` to automatically open the admin login modal when unauthenticated or redirected with `?login=admin`.
 - **Session Expiry & Deactivation Notices**: Added whitelist handling for `&error=expired` and `&error=deactivated` so signed-out or deactivated admins receive clear, actionable feedback.
 - **Session Guard Expiry Flagging**: Updated `admin-session.php` to distinguish expired active sessions from unauthenticated visits when redirecting.

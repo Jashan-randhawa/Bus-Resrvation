@@ -25,7 +25,7 @@ if ($searched) {
             $bus_row = db_one($link, 'SELECT id FROM buses WHERE bus_number = ? LIMIT 1', 's', [$selected_bus]);
             if ($bus_row && !empty($bus_row['id'])) {
                 $bus_id = (int)$bus_row['id'];
-                $lock_rows = db_all($link, "SELECT seat_no FROM seat_lock WHERE bus_id = ? AND travel_date = ?", 'is', [$bus_id, $selected_date]);
+                $lock_rows = db_all($link, "SELECT sl.seat_no FROM seat_lock sl JOIN booking b ON b.sno = sl.booking_id WHERE sl.bus_id = ? AND sl.travel_date = ? AND b.status IN ('Confirmed', 'Pending')", 'is', [$bus_id, $selected_date]);
                 foreach ($lock_rows as $lr) {
                     $booked_seats[(int)$lr['seat_no']] = true;
                 }

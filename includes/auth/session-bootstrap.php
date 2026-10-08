@@ -105,7 +105,7 @@ function require_role(string ...$allowed): void {
     $_SESSION['last'] = time();
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['logout'])) {
     if (function_exists('csrf_verify')) {
         csrf_verify();
     }

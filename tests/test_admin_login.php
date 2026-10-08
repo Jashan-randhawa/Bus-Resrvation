@@ -35,6 +35,13 @@ $files_to_lint = [
     'includes/auth/admin-session.php',
     'includes/layout/footer-public.php',
     'includes/layout/header-public.php',
+    'includes/helpers.php',
+    'admin/diagnostics.php',
+    'admin/bookings.php',
+    'admin/seats.php',
+    'user/my-bookings.php',
+    'database/db_migrate.php',
+    'tests/concurrency_worker.php',
     'tests/run_tests.php'
 ];
 
@@ -183,6 +190,67 @@ assert_check("homepage.php script resets password visibility on submit and modal
     str_contains($homepage_latest, 'resetPasswordVisibility') && str_contains($homepage_latest, 'hidden.bs.modal'));
 assert_check("homepage.php script detects CapsLock with getModifierState", 
     str_contains($homepage_latest, "getModifierState('CapsLock')"));
+
+// -------------------------------------------------------------
+// 8. Booking Concurrency & Architectural Fix Integrity (Issues 1-11)
+// -------------------------------------------------------------
+echo "\n[*] Suite 8: Booking Concurrency & Architectural Integrity (Issues 1-11)\n";
+$helpers_content = file_get_contents(__DIR__ . '/../includes/helpers.php');
+$diagnostics_content = file_get_contents(__DIR__ . '/../admin/diagnostics.php');
+$bookings_content = file_get_contents(__DIR__ . '/../admin/bookings.php');
+$user_bookings_content = file_get_contents(__DIR__ . '/../user/my-bookings.php');
+$seats_content = file_get_contents(__DIR__ . '/../admin/seats.php');
+$migrate_content = file_get_contents(__DIR__ . '/../database/db_migrate.php');
+$worker_content = file_get_contents(__DIR__ . '/../tests/concurrency_worker.php');
+$run_tests_content = file_get_contents(__DIR__ . '/../tests/run_tests.php');
+
+assert_check("helpers.php defines booking_concurrency_status()", 
+    str_contains($helpers_content, 'function booking_concurrency_status('));
+assert_check("helpers.php defines purge_stale_seat_locks()", 
+    str_contains($helpers_content, 'function purge_stale_seat_locks('));
+assert_check("helpers.php defines cancel_booking() with atomic lock deletion", 
+    str_contains($helpers_content, 'function cancel_booking(') && str_contains($helpers_content, 'DELETE FROM seat_lock'));
+assert_check("helpers.php defines booking_active_sql() with active statuses", 
+    str_contains($helpers_content, 'function booking_active_sql('));
+assert_check("helpers.php create_booking rejects uncatalogued buses", 
+    str_contains($helpers_content, 'is not registered in the system'));
+assert_check("helpers.php create_booking does NOT use INSERT IGNORE for seat_lock", 
+    !str_contains($helpers_content, 'INSERT IGNORE INTO seat_lock') && str_contains($helpers_content, 'INSERT INTO seat_lock'));
+assert_check("helpers.php get_booked_seats joins seat_lock with active booking", 
+    str_contains($helpers_content, 'FROM seat_lock sl') && 
+    str_contains($helpers_content, 'JOIN booking b ON b.sno = sl.booking_id') && 
+    str_contains($helpers_content, "b.status IN ('Confirmed', 'Pending')"));
+
+assert_check("admin/diagnostics.php invokes booking_concurrency_status()", 
+    str_contains($diagnostics_content, 'booking_concurrency_status($link)'));
+assert_check("admin/diagnostics.php does NOT check retired uq_booking_seat", 
+    !str_contains($diagnostics_content, "'uq_booking_seat'"));
+
+assert_check("admin/bookings.php executes atomic cancel_booking() for single & bulk actions", 
+    str_contains($bookings_content, 'cancel_booking($link, $delete_id)') && 
+    str_contains($bookings_content, 'cancel_booking($link, $sid)'));
+assert_check("user/my-bookings.php executes atomic cancel_booking() with owner check", 
+    str_contains($user_bookings_content, 'cancel_booking($link, $cancel_id, $uid)'));
+
+assert_check("admin/seats.php joins seat_lock with active booking status for all departures", 
+    str_contains($seats_content, 'JOIN booking b ON b.sno = sl.booking_id') && 
+    str_contains($seats_content, "b.status IN ('Confirmed', 'Pending')"));
+
+assert_check("db_migrate.php guards uq_booking_seat in migration 001 if 005 applied", 
+    str_contains($migrate_content, "005_rebookable_active_seats") && str_contains($migrate_content, "uq_booking_seat"));
+assert_check("db_migrate.php detects duplicate active seats before migration 005 unique index", 
+    str_contains($migrate_content, "conflicting active seat group(s) found") && str_contains($migrate_content, "uq_booking_active_seat"));
+assert_check("db_migrate.php detects duplicate active seats before migration 007 seat_lock backfill", 
+    str_contains($migrate_content, "conflicting seat lock group(s) found") && str_contains($migrate_content, "seat_lock was NOT backfilled"));
+
+assert_check("tests/concurrency_worker.php exists with CLI entry point & spin lock", 
+    str_contains($worker_content, 'concurrency_worker.php') && str_contains($worker_content, 'microtime(true) < $race_start'));
+
+assert_check("tests/run_tests.php includes Suite 14 (Tests A to I)", 
+    str_contains($run_tests_content, 'Suite 14: Booking Concurrency') && 
+    str_contains($run_tests_content, 'Suite 14 Test A') &&
+    str_contains($run_tests_content, 'Suite 14 Test I')
+);
 
 echo "\n========================================================\n";
 echo "   Test Results: {$passed} Passed, {$failed} Failed     \n";

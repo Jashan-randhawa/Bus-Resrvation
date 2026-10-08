@@ -69,20 +69,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_booking'])) {
     $delete_id = (int)($_POST['delete_id'] ?? 0);
     if ($delete_id > 0) {
         $old_booking = db_one($link, "SELECT sno, pnr, bus, seat, date, time, status, name, contact FROM booking WHERE sno = ?", 'i', [$delete_id]);
-        if ($has_status) {
-            db_exec($link, "UPDATE booking SET status = 'Cancelled' WHERE sno = ?", 'i', [$delete_id]);
+        $changed = cancel_booking($link, $delete_id);
+        if ($changed > 0) {
             $alert = 'Booking status marked as Cancelled (seat liberated, audit preserved).';
+            $alert_type = 'success';
+            audit($link, 'CANCEL', 'booking', $delete_id, $old_booking ?: null, ['status' => 'Cancelled']);
         } else {
-            db_exec($link, 'DELETE FROM booking WHERE sno = ?', 'i', [$delete_id]);
-            $alert = 'Booking record deleted.';
+            $alert = 'Booking was already cancelled or could not be found.';
+            $alert_type = 'info';
         }
-        try {
-            db_exec($link, 'DELETE FROM seat_lock WHERE booking_id = ?', 'i', [$delete_id]);
-        } catch (Throwable $e) {
-            // Table may not exist yet
-        }
-        audit($link, 'CANCEL', 'booking', $delete_id, $old_booking ?: null, ['status' => 'Cancelled']);
-        $alert_type = 'success';
     }
 }
 
@@ -101,16 +96,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
         foreach ($selected_ids as $sid) {
             $old_booking = db_one($link, "SELECT sno, pnr, bus, seat, date, time, status, name, contact FROM booking WHERE sno = ?", 'i', [$sid]);
             if ($old_booking && ($old_booking['status'] ?? '') !== 'Cancelled') {
-                if ($has_status) {
-                    db_exec($link, "UPDATE booking SET status = 'Cancelled' WHERE sno = ?", 'i', [$sid]);
-                } else {
-                    db_exec($link, 'DELETE FROM booking WHERE sno = ?', 'i', [$sid]);
+                $changed = cancel_booking($link, $sid);
+                if ($changed > 0) {
+                    audit($link, 'CANCEL', 'booking', $sid, $old_booking, ['status' => 'Cancelled', 'bulk' => true]);
+                    $cancelled_count++;
                 }
-                try {
-                    db_exec($link, 'DELETE FROM seat_lock WHERE booking_id = ?', 'i', [$sid]);
-                } catch (Throwable $e) {}
-                audit($link, 'CANCEL', 'booking', $sid, $old_booking, ['status' => 'Cancelled', 'bulk' => true]);
-                $cancelled_count++;
             }
         }
         $alert = "Bulk cancel complete: {$cancelled_count} reservation(s) cancelled and seats liberated.";

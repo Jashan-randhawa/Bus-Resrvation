@@ -11,6 +11,7 @@ if (PHP_SAPI !== 'cli') {
 
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/db_con.php';
+require_once __DIR__ . '/../includes/auth/session-bootstrap.php';
 require_once __DIR__ . '/../includes/helpers.php';
 
 echo "========================================================\n";
@@ -797,6 +798,230 @@ assert_test("homepage.php includes password visibility reset & caps detection JS
 );
 
 
+
+// -------------------------------------------------------------
+// Suite 14: Booking Concurrency, Atomic Locks, & Diagnostics (Issues 1-11)
+// -------------------------------------------------------------
+echo "\n[*] Suite 14: Booking Concurrency, Atomic Locks, & Diagnostics (Issues 1-11)\n";
+$s14_bus = 'S14-BUS-' . strtoupper(bin2hex(random_bytes(3)));
+db_exec($link, 'INSERT INTO buses (bus_number, capacity) VALUES (?, ?)', 'si', [$s14_bus, 40]);
+$s14_date = date('Y-m-d', strtotime('+10 days'));
+$s14_time = '09:00:00';
+
+// Test A: Same bus, date, departure, seat: first succeeds, second fails
+$res_a1 = create_booking($link, [
+    'bus' => $s14_bus,
+    'city1' => 'CityA',
+    'city2' => 'CityB',
+    'date' => $s14_date,
+    'time' => $s14_time,
+    'seat' => 10,
+    'price' => 50.0,
+    'name' => 'Alice Worker',
+    'contact' => '9111111111',
+    'status' => 'Confirmed'
+]);
+$res_a2 = create_booking($link, [
+    'bus' => $s14_bus,
+    'city1' => 'CityA',
+    'city2' => 'CityB',
+    'date' => $s14_date,
+    'time' => $s14_time,
+    'seat' => 10,
+    'price' => 50.0,
+    'name' => 'Bob Worker',
+    'contact' => '9222222222',
+    'status' => 'Confirmed'
+]);
+assert_test("Suite 14 Test A: First booking succeeds, second fails for same seat/departure", 
+    $res_a1['ok'] === true && $res_a2['ok'] === false && str_contains($res_a2['error'], 'already reserved')
+);
+
+// Test B: Same seat on a different departure (expect failure due to day-level seat_lock key constraint)
+$s14_time2 = '17:00:00';
+$res_b = create_booking($link, [
+    'bus' => $s14_bus,
+    'city1' => 'CityA',
+    'city2' => 'CityB',
+    'date' => $s14_date,
+    'time' => $s14_time2,
+    'seat' => 10,
+    'price' => 50.0,
+    'name' => 'Charlie Worker',
+    'contact' => '9333333333',
+    'status' => 'Confirmed'
+]);
+assert_test("Suite 14 Test B: Same seat on different departure rejected per day-level seat_lock key", 
+    $res_b['ok'] === false
+);
+
+// Test C: Cancel booking via cancel_booking() and verify rebooking succeeds
+$row_a1 = query_rows($link, "SELECT sno FROM booking WHERE pnr = ?", 's', [$res_a1['pnr']]);
+$sno_a1 = (int)($row_a1[0]['sno'] ?? 0);
+$cancelled_count = cancel_booking($link, $sno_a1);
+$lock_check = query_rows($link, "SELECT sl.id FROM seat_lock sl JOIN buses b ON sl.bus_id = b.id WHERE b.bus_number = ? AND sl.travel_date = ? AND sl.seat_no = 10", 'ss', [$s14_bus, $s14_date]);
+
+$res_c_rebook = create_booking($link, [
+    'bus' => $s14_bus,
+    'city1' => 'CityA',
+    'city2' => 'CityB',
+    'date' => $s14_date,
+    'time' => $s14_time,
+    'seat' => 10,
+    'price' => 50.0,
+    'name' => 'Dave Rebooker',
+    'contact' => '9444444444',
+    'status' => 'Confirmed'
+]);
+assert_test("Suite 14 Test C: cancel_booking liberates seat & lock, allowing rebooking", 
+    $cancelled_count === 1 && empty($lock_check) && $res_c_rebook['ok'] === true
+);
+
+// Test D: Pending hold blocks another customer
+$res_d1 = create_booking($link, [
+    'bus' => $s14_bus,
+    'city1' => 'CityA',
+    'city2' => 'CityB',
+    'date' => $s14_date,
+    'time' => $s14_time,
+    'seat' => 12,
+    'price' => 50.0,
+    'name' => 'Eve Holder',
+    'contact' => '9555555555',
+    'status' => 'Pending'
+]);
+$res_d2 = create_booking($link, [
+    'bus' => $s14_bus,
+    'city1' => 'CityA',
+    'city2' => 'CityB',
+    'date' => $s14_date,
+    'time' => $s14_time,
+    'seat' => 12,
+    'price' => 50.0,
+    'name' => 'Frank Blocker',
+    'contact' => '9666666666',
+    'status' => 'Confirmed'
+]);
+assert_test("Suite 14 Test D: Pending hold blocks another customer from booking", 
+    $res_d1['ok'] === true && $res_d2['ok'] === false
+);
+
+// Test E: Expired hold release liberates the seat and clears lock
+db_exec($link, "UPDATE booking SET hold_expires_at = NOW() - INTERVAL 1 MINUTE WHERE pnr = ?", 's', [$res_d1['pnr']]);
+$released_count = release_expired_holds($link);
+$res_e_rebook = create_booking($link, [
+    'bus' => $s14_bus,
+    'city1' => 'CityA',
+    'city2' => 'CityB',
+    'date' => $s14_date,
+    'time' => $s14_time,
+    'seat' => 12,
+    'price' => 50.0,
+    'name' => 'Grace Newcomer',
+    'contact' => '9777777777',
+    'status' => 'Confirmed'
+]);
+assert_test("Suite 14 Test E: Expired hold release liberates seat and clears lock", 
+    $released_count >= 1 && $res_e_rebook['ok'] === true
+);
+
+// Test F: Verify 5 distinct PNR generation without duplicates
+$pnrs = [];
+for ($i = 0; $i < 5; $i++) {
+    $pnrs[] = generate_pnr($link);
+}
+$unique_pnrs = array_unique($pnrs);
+assert_test("Suite 14 Test F: generate_pnr generates 5 distinct 10-char PNRs", 
+    count($unique_pnrs) === 5 && strlen($pnrs[0]) === 10
+);
+
+// Test G: Atomic rollback leaves no orphan booking row on lock collision
+$b_info = query_rows($link, "SELECT id FROM buses WHERE bus_number = ?", 's', [$s14_bus]);
+$s14_bid = (int)($b_info[0]['id'] ?? 0);
+db_exec($link, "INSERT INTO seat_lock (bus_id, travel_date, seat_no, locked_at) VALUES (?, ?, 25, NOW())", 'is', [$s14_bid, $s14_date]);
+$res_g = create_booking($link, [
+    'bus' => $s14_bus,
+    'city1' => 'CityA',
+    'city2' => 'CityB',
+    'date' => $s14_date,
+    'time' => $s14_time,
+    'seat' => 25,
+    'price' => 50.0,
+    'name' => 'Rollback Tester',
+    'contact' => '9888888888',
+    'status' => 'Confirmed'
+]);
+$orphan_bookings = query_rows($link, "SELECT sno FROM booking WHERE bus = ? AND seat = 25", 's', [$s14_bus]);
+db_exec($link, "DELETE FROM seat_lock WHERE bus_id = ? AND travel_date = ? AND seat_no = 25", 'is', [$s14_bid, $s14_date]);
+assert_test("Suite 14 Test G: Atomic rollback leaves no orphan booking row on lock collision", 
+    $res_g['ok'] === false && empty($orphan_bookings)
+);
+
+// Test H: booking_concurrency_status($link) reports healthy without mentioning uq_booking_seat
+$diag_status = booking_concurrency_status($link);
+assert_test("Suite 14 Test H: booking_concurrency_status reports healthy without uq_booking_seat", 
+    $diag_status['healthy'] === true && !in_array('uq_booking_seat', $diag_status['indexes'] ?? [])
+);
+
+// Test I: Concurrency race test using proc_open with tests/concurrency_worker.php (8 workers)
+$php_cli = PHP_BINARY ?: 'php';
+$race_seat = 20;
+$race_start = microtime(true) + 1.2;
+$worker_script = __DIR__ . '/concurrency_worker.php';
+$workers = [];
+$num_racers = 8;
+
+for ($i = 1; $i <= $num_racers; $i++) {
+    $cmd = [
+        $php_cli,
+        $worker_script,
+        $s14_bus,
+        $s14_date,
+        $s14_time,
+        (string)$race_seat,
+        sprintf('%.4f', $race_start),
+        "Racer {$i}"
+    ];
+    $descriptors = [
+        0 => ['pipe', 'r'],
+        1 => ['pipe', 'w'],
+        2 => ['pipe', 'w']
+    ];
+    $pipes = [];
+    $proc = proc_open($cmd, $descriptors, $pipes);
+    if (is_resource($proc)) {
+        fclose($pipes[0]);
+        $workers[] = ['proc' => $proc, 'stdout' => $pipes[1], 'stderr' => $pipes[2], 'id' => $i];
+    }
+}
+
+$success_count = 0;
+$fail_count = 0;
+foreach ($workers as $w) {
+    $out = stream_get_contents($w['stdout']);
+    $err = stream_get_contents($w['stderr']);
+    fclose($w['stdout']);
+    fclose($w['stderr']);
+    $code = proc_close($w['proc']);
+    $data = json_decode($out, true);
+    if ($data && !empty($data['ok'])) {
+        $success_count++;
+    } else {
+        $fail_count++;
+    }
+}
+
+$booked_race_seats = query_rows($link, "SELECT sno, pnr FROM booking WHERE bus = ? AND date = ? AND seat = ? AND status = 'Confirmed'", 'ssi', [$s14_bus, $s14_date, $race_seat]);
+$lock_race_seats = query_rows($link, "SELECT sl.id FROM seat_lock sl JOIN buses b ON sl.bus_id = b.id WHERE b.bus_number = ? AND sl.travel_date = ? AND sl.seat_no = ?", 'ssi', [$s14_bus, $s14_date, $race_seat]);
+
+assert_test("Suite 14 Test I: 8-worker concurrency race produces exactly 1 winner and 7 rejected", 
+    $success_count === 1 && $fail_count === ($num_racers - 1) && count($booked_race_seats) === 1 && count($lock_race_seats) === 1
+);
+
+// Clean up s14 bus data
+db_exec($link, 'DELETE FROM booking WHERE bus = ?', 's', [$s14_bus]);
+db_exec($link, 'DELETE FROM seat_lock WHERE bus_id = ?', 'i', [$s14_bid]);
+db_exec($link, 'DELETE FROM buses WHERE bus_number = ?', 's', [$s14_bus]);
 
 // Clean up test data
 db_exec($link, 'DELETE FROM booking WHERE bus = ?', 's', [$test_busno]);

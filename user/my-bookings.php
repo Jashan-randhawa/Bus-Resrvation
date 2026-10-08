@@ -47,20 +47,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_booking'])) {
                 $rem_min = max(1, (int)floor(($dep_ts - $now_ts) / 60));
                 flash_set('danger', "Cancellation refused: trips can only be cancelled at least {$cutoff_display} before departure. This trip departs in {$rem_min} minutes.");
             } else {
-                if ($has_status) {
-                    $updated = db_exec($link, "UPDATE booking SET status = 'Cancelled' WHERE sno = ? AND id = ?", 'ii', [$cancel_id, $uid]);
-                } else {
-                    $updated = db_exec($link, 'DELETE FROM booking WHERE sno = ? AND id = ?', 'ii', [$cancel_id, $uid]);
-                }
-
-                if ($updated > 0) {
-                    try {
-                        db_exec($link, 'DELETE FROM seat_lock WHERE booking_id = ?', 'i', [$cancel_id]);
-                    } catch (Throwable $e) {
-                        // Table may not exist yet
+                try {
+                    $updated = cancel_booking($link, $cancel_id, $uid);
+                    if ($updated > 0) {
+                        flash_set('success', 'Booking cancelled successfully and seat has been liberated. Eligible refunds are processed within 3–5 business days.');
+                    } else {
+                        flash_set('danger', 'Failed to cancel booking or booking was already cancelled.');
                     }
-                    flash_set('success', 'Booking cancelled successfully and seat has been liberated. Eligible refunds are processed within 3–5 business days.');
-                } else {
+                } catch (Throwable $e) {
+                    error_log('[busres] Cancellation error: ' . $e->getMessage());
                     flash_set('danger', 'Failed to cancel booking. Please try again.');
                 }
             }
