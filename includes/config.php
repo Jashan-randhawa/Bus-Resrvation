@@ -53,6 +53,13 @@ if (!defined('APP_BOOKING_CUTOFF_MIN')) {
     define('APP_BOOKING_CUTOFF_MIN', (int)(getenv('APP_BOOKING_CUTOFF_MIN') ?: 30));
 }
 
+// Mandatory 2FA enforcement for administrative roles (default: false / optional)
+// Set ADMIN_MFA_ENFORCE=true in environment to strictly enforce 2FA before accessing dashboard
+if (!defined('ADMIN_MFA_ENFORCE')) {
+    $mfa_enforce_env = getenv('ADMIN_MFA_ENFORCE');
+    define('ADMIN_MFA_ENFORCE', ($mfa_enforce_env !== false && ($mfa_enforce_env === '1' || strtolower($mfa_enforce_env) === 'true')));
+}
+
 // Global exception handler (M-04 / D-02 / P6)
 if (!function_exists('busres_exception_handler')) {
     function busres_exception_handler(Throwable $t): void {

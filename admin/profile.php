@@ -18,8 +18,13 @@ $alert = null;
 $alert_type = 'info';
 
 if (isset($_GET['mfa_required'])) {
-    $alert = 'Two-Factor Authentication is required for your administrative role. Please configure your authenticator app below to proceed.';
-    $alert_type = 'warning';
+    if (defined('ADMIN_MFA_ENFORCE') && ADMIN_MFA_ENFORCE) {
+        $alert = 'Two-Factor Authentication is required for your administrative role. Please configure your authenticator app below to proceed.';
+        $alert_type = 'warning';
+    } else {
+        $alert = 'Two-Factor Authentication is optional but recommended. You can set it up below or continue to your dashboard at any time.';
+        $alert_type = 'info';
+    }
 }
 
 $display_recovery_codes = $_SESSION['new_recovery_codes'] ?? null;
@@ -177,10 +182,13 @@ if (!$is_totp_enabled) {
 $title = 'Admin Profile & Security';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
 ?>
-<div class="page-header">
+<div class="page-header d-flex justify-content-between align-items-center">
     <div>
         <h1 class="page-title">Profile & Security Credentials</h1>
         <p class="page-subtitle">Manage administrative profile details, credential rotation, and two-factor authentication.</p>
+    </div>
+    <div>
+        <a href="<?= BASE_URL ?>/admin/index.php" class="btn btn-outline-dark"><i class="fas fa-tachometer-alt mr-1"></i> Dashboard</a>
     </div>
 </div>
 

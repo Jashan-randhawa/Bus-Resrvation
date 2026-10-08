@@ -71,14 +71,16 @@ if (!empty($_SESSION['admin_id'])) {
         }
     }
 
-    // Issue 2: Policy enforcement for super_admin and operator roles
-    if ($has_totp && (int)($admin_check['totp_enabled'] ?? 0) === 0) {
-        $role = $_SESSION['role'] ?? '';
-        if (in_array($role, ['super_admin', 'operator'], true)) {
-            $cur_script = basename($_SERVER['SCRIPT_NAME'] ?? '');
-            if ($cur_script !== 'profile.php' && $cur_script !== 'mfa.php') {
-                header('Location: ' . BASE_URL . '/admin/profile.php?mfa_required=1');
-                exit;
+    // Issue 2: Policy enforcement for super_admin and operator roles (enabled if ADMIN_MFA_ENFORCE=true)
+    if (defined('ADMIN_MFA_ENFORCE') && ADMIN_MFA_ENFORCE) {
+        if ($has_totp && (int)($admin_check['totp_enabled'] ?? 0) === 0) {
+            $role = $_SESSION['role'] ?? '';
+            if (in_array($role, ['super_admin', 'operator'], true)) {
+                $cur_script = basename($_SERVER['SCRIPT_NAME'] ?? '');
+                if ($cur_script !== 'profile.php' && $cur_script !== 'mfa.php') {
+                    header('Location: ' . BASE_URL . '/admin/profile.php?mfa_required=1');
+                    exit;
+                }
             }
         }
     }
