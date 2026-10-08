@@ -226,6 +226,12 @@ function run_migrations(mysqli $link): array {
 
     $log[] = "  -> Base tables verified.";
 
+    // Self-healing schema check (Prevention): Ensure critical columns exist even if migrations were previously marked applied
+    if (!has_column($link, 'admin', 'role')) {
+        $log[] = "[*] Healing missing admin.role column...";
+        try_sql($link, "ALTER TABLE `admin` ADD COLUMN `role` ENUM('super_admin', 'operator', 'viewer') NOT NULL DEFAULT 'operator'", $log);
+    }
+
     // 3. Migration 001: 001_hardening_and_schema_updates
     $m1 = '001_hardening_and_schema_updates';
     if (!migration_applied($link, $m1)) {
@@ -427,7 +433,13 @@ function run_migrations(mysqli $link): array {
         $log[] = "[*] Running migration: {$m5}...";
         $m5_ok = true;
         if (!has_column($link, 'booking', 'active_seat')) {
-            $m5_ok = try_sql($link, "ALTER TABLE `booking` ADD COLUMN `active_seat` INT GENERATED ALWAYS AS (IF(`status` IN ('Confirmed', 'Pending'), `seat`, NULL)) STORED", $log) && $m5_ok;
+            // Attempt STORED first; if engine does not support ALTER TABLE ADD STORED (e.g. TiDB), fallback to VIRTUAL (Option B)
+            $added = try_sql($link, "ALTER TABLE `booking` ADD COLUMN `active_seat` INT GENERATED ALWAYS AS (IF(`status` IN ('Confirmed', 'Pending'), `seat`, NULL)) STORED", $log);
+            if (!$added) {
+                $log[] = "  [i] Retrying active_seat as VIRTUAL generated column (TiDB compatibility)...";
+                $added = try_sql($link, "ALTER TABLE `booking` ADD COLUMN `active_seat` INT GENERATED ALWAYS AS (IF(`status` IN ('Confirmed', 'Pending'), `seat`, NULL))", $log);
+            }
+            $m5_ok = $added && $m5_ok;
         }
         if (has_index($link, 'booking', 'uq_booking_seat')) {
             $m5_ok = try_sql($link, "ALTER TABLE `booking` DROP INDEX `uq_booking_seat`", $log) && $m5_ok;
