@@ -4,6 +4,8 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-10-08
+
 ### Added
 - **Admin Section Security Remediation Plan**: Fully implemented and verified 32 findings across 4 phases:
   - Phase 1 (Access & Auth): Session hard lifetime cap (8h), password rotation check, fail-closed role check, RFC 6238 TOTP 2FA engine with AES-256-GCM encryption, scoped rate limiting, timing equalization, append-only triggers on `audit_log`, and archival script.

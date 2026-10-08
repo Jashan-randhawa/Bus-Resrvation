@@ -4,7 +4,7 @@
 
 ### *A Modern, Cloud-Ready Full-Stack Bus Ticket Booking & Fleet Management Platform*
 
-[![Latest Release](https://img.shields.io/badge/Release-v2.2.0-blue?style=for-the-badge&logo=github)](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/tag/v2.2.0)
+[![Latest Release](https://img.shields.io/badge/Release-v2.3.0-blue?style=for-the-badge&logo=github)](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/tag/v2.3.0)
 [![Docker Package](https://img.shields.io/badge/GitHub%20Package-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation)
 [![Wiki Docs](https://img.shields.io/badge/Documentation-Wiki-green?style=for-the-badge&logo=gitbook&logoColor=white)](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki)
 [![PHP](https://img.shields.io/badge/PHP-8.3%20%7C%208.4-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://www.php.net/)
@@ -14,7 +14,7 @@
 
 <br/>
 
-[📖 Explore Technical Wiki](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki) • [📦 Download v2.2.0 Release Bundle](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/tag/v2.2.0) • [🐳 Pull Docker Image](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation)
+[📖 Explore Technical Wiki](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki) • [📦 Download v2.3.0 Release Bundle](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/tag/v2.3.0) • [🐳 Pull Docker Image](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation)
 
 </div>
 
@@ -108,8 +108,8 @@ flowchart TD
 
 | Distribution Package | Target / Type | Description |
 |---|---|---|
-| **🐳 Docker Container** | [`ghcr.io/jashan-randhawa/bus-resrvation`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation) | Tags: `:latest`, `:2.2.0`, `:edge` |
-| **🗜️ Release Zip Archive** | [`bus-reservation-v2.2.0.zip`](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/download/v2.2.0/bus-reservation-v2.2.0.zip) | Curated distribution bundle via GitHub Actions |
+| **🐳 Docker Container** | [`ghcr.io/jashan-randhawa/bus-resrvation`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation) | Tags: `:latest`, `:2.3.0`, `:edge` |
+| **🗜️ Release Zip Archive** | [`bus-reservation-v2.3.0.zip`](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/download/v2.3.0/bus-reservation-v2.3.0.zip) | Curated distribution bundle via GitHub Actions |
 | **📄 Implementation Plan PDF** | [`Bus_Reservation_GitHub_Packages_Plan.pdf`](https://github.com/Jashan-randhawa/Bus-Resrvation/blob/main/docs/Bus_Reservation_GitHub_Packages_Plan.pdf) | GitHub Packages Release Plan (October 2026) |
 | **🐘 Composer Manifest** | `composer.json` | Project package definition for PHP environments |
 
@@ -153,7 +153,7 @@ flowchart TD
 docker pull ghcr.io/jashan-randhawa/bus-resrvation:latest
 
 # Or pull a specific release tag:
-docker pull ghcr.io/jashan-randhawa/bus-resrvation:2.2.0
+docker pull ghcr.io/jashan-randhawa/bus-resrvation:2.3.0
 
 # Or pull the cutting-edge build from main:
 docker pull ghcr.io/jashan-randhawa/bus-resrvation:edge
