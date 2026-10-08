@@ -1,0 +1,27 @@
+name: Release bundle
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build archive
+        run: |
+          zip -r "$RUNNER_TEMP/bus-reservation-${GITHUB_REF_NAME}.zip" . \
+            -x ".git/*" ".github/*" "docs/*" "assets/images/_unused/*"
+
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "$GITHUB_REF_NAME" \
+            "$RUNNER_TEMP/bus-reservation-${GITHUB_REF_NAME}.zip" --clobber
