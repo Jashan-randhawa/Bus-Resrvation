@@ -5,7 +5,7 @@ require_once __DIR__ . '/includes/layout/header-login.php';
 ?>
 <div class="auth-wrapper">
     <div class="auth-overlay"></div>
-    <div class="auth-card" data-aos="zoom-in" data-aos-duration="500">
+    <div class="auth-card">
         <div class="auth-header">
             <a href="<?= BASE_URL ?>/homepage.php" class="d-inline-flex align-items-center mb-2 text-decoration-none">
                 <img src="<?= BASE_URL ?>/assets/images/bus.svg" alt="Logo" style="width: 32px; height: 32px;" class="mr-2">
