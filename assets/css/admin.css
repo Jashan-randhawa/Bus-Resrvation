@@ -18,6 +18,7 @@
   position: sticky;
   top: 0;
   height: 100vh;
+  height: 100dvh;
   overflow-y: auto;
   border-right: 1px solid var(--sidebar-border, rgba(255, 255, 255, 0.06));
   z-index: 1040;
@@ -208,6 +209,8 @@
     top: 0;
     left: 0;
     bottom: 0;
+    height: 100vh;
+    height: 100dvh;
     transform: translateX(-100%);
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
   }
@@ -223,6 +226,10 @@
   .admin-content-wrap {
     padding: 1.25rem;
   }
+}
+
+body.overflow-hidden {
+  overflow: hidden;
 }
 
 /* ==========================================================================

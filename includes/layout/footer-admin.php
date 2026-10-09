@@ -15,23 +15,69 @@
         AOS.init();
     }
 
-    // Responsive Mobile Sidebar Toggle
+    // Responsive Mobile Sidebar Toggle (A5)
     document.addEventListener('DOMContentLoaded', function() {
         var sidebar = document.getElementById('adminSidebar');
         var toggle = document.getElementById('sidebarToggle');
         var overlay = document.getElementById('sidebarOverlay');
 
-        if (toggle && sidebar && overlay) {
-            toggle.addEventListener('click', function() {
-                sidebar.classList.toggle('show');
-                overlay.classList.toggle('show');
-            });
+        if (!toggle || !sidebar || !overlay) return;
 
-            overlay.addEventListener('click', function() {
-                sidebar.classList.remove('show');
-                overlay.classList.remove('show');
-            });
+        function setSidebar(open) {
+            sidebar.classList.toggle('show', open);
+            overlay.classList.toggle('show', open);
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (window.innerWidth < 992) {
+                if (open) {
+                    sidebar.removeAttribute('inert');
+                } else {
+                    sidebar.setAttribute('inert', '');
+                }
+            } else {
+                sidebar.removeAttribute('inert');
+            }
+            document.body.classList.toggle('overflow-hidden', open);
         }
+
+        // Initialize inert state on mobile devices
+        if (window.innerWidth < 992) {
+            sidebar.setAttribute('inert', '');
+        }
+
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 992) {
+                sidebar.removeAttribute('inert');
+                document.body.classList.remove('overflow-hidden');
+            } else if (!sidebar.classList.contains('show')) {
+                sidebar.setAttribute('inert', '');
+            }
+        });
+
+        toggle.addEventListener('click', function() {
+            var isOpen = sidebar.classList.contains('show');
+            setSidebar(!isOpen);
+        });
+
+        overlay.addEventListener('click', function() {
+            setSidebar(false);
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && sidebar.classList.contains('show')) {
+                setSidebar(false);
+                toggle.focus();
+            }
+        });
+
+        // Close on navigation link click when mobile drawer is open
+        var sidebarLinks = sidebar.querySelectorAll('a, button');
+        sidebarLinks.forEach(function(el) {
+            el.addEventListener('click', function() {
+                if (window.innerWidth < 992 && !el.classList.contains('theme-toggle-btn')) {
+                    setSidebar(false);
+                }
+            });
+        });
     });
 </script>
 </body>
