@@ -25,6 +25,7 @@ require_once __DIR__ . '/../config.php';
     <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>
 </head>
 <body>
+<a class="skip-link sr-only sr-only-focusable" href="#adminMain">Skip to content</a>
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 <div class="admin-shell">
     <aside class="admin-sidebar" id="adminSidebar">
@@ -56,7 +57,7 @@ require_once __DIR__ . '/../config.php';
         </div>
 
         <!-- Grouped Navigation -->
-        <nav class="admin-nav">
+        <nav class="admin-nav" aria-label="Admin navigation">
             <?php
             $is_super = function_exists('is_super_admin') && is_super_admin();
             $people_items = [
@@ -87,7 +88,7 @@ require_once __DIR__ . '/../config.php';
             if ($is_super) {
                 $nav_menu['System'] = [
                     ['Diagnostics', 'diagnostics.php', null, '⚡'],
-                    ['Audit Log', 'audit-log.php', null, '🛡️'],
+                    ['Audit Log', 'audit-log.php', null, '📜'],
                 ];
             }
             $current_script = basename($_SERVER['SCRIPT_NAME'] ?? '');
@@ -114,7 +115,7 @@ require_once __DIR__ . '/../config.php';
                         ?>
                         <li class="nav-item">
                             <a class="nav-link d-flex align-items-center <?= $is_active ? 'active' : '' ?>" href="<?= $link_url ?>" <?= $is_active ? 'aria-current="page"' : '' ?>>
-                                <span class="mr-2" style="font-size: 1rem;"><?= $icon ?></span>
+                                <span class="mr-2" style="font-size: 1rem;" aria-hidden="true"><?= $icon ?></span>
                                 <span><?= e($label) ?></span>
                                 <?= $badge_html ?>
                             </a>
@@ -154,7 +155,7 @@ require_once __DIR__ . '/../config.php';
             </div>
         </div>
 
-        <div class="admin-content-wrap">
+        <main id="adminMain" tabindex="-1" class="admin-content-wrap">
             <?php if (function_exists('flash_get')): ?>
                 <?php foreach (flash_get() as $m): ?>
                     <div class="alert alert-<?= e($m['type'] === 'error' ? 'danger' : $m['type']) ?> alert-dismissible fade show mb-4" role="alert">

@@ -1,5 +1,23 @@
 /* assets/css/admin.css -- Modern Admin Shell & Dashboard Styling */
 
+/* Skip Link (A6) */
+.skip-link {
+  position: absolute;
+  top: -999px;
+  left: -999px;
+}
+.skip-link:focus {
+  top: 10px;
+  left: 10px;
+  z-index: 10000;
+  padding: 8px 16px;
+  background: #1e40af;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 4px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+}
+
 .admin-shell {
   display: flex;
   min-height: 100vh;
