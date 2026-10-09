@@ -15,6 +15,14 @@ require_once __DIR__ . '/includes/layout/header-login.php';
             <p class="text-muted small mb-0">Sign in to manage your tickets and bookings</p>
         </div>
         <div class="auth-body">
+            <?php if (function_exists('flash_get')): ?>
+                <?php foreach (flash_get() as $f): ?>
+                    <div class="alert alert-<?= e($f['type'] === 'error' ? 'danger' : $f['type']) ?> alert-dismissible fade show" role="alert">
+                        <?= e($f['msg']) ?>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
             <form action="homepage.php" method="post">
                 <?= csrf_field() ?>
                 <input type="hidden" name="next" value="<?= e(safe_next_url($_GET['next'] ?? $_POST['next'] ?? null) ?? '') ?>">
