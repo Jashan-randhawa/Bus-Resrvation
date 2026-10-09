@@ -22,9 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && (($_GET['login'] ?? '') === 'admin')
   }
 }
 
-// Read-only queries for the central search & booking card (A1)
-$from_cities = db_all($link, 'SELECT DISTINCT city1 FROM route ORDER BY city1 ASC');
-$to_cities = db_all($link, 'SELECT DISTINCT city2 FROM route ORDER BY city2 ASC');
+// Read-only queries for the central search & booking card (A1, P10)
+$route_archived_sql = table_has_column($link, 'route', 'archived_at') ? ' WHERE archived_at IS NULL' : '';
+$route_pairs = db_all($link, "SELECT DISTINCT city1, city2 FROM route{$route_archived_sql} ORDER BY city1 ASC, city2 ASC");
+$from_cities = array_values(array_unique(array_column($route_pairs, 'city1')));
+$to_cities = array_values(array_unique(array_column($route_pairs, 'city2')));
 $user_role = $_SESSION['role'] ?? null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_POST['admin']))) {
@@ -355,7 +357,12 @@ if (isset($_POST['subbtn'])) {
           </span>
         </div>
 
-        <?php if ($user_role === 'user'): ?>
+        <?php if (empty($route_pairs)): ?>
+          <div class="alert alert-info mb-0 text-center py-3">
+            <strong>No scheduled routes are available at this time.</strong>
+            <p class="mb-0 small text-muted">Our scheduling team is updating timetables. Please check back shortly or contact customer support.</p>
+          </div>
+        <?php elseif ($user_role === 'user'): ?>
           <!-- Logged-in passenger directly posts to user/index.php -->
           <form action="<?= BASE_URL ?>/user/index.php" method="post">
             <?= csrf_field() ?>
@@ -367,19 +374,22 @@ if (isset($_POST['subbtn'])) {
                 <select name="from" id="home_from" class="form-control" required>
                   <option value="">Select Origin City</option>
                   <?php foreach ($from_cities as $c): ?>
-                    <option value="<?= e($c['city1']) ?>"><?= e($c['city1']) ?></option>
+                    <option value="<?= e($c) ?>"><?= e($c) ?></option>
                   <?php endforeach; ?>
                 </select>
               </div>
 
               <div class="form-group mb-0">
-                <label for="home_to" class="booking-field-label">
-                  <span>🏁</span> Destination City
-                </label>
-                <select name="to" id="home_to" class="form-control" required>
+                <div class="d-flex justify-content-between align-items-center">
+                  <label for="home_to" class="booking-field-label mb-0">
+                    <span>🏁</span> Destination City
+                  </label>
+                  <button type="button" class="btn btn-link btn-sm p-0 text-primary text-decoration-none" id="home_swap_btn" title="Swap Departure and Destination" style="font-size: 0.8rem; line-height: 1;">⇄ Swap</button>
+                </div>
+                <select name="to" id="home_to" class="form-control mt-1" required>
                   <option value="">Select Destination City</option>
                   <?php foreach ($to_cities as $c): ?>
-                    <option value="<?= e($c['city2']) ?>"><?= e($c['city2']) ?></option>
+                    <option value="<?= e($c) ?>"><?= e($c) ?></option>
                   <?php endforeach; ?>
                 </select>
               </div>
@@ -409,19 +419,22 @@ if (isset($_POST['subbtn'])) {
                 <select id="guest_from" class="form-control" required>
                   <option value="">Select Origin City</option>
                   <?php foreach ($from_cities as $c): ?>
-                    <option value="<?= e($c['city1']) ?>"><?= e($c['city1']) ?></option>
+                    <option value="<?= e($c) ?>"><?= e($c) ?></option>
                   <?php endforeach; ?>
                 </select>
               </div>
 
               <div class="form-group mb-0">
-                <label for="guest_to" class="booking-field-label">
-                  <span>🏁</span> Destination City
-                </label>
-                <select id="guest_to" class="form-control" required>
+                <div class="d-flex justify-content-between align-items-center">
+                  <label for="guest_to" class="booking-field-label mb-0">
+                    <span>🏁</span> Destination City
+                  </label>
+                  <button type="button" class="btn btn-link btn-sm p-0 text-primary text-decoration-none" id="guest_swap_btn" title="Swap Departure and Destination" style="font-size: 0.8rem; line-height: 1;">⇄ Swap</button>
+                </div>
+                <select id="guest_to" class="form-control mt-1" required>
                   <option value="">Select Destination City</option>
                   <?php foreach ($to_cities as $c): ?>
-                    <option value="<?= e($c['city2']) ?>"><?= e($c['city2']) ?></option>
+                    <option value="<?= e($c) ?>"><?= e($c) ?></option>
                   <?php endforeach; ?>
                 </select>
               </div>
@@ -478,6 +491,77 @@ if (isset($_POST['subbtn'])) {
             }
           </script>
         <?php endif; ?>
+
+        <script>
+          window.ROUTES = <?= json_encode($route_pairs, JSON_HEX_TAG) ?>;
+          (function() {
+            function setupRouteSelectors(fromId, toId, swapBtnId) {
+              var fromSelect = document.getElementById(fromId);
+              var toSelect = document.getElementById(toId);
+              var swapBtn = document.getElementById(swapBtnId);
+              if (!fromSelect || !toSelect) return;
+
+              function filterDests() {
+                var fromVal = fromSelect.value;
+                var curTo = toSelect.value;
+                var allowed = [];
+                if (window.ROUTES && Array.isArray(window.ROUTES)) {
+                  for (var i = 0; i < window.ROUTES.length; i++) {
+                    if (window.ROUTES[i].city1 === fromVal) {
+                      allowed.push(window.ROUTES[i].city2);
+                    }
+                  }
+                }
+
+                for (var j = 1; j < toSelect.options.length; j++) {
+                  var opt = toSelect.options[j];
+                  if (!fromVal) {
+                    opt.disabled = false;
+                  } else {
+                    opt.disabled = (opt.value === fromVal || allowed.indexOf(opt.value) === -1);
+                  }
+                }
+
+                if (fromVal && curTo && (curTo === fromVal || allowed.indexOf(curTo) === -1)) {
+                  toSelect.value = '';
+                }
+              }
+
+              fromSelect.addEventListener('change', filterDests);
+              if (fromSelect.value) {
+                filterDests();
+              }
+
+              if (swapBtn) {
+                swapBtn.addEventListener('click', function(e) {
+                  e.preventDefault();
+                  var origFrom = fromSelect.value;
+                  var origTo = toSelect.value;
+                  if (!origFrom && !origTo) return;
+
+                  if (origFrom && origTo) {
+                    var hasReverse = window.ROUTES && window.ROUTES.some(function(r) {
+                      return r.city1 === origTo && r.city2 === origFrom;
+                    });
+                    if (!hasReverse) {
+                      alert('No direct return route exists from ' + origTo + ' to ' + origFrom + '.');
+                      return;
+                    }
+                  }
+
+                  fromSelect.value = origTo;
+                  filterDests();
+                  toSelect.value = origFrom;
+                });
+              }
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              setupRouteSelectors('home_from', 'home_to', 'home_swap_btn');
+              setupRouteSelectors('guest_from', 'guest_to', 'guest_swap_btn');
+            });
+          })();
+        </script>
       </div>
     </div>
   </section>
