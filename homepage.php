@@ -911,13 +911,13 @@ if (isset($_POST['subbtn'])) {
     </div>
   </section>
 
-  <!-- 4. Features & Facts Section (C1, B4) -->
+  <!-- 4. Features & Facts Section (C1, B4, P14) -->
   <section id="about" class="home-section bg-light" aria-labelledby="aboutHeading">
     <div class="container text-center">
-      <span class="badge badge-primary p-2 px-3 mb-2 font-weight-bold">CORE CAPABILITIES</span>
+      <span class="badge badge-primary p-2 px-3 mb-2 font-weight-bold">WHY CHOOSE US</span>
       <h2 id="aboutHeading" class="font-weight-bold">Designed for Reliable Travel</h2>
       <p class="text-muted mx-auto" style="max-width: 680px;">
-        Direct seat reservation backed by transactional constraints, automated ticket tokens, and clear route schedules.
+        Direct seat reservations, instant boarding passes, and customer-first support designed for peace of mind.
       </p>
 
       <div class="features-container text-left">
@@ -926,8 +926,8 @@ if (isset($_POST['subbtn'])) {
             <!-- Shield SVG icon -->
             <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
           </div>
-          <h3>Seat Management</h3>
-          <p>Unique seat constraints prevent double-booking, with 10-minute holds released automatically if booking times expire.</p>
+          <h3>Guaranteed Seat Selection</h3>
+          <p>Your seat is held for 10 minutes while you pay. Real-time availability ensures you never get double-booked.</p>
         </div>
 
         <div class="feature-card">
@@ -935,8 +935,8 @@ if (isset($_POST['subbtn'])) {
             <!-- Ticket SVG icon -->
             <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line></svg>
           </div>
-          <h3>Random 10-Char PNR</h3>
-          <p>Every confirmed booking generates a unique 10-character token used for swift public lookup along with phone verification.</p>
+          <h3>Instant Ticket Access</h3>
+          <p>Check your ticket any time with your PNR and phone digits. Download or print your boarding pass whenever you need.</p>
         </div>
 
         <div class="feature-card">
@@ -944,8 +944,8 @@ if (isset($_POST['subbtn'])) {
             <!-- Lock SVG icon -->
             <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
           </div>
-          <h3>Account Security</h3>
-          <p>Protected with CSRF tokens, securely hashed credentials, and brute-force rate limiting on authentication and PNR searches.</p>
+          <h3>Secure &amp; Protected</h3>
+          <p>Your details are stored securely. Encrypted account protection and privacy safeguards keep your bookings safe.</p>
         </div>
       </div>
     </div>
