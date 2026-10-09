@@ -410,21 +410,22 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </div>
     <div class="table-responsive">
         <table class="table table-hover table-stack mb-0">
+            <caption class="sr-only">Passenger reservations, ticket statuses, and journey details</caption>
             <thead class="thead-light">
                 <tr>
-                    <th style="width: 40px;" class="text-center">
+                    <th scope="col" class="th-checkbox text-center">
                         <input type="checkbox" id="selectAllBookings" title="Select all on this page" aria-label="Select all bookings on this page">
                     </th>
-                    <th>PNR</th>
-                    <th>Bus</th>
-                    <th>Passenger</th>
-                    <th>Contact</th>
-                    <th>Route</th>
-                    <th>Date & Time</th>
-                    <th>Seat</th>
-                    <th>Status</th>
-                    <th>Fare</th>
-                    <th class="text-right">Actions</th>
+                    <th scope="col">PNR</th>
+                    <th scope="col">Bus</th>
+                    <th scope="col">Passenger</th>
+                    <th scope="col">Contact</th>
+                    <th scope="col">Route</th>
+                    <th scope="col">Date & Time</th>
+                    <th scope="col">Seat</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Fare</th>
+                    <th scope="col" class="text-right">Actions</th>
                 </tr>
             </thead>
             <tbody>

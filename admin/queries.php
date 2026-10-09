@@ -151,14 +151,15 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </div>
     <div class="table-responsive">
         <table class="table table-hover mb-0">
+            <caption class="sr-only">List of customer support messages and tickets</caption>
             <thead class="thead-light">
                 <tr>
-                    <th style="width: 50px;">#</th>
-                    <th>Status</th>
-                    <th>Sender</th>
-                    <th>Subject & Message</th>
-                    <th>Date Received</th>
-                    <th class="text-right">Action</th>
+                    <th scope="col" class="th-id-xs">#</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Sender</th>
+                    <th scope="col">Subject & Message</th>
+                    <th scope="col">Date Received</th>
+                    <th scope="col" class="text-right">Action</th>
                 </tr>
             </thead>
             <tbody>

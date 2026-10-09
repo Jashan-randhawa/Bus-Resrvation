@@ -218,15 +218,16 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </div>
     <div class="table-responsive">
         <table class="table table-hover mb-0">
+            <caption class="sr-only">Directory of registered customer accounts, contact details, and account status</caption>
             <thead class="thead-light">
                 <tr>
-                    <th style="width: 70px;">#</th>
-                    <th>Full Name</th>
-                    <th>Email Address</th>
-                    <th>Security</th>
-                    <th>Phone</th>
-                    <th>Address</th>
-                    <th class="text-right">Actions</th>
+                    <th scope="col" class="th-id-sm">#</th>
+                    <th scope="col">Full Name</th>
+                    <th scope="col">Email Address</th>
+                    <th scope="col">Security</th>
+                    <th scope="col">Phone</th>
+                    <th scope="col">Address</th>
+                    <th scope="col" class="text-right">Actions</th>
                 </tr>
             </thead>
             <tbody>

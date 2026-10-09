@@ -163,15 +163,16 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </div>
     <div class="table-responsive">
         <table class="table table-hover mb-0">
+            <caption class="sr-only">List of transit route schedules, origin, destination, assigned buses, and fares</caption>
             <thead class="thead-light">
                 <tr>
-                    <th style="width: 80px;">#</th>
-                    <th>Origin City</th>
-                    <th>Destination City</th>
-                    <th>Bus Assigned</th>
-                    <th>Departure Time</th>
-                    <th>Ticket Tariff</th>
-                    <th class="text-right">Actions</th>
+                    <th scope="col" class="th-id-md">#</th>
+                    <th scope="col">Origin City</th>
+                    <th scope="col">Destination City</th>
+                    <th scope="col">Bus Assigned</th>
+                    <th scope="col">Departure Time</th>
+                    <th scope="col">Ticket Tariff</th>
+                    <th scope="col" class="text-right">Actions</th>
                 </tr>
             </thead>
             <tbody>

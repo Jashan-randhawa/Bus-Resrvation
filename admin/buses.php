@@ -141,13 +141,14 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </div>
     <div class="table-responsive">
         <table class="table table-hover mb-0">
+            <caption class="sr-only">List of fleet transit vehicles and seating layouts</caption>
             <thead class="thead-light">
                 <tr>
-                    <th style="width: 80px;">#</th>
-                    <th>Bus Identifier / License</th>
-                    <th>Seating Capacity</th>
-                    <th>Seating Layout</th>
-                    <th class="text-right">Actions</th>
+                    <th scope="col" class="th-id-md">#</th>
+                    <th scope="col">Bus Identifier / License</th>
+                    <th scope="col">Seating Capacity</th>
+                    <th scope="col">Seating Layout</th>
+                    <th scope="col" class="text-right">Actions</th>
                 </tr>
             </thead>
             <tbody>

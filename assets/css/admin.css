@@ -339,3 +339,9 @@ body.overflow-hidden {
     display: none;
   }
 }
+
+/* Table Column Width Utilities (A21) */
+.th-id-xs { width: 50px; }
+.th-id-sm { width: 70px; }
+.th-id-md { width: 80px; }
+.th-checkbox { width: 40px; }
