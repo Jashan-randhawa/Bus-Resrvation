@@ -162,15 +162,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
   }
 }
 
-// Registration handler (H-06, Phase 1.4)
+// Registration handler (H-06, Phase 1.4, P9)
+$old_register = [
+  'fname' => '',
+  'lname' => '',
+  'user_email' => '',
+  'user_no' => '',
+  'address' => '',
+];
+
 if (isset($_POST['userbtn'])) {
   csrf_verify();
-  $raw_name = trim(trim((string)($_POST['fname'] ?? '')) . ' ' . trim((string)($_POST['lname'] ?? '')));
+  $raw_fname = trim((string)($_POST['fname'] ?? ''));
+  $raw_lname = trim((string)($_POST['lname'] ?? ''));
+  $raw_name = trim($raw_fname . ' ' . $raw_lname);
   $email = strtolower(trim((string)($_POST['user_email'] ?? '')));
   $pwd = (string)($_POST['user_pwd'] ?? '');
   $raw_phone = (string)($_POST['user_no'] ?? '');
   $raw_addr = (string)($_POST['address'] ?? '');
   $preserved_email = $email;
+
+  $old_register = [
+    'fname' => $raw_fname,
+    'lname' => $raw_lname,
+    'user_email' => $email,
+    'user_no' => $raw_phone,
+    'address' => $raw_addr,
+  ];
 
   $person_val = validate_person_fields($raw_name, $raw_phone, $raw_addr);
   $errors = $person_val['errors'];
@@ -835,7 +853,18 @@ if (isset($_POST['subbtn'])) {
             </div>
             <div class="form-group mb-1">
               <label for="user-pwd-input" class="font-weight-bold small text-muted">Password</label>
-              <input type="password" id="user-pwd-input" name="pwd" class="form-control" placeholder="••••••••" autocomplete="current-password" required />
+              <div class="input-group">
+                <input type="password" id="user-pwd-input" name="pwd" class="form-control" placeholder="••••••••" autocomplete="current-password" required />
+                <div class="input-group-append">
+                  <button class="btn btn-outline-secondary" type="button" id="user-login-pwd-toggle" aria-label="Show password" aria-pressed="false">
+                    <span id="user-login-pwd-toggle-text">Show</span>
+                  </button>
+                </div>
+              </div>
+              <div id="user-login-caps-warning" class="text-warning small mt-1 d-none" role="status" aria-live="polite">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="mr-1" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Caps Lock is ON
+              </div>
             </div>
             <div class="text-right mb-3">
               <a href="<?= BASE_URL ?>/forgot-password.php" class="small text-muted">Forgot password?</a>
@@ -861,29 +890,40 @@ if (isset($_POST['subbtn'])) {
             <div class="form-row">
               <div class="form-group col-6">
                 <label for="fname" class="font-weight-bold small text-muted">First Name</label>
-                <input type="text" class="form-control" name="fname" id="fname" placeholder="First" required />
+                <input type="text" class="form-control" name="fname" id="fname" value="<?= e($old_register['fname']) ?>" placeholder="First" required />
               </div>
               <div class="form-group col-6">
                 <label for="lname" class="font-weight-bold small text-muted">Last Name</label>
-                <input type="text" class="form-control" name="lname" id="lname" placeholder="Last" required />
+                <input type="text" class="form-control" name="lname" id="lname" value="<?= e($old_register['lname']) ?>" placeholder="Last" required />
               </div>
             </div>
             <div class="form-group">
               <label for="user_email" class="font-weight-bold small text-muted">Email Address</label>
-              <input type="email" class="form-control" name="user_email" id="user_email" value="<?= e($open_modal === 'register' ? $preserved_email : '') ?>" placeholder="email@example.com" autocomplete="email" required />
+              <input type="email" class="form-control" name="user_email" id="user_email" value="<?= e($old_register['user_email'] ?: ($open_modal === 'register' ? $preserved_email : '')) ?>" placeholder="email@example.com" autocomplete="email" required />
             </div>
             <div class="form-group">
               <label for="user_pwd" class="font-weight-bold small text-muted">Password</label>
-              <input type="password" class="form-control" name="user_pwd" id="user_pwd" placeholder="••••••••" minlength="8" autocomplete="new-password" required />
+              <div class="input-group">
+                <input type="password" class="form-control" name="user_pwd" id="user_pwd" placeholder="••••••••" minlength="8" autocomplete="new-password" required />
+                <div class="input-group-append">
+                  <button class="btn btn-outline-secondary" type="button" id="user-reg-pwd-toggle" aria-label="Show password" aria-pressed="false">
+                    <span id="user-reg-pwd-toggle-text">Show</span>
+                  </button>
+                </div>
+              </div>
+              <div id="user-reg-caps-warning" class="text-warning small mt-1 d-none" role="status" aria-live="polite">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="mr-1" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Caps Lock is ON
+              </div>
               <small class="form-text text-muted">Must be 8+ characters with at least 1 letter and 1 number.</small>
             </div>
             <div class="form-group">
               <label for="user_no" class="font-weight-bold small text-muted">Phone Number</label>
-              <input type="tel" class="form-control" name="user_no" id="user_no" placeholder="10-15 digits" required />
+              <input type="tel" class="form-control" name="user_no" id="user_no" inputmode="tel" pattern="[0-9]{10,15}" value="<?= e($old_register['user_no']) ?>" placeholder="10-15 digits" required />
             </div>
             <div class="form-group">
-              <label for="address" class="font-weight-bold small text-muted">Address</label>
-              <textarea name="address" id="address" rows="2" class="form-control" placeholder="Your street address"></textarea>
+              <label for="address" class="font-weight-bold small text-muted">Address <span class="text-muted font-weight-normal">(optional)</span></label>
+              <textarea name="address" id="address" rows="2" class="form-control" placeholder="Your street address (optional)"><?= e($old_register['address']) ?></textarea>
             </div>
             <button type="submit" class="btn btn-success btn-block py-2 font-weight-bold" name="userbtn" style="min-height: 44px;">
               Create New Account
@@ -988,63 +1028,61 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Password Visibility Toggle & Caps Lock Detection (Issues 5 & 6)
+  // Password Visibility Toggle & Caps Lock Detection (Issues 5 & 6, P9)
   (function() {
-    var pwdInput = document.getElementById('admin-pwd-input');
-    var pwdToggle = document.getElementById('admin-pwd-toggle');
-    var pwdToggleText = document.getElementById('admin-pwd-toggle-text');
-    var capsWarning = document.getElementById('admin-caps-warning');
+    function setupPasswordEnhancements(pwdInputId, pwdToggleId, pwdToggleTextId, capsWarningId, formEl, modalId) {
+      var pwdInput = document.getElementById(pwdInputId);
+      var pwdToggle = document.getElementById(pwdToggleId);
+      var pwdToggleText = document.getElementById(pwdToggleTextId);
+      var capsWarning = document.getElementById(capsWarningId);
 
-    function resetPasswordVisibility() {
-      if (pwdInput && pwdInput.type !== 'password') {
-        pwdInput.type = 'password';
-        if (pwdToggle) {
-          pwdToggle.setAttribute('aria-label', 'Show password');
-          pwdToggle.setAttribute('aria-pressed', 'false');
-        }
-        if (pwdToggleText) {
-          pwdToggleText.textContent = 'Show';
+      function resetPasswordVisibility() {
+        if (pwdInput && pwdInput.type !== 'password') {
+          pwdInput.type = 'password';
+          if (pwdToggle) {
+            pwdToggle.setAttribute('aria-label', 'Show password');
+            pwdToggle.setAttribute('aria-pressed', 'false');
+          }
+          if (pwdToggleText) {
+            pwdToggleText.textContent = 'Show';
+          }
         }
       }
-    }
 
-    if (pwdToggle && pwdInput) {
-      pwdToggle.addEventListener('click', function() {
-        var isPassword = pwdInput.type === 'password';
-        pwdInput.type = isPassword ? 'text' : 'password';
-        pwdToggle.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
-        pwdToggle.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
-        if (pwdToggleText) {
-          pwdToggleText.textContent = isPassword ? 'Hide' : 'Show';
+      if (pwdToggle && pwdInput) {
+        pwdToggle.addEventListener('click', function() {
+          var isPassword = pwdInput.type === 'password';
+          pwdInput.type = isPassword ? 'text' : 'password';
+          pwdToggle.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+          pwdToggle.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
+          if (pwdToggleText) {
+            pwdToggleText.textContent = isPassword ? 'Hide' : 'Show';
+          }
+          pwdInput.focus();
+        });
+      }
+
+      if (pwdInput && capsWarning) {
+        function checkCapsLock(e) {
+          if (e.getModifierState && e.getModifierState('CapsLock')) {
+            capsWarning.classList.remove('d-none');
+          } else {
+            capsWarning.classList.add('d-none');
+          }
         }
-        pwdInput.focus();
-      });
-    }
-
-    if (pwdInput && capsWarning) {
-      function checkCapsLock(e) {
-        if (e.getModifierState && e.getModifierState('CapsLock')) {
-          capsWarning.classList.remove('d-none');
-        } else {
+        pwdInput.addEventListener('keydown', checkCapsLock);
+        pwdInput.addEventListener('keyup', checkCapsLock);
+        pwdInput.addEventListener('blur', function() {
           capsWarning.classList.add('d-none');
-        }
+        });
       }
-      pwdInput.addEventListener('keydown', checkCapsLock);
-      pwdInput.addEventListener('keyup', checkCapsLock);
-      pwdInput.addEventListener('blur', function() {
-        capsWarning.classList.add('d-none');
-      });
-    }
 
-    // Reset visibility when form submits or modal closes
-    var adminModal = document.getElementById('loginModal');
-    if (adminModal) {
-      var adminForm = adminModal.querySelector('form');
-      if (adminForm) {
-        adminForm.addEventListener('submit', resetPasswordVisibility);
+      // Reset visibility when form submits or modal closes
+      if (formEl) {
+        formEl.addEventListener('submit', resetPasswordVisibility);
       }
-      if (window.jQuery) {
-        $('#loginModal').on('hidden.bs.modal', function() {
+      if (modalId && window.jQuery) {
+        $(modalId).on('hidden.bs.modal', function() {
           resetPasswordVisibility();
           if (capsWarning) {
             capsWarning.classList.add('d-none');
@@ -1052,6 +1090,16 @@ document.addEventListener('DOMContentLoaded', function () {
         });
       }
     }
+
+    var adminModal = document.getElementById('loginModal');
+    var adminForm = adminModal ? adminModal.querySelector('form') : null;
+    setupPasswordEnhancements('admin-pwd-input', 'admin-pwd-toggle', 'admin-pwd-toggle-text', 'admin-caps-warning', adminForm, '#loginModal');
+
+    var userLoginForm = document.querySelector('#user-login-pane form');
+    setupPasswordEnhancements('user-pwd-input', 'user-login-pwd-toggle', 'user-login-pwd-toggle-text', 'user-login-caps-warning', userLoginForm, '#userlogin');
+
+    var userRegForm = document.querySelector('#register-pane form');
+    setupPasswordEnhancements('user_pwd', 'user-reg-pwd-toggle', 'user-reg-pwd-toggle-text', 'user-reg-caps-warning', userRegForm, '#userlogin');
   })();
 });
 </script>
