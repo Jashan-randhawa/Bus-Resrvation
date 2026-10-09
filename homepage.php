@@ -445,7 +445,7 @@ if (isset($_POST['subbtn'])) {
       </div>
 
       <div class="pnr-search-box mx-auto" style="max-width: 700px;">
-        <form method="get" action="<?= e(BASE_URL) ?>/homepage.php#pnr" id="pnrSearchForm" onsubmit="handlePnrSubmit()" class="row">
+        <form method="get" action="<?= e(BASE_URL) ?>/homepage.php#pnr" id="pnrSearchForm" class="row">
           <div class="col-md-5 mb-3 mb-md-0">
             <label for="pnr_input" class="form-label font-weight-bold small text-muted">PNR Number</label>
             <input class="form-control" 
@@ -480,14 +480,22 @@ if (isset($_POST['subbtn'])) {
           </div>
         </form>
         <script>
-          function handlePnrSubmit() {
+          (function() {
+            var f = document.getElementById('pnrSearchForm');
             var btn = document.getElementById('pnrSubmitBtn');
-            if (btn) {
-              btn.disabled = true;
-              btn.innerHTML = '<span class="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span> Searching...';
+            if (f && btn) {
+              f.addEventListener('submit', function () {
+                setTimeout(function () {
+                  btn.disabled = true;
+                  btn.innerHTML = '<span class="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span> Searching...';
+                }, 0);
+              });
+              window.addEventListener('pageshow', function () {
+                btn.disabled = false;
+                btn.textContent = 'Search Ticket';
+              });
             }
-            document.getElementById('pnrSearchForm').submit();
-          }
+          })();
         </script>
 
         <?php
