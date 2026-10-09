@@ -80,5 +80,95 @@
         });
     });
 </script>
+
+<!-- Session Timeout Warning Modal (A15) -->
+<div class="modal fade" id="sessionTimeoutModal" tabindex="-1" role="dialog" aria-labelledby="sessionTimeoutModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title font-weight-bold" id="sessionTimeoutModalLabel">⏱️ Session Timeout Warning</h5>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <p class="mb-3 text-dark">Due to inactivity, your administrative session will expire in:</p>
+                <div class="display-4 font-weight-bold text-danger mb-3" id="sessionCountdown">120</div>
+                <p class="small text-muted mb-0">seconds. Unsaved form changes will be lost if your session expires.</p>
+            </div>
+            <div class="modal-footer bg-light justify-content-between">
+                <a href="<?= BASE_URL ?>/homepage.php?login=admin&error=expired" class="btn btn-outline-secondary btn-sm">
+                    Log Out Now
+                </a>
+                <button type="button" class="btn btn-primary btn-sm font-weight-bold" id="btnStayLoggedIn">
+                    Stay Logged In
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Session Timeout Warning & Heartbeat (A15)
+(function() {
+    var idleLimit = <?= (int)(defined('SESSION_IDLE_SECONDS') ? SESSION_IDLE_SECONDS : 1800) ?>;
+    var warnBefore = 120; // 2 minutes countdown
+    var warningTimer = null;
+    var countdownTimer = null;
+    var secondsRemaining = warnBefore;
+    var modal = document.getElementById('sessionTimeoutModal');
+    var countdownEl = document.getElementById('sessionCountdown');
+    var stayBtn = document.getElementById('btnStayLoggedIn');
+
+    if (!modal) return;
+
+    function startIdleTimer() {
+        if (warningTimer) clearTimeout(warningTimer);
+        if (countdownTimer) clearInterval(countdownTimer);
+
+        var msUntilWarn = Math.max(1000, (idleLimit - warnBefore) * 1000);
+        warningTimer = setTimeout(showWarningModal, msUntilWarn);
+    }
+
+    function showWarningModal() {
+        secondsRemaining = warnBefore;
+        if (countdownEl) countdownEl.textContent = secondsRemaining;
+        if (window.jQuery) {
+            window.jQuery('#sessionTimeoutModal').modal('show');
+        }
+
+        countdownTimer = setInterval(function() {
+            secondsRemaining--;
+            if (countdownEl) countdownEl.textContent = Math.max(0, secondsRemaining);
+            if (secondsRemaining <= 0) {
+                clearInterval(countdownTimer);
+                window.location.href = '<?= BASE_URL ?>/homepage.php?login=admin&error=expired';
+            }
+        }, 1000);
+    }
+
+    if (stayBtn) {
+        stayBtn.addEventListener('click', function() {
+            fetch('<?= BASE_URL ?>/admin/api-heartbeat.php', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(function(res) {
+                return res.json();
+            }).then(function(data) {
+                if (data && data.ok) {
+                    if (window.jQuery) {
+                        window.jQuery('#sessionTimeoutModal').modal('hide');
+                    }
+                    startIdleTimer();
+                }
+            }).catch(function() {
+                if (window.jQuery) {
+                    window.jQuery('#sessionTimeoutModal').modal('hide');
+                }
+                startIdleTimer();
+            });
+        });
+    }
+
+    startIdleTimer();
+})();
+</script>
 </body>
 </html>
