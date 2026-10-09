@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../includes/auth/admin-session.php';
 require_once __DIR__ . '/../includes/db_con.php';
 require_once __DIR__ . '/../includes/helpers.php';
+require_once __DIR__ . '/../includes/seat-map.php';
 
 $buses = db_all($link, 'SELECT bus_number, capacity, layout FROM buses ORDER BY bus_number ASC');
 
@@ -67,6 +68,7 @@ if ($searched) {
             $seat_status_map[$s_num] = 'Confirmed';
         }
     }
+    $seat_layout = build_seat_layout($bus_capacity, $bus_layout);
 }
 
 $title = 'Seat Availability';
@@ -154,22 +156,18 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         <div class="empty-text">Choose a bus, travel date, and departure time on the left to render the live interactive seat map.</div>
                     </div>
                 <?php else: ?>
-                    <div class="seat-legend justify-content-center mb-4">
-                        <div class="legend-item">
-                            <span class="legend-swatch legend-confirmed"></span>
-                            <span>Confirmed (<?= count(array_filter($seat_status_map, fn($s) => $s === 'Confirmed')) ?>)</span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="legend-swatch legend-pending"></span>
-                            <span>Pending Hold (<?= count(array_filter($seat_status_map, fn($s) => $s === 'Pending')) ?>)</span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="legend-swatch legend-available"></span>
-                            <span>Available (<?= max(0, $bus_capacity - count($booked_seats)) ?>)</span>
-                        </div>
+                    <div class="bus-map-wrapper">
+                        <?php render_seat_map($seat_layout, $booked_seats, [
+                            'bus'             => $selected_bus,
+                            'date'            => $selected_date,
+                            'time'            => $selected_time,
+                            'admin_mode'      => true,
+                            'status_map'      => $seat_status_map,
+                            'confirmed_count' => count(array_filter($seat_status_map, fn($s) => $s === 'Confirmed')),
+                            'pending_count'   => count(array_filter($seat_status_map, fn($s) => $s === 'Pending')),
+                            'available_count' => max(0, $bus_capacity - count($booked_seats)),
+                        ]); ?>
                     </div>
-
-                    <?= render_seat_grid($bus_capacity, $seat_status_map, 4, $bus_layout) ?>
                 <?php endif; ?>
             </div>
         </div>

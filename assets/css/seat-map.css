@@ -373,8 +373,9 @@
   font-weight: 900;
 }
 
-/* BOOKED SEAT (Disabled Radio) */
-.seat-radio:disabled + .seat-label {
+/* BOOKED SEAT (Disabled Radio) & CONFIRMED STATUS (Admin Visualizer) */
+.seat-radio:disabled + .seat-label,
+.seat-box.seat-status-confirmed .seat-label {
   --seat-bd: #ef4444;
   --seat-bg: #fee2e2;
   --seat-fg: #991b1b;
@@ -382,10 +383,11 @@
   --seat-headrest-bg: #fca5a5;
   --seat-arm-bd: #f87171;
   --seat-arm-bg: #fca5a5;
-  cursor: not-allowed;
-  opacity: 0.9;
+  cursor: default;
+  opacity: 0.95;
 }
-.seat-radio:disabled + .seat-label .seat-cushion {
+.seat-radio:disabled + .seat-label .seat-cushion,
+.seat-box.seat-status-confirmed .seat-label .seat-cushion {
   background-image: repeating-linear-gradient(
     135deg,
     transparent 0 5px,
@@ -393,7 +395,8 @@
   );
   box-shadow: none;
 }
-.seat-radio:disabled + .seat-label .seat-corner-icon::before {
+.seat-radio:disabled + .seat-label .seat-corner-icon::before,
+.seat-box.seat-status-confirmed .seat-label .seat-corner-icon::before {
   content: "\2715";
   color: #991b1b;
   font-size: 10px;
@@ -401,6 +404,50 @@
 }
 .seat-radio:disabled:hover + .seat-label {
   transform: none;
+}
+
+/* PENDING HOLD SEAT (Admin Visualizer) */
+.seat-box.seat-status-pending .seat-label {
+  --seat-bd: #d97706;
+  --seat-bg: #fef3c7;
+  --seat-fg: #92400e;
+  --seat-headrest-bd: #f59e0b;
+  --seat-headrest-bg: #fde68a;
+  --seat-arm-bd: #f59e0b;
+  --seat-arm-bg: #fde68a;
+  cursor: default;
+  opacity: 0.95;
+}
+.seat-box.seat-status-pending .seat-label .seat-cushion {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 5px,
+    rgba(245, 158, 11, 0.25) 5px 8px
+  );
+  box-shadow: none;
+}
+.seat-box.seat-status-pending .seat-label .seat-corner-icon::before {
+  content: "\23F3";
+  color: #b45309;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+/* AVAILABLE SEAT (Admin Visualizer) */
+.seat-box.seat-status-available .seat-label {
+  cursor: default;
+}
+
+/* Hover & Focus state for Admin Seats */
+.seat-box.seat-status-confirmed .seat-label:hover,
+.seat-box.seat-status-pending .seat-label:hover,
+.seat-box.seat-status-available .seat-label:hover {
+  transform: translateY(-2px);
+}
+.seat-box .seat-label:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+  border-radius: 8px;
 }
 
 /* Keyboard Focus Ring */
@@ -514,19 +561,42 @@
   color: #ffffff;
 }
 
-.legend-booked {
+.legend-booked,
+.legend-confirmed {
   color: #ef4444;
 }
-.legend-booked .mini-headrest {
+.legend-booked .mini-headrest,
+.legend-confirmed .mini-headrest {
   background: #fca5a5;
+  border-color: #ef4444;
 }
-.legend-booked .mini-cushion {
+.legend-booked .mini-cushion,
+.legend-confirmed .mini-cushion {
   background: #fee2e2;
   color: #991b1b;
+  border-color: #ef4444;
   background-image: repeating-linear-gradient(
     135deg,
     transparent 0 2px,
     rgba(239, 68, 68, 0.3) 2px 4px
+  );
+}
+
+.legend-pending {
+  color: #d97706;
+}
+.legend-pending .mini-headrest {
+  background: #fde68a;
+  border-color: #d97706;
+}
+.legend-pending .mini-cushion {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #d97706;
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 2px,
+    rgba(245, 158, 11, 0.3) 2px 4px
   );
 }
 
@@ -584,7 +654,8 @@ html[data-theme="dark"] .aisle-runner {
     transparent 6px 12px
   );
 }
-html[data-theme="dark"] .seat-radio:disabled + .seat-label {
+html[data-theme="dark"] .seat-radio:disabled + .seat-label,
+html[data-theme="dark"] .seat-box.seat-status-confirmed .seat-label {
   --seat-bd: #ef4444;
   --seat-bg: #3f1d24;
   --seat-fg: #fca5a5;
@@ -593,12 +664,56 @@ html[data-theme="dark"] .seat-radio:disabled + .seat-label {
   --seat-arm-bd: #ef4444;
   --seat-arm-bg: #5a1e28;
 }
-html[data-theme="dark"] .seat-radio:disabled + .seat-label .seat-cushion {
+html[data-theme="dark"] .seat-radio:disabled + .seat-label .seat-cushion,
+html[data-theme="dark"] .seat-box.seat-status-confirmed .seat-label .seat-cushion {
   background-image: repeating-linear-gradient(
     135deg,
     transparent 0 5px,
     rgba(239, 68, 68, 0.35) 5px 8px
   );
+}
+html[data-theme="dark"] .seat-box.seat-status-pending .seat-label {
+  --seat-bd: #f59e0b;
+  --seat-bg: #451a03;
+  --seat-fg: #fcd34d;
+  --seat-headrest-bd: #f59e0b;
+  --seat-headrest-bg: #78350f;
+  --seat-arm-bd: #f59e0b;
+  --seat-arm-bg: #78350f;
+}
+html[data-theme="dark"] .seat-box.seat-status-pending .seat-label .seat-cushion {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 5px,
+    rgba(245, 158, 11, 0.35) 5px 8px
+  );
+}
+html[data-theme="dark"] .legend-booked,
+html[data-theme="dark"] .legend-confirmed {
+  color: #f87171;
+}
+html[data-theme="dark"] .legend-booked .mini-headrest,
+html[data-theme="dark"] .legend-confirmed .mini-headrest {
+  background: #5a1e28;
+  border-color: #ef4444;
+}
+html[data-theme="dark"] .legend-booked .mini-cushion,
+html[data-theme="dark"] .legend-confirmed .mini-cushion {
+  background: #3f1d24;
+  color: #fca5a5;
+  border-color: #ef4444;
+}
+html[data-theme="dark"] .legend-pending {
+  color: #fbbf24;
+}
+html[data-theme="dark"] .legend-pending .mini-headrest {
+  background: #78350f;
+  border-color: #f59e0b;
+}
+html[data-theme="dark"] .legend-pending .mini-cushion {
+  background: #451a03;
+  color: #fcd34d;
+  border-color: #f59e0b;
 }
 html[data-theme="dark"] .bus-legend {
   background: #0f172a;

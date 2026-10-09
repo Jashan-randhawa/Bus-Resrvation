@@ -18,9 +18,92 @@ function render_seat_map(array $layout, array $booked, array $meta = []): void {
     $date_attr = htmlspecialchars($meta['date'] ?? '', ENT_QUOTES, 'UTF-8');
     $time_attr = htmlspecialchars($meta['time'] ?? '', ENT_QUOTES, 'UTF-8');
     $preselected = (int)($meta['selected'] ?? 0);
+    $admin_mode = !empty($meta['admin_mode']);
+    $status_map = (array)($meta['status_map'] ?? []);
+
+    $render_seat_box = function(?array $seat) use ($admin_mode, $status_map, $booked, $preselected): void {
+        if ($seat === null) {
+            echo '<span class="seat-box seat-empty" aria-hidden="true"></span>';
+            return;
+        }
+        $s_no = (int)$seat['no'];
+        $s_type = (string)$seat['type'];
+        $s_tag = ($s_type === 'Window') ? 'W' : 'A';
+
+        if ($admin_mode) {
+            $seat_status = 'Available';
+            if (isset($status_map[$s_no])) {
+                $seat_status = ($status_map[$s_no] === 'Pending') ? 'Pending' : 'Confirmed';
+            } elseif (isset($booked[$s_no]) || in_array($s_no, $booked, true)) {
+                $seat_status = 'Confirmed';
+            }
+            $status_class = match($seat_status) {
+                'Confirmed' => 'seat-status-confirmed',
+                'Pending'   => 'seat-status-pending',
+                default     => 'seat-status-available',
+            };
+            $status_label = match($seat_status) {
+                'Confirmed' => 'Confirmed Booking',
+                'Pending'   => 'Pending Hold',
+                default     => 'Available',
+            };
+            ?>
+            <div class="seat-box <?= $status_class ?>" data-seat="<?= $s_no ?>" data-status="<?= $seat_status ?>">
+                <div class="seat-label" title="Seat <?= $s_no ?> (<?= e($s_type) ?> Seat - <?= $status_label ?>)"
+                     role="img" aria-label="Seat <?= $s_no ?>, <?= e($s_type) ?>, <?= $status_label ?>" tabindex="0">
+                    <!-- Real Headrest Pillow -->
+                    <span class="seat-headrest" aria-hidden="true"></span>
+
+                    <!-- Realistic Chair Body with Armrests -->
+                    <span class="seat-body-wrap">
+                        <span class="seat-armrest seat-armrest-left" aria-hidden="true"></span>
+                        <span class="seat-cushion">
+                            <span class="seat-corner-icon" aria-hidden="true"></span>
+                            <span class="seat-num"><?= $s_no ?></span>
+                            <span class="seat-type-tag" aria-hidden="true"><?= $s_tag ?></span>
+                        </span>
+                        <span class="seat-armrest seat-armrest-right" aria-hidden="true"></span>
+                    </span>
+                </div>
+            </div>
+            <?php
+        } else {
+            $is_bk = isset($booked[$s_no]);
+            $is_selected = ($s_no === $preselected && !$is_bk);
+            $aria_state = $is_bk ? 'booked' : 'available';
+            ?>
+            <div class="seat-box">
+                <input type="radio" name="seat" id="seat-<?= $s_no ?>" value="<?= $s_no ?>" class="seat-radio"
+                    data-seat-type="<?= e($s_type) ?>"
+                    aria-label="Seat <?= $s_no ?>, <?= e($s_type) ?>, <?= $aria_state ?>"
+                    <?= $is_bk ? 'disabled' : 'required' ?>
+                    <?= $is_selected ? 'checked' : '' ?>>
+                <label for="seat-<?= $s_no ?>" class="seat-label" title="Seat <?= $s_no ?> (<?= e($s_type) ?> Seat - <?= ucfirst($aria_state) ?>)">
+                    <!-- Real Headrest Pillow -->
+                    <span class="seat-headrest" aria-hidden="true"></span>
+
+                    <!-- Realistic Chair Body with Armrests -->
+                    <span class="seat-body-wrap">
+                        <span class="seat-armrest seat-armrest-left" aria-hidden="true"></span>
+                        <span class="seat-cushion">
+                            <span class="seat-corner-icon" aria-hidden="true"></span>
+                            <span class="seat-num"><?= $s_no ?></span>
+                            <span class="seat-type-tag" aria-hidden="true"><?= $s_tag ?></span>
+                        </span>
+                        <span class="seat-armrest seat-armrest-right" aria-hidden="true"></span>
+                    </span>
+                </label>
+            </div>
+            <?php
+        }
+    };
     ?>
+    <?php if ($admin_mode): ?>
+    <div class="bus-map-card" role="region" aria-label="Bus Seat Occupancy Map" style="--left: <?= $left ?>; --right: <?= $right ?>;">
+    <?php else: ?>
     <fieldset class="bus-map-card" style="--left: <?= $left ?>; --right: <?= $right ?>;">
         <legend class="seat-legend-title sr-only">Select your seat</legend>
+    <?php endif; ?>
 
         <!-- Exterior Coach Side Mirrors -->
         <span class="bus-side-mirror bus-mirror-left" aria-hidden="true"></span>
@@ -73,43 +156,9 @@ function render_seat_map(array $layout, array $booked, array $meta = []): void {
                 <div class="bus-row" data-row="<?= $row_idx + 1 ?>">
                     <?php
                     $seat_idx = 0;
-                    // Left seat group
-                    for ($i = 0; $i < $left; $i++):
-                        $seat = $row[$seat_idx++] ?? null;
-                        if ($seat === null): ?>
-                            <span class="seat-box seat-empty" aria-hidden="true"></span>
-                        <?php else:
-                            $s_no = (int)$seat['no'];
-                            $s_type = (string)$seat['type'];
-                            $is_bk = isset($booked[$s_no]);
-                            $is_selected = ($s_no === $preselected && !$is_bk);
-                            $s_tag = ($s_type === 'Window') ? 'W' : 'A';
-                            $aria_state = $is_bk ? 'booked' : 'available';
-                            ?>
-                            <div class="seat-box">
-                                <input type="radio" name="seat" id="seat-<?= $s_no ?>" value="<?= $s_no ?>" class="seat-radio"
-                                    data-seat-type="<?= e($s_type) ?>"
-                                    aria-label="Seat <?= $s_no ?>, <?= e($s_type) ?>, <?= $aria_state ?>"
-                                    <?= $is_bk ? 'disabled' : 'required' ?>
-                                    <?= $is_selected ? 'checked' : '' ?>>
-                                <label for="seat-<?= $s_no ?>" class="seat-label" title="Seat <?= $s_no ?> (<?= e($s_type) ?> Seat - <?= ucfirst($aria_state) ?>)">
-                                    <!-- Real Headrest Pillow -->
-                                    <span class="seat-headrest" aria-hidden="true"></span>
-
-                                    <!-- Realistic Chair Body with Armrests -->
-                                    <span class="seat-body-wrap">
-                                        <span class="seat-armrest seat-armrest-left" aria-hidden="true"></span>
-                                        <span class="seat-cushion">
-                                            <span class="seat-corner-icon" aria-hidden="true"></span>
-                                            <span class="seat-num"><?= $s_no ?></span>
-                                            <span class="seat-type-tag" aria-hidden="true"><?= $s_tag ?></span>
-                                        </span>
-                                        <span class="seat-armrest seat-armrest-right" aria-hidden="true"></span>
-                                    </span>
-                                </label>
-                            </div>
-                        <?php endif;
-                    endfor;
+                    for ($i = 0; $i < $left; $i++) {
+                        $render_seat_box($row[$seat_idx++] ?? null);
+                    }
                     ?>
 
                     <span class="bus-aisle-space" aria-hidden="true">
@@ -117,43 +166,9 @@ function render_seat_map(array $layout, array $booked, array $meta = []): void {
                     </span>
 
                     <?php
-                    // Right seat group
-                    for ($i = 0; $i < $right; $i++):
-                        $seat = $row[$seat_idx++] ?? null;
-                        if ($seat === null): ?>
-                            <span class="seat-box seat-empty" aria-hidden="true"></span>
-                        <?php else:
-                            $s_no = (int)$seat['no'];
-                            $s_type = (string)$seat['type'];
-                            $is_bk = isset($booked[$s_no]);
-                            $is_selected = ($s_no === $preselected && !$is_bk);
-                            $s_tag = ($s_type === 'Window') ? 'W' : 'A';
-                            $aria_state = $is_bk ? 'booked' : 'available';
-                            ?>
-                            <div class="seat-box">
-                                <input type="radio" name="seat" id="seat-<?= $s_no ?>" value="<?= $s_no ?>" class="seat-radio"
-                                    data-seat-type="<?= e($s_type) ?>"
-                                    aria-label="Seat <?= $s_no ?>, <?= e($s_type) ?>, <?= $aria_state ?>"
-                                    <?= $is_bk ? 'disabled' : 'required' ?>
-                                    <?= $is_selected ? 'checked' : '' ?>>
-                                <label for="seat-<?= $s_no ?>" class="seat-label" title="Seat <?= $s_no ?> (<?= e($s_type) ?> Seat - <?= ucfirst($aria_state) ?>)">
-                                    <!-- Real Headrest Pillow -->
-                                    <span class="seat-headrest" aria-hidden="true"></span>
-
-                                    <!-- Realistic Chair Body with Armrests -->
-                                    <span class="seat-body-wrap">
-                                        <span class="seat-armrest seat-armrest-left" aria-hidden="true"></span>
-                                        <span class="seat-cushion">
-                                            <span class="seat-corner-icon" aria-hidden="true"></span>
-                                            <span class="seat-num"><?= $s_no ?></span>
-                                            <span class="seat-type-tag" aria-hidden="true"><?= $s_tag ?></span>
-                                        </span>
-                                        <span class="seat-armrest seat-armrest-right" aria-hidden="true"></span>
-                                    </span>
-                                </label>
-                            </div>
-                        <?php endif;
-                    endfor;
+                    for ($i = 0; $i < $right; $i++) {
+                        $render_seat_box($row[$seat_idx++] ?? null);
+                    }
                     ?>
                 </div>
             <?php endforeach; ?>
@@ -169,37 +184,88 @@ function render_seat_map(array $layout, array $booked, array $meta = []): void {
                 <span class="taillight taillight-right" aria-hidden="true"></span>
             </div>
         </div>
-    </fieldset>
-
-    <p id="seat-live" class="sr-only" role="status" aria-live="polite"></p>
-
-    <!-- Legend with Realistic Seat Swatches -->
-    <div class="bus-legend" aria-hidden="true">
-        <div class="bus-legend-item">
-            <span class="bus-legend-seat-icon legend-available">
-                <span class="mini-headrest"></span>
-                <span class="mini-cushion"></span>
-            </span>
-            <span>Available</span>
-        </div>
-        <div class="bus-legend-item">
-            <span class="bus-legend-seat-icon legend-selected">
-                <span class="mini-headrest"></span>
-                <span class="mini-cushion">&#10003;</span>
-            </span>
-            <span>Selected</span>
-        </div>
-        <div class="bus-legend-item">
-            <span class="bus-legend-seat-icon legend-booked">
-                <span class="mini-headrest"></span>
-                <span class="mini-cushion">&#10005;</span>
-            </span>
-            <span>Booked</span>
-        </div>
-        <div class="bus-legend-item bus-legend-types">
-            <span class="bus-legend-type-pill"><strong>W</strong> Window</span>
-            <span class="bus-legend-type-pill"><strong>A</strong> Aisle</span>
-        </div>
+    <?php if ($admin_mode): ?>
     </div>
+    <?php else: ?>
+    </fieldset>
+    <p id="seat-live" class="sr-only" role="status" aria-live="polite"></p>
+    <?php endif; ?>
+
+    <?php if ($admin_mode): ?>
+        <?php
+        $confirmed_cnt = (int)($meta['confirmed_count'] ?? 0);
+        $pending_cnt = (int)($meta['pending_count'] ?? 0);
+        $available_cnt = (int)($meta['available_count'] ?? 0);
+        if ($confirmed_cnt === 0 && $pending_cnt === 0 && $available_cnt === 0) {
+            foreach ($rows as $r_row) {
+                foreach ($r_row as $st) {
+                    if ($st === null) continue;
+                    $s_num = (int)$st['no'];
+                    $st_stat = $status_map[$s_num] ?? ((isset($booked[$s_num]) || in_array($s_num, $booked, true)) ? 'Confirmed' : 'Available');
+                    if ($st_stat === 'Confirmed') $confirmed_cnt++;
+                    elseif ($st_stat === 'Pending') $pending_cnt++;
+                    else $available_cnt++;
+                }
+            }
+        }
+        ?>
+        <!-- Legend with Realistic Seat Swatches (Admin Occupancy Visualizer) -->
+        <div class="bus-legend" aria-hidden="true">
+            <div class="bus-legend-item">
+                <span class="bus-legend-seat-icon legend-confirmed">
+                    <span class="mini-headrest"></span>
+                    <span class="mini-cushion">&#10005;</span>
+                </span>
+                <span>Confirmed (<?= $confirmed_cnt ?>)</span>
+            </div>
+            <div class="bus-legend-item">
+                <span class="bus-legend-seat-icon legend-pending">
+                    <span class="mini-headrest"></span>
+                    <span class="mini-cushion">&#23F3;</span>
+                </span>
+                <span>Pending Hold (<?= $pending_cnt ?>)</span>
+            </div>
+            <div class="bus-legend-item">
+                <span class="bus-legend-seat-icon legend-available">
+                    <span class="mini-headrest"></span>
+                    <span class="mini-cushion"></span>
+                </span>
+                <span>Available (<?= $available_cnt ?>)</span>
+            </div>
+            <div class="bus-legend-item bus-legend-types">
+                <span class="bus-legend-type-pill"><strong>W</strong> Window</span>
+                <span class="bus-legend-type-pill"><strong>A</strong> Aisle</span>
+            </div>
+        </div>
+    <?php else: ?>
+        <!-- Legend with Realistic Seat Swatches -->
+        <div class="bus-legend" aria-hidden="true">
+            <div class="bus-legend-item">
+                <span class="bus-legend-seat-icon legend-available">
+                    <span class="mini-headrest"></span>
+                    <span class="mini-cushion"></span>
+                </span>
+                <span>Available</span>
+            </div>
+            <div class="bus-legend-item">
+                <span class="bus-legend-seat-icon legend-selected">
+                    <span class="mini-headrest"></span>
+                    <span class="mini-cushion">&#10003;</span>
+                </span>
+                <span>Selected</span>
+            </div>
+            <div class="bus-legend-item">
+                <span class="bus-legend-seat-icon legend-booked">
+                    <span class="mini-headrest"></span>
+                    <span class="mini-cushion">&#10005;</span>
+                </span>
+                <span>Booked</span>
+            </div>
+            <div class="bus-legend-item bus-legend-types">
+                <span class="bus-legend-type-pill"><strong>W</strong> Window</span>
+                <span class="bus-legend-type-pill"><strong>A</strong> Aisle</span>
+            </div>
+        </div>
+    <?php endif; ?>
     <?php
 }
