@@ -6,70 +6,82 @@ This document explains security hardening measures, multi-role RBAC, concurrency
 
 ## 1. Security Architecture & Hardening
 
-### 1.1 Zero Hardcoded Secrets (P1)
-All production credentials are read dynamically via environment variables (`includes/db_con.php`):
-- `DB_HOST`: Hostname (default: `localhost`)
-- `DB_USER`: Username (default: `root`)
-- `DB_PASS`: Password (default: `""`)
-- `DB_NAME`: Database name (default: `majorproject`)
-- `DB_PORT`: Port (default: `3306`, or `4000` on TiDB Cloud)
-- `DB_SSL`: Enforce TLS encryption (default: `false`, set `true` in production)
+### 1.1 Zero Hardcoded Secrets
+All production credentials and API keys are injected dynamically via environment variables (`includes/db_con.php`, `includes/config.php`):
+- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_SSL`
+- `ADMIN_MFA_ENFORCE`
+- `MAIL_*`
 
-### 1.2 Multi-Role RBAC & Session Isolation (P2, P6)
+### 1.2 Multi-Role RBAC & Live Session Checks
 - **Role Enforcement:** Administrative privileges are scoped into `super_admin`, `operator`, and `viewer`.
+- **Live Database Validation:** Role changes, account deactivations (`is_active = 0`), or password changes invalidate existing sessions immediately.
 - **Session Keys:** `admin_id` is segregated from customer session keys (`uid`), preventing token impersonation across contexts.
-- **Session Expiration:** Idle sessions expire after 1,800 seconds (30 minutes) and require re-authentication.
+- **Session Expiration:** Idle sessions expire after 1,800 seconds (30 minutes) with an 8-hour absolute maximum lifetime cap.
 - **Diagnostic Protection:** `admin/diagnostics.php` is restricted to `super_admin` only, strips sensitive credentials from output, and sends `Cache-Control: no-store, private`.
 
-### 1.3 Atomic Seat Allocation & Concurrency Guarantees (P3)
+### 1.3 Two-Factor Authentication (RFC 6238 TOTP)
+- **High-Assurance MFA:** Compatible with Google Authenticator, Microsoft Authenticator, Authy, and 1Password.
+- **Encrypted at Rest:** Base32 secrets are encrypted using AES-256-GCM before storage in `admin.totp_secret`.
+- **Replay Protection:** Replay attacks are blocked by checking `last_totp_step` against incoming time-steps.
+- **Client-Side QR Rendering:** Generated using HTML5 canvas via `qrcode.js`, complying with CSP and avoiding secret URL leaks to 3rd-party servers.
+- **Backup Recovery Codes:** 10 single-use bcrypt-hashed recovery codes stored in `admin_recovery_codes`.
+
+### 1.4 Atomic Seat Allocation & Concurrency Guarantees
 - Real-time seat reservations utilize a dedicated `seat_lock` table with `PRIMARY KEY (bus_id, travel_date, seat_no)`.
 - Inserting into `booking` and `seat_lock` occurs within a single ACID transaction (`mysqli_begin_transaction`).
-- Double-booking collisions throw `errno 1062` which cleanly rolls back the transaction and informs the user immediately without leaking raw SQL errors.
+- Double-booking collisions throw MySQL error 1062, cleanly rolling back the transaction without leaking raw SQL errors.
 
-### 1.4 Cryptographic Passwords & Rehashing (O2)
+### 1.5 Cryptographic Passwords & Rehashing
 - Passwords use bcrypt (`PASSWORD_DEFAULT`).
 - Stored bcrypt hashes are protected: submittal of matching bcrypt strings does not overwrite existing password hashes (`password_get_info()['algo'] === null`).
-- Admin accounts require a minimum password length of 12 characters.
+- Admin accounts require a minimum password length of 12 characters (maximum 72 bytes).
 
-### 1.5 Pre-Auth Brute-Force Rate Limiting (O3, O9)
+### 1.6 Pre-Auth Brute-Force Rate Limiting
 - Login attempts are throttled before password verification:
   - Account key (`login:user:email` / `login:admin:email`): max 5 failures per 15 minutes.
   - IP key (`login:ip:ip`): max 20 failures per 15 minutes.
 - Throttled requests receive an HTTP 429 Too Many Requests response.
 - Expired throttle records older than 24 hours are automatically pruned.
 
-### 1.6 IP Spoofing Prevention (O1)
-- `client_ip()` verifies `REMOTE_ADDR` as the trusted foundation.
-- If behind a load balancer or reverse proxy, `TRUSTED_PROXY_HOPS` extracts the rightmost trusted hop rather than blindly accepting spoofed leftmost client headers.
-
-### 1.7 PNR Enumeration & Timing Attack Defense (O1)
+### 1.7 PNR Enumeration & Timing Attack Defense
 - Replaced sequential integer IDs with random 10-hex uppercase tokens (`random_bytes(5)`).
-- Public PNR status checks require the last 4 digits of the phone number.
+- Public PNR status checks require the last 4 digits of the passenger phone number.
 - Throttled per IP (10 / 10 min) and per target PNR token (5 / 15 min).
-- Constant-time and uniform error messages prevent oracle enumeration.
+- Constant-time password verify dummy execution prevents user enumeration.
 
-### 1.8 Comprehensive Audit Trail (P9)
+### 1.8 Comprehensive Audit Trail
 - All administrative mutations (bus create/delete, route schedule create/delete, booking create/cancel, customer modifications) write immutable log entries to `audit_log`.
-- Super administrators can inspect actor, timestamp, IP, action, and JSON state diffs in `admin/audit-log.php`.
+- Database triggers block `UPDATE` and `DELETE` on `audit_log`.
+
+### 1.9 Enforced HTTP Security Headers
+Apache security headers in `docker/apache-security.conf` enforce:
+- `Content-Security-Policy`: Strict directives with SRI hashes and script/image whitelisting.
+- `Strict-Transport-Security`: `max-age=15552000` (HSTS).
+- `X-Frame-Options`: `SAMEORIGIN`.
+- `X-Content-Type-Options`: `nosniff`.
 
 ---
 
-## 2. Automated Regression Test Suite (`tests/run_tests.php`) (O14)
+## 2. Automated Test Harnesses
 
-Run the test suite from the CLI to ensure all security and concurrency constraints hold:
+The system contains five automated test suites verifying security, concurrency, data integrity, and UI resilience:
 
 ```bash
-php tests/run_tests.php
-```
+# Admin Login Entry Points, Query Whitelist & Modal UI
+php tests/test_admin_login.php
 
-### Test Coverage Matrix:
-1. **IP Extraction & Anti-Spoofing:** Tests rightmost hop parsing and fallback on corrupted headers.
-2. **Throttling & Clearing:** Tests block triggers at threshold and recovery after window expiration.
-3. **Password Hash Verification:** Verifies bcrypt detection and plaintext isolation.
-4. **Fleet Capacity Modeling:** Validates custom bus capacity (10–60) and fallback behavior.
-5. **Double-Booking Race Condition Defense:** Simulates concurrent reservations for the same seat on the same trip to ensure the duplicate key constraint `uq_booking_seat` and `seat_lock` block double allocation.
-6. **Soft Cancellation & Seat Recovery:** Verifies that cancelling a booking preserves the audit row while freeing the seat for subsequent passengers.
-7. **Seat Hold Expiration & Liberation:** Verifies that `Pending` holds block other users, and auto-expire after timeout, liberating the seat.
+# Phase 1: Access Control, TOTP 2FA, Password Policy & Session Invalidation
+php tests/test_phase1.php
+
+# Phase 2: Money, Tariff Governance, Hold Segregation, Manifest & Analytics
+php tests/test_phase2.php
+
+# Phase 3: Route Conflict Detection, Bus Capacity & Migration Idempotency
+php tests/test_phase3.php
+
+# Phase 4: Enforced CSP Headers, SRI Hashes, SQL LIKE Escaping & CLI Guards
+php tests/test_phase4.php
+```
 
 ---
 
@@ -89,4 +101,29 @@ php tests/run_tests.php
 
 ### Issue 4: "Cannot delete bus / route: active bookings exist"
 - **Cause:** Administrator attempted to delete a vehicle or schedule with upcoming customer bookings.
-- **Fix:** Reassign the passengers or wait until the scheduled travel date has passed.
+- **Fix:** Archive the vehicle/route (`archived_at`) or wait until scheduled departure dates pass.
+
+### Issue 5: "Unknown column 'role' in 'field list' / Migration skipped"
+- **Cause:** A pre-existing database recorded migration 001 as applied before `role` was added, causing subsequent migrations (e.g., 009) to fail.
+- **Fix:** `database/db_migrate.php` includes self-healing schema checks on startup that automatically verify and add `admin.role`. Alternatively, add it manually in TiDB Cloud SQL Editor:
+  ```sql
+  ALTER TABLE `admin` ADD COLUMN `role` ENUM('super_admin','operator','viewer') NOT NULL DEFAULT 'operator';
+  ```
+
+### Issue 6: "Two-Factor Authentication required / Redirected to profile.php"
+- **Cause:** Mandatory 2FA enforcement was activated for admin accounts when `totp_enabled = 0`.
+- **Fix:**
+  1. Complete 2FA enrollment on `admin/profile.php` using Google Authenticator or Authy.
+  2. Set `ADMIN_MFA_ENFORCE=false` in Render environment variables to make 2FA optional.
+  3. If locked out of an account, run the break-glass CLI reset:
+     ```bash
+     php database/reset-mfa.php "admin@example.com"
+     ```
+
+### Issue 7: "The QR code is not loading"
+- **Cause:** Browser Content Security Policy (CSP) blocked third-party external QR image generators.
+- **Fix:** The application now renders QR codes locally via client-side HTML5 canvas (`qrcode.js`), with a 1-click **Copy** button for manual secret key entry in authenticator apps.
+
+### Issue 8: "TiDB cannot add a STORED generated column via ALTER TABLE (Migration 005)"
+- **Cause:** TiDB Cloud Serverless does not support adding `STORED` generated columns via `ALTER TABLE`.
+- **Fix:** `database/db_migrate.php` implements an automated fallback to `VIRTUAL` generated columns for `active_seat`, ensuring the unique index `uq_booking_active_seat` is created without failure.

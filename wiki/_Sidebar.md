@@ -10,7 +10,10 @@
 
 ---
 
-### 📦 Quick Links
+### 📦 Distribution & Packages
 - **[GitHub Repository](https://github.com/Jashan-randhawa/Bus-Resrvation)**
 - **[Releases](https://github.com/Jashan-randhawa/Bus-Resrvation/releases)**
-- **[Docker Packages](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation)**
+- **[Docker App Package](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation)**
+- **[Migration Runner Package](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation-migrate)**
+- **[@jashan-randhawa/bus-seat-picker](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/npm/bus-seat-picker)**
+- **[@jashan-randhawa/busres-ui](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/npm/busres-ui)**
