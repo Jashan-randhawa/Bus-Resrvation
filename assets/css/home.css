@@ -493,3 +493,143 @@ section[id] {
     margin-top: 0.5rem;
   }
 }
+
+/* ── 12. Popular Routes Auto-Scrolling Carousel Slider (3s) ──── */
+.popular-routes-slider-wrapper {
+  position: relative;
+  padding: 0 45px;
+}
+
+.popular-routes-track {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE/Edge */
+  padding: 0.5rem 0.25rem 1rem 0.25rem;
+}
+
+.popular-routes-track::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.popular-route-slide {
+  flex: 0 0 calc(33.333% - 1rem);
+  max-width: calc(33.333% - 1rem);
+  scroll-snap-align: start;
+}
+
+@media (max-width: 991.98px) {
+  .popular-route-slide {
+    flex: 0 0 calc(50% - 0.75rem);
+    max-width: calc(50% - 0.75rem);
+  }
+}
+
+@media (max-width: 575.98px) {
+  .popular-routes-slider-wrapper {
+    padding: 0;
+  }
+  .popular-route-slide {
+    flex: 0 0 85%;
+    max-width: 85%;
+  }
+}
+
+.popular-route-card {
+  border-radius: 12px;
+  background: var(--home-surface, #ffffff);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  height: 100%;
+}
+
+.popular-route-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+}
+
+.routes-slider-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: var(--home-navy, #1e293b);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+
+.routes-slider-btn:hover {
+  background: var(--home-primary, #2563eb);
+  color: #ffffff;
+  border-color: var(--home-primary, #2563eb);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.routes-slider-prev {
+  left: 0;
+}
+
+.routes-slider-next {
+  right: 0;
+}
+
+@media (max-width: 575.98px) {
+  .routes-slider-btn {
+    display: none;
+  }
+}
+
+.routes-slider-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.routes-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  background: #cbd5e1;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.routes-dot.active {
+  background: var(--home-primary, #2563eb);
+  width: 24px;
+  border-radius: 9999px;
+}
+
+html[data-theme="dark"] .routes-slider-btn {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+html[data-theme="dark"] .routes-slider-btn:hover {
+  background: var(--home-primary, #2563eb);
+  color: #ffffff;
+}
+html[data-theme="dark"] .routes-dot {
+  background: #475569;
+}
+html[data-theme="dark"] .routes-dot.active {
+  background: var(--home-primary, #2563eb);
+}
