@@ -11,8 +11,8 @@ $route_pk = table_has_column($link, 'route', 'sno') ? 'sno' : 'id';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
     csrf_verify();
     require_role('super_admin', 'operator');
-    $from = trim((string)($_POST['From'] ?? ''));
-    $to = trim((string)($_POST['To'] ?? ''));
+    $from = trim(preg_replace('/\s+/', ' ', (string)($_POST['From'] ?? '')));
+    $to = trim(preg_replace('/\s+/', ' ', (string)($_POST['To'] ?? '')));
     $bus = trim((string)($_POST['bus'] ?? ''));
     $time = trim((string)($_POST['time'] ?? ''));
     $price = (float)($_POST['price'] ?? 0);
@@ -132,6 +132,9 @@ $total_routes = (int)(db_one($link, "SELECT COUNT(*) AS c FROM route {$where_arc
 $pagination = paginate($total_routes, 25);
 $routes = db_all($link, "SELECT * FROM route {$where_archive} ORDER BY `{$route_pk}` ASC LIMIT ? OFFSET ?", 'ii', [$pagination['per_page'], $pagination['offset']]);
 
+// Distinct known cities for datalist auto-suggest (A16)
+$known_cities = db_all($link, "SELECT DISTINCT city1 AS city FROM route UNION SELECT DISTINCT city2 AS city FROM route ORDER BY city ASC");
+
 $form_old = $_SESSION['form_old'] ?? [];
 unset($_SESSION['form_old']);
 
@@ -225,14 +228,21 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             <div class="modal-body p-4">
                 <form action="" method="post">
                     <?= csrf_field() ?>
+                    <datalist id="citySuggestions">
+                        <?php foreach ($known_cities as $kc): ?>
+                            <?php if (!empty($kc['city'])): ?>
+                                <option value="<?= e(trim($kc['city'])) ?>">
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </datalist>
                     <div class="form-row">
                         <div class="col-6 form-group">
                             <label for="From" class="font-weight-bold small text-muted">From City</label>
-                            <input type="text" id="From" name="From" class="form-control" value="<?= e($form_old['From'] ?? '') ?>" placeholder="Origin" required />
+                            <input type="text" id="From" name="From" list="citySuggestions" class="form-control" value="<?= e($form_old['From'] ?? '') ?>" placeholder="Origin city" required autocomplete="off" />
                         </div>
                         <div class="col-6 form-group">
                             <label for="To" class="font-weight-bold small text-muted">To City</label>
-                            <input type="text" id="To" name="To" class="form-control" value="<?= e($form_old['To'] ?? '') ?>" placeholder="Destination" required />
+                            <input type="text" id="To" name="To" list="citySuggestions" class="form-control" value="<?= e($form_old['To'] ?? '') ?>" placeholder="Destination city" required autocomplete="off" />
                         </div>
                     </div>
                     <div class="form-group">
@@ -263,5 +273,25 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var fromInput = document.getElementById('From');
+    var toInput = document.getElementById('To');
+    var form = fromInput ? fromInput.closest('form') : null;
+
+    if (form && fromInput && toInput) {
+        form.addEventListener('submit', function(e) {
+            var f = fromInput.value.trim().toLowerCase();
+            var t = toInput.value.trim().toLowerCase();
+            if (f !== '' && f === t) {
+                e.preventDefault();
+                alert('Origin and destination cities cannot be the same.');
+                toInput.focus();
+            }
+        });
+    }
+});
+</script>
 
 <?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>
