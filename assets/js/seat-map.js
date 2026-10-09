@@ -5,6 +5,19 @@
   var btn = document.getElementById('submit-booking-btn');
   var bookingForm = document.getElementById('booking-form');
   var errBox = document.getElementById('booking-validation-error');
+  var submitTimeout = null;
+
+  function resetButton() {
+    if (submitTimeout) {
+      clearTimeout(submitTimeout);
+      submitTimeout = null;
+    }
+    if (btn) {
+      btn.innerHTML = 'Confirm &amp; Reserve Ticket';
+      var selectedRadio = document.querySelector('input[name="seat"]:checked');
+      btn.disabled = !selectedRadio;
+    }
+  }
 
   // Initialize the vendored/packaged BusSeatPicker widget
   var picker = null;
@@ -16,8 +29,8 @@
       liveRegion: '#seat-live',
       errorBox: '#booking-validation-error',
       availabilityUrl: 'api-seats.php',
-      pollInterval: 30000,
-      maxBackoff: 120000,
+      pollInterval: 15000,
+      maxBackoff: 60000,
       requestTimeout: 8000,
       classes: {
         badge: 'badge badge-success px-2 py-1 mr-1',
@@ -41,7 +54,7 @@
     }
   });
 
-  // U-05, Phase 1.7, Phase 5.2: Double click lock, bfcache reset, and accessible inline error
+  // U-05, Phase 1.7, Phase 5.2, Issue 7: Double click lock, 20s timeout, and accessible inline error
   if (bookingForm && btn) {
     bookingForm.addEventListener('submit', function (e) {
       var selectedRadio = document.querySelector('input[name="seat"]:checked');
@@ -66,17 +79,23 @@
         checkHidden.name = 'check';
         checkHidden.value = '1';
         bookingForm.appendChild(checkHidden);
+
+        // 20-second timeout resetting "Booking..." button on network failure or stalled submit
+        submitTimeout = setTimeout(function () {
+          resetButton();
+          if (errBox) {
+            errBox.className = 'alert alert-warning mt-3';
+            errBox.textContent = 'Reservation request timed out. Please check your connection and submit again.';
+            errBox.classList.remove('d-none');
+          }
+        }, 20000);
       }
     });
   }
 
   // Phase 1.7: Restore button state on browser Back/Forward (bfcache) navigation
   window.addEventListener('pageshow', function () {
-    if (btn) {
-      btn.innerHTML = 'Confirm &amp; Reserve Ticket';
-      var selectedRadio = document.querySelector('input[name="seat"]:checked');
-      btn.disabled = !selectedRadio;
-    }
+    resetButton();
     if (errBox) {
       errBox.classList.add('d-none');
       errBox.textContent = '';

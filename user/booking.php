@@ -47,7 +47,7 @@ $form_name = isset($_POST['unm']) ? trim((string)$_POST['unm']) : ($_SESSION['na
 $form_phone = isset($_POST['num']) ? trim((string)$_POST['num']) : ($_SESSION['phone'] ?? '');
 $form_seat = isset($_POST['seat']) ? (int)$_POST['seat'] : 0;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
     $post_route_id = (int)($_POST['route_id'] ?? 0);
     $post_time = trim((string)($_POST['time'] ?? ''));
