@@ -394,13 +394,38 @@ if (isset($_POST['subbtn'])) {
           <script>
             function handleGuestSearch(e) {
               e.preventDefault();
-              var fromVal = document.getElementById('guest_from').value;
-              var toVal = document.getElementById('guest_to').value;
-              var dateVal = document.getElementById('guest_date').value;
-              sessionStorage.setItem('guest_search_from', fromVal);
-              sessionStorage.setItem('guest_search_to', toVal);
-              sessionStorage.setItem('guest_search_date', dateVal);
-              $('#userlogin').modal('show');
+              var fromEl = document.getElementById('guest_from');
+              var toEl = document.getElementById('guest_to');
+              var dateEl = document.getElementById('guest_date');
+              var fromVal = fromEl ? fromEl.value : '';
+              var toVal = toEl ? toEl.value : '';
+              var dateVal = dateEl ? dateEl.value : '';
+
+              if (!fromVal || !toVal || !dateVal) {
+                return;
+              }
+
+              var q = new URLSearchParams({
+                from: fromVal,
+                to: toVal,
+                date: dateVal
+              });
+              var nextUrl = '<?= BASE_URL ?>/user/index.php?' + q.toString();
+
+              document.querySelectorAll('#userlogin input[name="next"]').forEach(function(input) {
+                input.value = nextUrl;
+              });
+
+              var noticeBox = document.getElementById('guestSearchNotice');
+              var noticeText = document.getElementById('guestSearchNoticeText');
+              if (noticeBox && noticeText) {
+                noticeText.textContent = 'Sign in or register to view available buses from ' + fromVal + ' to ' + toVal + ' on ' + dateVal + '.';
+                noticeBox.classList.remove('d-none');
+              }
+
+              if (window.jQuery) {
+                $('#userlogin').modal('show');
+              }
             }
           </script>
         <?php endif; ?>
@@ -711,6 +736,11 @@ if (isset($_POST['subbtn'])) {
             <a class="nav-link font-weight-bold <?= ($open_modal === 'register') ? 'active' : '' ?>" id="register-tab" data-toggle="tab" href="#register-pane" role="tab" aria-controls="register-pane" aria-selected="<?= ($open_modal === 'register') ? 'true' : 'false' ?>">Register</a>
           </li>
         </ul>
+      <div id="guestSearchNotice" class="alert alert-info alert-dismissible fade show m-3 mb-0 d-none" role="alert">
+        <span class="mr-1">🚌</span> <span id="guestSearchNoticeText"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
       </div>
       <div class="tab-content" id="authTabContent">
         <!-- Login Pane -->
