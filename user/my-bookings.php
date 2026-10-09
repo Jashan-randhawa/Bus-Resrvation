@@ -5,6 +5,7 @@ require_once __DIR__ . '/../includes/db_con.php';
 
 $uid = (int)($_SESSION['uid'] ?? 0);
 $phone = trim((string)($_SESSION['phone'] ?? ''));
+$now_ts = time();
 
 $alert = null;
 $alert_type = 'info';
