@@ -88,7 +88,7 @@
         <div class="admin-main">
             <!-- Top bar with toggle & theme switch -->
             <div class="admin-topbar">
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="sidebarToggle">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="sidebarToggle" aria-controls="adminSidebar" aria-expanded="false" aria-label="Toggle navigation menu">
                     &#9776; Menu
                 </button>
                 <span class="font-weight-bold text-dark ml-2"><?= e($title ?? 'Customer Area') ?></span>

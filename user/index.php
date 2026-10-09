@@ -248,6 +248,14 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
             <?php endif; ?>
         </div>
 
+        <?php if (!empty($matched_routes) && $search_date === date('Y-m-d')): ?>
+            <div class="px-3 pt-3">
+                <div class="alert alert-info py-2 px-3 mb-0 small" role="status">
+                    ℹ️ <strong>Same-day schedule:</strong> Upcoming available buses are shown first; trips that have already departed today are sorted below.
+                </div>
+            </div>
+        <?php endif; ?>
+
         <?php if (empty($matched_routes)): ?>
             <div class="empty-state py-5 text-center">
                 <div class="empty-icon" style="font-size: 3rem;">🚌</div>

@@ -1211,7 +1211,8 @@ html[data-theme="dark"] .bus-legend-item {
   .theme-toggle-btn {
     display: none !important;
   }
-  .admin-layout {
+  .admin-layout,
+  .admin-shell {
     display: block !important;
   }
   .admin-main,
@@ -1226,6 +1227,24 @@ html[data-theme="dark"] .bus-legend-item {
     max-width: 100% !important;
     margin: 0 auto !important;
   }
+}
+
+/* Accessibility: Skip Links & Focus Visible (Issue 10) */
+.skip-link {
+  position: absolute;
+  top: -999px;
+  left: -999px;
+  z-index: 10000;
+  padding: 8px 16px;
+  background: var(--c-primary, #1e40af);
+  color: #ffffff !important;
+  font-weight: 700;
+  border-radius: 0 0 6px 6px;
+  text-decoration: none;
+}
+.skip-link:focus {
+  top: 0;
+  left: 1rem;
 }
 
 /* Focus visible */

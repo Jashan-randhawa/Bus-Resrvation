@@ -9,23 +9,36 @@
     integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct"
     crossorigin="anonymous"></script>
 <script>
-    // Responsive Mobile Sidebar Toggle
+    // Responsive Mobile Sidebar Toggle with aria-expanded & Escape key handling (Issue 10)
     document.addEventListener('DOMContentLoaded', function() {
         var sidebar = document.getElementById('adminSidebar');
         var toggle = document.getElementById('sidebarToggle');
         var overlay = document.getElementById('sidebarOverlay');
 
-        if (toggle && sidebar && overlay) {
-            toggle.addEventListener('click', function() {
-                sidebar.classList.toggle('show');
-                overlay.classList.toggle('show');
-            });
+        if (!toggle || !sidebar || !overlay) return;
 
-            overlay.addEventListener('click', function() {
-                sidebar.classList.remove('show');
-                overlay.classList.remove('show');
-            });
+        function setSidebar(open) {
+            sidebar.classList.toggle('show', open);
+            overlay.classList.toggle('show', open);
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            document.body.classList.toggle('overflow-hidden', open);
         }
+
+        toggle.addEventListener('click', function() {
+            var isOpen = sidebar.classList.contains('show');
+            setSidebar(!isOpen);
+        });
+
+        overlay.addEventListener('click', function() {
+            setSidebar(false);
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && sidebar.classList.contains('show')) {
+                setSidebar(false);
+                toggle.focus();
+            }
+        });
     });
 </script>
 </body>
