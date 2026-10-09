@@ -38,6 +38,10 @@ jobs:
 
       - name: Verify package and vendored assets sync (no drift)
         run: |
+          for f in packages/seat-picker/dist/seat-picker.js assets/js/vendor/seat-picker.js \
+                   packages/ui/src/theme-toggle.js assets/js/theme-toggle.js; do
+            test -f "$f" || { echo "Missing expected file: $f"; exit 1; }
+          done
           diff -u packages/seat-picker/dist/seat-picker.js assets/js/vendor/seat-picker.js
-          diff -u packages/ui/src/theme-toggle.js assets/js/vendor/theme-toggle.js
+          diff -u packages/ui/src/theme-toggle.js assets/js/theme-toggle.js
 
