@@ -48,6 +48,8 @@ if ($is_cancelled) {
 }
 
 $is_active = (!$is_cancelled && !$is_expired);
+$is_valid = (!$is_cancelled && !$is_expired && !$is_past && ($raw_status === 'Confirmed' || $raw_status === ''));
+$stamp = $is_valid ? 'VALID PASS' : ($is_cancelled || $is_expired ? 'VOID' : ($raw_status === 'Pending' ? 'PENDING PAYMENT' : 'COMPLETED'));
 $verify_hash = strtoupper(substr(hash('crc32b', $booking['pnr'] . $booking['date']), 0, 6));
 ?>
 
@@ -111,10 +113,10 @@ $verify_hash = strtoupper(substr(hash('crc32b', $booking['pnr'] . $booking['date
         &larr; Back to My Bookings
     </a>
     <div>
-        <!-- Phase 2.2: Only show Print button if ticket is active/valid -->
-        <?php if ($is_active): ?>
+        <!-- Phase 2.2: Only show Print button if ticket is active/valid or completed receipt -->
+        <?php if (!$is_cancelled && !$is_expired): ?>
             <button type="button" onclick="window.print()" class="btn btn-primary shadow-sm font-weight-bold">
-                🖨️ Print Ticket
+                🖨️ <?= $is_past ? 'Print Receipt' : 'Print Ticket' ?>
             </button>
         <?php else: ?>
             <span class="badge badge-secondary px-3 py-2 text-uppercase">Ticket Inactive</span>
@@ -125,10 +127,10 @@ $verify_hash = strtoupper(substr(hash('crc32b', $booking['pnr'] . $booking['date
 <div class="row justify-content-center">
     <div class="col-lg-8 col-xl-7">
         <div class="card border ticket-container shadow-sm p-4 p-md-5 bg-white">
-            <!-- Phase 2.2: Watermark overlay for cancelled or expired tickets -->
-            <?php if (!$is_active): ?>
+            <!-- Phase 2.2: Watermark overlay for cancelled, expired, or completed tickets -->
+            <?php if (!$is_valid): ?>
                 <div class="ticket-void-overlay font-weight-bold text-uppercase" aria-hidden="true">
-                    <?= $is_cancelled ? 'VOID &bull; CANCELLED' : 'VOID &bull; EXPIRED' ?>
+                    <?= $is_cancelled ? 'VOID &bull; CANCELLED' : ($is_expired ? 'VOID &bull; EXPIRED' : ($is_past ? 'COMPLETED' : 'PENDING PAYMENT')) ?>
                 </div>
             <?php endif; ?>
 
@@ -189,7 +191,7 @@ $verify_hash = strtoupper(substr(hash('crc32b', $booking['pnr'] . $booking['date
                 <div class="col-sm-6 mb-3 text-sm-right">
                     <!-- Phase 2.3: Honest fare description -->
                     <small class="text-muted text-uppercase font-weight-bold d-block">
-                        <?= $is_active ? 'Ticket Fare' : 'Fare (Void / Cancelled)' ?>
+                        <?= $is_valid ? 'Ticket Fare' : ($is_past ? 'Paid Fare (Receipt)' : 'Fare (' . e($stamp) . ')') ?>
                     </small>
                     <div class="h3 font-weight-bold text-success mb-0"><?= CURRENCY ?><?= e(number_format((float)$booking['price'], 2)) ?></div>
                 </div>
@@ -198,13 +200,21 @@ $verify_hash = strtoupper(substr(hash('crc32b', $booking['pnr'] . $booking['date
             <!-- Instructions & Digital Verification Seal (Phase 2.1, 2.2) -->
             <div class="border-top pt-4 d-flex flex-column flex-sm-row justify-content-between align-items-center">
                 <div class="mb-3 mb-sm-0 text-center text-sm-left flex-grow-1 pr-sm-3">
-                    <?php if ($is_active): ?>
+                    <?php if ($is_valid): ?>
                         <div class="font-weight-bold small text-dark mb-1">Boarding Instructions:</div>
                         <ul class="text-muted small pl-3 mb-0 text-left">
                             <li>Please arrive at the terminal at least 15 minutes before departure.</li>
                             <li>Carry a valid government photo ID matching the passenger name.</li>
                             <li>Present this digital ticket or printed pass with PNR at boarding.</li>
                         </ul>
+                    <?php elseif ($is_past): ?>
+                        <div class="alert alert-secondary mb-0 small text-left">
+                            <strong>Trip Completed:</strong> This journey has departed and completed. This document serves as your travel receipt.
+                        </div>
+                    <?php elseif ($raw_status === 'Pending'): ?>
+                        <div class="alert alert-warning mb-0 small text-left">
+                            <strong>Pending Payment:</strong> This booking is on temporary hold and is not yet confirmed for boarding until payment completes.
+                        </div>
                     <?php else: ?>
                         <!-- Phase 2.2: Replaced boarding instructions for void tickets -->
                         <div class="alert alert-danger mb-0 small text-left">
@@ -223,7 +233,7 @@ $verify_hash = strtoupper(substr(hash('crc32b', $booking['pnr'] . $booking['date
                             SEAL: <?= e($verify_hash) ?>
                         </div>
                         <div class="text-muted small mt-1 font-weight-medium" style="font-size: 10px;">
-                            <?= $is_active ? 'VALID PASS' : 'VOID' ?>
+                            <?= e($stamp) ?>
                         </div>
                     </div>
                 </div>
