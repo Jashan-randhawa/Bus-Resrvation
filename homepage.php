@@ -869,82 +869,88 @@ document.addEventListener('DOMContentLoaded', function() {
 <?php endif; ?>
 
 <script>
-// Auto-focus first input field when modals are opened (E5)
-$('#userlogin').on('shown.bs.modal', function () {
-  var activePane = document.querySelector('#authTabContent .tab-pane.active');
-  if (activePane) {
-    var firstInput = activePane.querySelector('input:not([type=hidden])');
-    if (firstInput) firstInput.focus();
-  }
-});
-$('#loginModal').on('shown.bs.modal', function () {
-  var emailField = document.getElementById('admin-email-input');
-  if (emailField) emailField.focus();
-});
-
-// Password Visibility Toggle & Caps Lock Detection (Issues 5 & 6)
-(function() {
-  var pwdInput = document.getElementById('admin-pwd-input');
-  var pwdToggle = document.getElementById('admin-pwd-toggle');
-  var pwdToggleText = document.getElementById('admin-pwd-toggle-text');
-  var capsWarning = document.getElementById('admin-caps-warning');
-
-  function resetPasswordVisibility() {
-    if (pwdInput && pwdInput.type !== 'password') {
-      pwdInput.type = 'password';
-      if (pwdToggle) {
-        pwdToggle.setAttribute('aria-label', 'Show password');
-        pwdToggle.setAttribute('aria-pressed', 'false');
+document.addEventListener('DOMContentLoaded', function () {
+  // Auto-focus first input field when modals are opened (E5)
+  if (window.jQuery) {
+    $('#userlogin').on('shown.bs.modal', function () {
+      var activePane = document.querySelector('#authTabContent .tab-pane.active');
+      if (activePane) {
+        var firstInput = activePane.querySelector('input:not([type=hidden])');
+        if (firstInput) firstInput.focus();
       }
-      if (pwdToggleText) {
-        pwdToggleText.textContent = 'Show';
-      }
-    }
-  }
-
-  if (pwdToggle && pwdInput) {
-    pwdToggle.addEventListener('click', function() {
-      var isPassword = pwdInput.type === 'password';
-      pwdInput.type = isPassword ? 'text' : 'password';
-      pwdToggle.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
-      pwdToggle.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
-      if (pwdToggleText) {
-        pwdToggleText.textContent = isPassword ? 'Hide' : 'Show';
-      }
-      pwdInput.focus();
+    });
+    $('#loginModal').on('shown.bs.modal', function () {
+      var emailField = document.getElementById('admin-email-input');
+      if (emailField) emailField.focus();
     });
   }
 
-  if (pwdInput && capsWarning) {
-    function checkCapsLock(e) {
-      if (e.getModifierState && e.getModifierState('CapsLock')) {
-        capsWarning.classList.remove('d-none');
-      } else {
+  // Password Visibility Toggle & Caps Lock Detection (Issues 5 & 6)
+  (function() {
+    var pwdInput = document.getElementById('admin-pwd-input');
+    var pwdToggle = document.getElementById('admin-pwd-toggle');
+    var pwdToggleText = document.getElementById('admin-pwd-toggle-text');
+    var capsWarning = document.getElementById('admin-caps-warning');
+
+    function resetPasswordVisibility() {
+      if (pwdInput && pwdInput.type !== 'password') {
+        pwdInput.type = 'password';
+        if (pwdToggle) {
+          pwdToggle.setAttribute('aria-label', 'Show password');
+          pwdToggle.setAttribute('aria-pressed', 'false');
+        }
+        if (pwdToggleText) {
+          pwdToggleText.textContent = 'Show';
+        }
+      }
+    }
+
+    if (pwdToggle && pwdInput) {
+      pwdToggle.addEventListener('click', function() {
+        var isPassword = pwdInput.type === 'password';
+        pwdInput.type = isPassword ? 'text' : 'password';
+        pwdToggle.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+        pwdToggle.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
+        if (pwdToggleText) {
+          pwdToggleText.textContent = isPassword ? 'Hide' : 'Show';
+        }
+        pwdInput.focus();
+      });
+    }
+
+    if (pwdInput && capsWarning) {
+      function checkCapsLock(e) {
+        if (e.getModifierState && e.getModifierState('CapsLock')) {
+          capsWarning.classList.remove('d-none');
+        } else {
+          capsWarning.classList.add('d-none');
+        }
+      }
+      pwdInput.addEventListener('keydown', checkCapsLock);
+      pwdInput.addEventListener('keyup', checkCapsLock);
+      pwdInput.addEventListener('blur', function() {
         capsWarning.classList.add('d-none');
-      }
+      });
     }
-    pwdInput.addEventListener('keydown', checkCapsLock);
-    pwdInput.addEventListener('keyup', checkCapsLock);
-    pwdInput.addEventListener('blur', function() {
-      capsWarning.classList.add('d-none');
-    });
-  }
 
-  // Reset visibility when form submits or modal closes
-  var adminModal = document.getElementById('loginModal');
-  if (adminModal) {
-    var adminForm = adminModal.querySelector('form');
-    if (adminForm) {
-      adminForm.addEventListener('submit', resetPasswordVisibility);
-    }
-    $('#loginModal').on('hidden.bs.modal', function() {
-      resetPasswordVisibility();
-      if (capsWarning) {
-        capsWarning.classList.add('d-none');
+    // Reset visibility when form submits or modal closes
+    var adminModal = document.getElementById('loginModal');
+    if (adminModal) {
+      var adminForm = adminModal.querySelector('form');
+      if (adminForm) {
+        adminForm.addEventListener('submit', resetPasswordVisibility);
       }
-    });
-  }
-})();
+      if (window.jQuery) {
+        $('#loginModal').on('hidden.bs.modal', function() {
+          resetPasswordVisibility();
+          if (capsWarning) {
+            capsWarning.classList.add('d-none');
+          }
+        });
+      }
+    }
+  })();
+});
 </script>
 
 <?php require_once __DIR__ . '/includes/layout/footer-public.php'; ?>
