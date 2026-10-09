@@ -494,49 +494,14 @@ section[id] {
   }
 }
 
-/* ── 12. Popular Routes Auto-Scrolling Carousel Slider (3s) ──── */
-.popular-routes-slider-wrapper {
+/* ── 12. Bootstrap Carousel for Popular Routes (3s auto-scroll) ── */
+#popularRoutesCarousel {
   position: relative;
-  padding: 0 45px;
+  padding: 0 45px 35px 45px;
 }
 
-.popular-routes-track {
-  display: flex;
-  gap: 1.5rem;
-  overflow-x: auto;
-  scroll-behavior: smooth;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none;  /* IE/Edge */
-  padding: 0.5rem 0.25rem 1rem 0.25rem;
-}
-
-.popular-routes-track::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-.popular-route-slide {
-  flex: 0 0 calc(33.333% - 1rem);
-  max-width: calc(33.333% - 1rem);
-  scroll-snap-align: start;
-}
-
-@media (max-width: 991.98px) {
-  .popular-route-slide {
-    flex: 0 0 calc(50% - 0.75rem);
-    max-width: calc(50% - 0.75rem);
-  }
-}
-
-@media (max-width: 575.98px) {
-  .popular-routes-slider-wrapper {
-    padding: 0;
-  }
-  .popular-route-slide {
-    flex: 0 0 85%;
-    max-width: 85%;
-  }
+#popularRoutesCarousel .carousel-inner {
+  padding: 5px 2px;
 }
 
 .popular-route-card {
@@ -552,84 +517,109 @@ section[id] {
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
 }
 
-.routes-slider-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+#popularRoutesCarousel .carousel-control-prev,
+#popularRoutesCarousel .carousel-control-next {
   width: 42px;
   height: 42px;
+  top: 45%;
+  transform: translateY(-50%);
   border-radius: 50%;
-  background: #ffffff;
+  background-color: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.12);
-  color: var(--home-navy, #1e293b);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-  line-height: 1;
-  cursor: pointer;
-  z-index: 10;
+  color: #1e293b;
+  opacity: 0.92;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
+  z-index: 5;
 }
 
-.routes-slider-btn:hover {
-  background: var(--home-primary, #2563eb);
-  color: #ffffff;
-  border-color: var(--home-primary, #2563eb);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-}
-
-.routes-slider-prev {
+#popularRoutesCarousel .carousel-control-prev {
   left: 0;
 }
 
-.routes-slider-next {
+#popularRoutesCarousel .carousel-control-next {
   right: 0;
 }
 
+#popularRoutesCarousel .carousel-control-prev:hover,
+#popularRoutesCarousel .carousel-control-next:hover {
+  background-color: var(--home-primary, #2563eb);
+  border-color: var(--home-primary, #2563eb);
+  opacity: 1;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+#popularRoutesCarousel .carousel-control-prev-icon {
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%231e293b' viewBox='0 0 8 8'%3E%3Cpath d='M5.25 0l-4 4 4 4 1.5-1.5-2.5-2.5 2.5-2.5-1.5-1.5z'/%3E%3C/svg%3E");
+  width: 14px;
+  height: 14px;
+}
+
+#popularRoutesCarousel .carousel-control-next-icon {
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%231e293b' viewBox='0 0 8 8'%3E%3Cpath d='M2.75 0l-1.5 1.5 2.5 2.5-2.5 2.5 1.5 1.5 4-4-4-4z'/%3E%3C/svg%3E");
+  width: 14px;
+  height: 14px;
+}
+
+#popularRoutesCarousel .carousel-control-prev:hover .carousel-control-prev-icon {
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23ffffff' viewBox='0 0 8 8'%3E%3Cpath d='M5.25 0l-4 4 4 4 1.5-1.5-2.5-2.5 2.5-2.5-1.5-1.5z'/%3E%3C/svg%3E");
+}
+
+#popularRoutesCarousel .carousel-control-next:hover .carousel-control-next-icon {
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23ffffff' viewBox='0 0 8 8'%3E%3Cpath d='M2.75 0l-1.5 1.5 2.5 2.5-2.5 2.5 1.5 1.5 4-4-4-4z'/%3E%3C/svg%3E");
+}
+
+#popularRoutesCarousel .carousel-indicators {
+  bottom: 0;
+  margin-bottom: 0;
+}
+
+#popularRoutesCarousel .carousel-indicators li {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #cbd5e1;
+  border: none;
+  margin: 0 4px;
+  opacity: 1;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+#popularRoutesCarousel .carousel-indicators li.active {
+  background-color: var(--home-primary, #2563eb);
+  width: 28px;
+  border-radius: 9999px;
+}
+
 @media (max-width: 575.98px) {
-  .routes-slider-btn {
+  #popularRoutesCarousel {
+    padding: 0 0 35px 0;
+  }
+  #popularRoutesCarousel .carousel-control-prev,
+  #popularRoutesCarousel .carousel-control-next {
     display: none;
   }
 }
 
-.routes-slider-dots {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-}
-
-.routes-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: none;
-  background: #cbd5e1;
-  padding: 0;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.routes-dot.active {
-  background: var(--home-primary, #2563eb);
-  width: 24px;
-  border-radius: 9999px;
-}
-
-html[data-theme="dark"] .routes-slider-btn {
-  background: #1e293b;
+html[data-theme="dark"] #popularRoutesCarousel .carousel-control-prev,
+html[data-theme="dark"] #popularRoutesCarousel .carousel-control-next {
+  background-color: #1e293b;
   border-color: #334155;
-  color: #f1f5f9;
 }
-html[data-theme="dark"] .routes-slider-btn:hover {
-  background: var(--home-primary, #2563eb);
-  color: #ffffff;
+
+html[data-theme="dark"] #popularRoutesCarousel .carousel-control-prev-icon {
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23f1f5f9' viewBox='0 0 8 8'%3E%3Cpath d='M5.25 0l-4 4 4 4 1.5-1.5-2.5-2.5 2.5-2.5-1.5-1.5z'/%3E%3C/svg%3E");
 }
-html[data-theme="dark"] .routes-dot {
-  background: #475569;
+
+html[data-theme="dark"] #popularRoutesCarousel .carousel-control-next-icon {
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23f1f5f9' viewBox='0 0 8 8'%3E%3Cpath d='M2.75 0l-1.5 1.5 2.5 2.5-2.5 2.5 1.5 1.5 4-4-4-4z'/%3E%3C/svg%3E");
 }
-html[data-theme="dark"] .routes-dot.active {
-  background: var(--home-primary, #2563eb);
+
+html[data-theme="dark"] #popularRoutesCarousel .carousel-indicators li {
+  background-color: #475569;
+}
+
+html[data-theme="dark"] #popularRoutesCarousel .carousel-indicators li.active {
+  background-color: var(--home-primary, #2563eb);
 }

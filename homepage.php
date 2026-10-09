@@ -632,159 +632,79 @@ if (isset($_POST['subbtn'])) {
         </p>
       </div>
 
-      <!-- Popular Routes Auto-Scrolling Carousel (3s interval) -->
-      <div class="popular-routes-slider-wrapper">
-        <button type="button" class="routes-slider-btn routes-slider-prev" id="routesSliderPrev" aria-label="Previous route" title="Previous route">
-          &#10094;
-        </button>
+      <!-- Popular Routes Bootstrap Carousel (3s auto-cycle) -->
+      <?php $route_chunks = array_chunk($popular_routes, 3); ?>
+      <div id="popularRoutesCarousel" class="carousel slide" data-ride="carousel" data-interval="3000" data-pause="hover">
+        <?php if (count($route_chunks) > 1): ?>
+        <!-- Carousel Indicators -->
+        <ol class="carousel-indicators">
+          <?php foreach ($route_chunks as $c_idx => $chunk): ?>
+            <li data-target="#popularRoutesCarousel" data-slide-to="<?= $c_idx ?>" class="<?= $c_idx === 0 ? 'active' : '' ?>" aria-label="Slide <?= $c_idx + 1 ?>"></li>
+          <?php endforeach; ?>
+        </ol>
+        <?php endif; ?>
 
-        <div class="popular-routes-track" id="popularRoutesTrack" tabindex="0" role="region" aria-label="Popular routes carousel">
-          <?php foreach ($popular_routes as $idx => $pr): ?>
-            <div class="popular-route-slide" data-index="<?= $idx ?>">
-              <div class="card h-100 border-0 shadow-sm popular-route-card">
-                <div class="card-body p-4 d-flex flex-column justify-content-between">
-                  <div>
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                      <span class="badge badge-light border text-muted px-2 py-1 small">
-                        <span aria-hidden="true">🚌</span> <?= e((string)($pr['bus_count'] ?? 1)) ?> Daily Departure<?= ((int)($pr['bus_count'] ?? 1) > 1) ? 's' : '' ?>
-                      </span>
-                      <span class="text-success font-weight-bold">
-                        from <?= CURRENCY ?><?= e(number_format((float)$pr['min_price'], 2)) ?>
-                      </span>
+        <!-- Carousel Slides -->
+        <div class="carousel-inner">
+          <?php foreach ($route_chunks as $c_idx => $chunk): ?>
+            <div class="carousel-item <?= $c_idx === 0 ? 'active' : '' ?>">
+              <div class="row">
+                <?php foreach ($chunk as $pr): ?>
+                  <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 border-0 shadow-sm popular-route-card">
+                      <div class="card-body p-4 d-flex flex-column justify-content-between">
+                        <div>
+                          <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="badge badge-light border text-muted px-2 py-1 small">
+                              <span aria-hidden="true">🚌</span> <?= e((string)($pr['bus_count'] ?? 1)) ?> Daily Departure<?= ((int)($pr['bus_count'] ?? 1) > 1) ? 's' : '' ?>
+                            </span>
+                            <span class="text-success font-weight-bold">
+                              from <?= CURRENCY ?><?= e(number_format((float)$pr['min_price'], 2)) ?>
+                            </span>
+                          </div>
+                          <h5 class="card-title font-weight-bold text-dark mb-1">
+                            <?= e($pr['city1']) ?> <span class="text-primary mx-1">&rarr;</span> <?= e($pr['city2']) ?>
+                          </h5>
+                          <p class="card-text text-muted small">Daily scheduled coaches with reserved seating.</p>
+                        </div>
+                        <div class="mt-3 pt-3 border-top">
+                          <a href="#search" class="btn btn-outline-primary btn-sm btn-block font-weight-bold" onclick="prefillSearch('<?= e($pr['city1']) ?>', '<?= e($pr['city2']) ?>');">
+                            Book This Route &rarr;
+                          </a>
+                        </div>
+                      </div>
                     </div>
-                    <h5 class="card-title font-weight-bold text-dark mb-1">
-                      <?= e($pr['city1']) ?> <span class="text-primary mx-1">&rarr;</span> <?= e($pr['city2']) ?>
-                    </h5>
-                    <p class="card-text text-muted small">Daily scheduled coaches with reserved seating.</p>
                   </div>
-                  <div class="mt-3 pt-3 border-top">
-                    <a href="#search" class="btn btn-outline-primary btn-sm btn-block font-weight-bold" onclick="prefillSearch('<?= e($pr['city1']) ?>', '<?= e($pr['city2']) ?>');">
-                      Book This Route &rarr;
-                    </a>
-                  </div>
-                </div>
+                <?php endforeach; ?>
               </div>
             </div>
           <?php endforeach; ?>
         </div>
 
-        <button type="button" class="routes-slider-btn routes-slider-next" id="routesSliderNext" aria-label="Next route" title="Next route">
-          &#10095;
-        </button>
-      </div>
-
-      <!-- Carousel Pagination Dots -->
-      <div class="routes-slider-dots mt-3" id="routesSliderDots" aria-hidden="true">
-        <?php foreach ($popular_routes as $idx => $pr): ?>
-          <button type="button" class="routes-dot <?= $idx === 0 ? 'active' : '' ?>" data-slide-to="<?= $idx ?>" aria-label="Go to slide <?= $idx + 1 ?>"></button>
-        <?php endforeach; ?>
+        <?php if (count($route_chunks) > 1): ?>
+        <!-- Carousel Nav Controls -->
+        <a class="carousel-control-prev" href="#popularRoutesCarousel" role="button" data-slide="prev" aria-label="Previous slide">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="sr-only">Previous</span>
+        </a>
+        <a class="carousel-control-next" href="#popularRoutesCarousel" role="button" data-slide="next" aria-label="Next slide">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="sr-only">Next</span>
+        </a>
+        <?php endif; ?>
       </div>
 
       <script>
-        (function() {
-          var track = document.getElementById('popularRoutesTrack');
-          if (!track) return;
-
-          var prevBtn = document.getElementById('routesSliderPrev');
-          var nextBtn = document.getElementById('routesSliderNext');
-          var dots = document.querySelectorAll('#routesSliderDots .routes-dot');
-          var slides = track.querySelectorAll('.popular-route-slide');
-          if (!slides.length) return;
-
-          var autoScrollTimer = null;
-          var intervalMs = 3000; // 3-second auto-scroll
-
-          function getStepWidth() {
-            var firstSlide = slides[0];
-            if (!firstSlide) return 300;
-            var style = window.getComputedStyle(track);
-            var gap = parseFloat(style.gap) || 24;
-            return firstSlide.offsetWidth + gap;
-          }
-
-          function updateActiveDot() {
-            var scrollLeft = track.scrollLeft;
-            var step = getStepWidth();
-            var activeIdx = Math.round(scrollLeft / step);
-            dots.forEach(function(dot, i) {
-              if (i === activeIdx) {
-                dot.classList.add('active');
-              } else {
-                dot.classList.remove('active');
-              }
+        document.addEventListener('DOMContentLoaded', function() {
+          if (window.jQuery && $('#popularRoutesCarousel').length) {
+            $('#popularRoutesCarousel').carousel({
+              interval: 3000,
+              ride: 'carousel',
+              pause: 'hover',
+              wrap: true
             });
           }
-
-          function scrollNext() {
-            var maxScroll = track.scrollWidth - track.clientWidth;
-            var step = getStepWidth();
-            if (track.scrollLeft >= maxScroll - 15) {
-              track.scrollTo({ left: 0, behavior: 'smooth' });
-            } else {
-              track.scrollBy({ left: step, behavior: 'smooth' });
-            }
-          }
-
-          function scrollPrev() {
-            var step = getStepWidth();
-            if (track.scrollLeft <= 15) {
-              var maxScroll = track.scrollWidth - track.clientWidth;
-              track.scrollTo({ left: maxScroll, behavior: 'smooth' });
-            } else {
-              track.scrollBy({ left: -step, behavior: 'smooth' });
-            }
-          }
-
-          function startAutoScroll() {
-            stopAutoScroll();
-            autoScrollTimer = setInterval(scrollNext, intervalMs);
-          }
-
-          function stopAutoScroll() {
-            if (autoScrollTimer) {
-              clearInterval(autoScrollTimer);
-              autoScrollTimer = null;
-            }
-          }
-
-          if (nextBtn) {
-            nextBtn.addEventListener('click', function() {
-              scrollNext();
-              startAutoScroll();
-            });
-          }
-
-          if (prevBtn) {
-            prevBtn.addEventListener('click', function() {
-              scrollPrev();
-              startAutoScroll();
-            });
-          }
-
-          dots.forEach(function(dot) {
-            dot.addEventListener('click', function() {
-              var idx = parseInt(this.getAttribute('data-slide-to'), 10);
-              var step = getStepWidth();
-              track.scrollTo({ left: idx * step, behavior: 'smooth' });
-              startAutoScroll();
-            });
-          });
-
-          track.addEventListener('scroll', function() {
-            updateActiveDot();
-          }, { passive: true });
-
-          // Pause on mouse hover / touch
-          track.addEventListener('mouseenter', stopAutoScroll);
-          track.addEventListener('mouseleave', startAutoScroll);
-          track.addEventListener('touchstart', stopAutoScroll, { passive: true });
-          track.addEventListener('touchend', function() {
-            setTimeout(startAutoScroll, 1000);
-          }, { passive: true });
-
-          // Start auto-scroll on 3s
-          startAutoScroll();
-        })();
+        });
       </script>
 
       <!-- Trust signals / Facts row -->
