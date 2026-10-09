@@ -22,12 +22,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && (($_GET['login'] ?? '') === 'admin')
   }
 }
 
-// Read-only queries for the central search & booking card (A1, P10)
+// Read-only queries for the central search & booking card (A1, P10, P13)
 $route_archived_sql = table_has_column($link, 'route', 'archived_at') ? ' WHERE archived_at IS NULL' : '';
 $route_pairs = db_all($link, "SELECT DISTINCT city1, city2 FROM route{$route_archived_sql} ORDER BY city1 ASC, city2 ASC");
 $from_cities = array_values(array_unique(array_column($route_pairs, 'city1')));
 $to_cities = array_values(array_unique(array_column($route_pairs, 'city2')));
 $user_role = $_SESSION['role'] ?? null;
+
+$popular_routes = db_all($link, "
+    SELECT city1, city2, MIN(price) AS min_price, COUNT(DISTINCT busno) AS bus_count
+    FROM route
+    {$route_archived_sql}
+    GROUP BY city1, city2
+    ORDER BY bus_count DESC, min_price ASC
+    LIMIT 6
+");
+$total_routes_count = (int)(db_one($link, "SELECT COUNT(*) AS c FROM route{$route_archived_sql}")['c'] ?? 0);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_POST['admin']))) {
   csrf_verify();
@@ -499,6 +509,22 @@ if (isset($_POST['subbtn'])) {
 
         <script>
           window.ROUTES = <?= json_encode($route_pairs, JSON_HEX_TAG) ?>;
+          function prefillSearch(fromCity, toCity) {
+            var isUser = <?= json_encode($user_role === 'user') ?>;
+            var fromId = isUser ? 'home_from' : 'guest_from';
+            var toId = isUser ? 'home_to' : 'guest_to';
+            var fromEl = document.getElementById(fromId);
+            var toEl = document.getElementById(toId);
+            if (fromEl) {
+              fromEl.value = fromCity;
+              fromEl.dispatchEvent(new Event('change'));
+            }
+            if (toEl) {
+              setTimeout(function() {
+                toEl.value = toCity;
+              }, 60);
+            }
+          }
           (function() {
             function setupRouteSelectors(fromId, toId, swapBtnId) {
               var fromSelect = document.getElementById(fromId);
@@ -591,6 +617,75 @@ if (isset($_POST['subbtn'])) {
       </div>
     </div>
   </section>
+
+  <!-- Popular Routes Showcase & Trust Signals (P13) -->
+  <?php if (!empty($popular_routes)): ?>
+  <section id="routes" class="home-section" aria-labelledby="routesHeading">
+    <div class="container">
+      <div class="text-center mb-5">
+        <span class="badge badge-primary p-2 px-3 mb-2 font-weight-bold">FARES &amp; TIMETABLES</span>
+        <h2 id="routesHeading" class="font-weight-bold">Popular Intercity Routes</h2>
+        <p class="text-muted mx-auto" style="max-width: 600px;">
+          Explore scheduled coach journeys with transparent, upfront pricing. Click any route to plan your trip.
+        </p>
+      </div>
+
+      <div class="row">
+        <?php foreach ($popular_routes as $pr): ?>
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm popular-route-card" style="border-radius: 12px; transition: transform 0.2s, box-shadow 0.2s;">
+              <div class="card-body p-4 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="badge badge-light border text-muted px-2 py-1 small">
+                      <span aria-hidden="true">🚌</span> <?= e((string)($pr['bus_count'] ?? 1)) ?> Daily Departure<?= ((int)($pr['bus_count'] ?? 1) > 1) ? 's' : '' ?>
+                    </span>
+                    <span class="text-success font-weight-bold">
+                      from <?= CURRENCY ?><?= e(number_format((float)$pr['min_price'], 2)) ?>
+                    </span>
+                  </div>
+                  <h5 class="card-title font-weight-bold text-dark mb-1">
+                    <?= e($pr['city1']) ?> <span class="text-primary mx-1">&rarr;</span> <?= e($pr['city2']) ?>
+                  </h5>
+                  <p class="card-text text-muted small">Daily scheduled coaches with reserved seating.</p>
+                </div>
+                <div class="mt-3 pt-3 border-top">
+                  <a href="#search" class="btn btn-outline-primary btn-sm btn-block font-weight-bold" onclick="prefillSearch('<?= e($pr['city1']) ?>', '<?= e($pr['city2']) ?>');">
+                    Book This Route &rarr;
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        <?php endforeach; ?>
+      </div>
+
+      <!-- Trust signals / Facts row -->
+      <div class="card border-0 shadow-sm mt-4 bg-light" style="border-radius: 12px;">
+        <div class="card-body p-4">
+          <div class="row text-center">
+            <div class="col-6 col-md-3 mb-3 mb-md-0">
+              <div class="h3 font-weight-bold text-primary mb-1"><?= $total_routes_count ?>+</div>
+              <div class="text-muted small">Active Schedules</div>
+            </div>
+            <div class="col-6 col-md-3 mb-3 mb-md-0">
+              <div class="h3 font-weight-bold text-primary mb-1">10 Min</div>
+              <div class="text-muted small">Guaranteed Seat Hold</div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="h3 font-weight-bold text-primary mb-1">Instant</div>
+              <div class="text-muted small">PNR &amp; Boarding Pass</div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="h3 font-weight-bold text-primary mb-1">24/7</div>
+              <div class="text-muted small">Online Inquiry Support</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <?php endif; ?>
 
   <!-- 3. PNR Lookup Section (D1-D8) -->
   <section id="pnr" class="home-section" aria-labelledby="pnrHeading">
