@@ -24,6 +24,7 @@
 </head>
 
 <body>
+    <a class="skip-link sr-only sr-only-focusable" href="#main">Skip to main content</a>
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <div class="admin-shell">
         <aside class="admin-sidebar" id="adminSidebar">
@@ -100,7 +101,7 @@
                 </div>
             </div>
 
-            <div class="admin-content-wrap">
+            <main id="main" tabindex="-1" class="admin-content-wrap">
             <?php if (function_exists('flash_get')): ?>
                 <?php foreach (flash_get() as $m): ?>
                     <div class="alert alert-<?= e($m['type'] ?? 'info') ?> alert-dismissible fade show" role="alert">

@@ -1,4 +1,4 @@
-        </div>
+        </main>
     </div>
 </div>
 <!-- Bootstrap & jQuery without unused external AOS dependencies (U-19 / U-20) -->
