@@ -97,14 +97,9 @@ $user_role = $_SESSION['role'] ?? null;
             </li>
           <?php else: ?>
             <li class="nav-item ml-lg-3 mt-2 mt-lg-0">
-              <button type="button" class="btn btn-outline-primary btn-nav-action" data-toggle="modal" data-target="#userlogin">
+              <button type="button" class="btn btn-primary btn-nav-action" data-toggle="modal" data-target="#userlogin">
                 Passenger Sign In
               </button>
-            </li>
-            <li class="nav-item ml-lg-2 mt-2 mt-lg-0">
-              <a href="<?= e(BASE_URL) ?>/homepage.php?login=admin" class="btn btn-dark btn-nav-action" data-toggle="modal" data-target="#loginModal" role="button">
-                Admin Portal
-              </a>
             </li>
           <?php endif; ?>
 

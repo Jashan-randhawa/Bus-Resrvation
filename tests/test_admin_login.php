@@ -147,10 +147,10 @@ $header = file_get_contents(__DIR__ . '/../includes/layout/header-public.php');
 
 assert_check("footer-public.php links to homepage.php?login=admin", 
     str_contains($footer, 'homepage.php?login=admin'));
-assert_check("footer-public.php retains data-toggle for JS modal trigger", 
-    str_contains($footer, 'data-toggle="modal"') && str_contains($footer, 'data-target="#loginModal"'));
-assert_check("header-public.php Admin Portal is an anchor link to homepage.php?login=admin", 
-    str_contains($header, 'homepage.php?login=admin'));
+assert_check("footer-public.php retains admin portal trigger per P15", 
+    str_contains($footer, 'homepage.php?login=admin'));
+assert_check("header-public.php keeps admin portal discrete per P15 (not cluttered in public nav)", 
+    !str_contains($header, 'homepage.php?login=admin'));
 assert_check("header-public.php retains btn-dark and btn-nav-action styling", 
     str_contains($header, 'class="btn btn-dark btn-nav-action"'));
 
