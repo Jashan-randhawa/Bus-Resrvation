@@ -445,9 +445,14 @@ if (isset($_POST['subbtn'])) {
       </div>
 
       <div class="pnr-search-box mx-auto" style="max-width: 700px;">
-        <form method="get" action="<?= e(BASE_URL) ?>/homepage.php#pnr" id="pnrSearchForm" class="row">
+        <?php
+        $searched_pnr = strtoupper(trim((string)($_POST['pnr'] ?? $_GET['pnr'] ?? '')));
+        $searched_phone4 = preg_replace('/\D/', '', (string)($_POST['phone4'] ?? $_GET['phone4'] ?? ''));
+        ?>
+        <form method="post" action="<?= e(BASE_URL) ?>/homepage.php#pnr" id="pnrSearchForm" class="row">
+          <?= csrf_field() ?>
           <div class="col-md-5 mb-3 mb-md-0">
-            <label for="pnr_input" class="form-label font-weight-bold small text-muted">PNR Number</label>
+            <label for="pnr_input" class="d-block font-weight-bold small text-muted">PNR Number</label>
             <input class="form-control" 
                    id="pnr_input"
                    name="pnr" 
@@ -456,12 +461,12 @@ if (isset($_POST['subbtn'])) {
                    autocomplete="off"
                    autocapitalize="characters"
                    placeholder="e.g. 9B3A57EF10" 
-                   value="<?= e($_GET['pnr'] ?? '') ?>" 
+                   value="<?= e($searched_pnr) ?>" 
                    required 
                    style="text-transform: uppercase;">
           </div>
           <div class="col-md-4 mb-3 mb-md-0">
-            <label for="phone4_input" class="form-label font-weight-bold small text-muted">Last 4 Digits of Phone</label>
+            <label for="phone4_input" class="d-block font-weight-bold small text-muted">Last 4 Digits of Phone</label>
             <input class="form-control" 
                    id="phone4_input"
                    name="phone4" 
@@ -470,7 +475,7 @@ if (isset($_POST['subbtn'])) {
                    inputmode="numeric"
                    autocomplete="off"
                    placeholder="e.g. 5521" 
-                   value="<?= e($_GET['phone4'] ?? '') ?>" 
+                   value="<?= e($searched_phone4) ?>" 
                    required>
           </div>
           <div class="col-md-3 d-flex align-items-end">
@@ -499,15 +504,20 @@ if (isset($_POST['subbtn'])) {
         </script>
 
         <?php
-        if (isset($_GET['pnr'], $_GET['phone4'])) {
-          // Send no-store & noindex headers for privacy on PNR lookup results (D3)
+        $is_pnr_post = ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pnr'], $_POST['phone4']));
+        $is_pnr_get = (isset($_GET['pnr'], $_GET['phone4']));
+        if ($is_pnr_post || $is_pnr_get) {
+          if ($is_pnr_post) {
+            csrf_verify();
+          }
+          // Send no-store & noindex headers for privacy on PNR lookup results (D3 / P4)
           if (!headers_sent()) {
             header('Cache-Control: no-store, no-cache, must-revalidate');
+            header('X-Robots-Tag: noindex, nofollow');
           }
-          echo '<meta name="robots" content="noindex">';
 
-          $pnrInput = strtoupper(trim((string)$_GET['pnr']));
-          $phone4 = preg_replace('/\D/', '', (string)$_GET['phone4']);
+          $pnrInput = $searched_pnr;
+          $phone4 = $searched_phone4;
           $b = null;
           $pnr_state = 'not_found';
           $ip = client_ip();
