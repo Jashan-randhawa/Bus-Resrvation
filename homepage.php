@@ -1015,6 +1015,7 @@ if (isset($_POST['subbtn'])) {
             <a class="nav-link font-weight-bold <?= ($open_modal === 'register') ? 'active' : '' ?>" id="register-tab" data-toggle="tab" href="#register-pane" role="tab" aria-controls="register-pane" aria-selected="<?= ($open_modal === 'register') ? 'true' : 'false' ?>">Register</a>
           </li>
         </ul>
+      </div>
       <div id="guestSearchNotice" class="alert alert-info alert-dismissible fade show m-3 mb-0 d-none" role="alert">
         <span class="mr-1" aria-hidden="true">🚌</span> <span id="guestSearchNoticeText"></span>
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -1209,6 +1210,19 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function () {
   // Auto-focus first input field when modals are opened (E5)
   if (window.jQuery) {
+    // Smooth transition when switching between auth modals
+    $(document).on('click', '[data-toggle="modal"][data-dismiss="modal"]', function(e) {
+      var targetModal = $(this).attr('data-target');
+      var currentModal = $(this).closest('.modal');
+      if (currentModal.length && targetModal) {
+        e.preventDefault();
+        currentModal.modal('hide');
+        currentModal.one('hidden.bs.modal', function() {
+          $(targetModal).modal('show');
+        });
+      }
+    });
+
     $('#userlogin').on('shown.bs.modal', function () {
       var activePane = document.querySelector('#authTabContent .tab-pane.active');
       if (activePane) {
