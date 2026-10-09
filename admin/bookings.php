@@ -394,7 +394,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                 📥 Export Selected
             </button>
             <?php if (is_super_admin()): ?>
-            <button type="submit" name="bulk_action" value="cancel" class="btn btn-outline-danger btn-sm font-weight-bold" onclick="return confirm('Are you sure you want to cancel all selected reservations?');">
+            <button type="button" id="btnTriggerBulkCancel" class="btn btn-outline-danger btn-sm font-weight-bold" data-toggle="modal" data-target="#bulkCancelModal">
                 🚫 Bulk Cancel
             </button>
             <?php endif; ?>
@@ -471,11 +471,14 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                                 <a href="<?= BASE_URL ?>/admin/edit/edit-booking.php?id=<?= e($sno) ?>" class="btn btn-outline-secondary btn-sm">Edit</a>
                                 <?php endif; ?>
                                 <?php if (is_super_admin() && !$is_cancelled && !$is_expired): ?>
-                                    <form method="post" action="" style="display:inline;" onsubmit="return confirm('Cancel this reservation and liberate the seat?');">
-                                        <?= csrf_field() ?>
-                                        <input type="hidden" name="delete_id" value="<?= e($sno) ?>">
-                                        <button type="submit" name="delete_booking" class="btn btn-outline-danger btn-sm ml-1">Cancel</button>
-                                    </form>
+                                    <button type="button" class="btn btn-outline-danger btn-sm ml-1 btn-cancel-booking"
+                                            data-toggle="modal" data-target="#cancelBookingModal"
+                                            data-id="<?= e($sno) ?>"
+                                            data-pnr="<?= e($display_pnr !== '' ? $display_pnr : ('#' . $sno)) ?>"
+                                            data-name="<?= e($row['name'] ?? '') ?>"
+                                            data-seat="<?= e((string)$row['seat']) ?>">
+                                        Cancel booking
+                                    </button>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -598,6 +601,72 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         <button type="submit" class="btn btn-primary" name="check">Confirm Reservation</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Booking Confirmation Modal (A9) -->
+<div class="modal fade" id="cancelBookingModal" tabindex="-1" role="dialog" aria-labelledby="cancelBookingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title font-weight-bold" id="cancelBookingModalLabel">Confirm Reservation Cancellation</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="post" action="" id="cancelBookingForm">
+                <?= csrf_field() ?>
+                <input type="hidden" name="delete_id" id="cancelBookingId" value="">
+                <div class="modal-body p-4">
+                    <p class="mb-2">Are you sure you want to cancel the following passenger reservation?</p>
+                    <div class="bg-light p-3 rounded border mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted small">PNR / Ticket:</span>
+                            <code class="font-weight-bold" id="cancelModalPnr"></code>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted small">Passenger:</span>
+                            <span class="font-weight-bold text-dark" id="cancelModalName"></span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted small">Allocated Seat:</span>
+                            <span class="badge badge-info px-2" id="cancelModalSeat"></span>
+                        </div>
+                    </div>
+                    <p class="small text-danger mb-0">This action will void the ticket, release the seat lock immediately, and record an audit trail event.</p>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Keep Reservation</button>
+                    <button type="submit" name="delete_booking" class="btn btn-danger btn-sm font-weight-bold">
+                        Cancel booking
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Cancel Confirmation Modal (A9) -->
+<div class="modal fade" id="bulkCancelModal" tabindex="-1" role="dialog" aria-labelledby="bulkCancelModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title font-weight-bold" id="bulkCancelModalLabel">Confirm Bulk Cancellation</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="mb-2">Are you sure you want to cancel all <strong id="bulkCancelCountDisplay" class="text-danger">0</strong> selected reservations?</p>
+                <p class="small text-muted mb-0">All selected tickets will be marked as cancelled, their seats liberated, and individual audit logs recorded.</p>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Keep Reservations</button>
+                <button type="button" class="btn btn-danger btn-sm font-weight-bold" id="confirmBulkCancelBtn">
+                    Confirm Bulk Cancellation
+                </button>
             </div>
         </div>
     </div>
@@ -831,6 +900,34 @@ document.addEventListener('DOMContentLoaded', function() {
     checkboxes.forEach(function(cb) {
         cb.addEventListener('change', updateBulkState);
     });
+
+    // Destructive Action Modal Wiring (A9)
+    if (window.jQuery) {
+        jQuery('.btn-cancel-booking').on('click', function() {
+            var $btn = jQuery(this);
+            jQuery('#cancelBookingId').val($btn.data('id'));
+            jQuery('#cancelModalPnr').text($btn.data('pnr'));
+            jQuery('#cancelModalName').text($btn.data('name'));
+            jQuery('#cancelModalSeat').text('#' + $btn.data('seat'));
+        });
+
+        jQuery('#btnTriggerBulkCancel').on('click', function() {
+            var count = jQuery('.booking-select-cb:checked').length;
+            jQuery('#bulkCancelCountDisplay').text(count);
+        });
+
+        jQuery('#confirmBulkCancelBtn').on('click', function() {
+            var form = document.getElementById('bulkBookingsForm');
+            if (form) {
+                var hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'bulk_action';
+                hidden.value = 'cancel';
+                form.appendChild(hidden);
+                form.submit();
+            }
+        });
+    }
 });
 </script>
 

@@ -21,6 +21,12 @@ unset($_SESSION['migration_log']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['run_migrations'])) {
     csrf_verify();
+    $confirm_text = strtoupper(trim((string)($_POST['confirm_migrate'] ?? '')));
+    if ($confirm_text !== 'MIGRATE') {
+        flash_set('danger', 'Migration aborted: you must type "MIGRATE" exactly to execute database migrations.');
+        header('Location: ' . BASE_URL . '/admin/diagnostics.php');
+        exit;
+    }
     require_once __DIR__ . '/../database/db_migrate.php';
     $res = run_migrations($link);
     audit($link, 'RUN_MIGRATIONS', 'system', null, null, ['ok' => $res['ok']]);
@@ -247,13 +253,41 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </div>
     <div class="d-flex align-items-center">
         <a href="?run=1" class="btn btn-outline-primary btn-sm mr-2">⚡ Run Diagnostics</a>
-        <form method="post" class="d-inline mr-2" onsubmit="return confirm('Execute all database schema migrations now?');">
-            <?= csrf_field() ?>
-            <button type="submit" name="run_migrations" value="1" class="btn btn-outline-warning btn-sm">
-                Run Migrations
-            </button>
-        </form>
+        <button type="button" class="btn btn-outline-warning btn-sm mr-2" data-toggle="modal" data-target="#migrateConfirmModal">
+            Run Migrations
+        </button>
         <a href="diagnostics.php" class="btn btn-outline-secondary btn-sm">Refresh</a>
+    </div>
+</div>
+
+<!-- Migrate Confirmation Modal (A9) -->
+<div class="modal fade" id="migrateConfirmModal" tabindex="-1" role="dialog" aria-labelledby="migrateConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title font-weight-bold" id="migrateConfirmModalLabel">⚠️ Confirm Database Migration</h5>
+                <button type="button" class="close text-dark" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="post" action="diagnostics.php">
+                <?= csrf_field() ?>
+                <div class="modal-body p-4">
+                    <p class="text-danger font-weight-bold mb-2">Executing migrations will apply schema alterations directly to the database.</p>
+                    <p class="text-muted small mb-3">To prevent accidental execution during live operations, please type <strong>MIGRATE</strong> in the box below to authorize execution.</p>
+                    <div class="form-group mb-0">
+                        <label for="confirmMigrateInput" class="small font-weight-bold text-muted">Authorization Confirmation</label>
+                        <input type="text" id="confirmMigrateInput" name="confirm_migrate" class="form-control" placeholder="Type MIGRATE to authorize" required autocomplete="off">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+                    <button type="submit" name="run_migrations" value="1" class="btn btn-warning btn-sm font-weight-bold">
+                        Execute Migrations
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
