@@ -141,7 +141,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 
 <style>
 @media print {
-    .admin-sidebar, .admin-topbar, .admin-footer, .no-print, .btn, .filter-card {
+    .admin-sidebar, .admin-topbar, .admin-sidebar-footer, .no-print, .btn, .filter-card {
         display: none !important;
     }
     .admin-main {
@@ -194,8 +194,11 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             <a href="?<?= http_build_query(['bus' => $selected_bus, 'date' => $selected_date, 'route' => $selected_route, 'export' => 'csv']) ?>" class="btn btn-outline-success btn-sm mr-2 shadow-sm font-weight-bold">
                 📥 Export Manifest CSV
             </a>
-            <button onclick="window.print()" class="btn btn-primary btn-sm shadow-sm font-weight-bold">
+            <button onclick="window.print()" class="btn btn-primary btn-sm shadow-sm font-weight-bold mr-2">
                 🖨️ Print Manifest
+            </button>
+            <button type="button" id="clearBoardingBtn" class="btn btn-outline-secondary btn-sm shadow-sm font-weight-bold" title="Reset all boarding checks for this manifest">
+                🔄 Reset Boarding
             </button>
         <?php endif; ?>
     </div>
@@ -325,7 +328,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                             <tr>
                                 <td class="text-center font-weight-bold">#<?= e((string)$p['seat']) ?></td>
                                 <td class="text-center no-print">
-                                    <input type="checkbox" title="Mark Boarded">
+                                    <input type="checkbox" class="board-checkbox" data-key="manifest_boarded_<?= e($selected_bus) ?>_<?= e($selected_date) ?>_<?= e((string)$p['sno']) ?>" title="Mark Boarded" aria-label="Mark <?= e($p['name']) ?> (Seat #<?= e((string)$p['seat']) ?>) boarded">
                                 </td>
                                 <td class="font-weight-medium text-dark"><?= e($p['name']) ?></td>
                                 <td><?= e($p['contact']) ?></td>
@@ -374,5 +377,43 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var checkboxes = document.querySelectorAll('.board-checkbox');
+    checkboxes.forEach(function(cb) {
+        var key = cb.getAttribute('data-key');
+        if (key && localStorage.getItem(key) === 'true') {
+            cb.checked = true;
+            var tr = cb.closest('tr');
+            if (tr) tr.classList.add('table-success');
+        }
+        cb.addEventListener('change', function() {
+            if (key) {
+                localStorage.setItem(key, this.checked ? 'true' : 'false');
+            }
+            var tr = this.closest('tr');
+            if (tr) {
+                tr.classList.toggle('table-success', this.checked);
+            }
+        });
+    });
+
+    var clearBtn = document.getElementById('clearBoardingBtn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            if (confirm('Reset all boarding checkmarks for this manifest?')) {
+                checkboxes.forEach(function(cb) {
+                    var key = cb.getAttribute('data-key');
+                    if (key) localStorage.removeItem(key);
+                    cb.checked = false;
+                    var tr = cb.closest('tr');
+                    if (tr) tr.classList.remove('table-success');
+                });
+            }
+        });
+    }
+});
+</script>
 
 <?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>
