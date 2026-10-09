@@ -42,182 +42,17 @@ $total_admins = (int)($kpi['total_admins'] ?? 0);
 $total_queries = (int)($kpi['total_queries'] ?? 0);
 $total_seats = (int)($kpi['total_seats'] ?? 0);
 $total_earnings = number_format((float)($kpi['total_revenue'] ?? 0), 2);
-?>
-<div class="page-header">
-    <div>
-        <h1 class="page-title">Executive Dashboard</h1>
-        <p class="page-subtitle">Real-time overview of ticket operations, fleet availability, user queries, and revenue.</p>
-    </div>
-    <div class="d-flex align-items-center">
-        <a href="<?= BASE_URL ?>/admin/diagnostics.php" class="btn btn-outline-primary btn-sm">
-            <span class="mr-1">⚡</span> System Health
-        </a>
-    </div>
-</div>
 
-<div class="row">
-    <!-- Bookings Card -->
-    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-        <div class="stat-card stat-bookings h-100 d-flex flex-column justify-content-between">
-            <div>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="stat-label">Reservations</span>
-                    <span class="badge badge-primary">Total</span>
-                </div>
-                <div class="stat-value"><?= e($total_bookings) ?></div>
-            </div>
-            <div>
-                <a href="<?= BASE_URL ?>/admin/bookings.php" class="stat-link text-primary text-decoration-none">
-                    Review Bookings &rarr;
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Buses Card -->
-    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-        <div class="stat-card stat-fleet h-100 d-flex flex-column justify-content-between">
-            <div>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="stat-label">Fleet</span>
-                    <span class="badge badge-success">Active</span>
-                </div>
-                <div class="stat-value"><?= e($total_buses) ?></div>
-            </div>
-            <div>
-                <a href="<?= BASE_URL ?>/admin/buses.php" class="stat-link text-success text-decoration-none">
-                    Fleet Catalog &rarr;
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Routes Card -->
-    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-        <div class="stat-card stat-routes h-100 d-flex flex-column justify-content-between">
-            <div>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="stat-label">Transit Routes</span>
-                    <span class="badge badge-warning text-dark">Active</span>
-                </div>
-                <div class="stat-value"><?= e($total_routes) ?></div>
-            </div>
-            <div>
-                <a href="<?= BASE_URL ?>/admin/routes.php" class="stat-link stat-link-warn text-decoration-none">
-                    Manage Routes &rarr;
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Seats Capacity Card -->
-    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-        <div class="stat-card stat-seats h-100 d-flex flex-column justify-content-between">
-            <div>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="stat-label">Fleet Capacity</span>
-                    <span class="badge badge-info">Seats</span>
-                </div>
-                <div class="stat-value"><?= e($total_seats) ?></div>
-            </div>
-            <div>
-                <a href="<?= BASE_URL ?>/admin/seats.php" class="stat-link stat-link-info text-decoration-none">
-                    Seat Visualizer &rarr;
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Customers Card -->
-    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-        <div class="stat-card stat-customers h-100 d-flex flex-column justify-content-between">
-            <div>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="stat-label">Customers</span>
-                    <span class="badge badge-light border">Registered</span>
-                </div>
-                <div class="stat-value"><?= e($total_customers) ?></div>
-            </div>
-            <div>
-                <a href="<?= BASE_URL ?>/admin/customers.php" class="stat-link text-secondary text-decoration-none">
-                    Customer Roster &rarr;
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Customer Queries Card -->
-    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-        <div class="stat-card stat-queries h-100 d-flex flex-column justify-content-between">
-            <div>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="stat-label">Inquiries</span>
-                    <span class="badge badge-secondary">Received</span>
-                </div>
-                <div class="stat-value"><?= e($total_queries) ?></div>
-            </div>
-            <div>
-                <a href="<?= BASE_URL ?>/admin/queries.php" class="stat-link text-secondary text-decoration-none">
-                    Customer Messages &rarr;
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Administrators Card -->
-    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-        <div class="stat-card stat-admins h-100 d-flex flex-column justify-content-between">
-            <div>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="stat-label">Administrators</span>
-                    <span class="badge badge-dark">System</span>
-                </div>
-                <div class="stat-value"><?= e($total_admins) ?></div>
-            </div>
-            <div>
-                <a href="<?= BASE_URL ?>/admin/add-admin.php" class="stat-link text-dark text-decoration-none">
-                    Admin Accounts &rarr;
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Revenue Card -->
-    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-        <div class="stat-card stat-revenue h-100 d-flex flex-column justify-content-between bg-white">
-            <div>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="stat-label">Confirmed Revenue</span>
-                    <span class="badge badge-success">Audited</span>
-                </div>
-                <div class="stat-value text-success"><?= CURRENCY ?><?= e($total_earnings) ?></div>
-            </div>
-            <div>
-                <a href="<?= BASE_URL ?>/admin/bookings.php" class="stat-link text-success text-decoration-none">
-                    Sales Ledger &rarr;
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Definitions Footnote (Issue 10) -->
-<div class="row">
-    <div class="col-12">
-        <p class="text-muted small mt-n2 mb-4">
-            <span class="mr-1">&bull; <strong>Definitions:</strong></span>
-            Fleet, Transit Routes, and Customers count active (non-archived) records. Administrators count active system accounts. Confirmed Revenue reflects completed reservations only.
-        </p>
-    </div>
-</div>
-
-<?php
-// Item 11 & Issue 9: 30-day Trends & Analytics
-$window_days = 30;
+// Time window filter for operational analytics (A12)
+$allowed_windows = [7, 30, 90];
+$window_days = (int)($_GET['days'] ?? 30);
+if (!in_array($window_days, $allowed_windows, true)) {
+    $window_days = 30;
+}
 $window_end = date('Y-m-d');
 $window_start = date('Y-m-d', strtotime('-' . ($window_days - 1) . ' days'));
 
-// 30-day booking & revenue daily totals with explicit date window
+// Daily stats query with explicit date window (Issue 9)
 $daily_stats = db_all($link, "
     SELECT 
         `date`,
@@ -229,6 +64,18 @@ $daily_stats = db_all($link, "
     GROUP BY `date`
     ORDER BY `date` DESC
 ", 'ss', [$window_start, $window_end]);
+
+// Cancellation metrics strictly within the window (Issue 9)
+$cancel_metrics = db_one($link, "
+    SELECT 
+        COUNT(*) AS total,
+        SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS cancelled
+    FROM booking
+    WHERE `date` BETWEEN ? AND ?
+", 'ss', [$window_start, $window_end]);
+$all_bks = (int)($cancel_metrics['total'] ?? 0);
+$all_cnl = (int)($cancel_metrics['cancelled'] ?? 0);
+$cnl_rate = $all_bks > 0 ? round(($all_cnl / $all_bks) * 100, 1) : 0;
 
 // Top 5 Popular Routes (Issue 10: strictly Confirmed or NULL for legacy)
 $top_routes_where = $has_status ? "WHERE status = 'Confirmed' OR status IS NULL" : "";
@@ -244,21 +91,244 @@ $top_routes = db_all($link, "
     LIMIT 5
 ");
 
-// Cancellation metrics strictly within the 30-day window (Issue 9)
-$cancel_metrics = db_one($link, "
-    SELECT 
-        COUNT(*) AS total,
-        SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS cancelled
-    FROM booking
-    WHERE `date` BETWEEN ? AND ?
-", 'ss', [$window_start, $window_end]);
-$all_bks = (int)($cancel_metrics['total'] ?? 0);
-$all_cnl = (int)($cancel_metrics['cancelled'] ?? 0);
-$cnl_rate = $all_bks > 0 ? round(($all_cnl / $all_bks) * 100, 1) : 0;
+// Today's Scheduled Departures (A12)
+$today_date = date('Y-m-d');
+$today_departures = db_all($link, "
+    SELECT r.busno, r.city1, r.city2, r.`time`,
+           (SELECT COUNT(*) FROM booking b WHERE b.bus = r.busno AND b.`date` = ? AND b.`time` = r.`time` AND (b.status = 'Confirmed' OR b.status IS NULL)) AS booked_count,
+           COALESCE(bu.capacity, 36) AS total_capacity
+    FROM route r
+    LEFT JOIN buses bu ON r.busno = bu.bus_number
+    WHERE (r.archived_at IS NULL)
+    ORDER BY r.`time` ASC
+    LIMIT 8
+", 's', [$today_date]);
 ?>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Executive Dashboard</h1>
+        <p class="page-subtitle">Real-time overview of ticket operations, fleet availability, user queries, and revenue.</p>
+    </div>
+    <div class="d-flex align-items-center">
+        <a href="<?= BASE_URL ?>/admin/diagnostics.php" class="btn btn-outline-primary btn-sm">
+            <span class="mr-1">⚡</span> System Health
+        </a>
+    </div>
+</div>
 
-<!-- Analytics Section (Item 11) -->
-<div class="row mt-2">
+<!-- Primary 4 KPI Stat Cards (A12) -->
+<div class="row">
+    <!-- Confirmed Revenue -->
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="stat-card stat-revenue h-100 d-flex flex-column justify-content-between bg-white border shadow-sm">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="stat-label">Confirmed Revenue</span>
+                    <span class="badge badge-success">Audited</span>
+                </div>
+                <div class="stat-value text-success"><?= CURRENCY ?><?= e($total_earnings) ?></div>
+            </div>
+            <div>
+                <a href="<?= BASE_URL ?>/admin/bookings.php" class="stat-link text-success text-decoration-none">
+                    Sales Ledger &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Reservations -->
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="stat-card stat-bookings h-100 d-flex flex-column justify-content-between shadow-sm">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="stat-label">Reservations</span>
+                    <span class="badge badge-primary">Total</span>
+                </div>
+                <div class="stat-value"><?= e($total_bookings) ?></div>
+            </div>
+            <div>
+                <a href="<?= BASE_URL ?>/admin/bookings.php" class="stat-link text-primary text-decoration-none">
+                    Review Bookings &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Fleet Buses -->
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="stat-card stat-fleet h-100 d-flex flex-column justify-content-between shadow-sm">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="stat-label">Active Fleet</span>
+                    <span class="badge badge-success">Active</span>
+                </div>
+                <div class="stat-value"><?= e($total_buses) ?></div>
+            </div>
+            <div>
+                <a href="<?= BASE_URL ?>/admin/buses.php" class="stat-link text-success text-decoration-none">
+                    Fleet Catalog &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Transit Routes -->
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="stat-card stat-routes h-100 d-flex flex-column justify-content-between shadow-sm">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="stat-label">Transit Routes</span>
+                    <span class="badge badge-warning text-dark">Active</span>
+                </div>
+                <div class="stat-value"><?= e($total_routes) ?></div>
+            </div>
+            <div>
+                <a href="<?= BASE_URL ?>/admin/routes.php" class="stat-link stat-link-warn text-decoration-none">
+                    Manage Routes &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary Operational Metrics Strip (A12) -->
+<div class="row mb-3">
+    <!-- Fleet Capacity -->
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card border-0 shadow-sm p-3 bg-white h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="small font-weight-bold text-muted">Fleet Capacity</span>
+                <span class="badge badge-info px-2">Seats</span>
+            </div>
+            <div class="h4 font-weight-bold mb-1 mt-1"><?= e($total_seats) ?></div>
+            <a href="<?= BASE_URL ?>/admin/seats.php" class="small stat-link stat-link-info font-weight-bold text-decoration-none">Seat Map &rarr;</a>
+        </div>
+    </div>
+
+    <!-- Customers -->
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card border-0 shadow-sm p-3 bg-white h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="small font-weight-bold text-muted">Customers</span>
+                <span class="badge badge-light border">Registered</span>
+            </div>
+            <div class="h4 font-weight-bold mb-1 mt-1"><?= e($total_customers) ?></div>
+            <a href="<?= BASE_URL ?>/admin/customers.php" class="small text-secondary font-weight-bold text-decoration-none">Customer Roster &rarr;</a>
+        </div>
+    </div>
+
+    <!-- Customer Inquiries -->
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card border-0 shadow-sm p-3 bg-white h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="small font-weight-bold text-muted">Inquiries</span>
+                <span class="badge badge-secondary">Received</span>
+            </div>
+            <div class="h4 font-weight-bold mb-1 mt-1"><?= e($total_queries) ?></div>
+            <a href="<?= BASE_URL ?>/admin/queries.php" class="small text-secondary font-weight-bold text-decoration-none">Messages &rarr;</a>
+        </div>
+    </div>
+
+    <!-- Administrators -->
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card border-0 shadow-sm p-3 bg-white h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="small font-weight-bold text-muted">Administrators</span>
+                <span class="badge badge-dark">System</span>
+            </div>
+            <div class="h4 font-weight-bold mb-1 mt-1"><?= e($total_admins) ?></div>
+            <a href="<?= BASE_URL ?>/admin/add-admin.php" class="small text-dark font-weight-bold text-decoration-none">Admin Accounts &rarr;</a>
+        </div>
+    </div>
+</div>
+
+<!-- Definitions Footnote (Issue 10) -->
+<div class="row">
+    <div class="col-12">
+        <p class="text-muted small mb-4">
+            <span class="mr-1">&bull; <strong>Definitions:</strong></span>
+            Fleet, Transit Routes, and Customers count active (non-archived) records. Administrators count active system accounts. Confirmed Revenue reflects completed reservations only.
+        </p>
+    </div>
+</div>
+
+<!-- Today's Scheduled Departures (A12) -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-0 font-weight-bold text-dark">📋 Today's Scheduled Departures</h6>
+                    <small class="text-muted font-weight-normal"><?= e(date('l, d F Y', strtotime($today_date))) ?></small>
+                </div>
+                <a href="<?= BASE_URL ?>/admin/manifest.php" class="btn btn-outline-primary btn-sm font-weight-bold">
+                    View Full Manifest &rarr;
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Departure Time</th>
+                                <th>Vehicle</th>
+                                <th>Route Corridor</th>
+                                <th>Current Occupancy</th>
+                                <th class="text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($today_departures)): ?>
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        No active departures configured for today.
+                                    </td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach ($today_departures as $dep): ?>
+                                    <?php 
+                                    $booked = (int)$dep['booked_count'];
+                                    $cap = (int)$dep['total_capacity'];
+                                    $pct = $cap > 0 ? min(100, round(($booked / $cap) * 100)) : 0;
+                                    $bar_class = $pct > 80 ? 'bg-danger' : ($pct > 50 ? 'bg-warning' : 'bg-success');
+                                    ?>
+                                    <tr>
+                                        <td>
+                                            <span class="font-weight-bold text-dark">⏰ <?= e($dep['time']) ?></span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-light border">🚌 <?= e($dep['busno']) ?></span>
+                                        </td>
+                                        <td class="font-weight-medium text-dark">
+                                            <?= e($dep['city1']) ?> &rarr; <?= e($dep['city2']) ?>
+                                        </td>
+                                        <td style="min-width: 180px;">
+                                            <div class="d-flex justify-content-between small text-muted mb-1">
+                                                <span><?= $booked ?> / <?= $cap ?> seats</span>
+                                                <span class="font-weight-bold"><?= $pct ?>%</span>
+                                            </div>
+                                            <div class="progress" style="height: 6px;">
+                                                <div class="progress-bar <?= $bar_class ?>" role="progressbar" style="width: <?= $pct ?>%;" aria-valuenow="<?= $pct ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        </td>
+                                        <td class="text-right">
+                                            <a href="<?= BASE_URL ?>/admin/manifest.php?bus=<?= urlencode($dep['busno']) ?>&date=<?= urlencode($today_date) ?>&time=<?= urlencode($dep['time']) ?>" class="btn btn-sm btn-outline-primary py-1 px-2 font-weight-bold">
+                                                Manifest &rarr;
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analytics & Trends Section (Item 11, A12) -->
+<div class="row">
     <!-- Top Routes -->
     <div class="col-lg-6 mb-4">
         <div class="card border-0 shadow-sm h-100">
@@ -301,15 +371,49 @@ $cnl_rate = $all_bks > 0 ? round(($all_cnl / $all_bks) * 100, 1) : 0;
         </div>
     </div>
 
-    <!-- 30-Day Operational Health -->
+    <!-- 30-Day Performance Overview with 7d/30d/90d selector (A12) -->
     <div class="col-lg-6 mb-4">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h6 class="mb-0 font-weight-bold text-dark">30-Day Performance Overview <small class="text-muted font-weight-normal">(<?= e(date('d M', strtotime($window_start))) ?> &ndash; <?= e(date('d M Y', strtotime($window_end))) ?>)</small></h6>
-                <span class="badge badge-info">Cancellation Rate: <?= $cnl_rate ?>%</span>
+            <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center">
+                <div class="my-1">
+                    <h6 class="mb-0 font-weight-bold text-dark">
+                        30-Day Performance Overview
+                        <small class="text-muted font-weight-normal">(<?= e(date('d M', strtotime($window_start))) ?> &ndash; <?= e(date('d M Y', strtotime($window_end))) ?>)</small>
+                    </h6>
+                </div>
+                <div class="d-flex align-items-center my-1">
+                    <div class="btn-group btn-group-sm mr-2" role="group" aria-label="Time window selector">
+                        <a href="?days=7" class="btn <?= $window_days === 7 ? 'btn-primary' : 'btn-outline-secondary' ?>">7d</a>
+                        <a href="?days=30" class="btn <?= $window_days === 30 ? 'btn-primary' : 'btn-outline-secondary' ?>">30d</a>
+                        <a href="?days=90" class="btn <?= $window_days === 90 ? 'btn-primary' : 'btn-outline-secondary' ?>">90d</a>
+                    </div>
+                    <span class="badge badge-info">Cancel Rate: <?= $cnl_rate ?>%</span>
+                </div>
             </div>
             <div class="card-body p-0">
-                <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+                <!-- Visual Trend Bars -->
+                <?php if (!empty($daily_stats)): ?>
+                    <?php
+                    $max_daily = max(1, max(array_map(fn($d) => (int)$d['daily_bookings'], $daily_stats)));
+                    ?>
+                    <div class="p-3 bg-light border-bottom">
+                        <div class="small font-weight-bold text-muted mb-2">Booking Volume Visualizer (Recent <?= min(14, count($daily_stats)) ?> Days)</div>
+                        <div class="d-flex align-items-end justify-content-between" style="height: 60px; gap: 4px;">
+                            <?php foreach (array_reverse(array_slice($daily_stats, 0, 14)) as $stat): ?>
+                                <?php 
+                                $b_cnt = (int)$stat['daily_bookings'];
+                                $h_pct = max(12, round(($b_cnt / $max_daily) * 100));
+                                ?>
+                                <div class="d-flex flex-column align-items-center flex-grow-1" title="<?= e($stat['date']) ?>: <?= $b_cnt ?> bookings">
+                                    <div class="bg-primary rounded-top w-100" style="height: <?= $h_pct ?>%; min-height: 4px;"></div>
+                                    <span class="text-muted" style="font-size: 0.65rem;"><?= date('d', strtotime($stat['date'])) ?></span>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <div class="table-responsive" style="max-height: 240px; overflow-y: auto;">
                     <table class="table table-hover mb-0">
                         <thead class="thead-light">
                             <tr>
@@ -321,7 +425,7 @@ $cnl_rate = $all_bks > 0 ? round(($all_cnl / $all_bks) * 100, 1) : 0;
                         </thead>
                         <tbody>
                             <?php if (empty($daily_stats)): ?>
-                                <tr><td colspan="4" class="text-center text-muted py-4">No reservations in the past 30 days.</td></tr>
+                                <tr><td colspan="4" class="text-center text-muted py-4">No reservations in the selected timeframe.</td></tr>
                             <?php else: ?>
                                 <?php foreach ($daily_stats as $ds): ?>
                                     <tr>
