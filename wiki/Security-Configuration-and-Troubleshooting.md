@@ -10,13 +10,14 @@ This document explains security hardening measures, multi-role RBAC, concurrency
 All production credentials and API keys are injected dynamically via environment variables (`includes/db_con.php`, `includes/config.php`):
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_SSL`
 - `ADMIN_MFA_ENFORCE`
+- `TICKET_HMAC_SECRET` (used for digital boarding pass signature generation and verification)
 - `MAIL_*`
 
 ### 1.2 Multi-Role RBAC & Live Session Checks
 - **Role Enforcement:** Administrative privileges are scoped into `super_admin`, `operator`, and `viewer`.
 - **Live Database Validation:** Role changes, account deactivations (`is_active = 0`), or password changes invalidate existing sessions immediately.
 - **Session Keys:** `admin_id` is segregated from customer session keys (`uid`), preventing token impersonation across contexts.
-- **Session Expiration:** Idle sessions expire after 1,800 seconds (30 minutes) with an 8-hour absolute maximum lifetime cap.
+- **Session Expiration & Background Tab Synchronization:** Idle sessions expire after 1,800 seconds (30 minutes). Background browser tab throttling is mitigated by computing elapsed duration from `Date.now()` on activity ticks and listening to `visibilitychange` events, redirecting expired tabs immediately upon re-focus.
 - **Diagnostic Protection:** `admin/diagnostics.php` is restricted to `super_admin` only, strips sensitive credentials from output, and sends `Cache-Control: no-store, private`.
 
 ### 1.3 Two-Factor Authentication (RFC 6238 TOTP)

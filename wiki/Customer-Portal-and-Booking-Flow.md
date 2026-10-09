@@ -76,7 +76,31 @@ Passengers can inspect their travel history strictly bound to their authenticate
 
 ---
 
-## 6. Public PNR Verification (`homepage.php#pnr`)
+## 6. Digital Ticket Verification & HMAC-SHA256 Seal (`user/ticket.php`, `user/verify.php`)
+
+Tickets carry a cryptographically signed verification seal and QR code:
+1. **HMAC-SHA256 Signature:** Computed over `PNR|Date|Time|Seat` using `TICKET_HMAC_SECRET` (configured via environment or fallback salt).
+2. **Dedicated Validity States:**
+   - **`VALID PASS`:** Future departure, confirmed booking status.
+   - **`COMPLETED`:** Departed past journey (receipt remains viewable/printable for expense accounting).
+   - **`PENDING PAYMENT`:** Seat hold active, awaiting payment confirmation.
+   - **`VOID`:** Cancelled or expired reservations (watermarked overlay displayed).
+3. **Public QR Code & Verification Endpoint (`user/verify.php`):**
+   - Conductors and travelers can scan the QR code to verify the ticket against the live database.
+   - Evaluates `hash_equals($expected_sig, $sig)` to detect altered tickets or forge attempts.
+
+---
+
+## 7. Search Usability & Resilience (`user/index.php`)
+
+- **Anchor Auto-Scroll:** When search results load, the view automatically scrolls to `#search-results`.
+- **Loading State:** The search button shows a progress spinner on submission while preventing duplicate requests.
+- **Departed Journey Sorting:** On same-day searches, departed trips are cleanly sorted below upcoming bookable journeys, accompanied by a same-day schedule note.
+- **Swap Cities Validation:** Swapping origins and destinations validates whether the reverse route exists before updating selections, avoiding accidental blank fields.
+
+---
+
+## 8. Public PNR Verification (`homepage.php#pnr`)
 
 Travelers can verify ticket status from the homepage without logging in:
 1. Requires the **10-character PNR** and the **last 4 digits of the passenger phone number**.
