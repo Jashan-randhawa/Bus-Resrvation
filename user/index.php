@@ -91,11 +91,22 @@ if (isset($_GET['from']) || isset($_GET['to']) || isset($_GET['date'])) {
                     $booked_counts[$key] = (int)$cr['taken_count'];
                 }
 
-                // Phase 3.2: Sorting controls (departure time, price, available seats)
-                if ($sort === 'price_asc') {
-                    usort($matched_routes, fn($a, $b) => (float)$a['price'] <=> (float)$b['price']);
-                } elseif ($sort === 'seats_desc') {
-                    usort($matched_routes, function($a, $b) use ($booked_counts) {
+                // Phase 3.2 / Issue 12: Sorting controls with departed trips sorted below upcoming
+                $now_ts = time();
+                usort($matched_routes, function($a, $b) use ($sort, $booked_counts, $search_date, $now_ts) {
+                    $tsA = strtotime($search_date . ' ' . (string)$a['time']);
+                    $tsB = strtotime($search_date . ' ' . (string)$b['time']);
+                    $depA = ($tsA <= $now_ts);
+                    $depB = ($tsB <= $now_ts);
+
+                    // Departed trips are pushed below upcoming trips
+                    if ($depA !== $depB) {
+                        return $depA ? 1 : -1;
+                    }
+
+                    if ($sort === 'price_asc') {
+                        return (float)$a['price'] <=> (float)$b['price'];
+                    } elseif ($sort === 'seats_desc') {
                         $capA = (int)($a['bus_capacity'] ?? 36);
                         $capB = (int)($b['bus_capacity'] ?? 36);
                         $tA = $booked_counts[$a['busno'] . '::' . substr((string)$a['time'], 0, 5)] ?? 0;
@@ -103,8 +114,11 @@ if (isset($_GET['from']) || isset($_GET['to']) || isset($_GET['date'])) {
                         $openA = max(0, $capA - $tA);
                         $openB = max(0, $capB - $tB);
                         return $openB <=> $openA;
-                    });
-                }
+                    } else {
+                        // Default time_asc
+                        return $tsA <=> $tsB;
+                    }
+                });
             }
         }
     }
@@ -199,7 +213,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                 <button type="button" class="btn btn-outline-secondary btn-sm d-md-none" id="swap-cities-btn-mobile">
                     ⇄ Swap Cities
                 </button>
-                <button type="submit" class="btn btn-primary px-4 py-2 font-weight-bold shadow-sm ml-auto">
+                <button type="submit" class="btn btn-primary px-4 py-2 font-weight-bold shadow-sm ml-auto" id="search-submit-btn">
                     🔍 Find Available Buses
                 </button>
             </div>
@@ -209,7 +223,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
 </div>
 
 <?php if ($searched && empty($alert)): ?>
-    <div class="data-table-wrapper mb-4">
+    <div class="data-table-wrapper mb-4" id="search-results">
         <div class="table-header d-flex flex-column flex-sm-row justify-content-between align-items-sm-center">
             <div class="mb-2 mb-sm-0">
                 <h5 class="mb-0 font-weight-bold">Available Journeys</h5>
@@ -495,6 +509,31 @@ function updateSort(val) {
 document.getElementById('sort-select')?.addEventListener('change', function() {
     updateSort(this.value);
 });
+
+// Issue 12: Loading spinner on search submission & Anchor scroll
+var searchForm = document.getElementById('search-form');
+var searchBtn = document.getElementById('search-submit-btn');
+if (searchForm && searchBtn) {
+    searchForm.addEventListener('submit', function() {
+        searchBtn.innerHTML = '<span class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>Searching...';
+        searchBtn.style.pointerEvents = 'none';
+    });
+}
+window.addEventListener('pageshow', function() {
+    if (searchBtn) {
+        searchBtn.style.pointerEvents = '';
+        searchBtn.innerHTML = '🔍 Find Available Buses';
+    }
+});
+
+<?php if ($searched): ?>
+document.addEventListener('DOMContentLoaded', function() {
+    var resEl = document.getElementById('search-results');
+    if (resEl) {
+        resEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+});
+<?php endif; ?>
 </script>
 
 <?php require_once __DIR__ . '/../includes/layout/footer-user.php'; ?>
