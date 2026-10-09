@@ -10,6 +10,7 @@ $has_status = table_has_column($link, 'booking', 'status');
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
     csrf_verify();
     require_role('super_admin', 'operator');
+    $trip_id = (int)($_POST['trip_id'] ?? 0);
     $bus = trim((string)($_POST['bus'] ?? ''));
     $unm = trim((string)($_POST['unm'] ?? ''));
     $num = trim((string)($_POST['num'] ?? ''));
@@ -20,12 +21,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
     $seat = (int)($_POST['seat'] ?? 0);
     $amount = (float)($_POST['amount'] ?? 0);
 
+    // If trip_id provided, look up route by primary key (A3)
+    $route_pk = table_has_column($link, 'route', 'sno') ? 'sno' : 'id';
+    $matched_route = null;
+    if ($trip_id > 0) {
+        $has_archived_route = table_has_column($link, 'route', 'archived_at');
+        $arch_where = $has_archived_route ? " AND archived_at IS NULL" : "";
+        $matched_route = db_one($link, "SELECT * FROM route WHERE `{$route_pk}` = ?{$arch_where} LIMIT 1", 'i', [$trip_id]);
+        if ($matched_route) {
+            $bus = (string)$matched_route['busno'];
+            $from = (string)$matched_route['city1'];
+            $to = (string)$matched_route['city2'];
+            $time = (string)$matched_route['time'];
+        }
+    }
+
     // Check active route and server-side tariff (Issues 8, 12)
-    $has_archived_route = table_has_column($link, 'route', 'archived_at');
-    $route_query = $has_archived_route 
-        ? "SELECT price FROM route WHERE busno = ? AND city1 = ? AND city2 = ? AND `time` = ? AND archived_at IS NULL LIMIT 1"
-        : "SELECT price FROM route WHERE busno = ? AND city1 = ? AND city2 = ? AND `time` = ? LIMIT 1";
-    $matched_route = db_one($link, $route_query, 'ssss', [$bus, $from, $to, $time]);
+    if (!$matched_route) {
+        $has_archived_route = table_has_column($link, 'route', 'archived_at');
+        $route_query = $has_archived_route 
+            ? "SELECT price FROM route WHERE busno = ? AND city1 = ? AND city2 = ? AND `time` = ? AND archived_at IS NULL LIMIT 1"
+            : "SELECT price FROM route WHERE busno = ? AND city1 = ? AND city2 = ? AND `time` = ? LIMIT 1";
+        $matched_route = db_one($link, $route_query, 'ssss', [$bus, $from, $to, $time]);
+    }
 
     if (!$matched_route) {
         $_SESSION['form_old'] = $_POST;
@@ -34,6 +52,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
         $official_tariff = (float)$matched_route['price'];
         $override_reason = trim((string)($_POST['override_reason'] ?? ''));
         $price_override = isset($_POST['price_override']) && $_POST['price_override'] !== '' ? (float)$_POST['price_override'] : null;
+
+        if (is_super_admin() && $price_override !== null && $price_override > 0 && strlen($override_reason) < 10) {
+            $_SESSION['form_old'] = $_POST;
+            flash_set('danger', 'Price override requires a justification reason of at least 10 characters.');
+            $redirect_url = BASE_URL . '/admin/bookings.php' . (!empty($_GET) ? '?' . http_build_query($_GET) : '');
+            header('Location: ' . $redirect_url, true, 303);
+            exit;
+        }
 
         $booking_params = [
             'id'      => 0, // Admin-created booking
@@ -146,6 +172,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
         export_csv('bookings-selected-' . date('Ymd-His') . '.csv', $headers, $cleaned_export);
     }
 }
+
+// Query active trips/routes with vehicle info (A3)
+$has_arch_route = table_has_column($link, 'route', 'archived_at');
+$has_arch_bus = table_has_column($link, 'buses', 'archived_at');
+$has_layout_bus = table_has_column($link, 'buses', 'layout');
+$has_cap_bus = table_has_column($link, 'buses', 'capacity');
+
+$trip_where = [];
+if ($has_arch_route) {
+    $trip_where[] = 'r.archived_at IS NULL';
+}
+if ($has_arch_bus) {
+    $trip_where[] = '(b.archived_at IS NULL OR b.archived_at = "")';
+}
+$trip_where_sql = !empty($trip_where) ? 'WHERE ' . implode(' AND ', $trip_where) : '';
+$cap_select = $has_cap_bus ? 'COALESCE(b.capacity, 36) AS capacity' : '36 AS capacity';
+$layout_select = $has_layout_bus ? "COALESCE(b.layout, '2+2') AS layout" : "'2+2' AS layout";
+
+$trip_sql = "SELECT r.*, {$cap_select}, {$layout_select}
+             FROM route r 
+             LEFT JOIN buses b ON r.busno = b.bus_number 
+             {$trip_where_sql}
+             ORDER BY r.city1 ASC, r.city2 ASC, r.time ASC";
+$active_trips = db_all($link, $trip_sql);
 
 // Query buses with capacity (P-03)
 if (table_has_column($link, 'buses', 'capacity')) {
@@ -438,84 +488,106 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 </div>
 
 
-<!-- Booking Modal -->
-<div class="modal fade" id="addBookingModal" tabindex="-1">
+<!-- Booking Modal (A3) -->
+<div class="modal fade" id="addBookingModal" tabindex="-1" role="dialog" aria-labelledby="addBookingModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title font-weight-bold">Create Passenger Reservation</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                <h5 class="modal-title font-weight-bold" id="addBookingModalLabel">Create Passenger Reservation</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">&times;</button>
             </div>
             <div class="modal-body p-4">
                 <form action="" method="post" id="adminBookingForm">
                     <?= csrf_field() ?>
+                    <input type="hidden" name="bus" id="trip_bus" value="<?= e($form_old['bus'] ?? '') ?>">
+                    <input type="hidden" name="from" id="trip_from" value="<?= e($form_old['from'] ?? '') ?>">
+                    <input type="hidden" name="to" id="trip_to" value="<?= e($form_old['to'] ?? '') ?>">
+                    <input type="hidden" name="time" id="trip_time" value="<?= e($form_old['time'] ?? '') ?>">
+
+                    <!-- Trip Dropdown (A3) -->
+                    <div class="form-group mb-3">
+                        <label for="trip_select" class="font-weight-bold small text-muted">Scheduled Trip <span class="text-danger">*</span></label>
+                        <select name="trip_id" id="trip_select" class="form-control" required>
+                            <option value="">-- Select Trip (Bus | Origin &rarr; Destination | Departure) --</option>
+                            <?php 
+                            $route_pk = table_has_column($link, 'route', 'sno') ? 'sno' : 'id';
+                            foreach ($active_trips as $row): 
+                                $rid = (int)($row[$route_pk] ?? $row['id'] ?? $row['sno'] ?? 0);
+                                $is_selected = ((int)($form_old['trip_id'] ?? 0) === $rid)
+                                    || (($form_old['bus'] ?? '') === $row['busno'] && ($form_old['from'] ?? '') === $row['city1'] && ($form_old['to'] ?? '') === $row['city2'] && ($form_old['time'] ?? '') === $row['time']);
+                            ?>
+                                <option value="<?= $rid ?>"
+                                        data-bus="<?= e($row['busno']) ?>"
+                                        data-from="<?= e($row['city1']) ?>"
+                                        data-to="<?= e($row['city2']) ?>"
+                                        data-time="<?= e($row['time']) ?>"
+                                        data-price="<?= e(number_format((float)$row['price'], 2, '.', '')) ?>"
+                                        data-capacity="<?= (int)($row['capacity'] ?? 36) ?>"
+                                        data-layout="<?= e($row['layout'] ?? '2+2') ?>"
+                                        <?= $is_selected ? 'selected' : '' ?>>
+                                    <?= e($row['busno']) ?> &bull; <?= e($row['city1']) ?> &rarr; <?= e($row['city2']) ?> &bull; <?= e($row['time']) ?> &bull; Fare: <?= CURRENCY ?><?= e(number_format((float)$row['price'], 2)) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <small class="form-text text-muted">Select active schedule route to configure vehicle, cities, and standard tariff.</small>
+                    </div>
+
                     <div class="form-row">
                         <div class="col-md-6 form-group">
-                            <label for="bus" class="font-weight-bold small text-muted">Assigned Bus</label>
-                            <select name="bus" id="bus" class="form-control" required>
-                                <option value="" data-capacity="36">Select Bus Number</option>
-                                <?php foreach ($buses as $row): ?>
-                                    <option value="<?= e($row['bus_number']) ?>" data-capacity="<?= (int)($row['capacity'] ?? 36) ?>" <?= ($form_old['bus'] ?? '') === $row['bus_number'] ? 'selected' : '' ?>>
-                                        <?= e($row['bus_number']) ?> (<?= (int)($row['capacity'] ?? 36) ?> seats)
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                            <label for="date" class="font-weight-bold small text-muted">Travel Date <span class="text-danger">*</span></label>
+                            <input type="date" min="<?= date('Y-m-d') ?>" name="date" id="date" class="form-control" value="<?= e($form_old['date'] ?? date('Y-m-d')) ?>" required />
                         </div>
                         <div class="col-md-6 form-group">
-                            <label for="unm" class="font-weight-bold small text-muted">Passenger Name</label>
-                            <input type="text" name="unm" id="unm" class="form-control" value="<?= e($form_old['unm'] ?? '') ?>" placeholder="Full name" required />
+                            <label for="amount" class="font-weight-bold small text-muted">Official Fare (<?= CURRENCY ?>)</label>
+                            <input type="text" name="amount" class="form-control bg-light" id="amount" value="<?= e((string)($form_old['amount'] ?? '')) ?>" readonly placeholder="0.00" required>
+                            <small class="form-text text-muted">Official read-only tariff for this schedule.</small>
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="col-md-6 form-group">
-                            <label for="num" class="font-weight-bold small text-muted">Contact Phone</label>
-                            <input type="tel" name="num" id="num" class="form-control" value="<?= e($form_old['num'] ?? '') ?>" placeholder="Phone number" required />
+                            <label for="unm" class="font-weight-bold small text-muted">Passenger Full Name <span class="text-danger">*</span></label>
+                            <input type="text" name="unm" id="unm" class="form-control" value="<?= e($form_old['unm'] ?? '') ?>" placeholder="e.g. Jane Doe" required />
                         </div>
                         <div class="col-md-6 form-group">
-                            <label for="date" class="font-weight-bold small text-muted">Travel Date</label>
-                            <input type="date" min="<?= date('Y-m-d') ?>" name="date" id="date" class="form-control" value="<?= e($form_old['date'] ?? '') ?>" required />
+                            <label for="num" class="font-weight-bold small text-muted">Contact Phone <span class="text-danger">*</span></label>
+                            <input type="tel" name="num" id="num" class="form-control" value="<?= e($form_old['num'] ?? '') ?>" placeholder="e.g. +91 9876543210" required />
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="col-md-6 form-group">
-                            <label for="from" class="font-weight-bold small text-muted">Departure City</label>
-                            <select name="from" id="from" class="form-control" required>
-                                <option value="">Select Origin City</option>
-                                <?php foreach ($from_cities as $row): ?>
-                                    <option value="<?= e($row['city1']) ?>" <?= ($form_old['from'] ?? '') === $row['city1'] ? 'selected' : '' ?>><?= e($row['city1']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
+                    <?php if (is_super_admin()): ?>
+                    <div class="card bg-light border p-3 mb-3" id="superAdminOverrideCard">
+                        <div class="custom-control custom-checkbox mb-2">
+                            <input type="checkbox" class="custom-control-input" id="enablePriceOverride" <?= !empty($form_old['price_override']) ? 'checked' : '' ?>>
+                            <label class="custom-control-label font-weight-bold text-dark small" for="enablePriceOverride">
+                                Super Admin: Price Override (Custom Tariff)
+                            </label>
                         </div>
-                        <div class="col-md-6 form-group">
-                            <label for="to" class="font-weight-bold small text-muted">Destination City</label>
-                            <select name="to" id="to" class="form-control" required>
-                                <option value="">Select Destination City</option>
-                                <?php foreach ($to_cities as $row): ?>
-                                    <option value="<?= e($row['city2']) ?>" <?= ($form_old['to'] ?? '') === $row['city2'] ? 'selected' : '' ?>><?= e($row['city2']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="col-md-4 form-group">
-                            <label for="time" class="font-weight-bold small text-muted">Departure Time</label>
-                            <input type="time" name="time" id="time" class="form-control" value="<?= e($form_old['time'] ?? '') ?>" required />
-                        </div>
-                        <div class="col-md-4 form-group">
-                            <label for="seat_no" id="seat_label" class="font-weight-bold small text-muted">Seat Number</label>
-                            <input type="number" min="1" max="36" name="seat" class="form-control" id="seat_no" value="<?= e((string)($form_old['seat'] ?? '')) ?>" placeholder="Seat #" required>
-                        </div>
-                        <div class="col-md-4 form-group">
-                            <label for="amount" class="font-weight-bold small text-muted">Price (<?= CURRENCY ?>)</label>
-                            <input type="number" step="0.01" min="1" name="amount" class="form-control" id="amount" value="<?= e((string)($form_old['amount'] ?? '')) ?>" placeholder="0.00" required>
+                        <div id="priceOverrideFields" class="<?= empty($form_old['price_override']) ? 'd-none' : '' ?>">
+                            <div class="form-row">
+                                <div class="col-md-5 form-group mb-2">
+                                    <label for="price_override" class="font-weight-bold small text-muted">Override Fare (<?= CURRENCY ?>)</label>
+                                    <input type="number" step="0.01" min="0" name="price_override" id="price_override" class="form-control form-control-sm" value="<?= e((string)($form_old['price_override'] ?? '')) ?>" placeholder="New fare" <?= empty($form_old['price_override']) ? 'disabled' : '' ?>>
+                                </div>
+                                <div class="col-md-7 form-group mb-2">
+                                    <label for="override_reason" class="font-weight-bold small text-muted">Justification Reason (min 10 chars) <span class="text-danger">*</span></label>
+                                    <input type="text" name="override_reason" id="override_reason" class="form-control form-control-sm" minlength="10" value="<?= e($form_old['override_reason'] ?? '') ?>" placeholder="Reason for fare exception" <?= empty($form_old['price_override']) ? 'disabled' : '' ?>>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                    <?php endif; ?>
 
-                    <label class="font-weight-bold small text-muted mb-2">Click Seat to Assign</label>
-                    <div class="p-3 border rounded mb-4 bg-light" style="max-height: 180px; overflow-y: auto;">
+                    <div class="form-group mb-2">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="seat_no" id="seat_label" class="font-weight-bold small text-muted mb-0">Seat Number</label>
+                            <small id="seatAvailHelp" class="text-muted">Select trip &amp; date to preview seat availability</small>
+                        </div>
+                        <input type="number" min="1" max="36" name="seat" class="form-control" id="seat_no" value="<?= e((string)($form_old['seat'] ?? '')) ?>" placeholder="Seat #" required>
+                    </div>
+
+                    <label class="font-weight-bold small text-muted mb-2">Seat Visualizer &bull; Click to Assign</label>
+                    <div class="p-3 border rounded mb-4 bg-light" style="max-height: 190px; overflow-y: auto;">
                         <div class="d-flex flex-wrap justify-content-center" id="seatGridContainer"></div>
                     </div>
 
@@ -531,42 +603,201 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    var busSelect = document.getElementById('bus');
+    var tripSelect = document.getElementById('trip_select');
+    var dateInput = document.getElementById('date');
     var seatInput = document.getElementById('seat_no');
     var seatLabel = document.getElementById('seat_label');
     var gridContainer = document.getElementById('seatGridContainer');
+    var seatHelp = document.getElementById('seatAvailHelp');
+    var amountInput = document.getElementById('amount');
 
-    function rebuildSeatGrid(capacity) {
-        if (!seatInput || !gridContainer) return;
+    var tripBus = document.getElementById('trip_bus');
+    var tripFrom = document.getElementById('trip_from');
+    var tripTo = document.getElementById('trip_to');
+    var tripTime = document.getElementById('trip_time');
+
+    var enableOverride = document.getElementById('enablePriceOverride');
+    var overrideFields = document.getElementById('priceOverrideFields');
+    var overrideInput = document.getElementById('price_override');
+    var overrideReason = document.getElementById('override_reason');
+
+    if (enableOverride) {
+        enableOverride.addEventListener('change', function() {
+            if (this.checked) {
+                if (overrideFields) overrideFields.classList.remove('d-none');
+                if (overrideInput) overrideInput.disabled = false;
+                if (overrideReason) {
+                    overrideReason.disabled = false;
+                    overrideReason.required = true;
+                }
+            } else {
+                if (overrideFields) overrideFields.classList.add('d-none');
+                if (overrideInput) {
+                    overrideInput.value = '';
+                    overrideInput.disabled = true;
+                }
+                if (overrideReason) {
+                    overrideReason.value = '';
+                    overrideReason.disabled = true;
+                    overrideReason.required = false;
+                }
+            }
+        });
+    }
+
+    var currentBookedSeats = [];
+
+    function rebuildSeatGrid(capacity, bookedSeats) {
+        if (!gridContainer || !seatInput) return;
+        bookedSeats = bookedSeats || [];
+        currentBookedSeats = bookedSeats;
         seatInput.max = capacity;
         if (seatLabel) seatLabel.innerText = 'Seat Number (1-' + capacity + '):';
         seatInput.placeholder = '1 - ' + capacity;
         gridContainer.innerHTML = '';
+
+        var currentSelected = parseInt(seatInput.value, 10) || 0;
+
         for (var i = 1; i <= capacity; i++) {
             var btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = 'btn btn-outline-info btn-sm m-1';
             btn.style.width = '42px';
             btn.style.height = '36px';
             btn.innerText = i;
             btn.setAttribute('data-seat', i);
+
+            var isTaken = bookedSeats.indexOf(i) !== -1;
+            if (isTaken) {
+                btn.className = 'btn btn-secondary btn-sm m-1 disabled';
+                btn.disabled = true;
+                btn.title = 'Seat #' + i + ' is already reserved';
+                btn.style.opacity = '0.45';
+                btn.style.cursor = 'not-allowed';
+            } else if (currentSelected === i) {
+                btn.className = 'btn btn-success btn-sm m-1 font-weight-bold shadow-sm';
+                btn.title = 'Selected Seat #' + i;
+            } else {
+                btn.className = 'btn btn-outline-info btn-sm m-1';
+                btn.title = 'Seat #' + i + ' (Available)';
+            }
+
             btn.onclick = function() {
-                seatInput.value = this.getAttribute('data-seat');
+                var sNum = parseInt(this.getAttribute('data-seat'), 10);
+                if (bookedSeats.indexOf(sNum) !== -1) return;
+                seatInput.value = sNum;
+                // Re-render highlight
+                var allBtns = gridContainer.querySelectorAll('button[data-seat]');
+                allBtns.forEach(function(b) {
+                    var n = parseInt(b.getAttribute('data-seat'), 10);
+                    if (bookedSeats.indexOf(n) === -1) {
+                        if (n === sNum) {
+                            b.className = 'btn btn-success btn-sm m-1 font-weight-bold shadow-sm';
+                        } else {
+                            b.className = 'btn btn-outline-info btn-sm m-1';
+                        }
+                    }
+                });
             };
+
             gridContainer.appendChild(btn);
         }
     }
 
-    if (busSelect) {
-        busSelect.addEventListener('change', function() {
-            var opt = this.options[this.selectedIndex];
-            var cap = parseInt(opt ? opt.getAttribute('data-capacity') : '36', 10) || 36;
-            rebuildSeatGrid(cap);
-        });
-        var initialOpt = busSelect.options[busSelect.selectedIndex];
-        var initialCap = parseInt(initialOpt ? initialOpt.getAttribute('data-capacity') : '36', 10) || 36;
-        rebuildSeatGrid(initialCap);
+    function refreshSeatAvailability() {
+        if (!tripSelect) return;
+        var opt = tripSelect.options[tripSelect.selectedIndex];
+        if (!opt || !opt.value) {
+            if (gridContainer) gridContainer.innerHTML = '<span class="text-muted small">Please select a trip above to view seating chart.</span>';
+            if (seatHelp) seatHelp.innerText = 'Select a trip to view seats';
+            return;
+        }
+
+        var bus = opt.getAttribute('data-bus') || '';
+        var from = opt.getAttribute('data-from') || '';
+        var to = opt.getAttribute('data-to') || '';
+        var time = opt.getAttribute('data-time') || '';
+        var price = opt.getAttribute('data-price') || '0.00';
+        var capacity = parseInt(opt.getAttribute('data-capacity') || '36', 10) || 36;
+        var dateVal = dateInput ? dateInput.value : '';
+
+        if (tripBus) tripBus.value = bus;
+        if (tripFrom) tripFrom.value = from;
+        if (tripTo) tripTo.value = to;
+        if (tripTime) tripTime.value = time;
+        if (amountInput) amountInput.value = price;
+
+        if (!dateVal) {
+            rebuildSeatGrid(capacity, []);
+            if (seatHelp) seatHelp.innerText = 'Select travel date to check availability';
+            return;
+        }
+
+        if (seatHelp) seatHelp.innerText = 'Checking seat availability...';
+
+        fetch('api-seats.php?bus=' + encodeURIComponent(bus) + '&date=' + encodeURIComponent(dateVal) + '&time=' + encodeURIComponent(time))
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.ok && Array.isArray(data.booked_seats)) {
+                    var booked = data.booked_seats;
+                    rebuildSeatGrid(capacity, booked);
+                    var freeCount = capacity - booked.length;
+                    if (seatHelp) seatHelp.innerHTML = '<span class="text-success font-weight-bold">' + freeCount + ' / ' + capacity + ' seats available</span>';
+                    // If currently selected seat is taken, clear it
+                    var curr = parseInt(seatInput.value, 10);
+                    if (curr && booked.indexOf(curr) !== -1) {
+                        seatInput.value = '';
+                    }
+                } else {
+                    rebuildSeatGrid(capacity, []);
+                    if (seatHelp) seatHelp.innerText = 'Live availability check unavailable';
+                }
+            })
+            .catch(function() {
+                rebuildSeatGrid(capacity, []);
+                if (seatHelp) seatHelp.innerText = 'Could not fetch live seat status';
+            });
     }
+
+    if (tripSelect) {
+        tripSelect.addEventListener('change', refreshSeatAvailability);
+    }
+    if (dateInput) {
+        dateInput.addEventListener('change', refreshSeatAvailability);
+    }
+
+    // Input event on seat_no to synchronize visual selection
+    if (seatInput) {
+        seatInput.addEventListener('input', function() {
+            var val = parseInt(this.value, 10) || 0;
+            if (gridContainer) {
+                var allBtns = gridContainer.querySelectorAll('button[data-seat]');
+                allBtns.forEach(function(b) {
+                    var n = parseInt(b.getAttribute('data-seat'), 10);
+                    if (currentBookedSeats.indexOf(n) === -1) {
+                        if (n === val) {
+                            b.className = 'btn btn-success btn-sm m-1 font-weight-bold shadow-sm';
+                        } else {
+                            b.className = 'btn btn-outline-info btn-sm m-1';
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    // Initial load
+    if (tripSelect && tripSelect.value) {
+        refreshSeatAvailability();
+    } else if (gridContainer) {
+        gridContainer.innerHTML = '<span class="text-muted small">Please select a trip above to view seating chart.</span>';
+    }
+
+    // Auto open modal if returning from a failed submission
+    <?php if (!empty($form_old)): ?>
+    if (window.jQuery && jQuery.fn.modal) {
+        jQuery('#addBookingModal').modal('show');
+    }
+    <?php endif; ?>
 
     // Bulk selection logic
     var selectAll = document.getElementById('selectAllBookings');
