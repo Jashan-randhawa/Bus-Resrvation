@@ -20,9 +20,15 @@
             var target = document.querySelector(targetId);
             if (target) {
               e.preventDefault();
+              var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
               target.scrollIntoView({
-                behavior: 'smooth'
+                behavior: reduceMotion ? 'auto' : 'smooth'
               });
+              target.setAttribute('tabindex', '-1');
+              target.focus({ preventScroll: true });
+              if (window.history && window.history.pushState) {
+                window.history.pushState(null, '', targetId);
+              }
               // Auto-close mobile navigation menu after link tap (P5)
               var nav = document.getElementById('mycollapsediv');
               if (nav && nav.classList.contains('show') && window.jQuery) {
