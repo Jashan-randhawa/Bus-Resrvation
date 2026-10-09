@@ -244,7 +244,7 @@ if (isset($_POST['subbtn'])) {
 <?php require_once __DIR__ . '/includes/layout/header-public.php'; ?>
 
 <main id="main" tabindex="-1">
-  <?php if (!empty($msg)): ?>
+  <?php if (!empty($msg) && empty($open_modal)): ?>
     <div class="container pt-4">
       <div class="alert alert-<?= e($msg_type) ?> alert-dismissible fade show text-center" role="alert">
         <?= e($msg) ?>
