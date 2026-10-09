@@ -203,6 +203,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                     🔍 Find Available Buses
                 </button>
             </div>
+            <div id="swap-hint" class="small text-danger mt-2 font-weight-medium" style="display:none;" role="alert"></div>
         </form>
     </div>
 </div>
@@ -432,16 +433,55 @@ if (document.getElementById('from')?.value) {
     filterDestinations();
 }
 
-// U-13: Swap Cities handler
+function hasOpt(selectEl, val) {
+    if (!selectEl || !val) return false;
+    for (var i = 0; i < selectEl.options.length; i++) {
+        if (selectEl.options[i].value === val) return true;
+    }
+    return false;
+}
+
+function showSwapHint(msg) {
+    var hint = document.getElementById('swap-hint');
+    if (hint) {
+        hint.textContent = msg;
+        hint.style.display = 'block';
+        setTimeout(function() {
+            hint.style.display = 'none';
+        }, 4000);
+    }
+}
+
+// U-13 / Issue 6: Swap Cities handler
 function swapCities() {
     var fromSelect = document.getElementById('from');
     var toSelect = document.getElementById('to');
-    if (fromSelect && toSelect) {
-        var temp = fromSelect.value;
-        fromSelect.value = toSelect.value;
-        toSelect.value = temp;
-        filterDestinations();
+    if (!fromSelect || !toSelect) return;
+
+    var f = fromSelect.value;
+    var t = toSelect.value;
+
+    if (!f || !t) {
+        showSwapHint('Please select both Origin and Destination before swapping.');
+        return;
     }
+
+    if (!hasOpt(fromSelect, t) || !hasOpt(toSelect, f)) {
+        showSwapHint('Cannot swap: Reverse direction is not available in the city selection options.');
+        return;
+    }
+
+    if (typeof routesMap !== 'undefined' && routesMap[t] && routesMap[t].indexOf(f) === -1) {
+        showSwapHint('Cannot swap: No scheduled routes currently exist for ' + t + ' → ' + f + '.');
+        return;
+    }
+
+    var hint = document.getElementById('swap-hint');
+    if (hint) hint.style.display = 'none';
+
+    fromSelect.value = t;
+    toSelect.value = f;
+    filterDestinations();
 }
 document.getElementById('swap-cities-btn')?.addEventListener('click', swapCities);
 document.getElementById('swap-cities-btn-mobile')?.addEventListener('click', swapCities);
