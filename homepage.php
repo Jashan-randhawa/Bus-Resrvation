@@ -322,7 +322,7 @@ if (isset($_POST['subbtn'])) {
       <div class="row align-items-center">
         <div class="col-lg-6 hero-animate-in">
           <div class="hero-pill">
-            <span>🛡️</span>
+            <span aria-hidden="true">🛡️</span>
             <span>DIRECT INTERCITY BOOKINGS</span>
           </div>
           <h1 id="heroHeading" class="hero-heading">
@@ -386,7 +386,7 @@ if (isset($_POST['subbtn'])) {
             <div class="booking-form-grid">
               <div class="form-group mb-0">
                 <label for="home_from" class="booking-field-label">
-                  <span>📍</span> Departure City
+                  <span aria-hidden="true">📍</span> Departure City
                 </label>
                 <select name="from" id="home_from" class="form-control" required>
                   <option value="">Select Origin City</option>
@@ -399,7 +399,7 @@ if (isset($_POST['subbtn'])) {
               <div class="form-group mb-0">
                 <div class="d-flex justify-content-between align-items-center">
                   <label for="home_to" class="booking-field-label mb-0">
-                    <span>🏁</span> Destination City
+                    <span aria-hidden="true">🏁</span> Destination City
                   </label>
                   <button type="button" class="btn btn-link btn-sm p-0 text-primary text-decoration-none" id="home_swap_btn" title="Swap Departure and Destination" style="font-size: 0.8rem; line-height: 1;">⇄ Swap</button>
                 </div>
@@ -413,7 +413,7 @@ if (isset($_POST['subbtn'])) {
 
               <div class="form-group mb-0">
                 <label for="home_date" class="booking-field-label">
-                  <span>📅</span> Travel Date
+                  <span aria-hidden="true">📅</span> Travel Date
                 </label>
                 <input type="date" min="<?= date('Y-m-d') ?>" max="<?= date('Y-m-d', strtotime('+90 days')) ?>" name="date" id="home_date" value="<?= date('Y-m-d') ?>" class="form-control" required>
               </div>
@@ -431,7 +431,7 @@ if (isset($_POST['subbtn'])) {
             <div class="booking-form-grid">
               <div class="form-group mb-0">
                 <label for="guest_from" class="booking-field-label">
-                  <span>📍</span> Departure City
+                  <span aria-hidden="true">📍</span> Departure City
                 </label>
                 <select id="guest_from" class="form-control" required>
                   <option value="">Select Origin City</option>
@@ -444,7 +444,7 @@ if (isset($_POST['subbtn'])) {
               <div class="form-group mb-0">
                 <div class="d-flex justify-content-between align-items-center">
                   <label for="guest_to" class="booking-field-label mb-0">
-                    <span>🏁</span> Destination City
+                    <span aria-hidden="true">🏁</span> Destination City
                   </label>
                   <button type="button" class="btn btn-link btn-sm p-0 text-primary text-decoration-none" id="guest_swap_btn" title="Swap Departure and Destination" style="font-size: 0.8rem; line-height: 1;">⇄ Swap</button>
                 </div>
@@ -458,7 +458,7 @@ if (isset($_POST['subbtn'])) {
 
               <div class="form-group mb-0">
                 <label for="guest_date" class="booking-field-label">
-                  <span>📅</span> Travel Date
+                  <span aria-hidden="true">📅</span> Travel Date
                 </label>
                 <input type="date" min="<?= date('Y-m-d') ?>" max="<?= date('Y-m-d', strtotime('+90 days')) ?>" id="guest_date" value="<?= date('Y-m-d') ?>" class="form-control" required>
               </div>
@@ -870,45 +870,26 @@ if (isset($_POST['subbtn'])) {
                 </div>
               </div>
             </div>
-            <script>
-              document.addEventListener('DOMContentLoaded', function() {
-                var resArea = document.getElementById('pnrResultArea');
-                if (resArea) resArea.focus();
-              });
-            </script>
           <?php elseif ($pnr_state === 'throttled'): ?>
             <div class="alert alert-danger mt-4 text-center mb-0" role="alert" tabindex="-1" id="pnrResultArea">
               <strong>Lookup limit reached:</strong> Too many verification attempts have been made. Please wait 15 minutes before checking this ticket again.
             </div>
-            <script>
-              document.addEventListener('DOMContentLoaded', function() {
-                var resArea = document.getElementById('pnrResultArea');
-                if (resArea) resArea.focus();
-              });
-            </script>
           <?php elseif ($pnr_state === 'invalid'): ?>
             <div class="alert alert-warning mt-4 text-center mb-0" role="alert" tabindex="-1" id="pnrResultArea">
-              <strong>Invalid format:</strong> Please verify that your PNR is exactly 10 alphanumeric characters and phone digits are 4 numbers.
+              <strong>Invalid format:</strong> Please verify that your PNR is exactly 10 characters (letters A-F and numbers) and phone digits are 4 numbers.
             </div>
-            <script>
-              document.addEventListener('DOMContentLoaded', function() {
-                var resArea = document.getElementById('pnrResultArea');
-                if (resArea) resArea.focus();
-              });
-            </script>
           <?php else: ?>
             <div class="alert alert-warning mt-4 text-center mb-0" role="alert" tabindex="-1" id="pnrResultArea">
               <strong>No matching reservation:</strong> No booking record was found matching that PNR token and phone number.
             </div>
-            <script>
-              document.addEventListener('DOMContentLoaded', function() {
-                var resArea = document.getElementById('pnrResultArea');
-                if (resArea) resArea.focus();
-              });
-            </script>
-          <?php endif;
-        }
-        ?>
+          <?php endif; ?>
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              var resArea = document.getElementById('pnrResultArea');
+              if (resArea) resArea.focus();
+            });
+          </script>
+        <?php } ?>
       </div>
     </div>
   </section>
@@ -1035,7 +1016,7 @@ if (isset($_POST['subbtn'])) {
           </li>
         </ul>
       <div id="guestSearchNotice" class="alert alert-info alert-dismissible fade show m-3 mb-0 d-none" role="alert">
-        <span class="mr-1">🚌</span> <span id="guestSearchNoticeText"></span>
+        <span class="mr-1" aria-hidden="true">🚌</span> <span id="guestSearchNoticeText"></span>
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>

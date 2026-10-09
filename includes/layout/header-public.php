@@ -11,10 +11,14 @@ $user_role = $_SESSION['role'] ?? null;
   <meta name="description" content="Simple and reliable bus ticket booking system. Check real-time seat availability, lookup PNR status, and reserve seats across intercity routes.">
   <meta name="theme-color" content="#1e293b">
 
-  <!-- Open Graph -->
+  <!-- Open Graph & Canonical (P19) -->
+  <link rel="canonical" href="<?= e(BASE_URL) ?>/homepage.php">
   <meta property="og:title" content="Bus Service - Safe &amp; Simple Ticket Booking">
   <meta property="og:description" content="Simple and reliable bus ticket booking system. Real-time seats and instant PNR lookup.">
+  <meta property="og:image" content="<?= e(BASE_URL) ?>/assets/images/hero-800.webp">
+  <meta property="og:url" content="<?= e(BASE_URL) ?>/homepage.php">
   <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
 
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/assets/images/bus.svg">

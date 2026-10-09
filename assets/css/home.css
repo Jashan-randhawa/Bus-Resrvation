@@ -70,8 +70,8 @@ html[data-theme="dark"] .ticket-receipt-card,
 html[data-theme="dark"] .feature-card,
 html[data-theme="dark"] .contact-form-card,
 html[data-theme="dark"] .public-footer {
-  background-color: var(--home-bg-white) !important;
-  border-color: var(--home-border) !important;
+  background-color: var(--home-bg-white);
+  border-color: var(--home-border);
 }
 html[data-theme="dark"] .feature-svg-icon {
   background-color: #1e293b;
@@ -233,7 +233,7 @@ section[id] {
 }
 
 .hero-image-wrapper {
-  background: #ffffff;
+  background: var(--home-bg-white);
   border-radius: var(--radius-xl, 14px);
   padding: 0.75rem;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06);
@@ -247,12 +247,12 @@ section[id] {
   height: auto;
   border-radius: var(--radius-lg, 10px);
   object-fit: cover;
-  background: #ffffff;
+  background: var(--home-bg-white);
 }
 
 /* ── 5. Central Search & Booking Card (Section A1) ──────────── */
 .booking-search-card {
-  background: #ffffff;
+  background: var(--home-bg-white);
   border: 1px solid var(--home-border);
   border-radius: var(--radius-xl, 14px);
   box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.08);
@@ -290,7 +290,7 @@ section[id] {
 
 /* ── 6. PNR Verification Ticket & Section (Section D) ───────── */
 .pnr-search-box {
-  background: #ffffff;
+  background: var(--home-bg-white);
   border: 1px solid var(--home-border);
   border-radius: var(--radius-xl, 14px);
   padding: clamp(1.5rem, 3vw, 2rem);
@@ -298,7 +298,7 @@ section[id] {
 }
 
 .ticket-receipt-card {
-  background: #ffffff;
+  background: var(--home-bg-white);
   border: 1.5px solid var(--home-border);
   border-radius: var(--radius-xl, 14px);
   overflow: hidden;
@@ -383,7 +383,7 @@ section[id] {
 }
 
 .feature-card {
-  background: #ffffff;
+  background: var(--home-bg-white);
   border: 1px solid var(--home-border);
   border-radius: var(--radius-lg, 10px);
   padding: 2rem 1.75rem;
@@ -432,7 +432,7 @@ section[id] {
 .contact-form-card {
   max-width: 760px;
   margin: 0 auto;
-  background: #ffffff;
+  background: var(--home-bg-white);
   border: 1px solid var(--home-border);
   border-radius: var(--radius-xl, 14px);
   padding: clamp(1.75rem, 4vw, 2.75rem);
