@@ -347,14 +347,19 @@ if (isset($_POST['subbtn'])) {
   <section id="search" class="home-section bg-light" aria-labelledby="searchHeading">
     <div class="container">
       <div class="booking-search-card">
-        <div class="card-title-bar">
+        <div class="card-title-bar d-flex flex-column flex-sm-row justify-content-between align-items-sm-center">
           <div>
             <h2 id="searchHeading" class="h4 font-weight-bold text-dark mb-1">Plan Your Journey</h2>
-            <p class="text-muted small mb-0">Select departure, destination, and travel date to find scheduled coaches.</p>
+            <p class="text-muted small mb-0">
+              Select departure, destination, and travel date to find scheduled coaches.
+              <span class="d-block d-md-inline text-muted mt-1 mt-md-0 font-italic">Need more seats? Make a separate booking for each passenger.</span>
+            </p>
           </div>
-          <span class="badge badge-primary px-3 py-2 font-weight-bold d-none d-md-inline-block">
-            1 Seat per Booking
-          </span>
+          <div class="mt-2 mt-sm-0">
+            <span class="badge badge-primary px-3 py-2 font-weight-bold">
+              1 Seat per Booking
+            </span>
+          </div>
         </div>
 
         <?php if (empty($route_pairs)): ?>
