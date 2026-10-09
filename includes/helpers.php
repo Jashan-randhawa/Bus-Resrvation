@@ -1084,7 +1084,7 @@ function render_pagination(array $pagination, array $keep_params = []): string {
 
     for ($i = $start; $i <= $end; $i++) {
         if ($i === $page) {
-            $html .= '<li class="page-item active"><span class="page-link">' . $i . '</span></li>';
+            $html .= '<li class="page-item active" aria-current="page"><span class="page-link">' . $i . '</span></li>';
         } else {
             $html .= '<li class="page-item"><a class="page-link" href="' . e($build_url($i)) . '">' . $i . '</a></li>';
         }

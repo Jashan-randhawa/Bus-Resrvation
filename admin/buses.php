@@ -205,12 +205,14 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 </div>
 
 <!-- Add Bus Modal -->
-<div class="modal fade" id="addBusModal" tabindex="-1">
+<div class="modal fade" id="addBusModal" tabindex="-1" role="dialog" aria-labelledby="addBusModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title font-weight-bold">Register New Bus</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                <h5 class="modal-title font-weight-bold" id="addBusModalLabel">Register New Bus</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body p-4">
                 <form action="" method="post">

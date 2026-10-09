@@ -227,12 +227,14 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                                 <?php endif; ?>
 
                                 <!-- Reply Modal -->
-                                <div class="modal fade text-left" id="replyModal<?= $qid ?>" tabindex="-1">
+                                <div class="modal fade text-left" id="replyModal<?= $qid ?>" tabindex="-1" role="dialog" aria-labelledby="replyModalLabel<?= $qid ?>" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered">
                                         <div class="modal-content">
                                             <div class="modal-header bg-dark text-white">
-                                                <h5 class="modal-title font-weight-bold">Reply to <?= e($name) ?></h5>
-                                                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                                                <h5 class="modal-title font-weight-bold" id="replyModalLabel<?= $qid ?>">Reply to <?= e($name) ?></h5>
+                                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
                                             </div>
                                             <form action="" method="post">
                                                 <?= csrf_field() ?>

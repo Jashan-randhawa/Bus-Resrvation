@@ -329,12 +329,12 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     <div class="card-body p-3">
         <form action="bookings.php" method="get" class="form-row align-items-end">
             <div class="col-md-3 mb-2 mb-md-0">
-                <label class="small font-weight-bold text-muted mb-1">Search Keyword</label>
-                <input type="text" name="q" class="form-control form-control-sm" placeholder="PNR, name, phone, city..." value="<?= e($search) ?>">
+                <label for="filter_q" class="small font-weight-bold text-muted mb-1">Search Keyword</label>
+                <input type="text" id="filter_q" name="q" class="form-control form-control-sm" placeholder="PNR, name, phone, city..." value="<?= e($search) ?>">
             </div>
             <div class="col-md-2 mb-2 mb-md-0">
-                <label class="small font-weight-bold text-muted mb-1">Fleet Bus</label>
-                <select name="bus" class="form-control form-control-sm">
+                <label for="filter_bus" class="small font-weight-bold text-muted mb-1">Fleet Bus</label>
+                <select id="filter_bus" name="bus" class="form-control form-control-sm">
                     <option value="">All Buses</option>
                     <?php foreach ($buses as $b_opt): ?>
                         <option value="<?= e($b_opt['bus_number']) ?>" <?= $filter_bus === $b_opt['bus_number'] ? 'selected' : '' ?>>
@@ -344,12 +344,12 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                 </select>
             </div>
             <div class="col-md-2 mb-2 mb-md-0">
-                <label class="small font-weight-bold text-muted mb-1">From Date</label>
-                <input type="date" name="from_date" class="form-control form-control-sm" value="<?= e($filter_date_from) ?>">
+                <label for="filter_from_date" class="small font-weight-bold text-muted mb-1">From Date</label>
+                <input type="date" id="filter_from_date" name="from_date" class="form-control form-control-sm" value="<?= e($filter_date_from) ?>">
             </div>
             <div class="col-md-2 mb-2 mb-md-0">
-                <label class="small font-weight-bold text-muted mb-1">To Date</label>
-                <input type="date" name="to_date" class="form-control form-control-sm" value="<?= e($filter_date_to) ?>">
+                <label for="filter_to_date" class="small font-weight-bold text-muted mb-1">To Date</label>
+                <input type="date" id="filter_to_date" name="to_date" class="form-control form-control-sm" value="<?= e($filter_date_to) ?>">
             </div>
             <div class="col-md-3 d-flex align-items-center">
                 <button type="submit" class="btn btn-primary btn-sm px-3 mr-2">Filter</button>
@@ -377,7 +377,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                 default     => $is_curr ? 'btn-dark' : 'btn-outline-secondary',
             };
             ?>
-            <a href="?<?= http_build_query($tab_params) ?>" class="btn <?= $btn_style ?>"><?= $st ?></a>
+            <a href="?<?= http_build_query($tab_params) ?>" class="btn <?= $btn_style ?>" <?= $is_curr ? 'aria-current="true"' : '' ?>><?= $st ?></a>
         <?php endforeach; ?>
     </div>
 </div>
@@ -413,7 +413,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             <thead class="thead-light">
                 <tr>
                     <th style="width: 40px;" class="text-center">
-                        <input type="checkbox" id="selectAllBookings" title="Select all on this page">
+                        <input type="checkbox" id="selectAllBookings" title="Select all on this page" aria-label="Select all bookings on this page">
                     </th>
                     <th>PNR</th>
                     <th>Bus</th>
@@ -455,7 +455,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         ?>
                         <tr class="<?= ($is_cancelled || $is_expired) ? 'text-muted' : '' ?>">
                             <td class="text-center">
-                                <input type="checkbox" name="selected_ids[]" value="<?= e($sno) ?>" form="bulkBookingsForm" class="booking-select-cb">
+                                <input type="checkbox" name="selected_ids[]" value="<?= e($sno) ?>" form="bulkBookingsForm" class="booking-select-cb" aria-label="Select booking <?= e($display_pnr !== '' ? $display_pnr : ('#' . $sno)) ?>">
                             </td>
                             <td><code><?= e($display_pnr !== '' ? $display_pnr : ('#' . $sno)) ?></code></td>
                             <td><strong><?= e($row['bus'] ?? '') ?></strong></td>
@@ -494,7 +494,9 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <div class="modal-content">
             <div class="modal-header bg-dark text-white">
                 <h5 class="modal-title font-weight-bold" id="addBookingModalLabel">Create Passenger Reservation</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">&times;</button>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body p-4">
                 <form action="" method="post" id="adminBookingForm">
