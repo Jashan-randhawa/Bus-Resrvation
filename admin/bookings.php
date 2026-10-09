@@ -409,7 +409,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <span class="record-count"><?= $pagination['total_records'] ?> record(s)</span>
     </div>
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover table-stack mb-0">
             <thead class="thead-light">
                 <tr>
                     <th style="width: 40px;" class="text-center">
@@ -454,19 +454,19 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         elseif ($is_cancelled) $badge_class = 'danger';
                         ?>
                         <tr class="<?= ($is_cancelled || $is_expired) ? 'text-muted' : '' ?>">
-                            <td class="text-center">
+                            <td class="text-center" data-label="Select">
                                 <input type="checkbox" name="selected_ids[]" value="<?= e($sno) ?>" form="bulkBookingsForm" class="booking-select-cb" aria-label="Select booking <?= e($display_pnr !== '' ? $display_pnr : ('#' . $sno)) ?>">
                             </td>
-                            <td><code><?= e($display_pnr !== '' ? $display_pnr : ('#' . $sno)) ?></code></td>
-                            <td><strong><?= e($row['bus'] ?? '') ?></strong></td>
-                            <td class="font-weight-medium text-dark"><?= e($row['name'] ?? '') ?></td>
-                            <td><?= e($row['contact'] ?? '') ?></td>
-                            <td><?= e($row['city1'] ?? '') ?> &rarr; <?= e($row['city2'] ?? '') ?></td>
-                            <td><?= e($row['date'] ?? '') ?><br><small class="text-muted"><?= e($row['time'] ?? '') ?></small></td>
-                            <td><span class="badge badge-info px-2 py-1">Seat #<?= e((string)$row['seat']) ?></span></td>
-                            <td><span class="badge badge-<?= $badge_class ?>"><?= e($status) ?></span></td>
-                            <td class="font-weight-bold text-dark"><?= CURRENCY ?><?= e(number_format((float)($row['price'] ?? 0), 2)) ?></td>
-                            <td class="text-right">
+                            <td data-label="PNR"><code><?= e($display_pnr !== '' ? $display_pnr : ('#' . $sno)) ?></code></td>
+                            <td data-label="Bus"><strong><?= e($row['bus'] ?? '') ?></strong></td>
+                            <td data-label="Passenger" class="font-weight-medium text-dark"><?= e($row['name'] ?? '') ?></td>
+                            <td data-label="Contact"><?= e($row['contact'] ?? '') ?></td>
+                            <td data-label="Route"><?= e($row['city1'] ?? '') ?> &rarr; <?= e($row['city2'] ?? '') ?></td>
+                            <td data-label="Date & Time"><?= e($row['date'] ?? '') ?><br><small class="text-muted"><?= e($row['time'] ?? '') ?></small></td>
+                            <td data-label="Seat"><span class="badge badge-info px-2 py-1">Seat #<?= e((string)$row['seat']) ?></span></td>
+                            <td data-label="Status"><span class="badge badge-<?= $badge_class ?>"><?= e($status) ?></span></td>
+                            <td data-label="Fare" class="font-weight-bold text-dark"><?= CURRENCY ?><?= e(number_format((float)($row['price'] ?? 0), 2)) ?></td>
+                            <td data-label="Actions" class="text-right">
                                 <?php if (can_write()): ?>
                                 <a href="<?= BASE_URL ?>/admin/edit/edit-booking.php?id=<?= e($sno) ?>" class="btn btn-outline-secondary btn-sm">Edit</a>
                                 <?php endif; ?>

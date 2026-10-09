@@ -279,3 +279,63 @@ body.overflow-hidden {
 [data-theme="dark"] .badge-warning, [data-theme="dark"] .btn-warning {
   color: #111827 !important;
 }
+
+/* ==========================================================================
+   Responsive Stacked Table Cards for Small Screens (< 768px) (A13)
+   ========================================================================== */
+@media (max-width: 767.98px) {
+  .table-stack thead {
+    display: none;
+  }
+  .table-stack tbody,
+  .table-stack tr,
+  .table-stack td {
+    display: block;
+    width: 100%;
+  }
+  .table-stack tr {
+    margin-bottom: 1rem;
+    border: 1px solid var(--c-border, #e2e8f0);
+    border-radius: var(--radius-md, 8px);
+    background: var(--c-surface, #ffffff);
+    padding: 0.85rem 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+  .table-stack td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.45rem 0;
+    border: none;
+    border-bottom: 1px solid var(--c-border-subtle, #f1f5f9);
+    text-align: right;
+  }
+  .table-stack td:last-child {
+    border-bottom: none;
+    margin-top: 0.25rem;
+    padding-top: 0.6rem;
+  }
+  .table-stack td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--c-text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    text-align: left;
+    margin-right: 1rem;
+  }
+  .table-stack td[data-label="Select"] {
+    justify-content: flex-start;
+    padding-bottom: 0.5rem;
+  }
+  .table-stack td[data-label="Select"]::before {
+    margin-right: 0.5rem;
+  }
+  .table-stack td[data-label="Actions"] {
+    justify-content: flex-end;
+  }
+  .table-stack td[data-label="Actions"]::before {
+    display: none;
+  }
+}
