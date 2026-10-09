@@ -221,23 +221,54 @@ if (isset($_POST['userbtn'])) {
   }
 }
 
-// Contact form handler (C-02, H-07)
+// Contact form handler (C-02, H-07, P8)
+$contact_old = [
+  'name' => $_SESSION['name'] ?? '',
+  'email' => $_SESSION['email'] ?? '',
+  'subject' => '',
+  'query' => ''
+];
+$contact_alert = null;
+$contact_alert_type = 'info';
+
 if (isset($_POST['subbtn'])) {
   csrf_verify();
+
+  // Honeypot spam check
+  if (!empty($_POST['website'])) {
+    header('Location: ' . BASE_URL . '/homepage.php#contact');
+    exit;
+  }
+
   $n = trim((string)($_POST['name'] ?? ''));
   $em = trim((string)($_POST['email'] ?? ''));
   $s = trim((string)($_POST['subject'] ?? ''));
   $q = trim((string)($_POST['query'] ?? ''));
 
-  if ($n !== '' && filter_var($em, FILTER_VALIDATE_EMAIL) && $q !== '') {
+  $contact_old = ['name' => $n, 'email' => $em, 'subject' => $s, 'query' => $q];
+  $ip = client_ip();
+  $contactKey = 'contact:ip:' . $ip;
+
+  if (throttle_blocked($link, $contactKey, 5, 3600)) {
+    $contact_alert = 'Too many inquiries sent recently from your IP. Please try again later.';
+    $contact_alert_type = 'danger';
+  } elseif ($n === '' || !filter_var($em, FILTER_VALIDATE_EMAIL) || $q === '') {
+    $contact_alert = 'Please provide your full name, a valid email address, and inquiry details.';
+    $contact_alert_type = 'warning';
+  } else {
+    $n = mb_substr($n, 0, 100);
+    $em = mb_substr($em, 0, 100);
+    $s = mb_substr($s, 0, 200);
+    $q = mb_substr($q, 0, 3000);
+
     db_exec($link,
       'INSERT INTO query (user_name, user_email, user_subject, user_qry) VALUES (?,?,?,?)',
       'ssss', [$n, $em, $s, $q]);
-    $msg = 'Thank you! Your inquiry has been submitted successfully.';
-    $msg_type = 'success';
-  } else {
-    $msg = 'Please provide your name, a valid email, and your query details.';
-    $msg_type = 'warning';
+    throttle_hit($link, $contactKey);
+
+    flash_set('success', 'Thank you! Your inquiry has been submitted successfully. Our support team will reply by email.');
+    header('Location: ' . BASE_URL . '/homepage.php#contact');
+    exit;
   }
 }
 ?>
@@ -706,25 +737,49 @@ if (isset($_POST['subbtn'])) {
           <h2 id="contactHeading" class="font-weight-bold">Send Us a Message</h2>
           <p class="text-muted">Have inquiries regarding routes, schedules, or ticketing? Send a message and our team will reply by email.</p>
         </div>
-        <form action="<?= e(BASE_URL) ?>/homepage.php" method="post">
+
+        <?php
+        $flashes = flash_get();
+        foreach ($flashes as $f): ?>
+          <div class="alert alert-<?= e($f['type']) ?> alert-dismissible fade show mb-4" role="alert">
+            <?= e($f['msg']) ?>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        <?php endforeach; ?>
+
+        <?php if (!empty($contact_alert)): ?>
+          <div class="alert alert-<?= e($contact_alert_type) ?> alert-dismissible fade show mb-4" role="alert">
+            <?= e($contact_alert) ?>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        <?php endif; ?>
+
+        <form action="<?= e(BASE_URL) ?>/homepage.php#contact" method="post">
           <?= csrf_field() ?>
+          <div style="display:none;" aria-hidden="true">
+            <input type="text" name="website" tabindex="-1" autocomplete="off">
+          </div>
           <div class="form-row">
             <div class="col-md-6 form-group">
               <label for="contact_name" class="font-weight-bold small text-muted">Your Full Name</label>
-              <input type="text" id="contact_name" class="form-control" name="name" placeholder="John Doe" required />
+              <input type="text" id="contact_name" class="form-control" name="name" maxlength="100" value="<?= e($contact_old['name']) ?>" placeholder="John Doe" required />
             </div>
             <div class="col-md-6 form-group">
               <label for="contact_email" class="font-weight-bold small text-muted">Email Address</label>
-              <input type="email" id="contact_email" class="form-control" name="email" placeholder="john@example.com" required />
+              <input type="email" id="contact_email" class="form-control" name="email" maxlength="100" value="<?= e($contact_old['email']) ?>" placeholder="john@example.com" required />
             </div>
           </div>
           <div class="form-group">
             <label for="contact_subject" class="font-weight-bold small text-muted">Subject</label>
-            <input type="text" id="contact_subject" class="form-control" name="subject" placeholder="Inquiry regarding ticket #..." />
+            <input type="text" id="contact_subject" class="form-control" name="subject" maxlength="200" value="<?= e($contact_old['subject']) ?>" placeholder="Inquiry regarding ticket #..." />
           </div>
           <div class="form-group">
             <label for="contact_query" class="font-weight-bold small text-muted">Message Content</label>
-            <textarea id="contact_query" rows="4" class="form-control" name="query" placeholder="Type your inquiry here..." required></textarea>
+            <textarea id="contact_query" rows="4" class="form-control" name="query" maxlength="3000" placeholder="Type your inquiry here..." required><?= e($contact_old['query']) ?></textarea>
           </div>
           <button type="submit" name="subbtn" class="btn btn-primary btn-block btn-lg shadow-sm" style="min-height: 48px;">
             Send Inquiry
