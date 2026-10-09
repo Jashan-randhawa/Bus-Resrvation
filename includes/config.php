@@ -60,6 +60,12 @@ if (!defined('ADMIN_MFA_ENFORCE')) {
     define('ADMIN_MFA_ENFORCE', ($mfa_enforce_env !== false && ($mfa_enforce_env === '1' || strtolower($mfa_enforce_env) === 'true')));
 }
 
+// Ticket HMAC verification secret (Issue 5)
+if (!defined('TICKET_HMAC_SECRET')) {
+    $hmac_env = getenv('TICKET_HMAC_SECRET');
+    define('TICKET_HMAC_SECRET', ($hmac_env !== false && $hmac_env !== '') ? $hmac_env : 'busres-ticket-secret-salt');
+}
+
 // Global exception handler (M-04 / D-02 / P6)
 if (!function_exists('busres_exception_handler')) {
     function busres_exception_handler(Throwable $t): void {

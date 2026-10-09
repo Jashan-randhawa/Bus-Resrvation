@@ -50,7 +50,13 @@ if ($is_cancelled) {
 $is_active = (!$is_cancelled && !$is_expired);
 $is_valid = (!$is_cancelled && !$is_expired && !$is_past && ($raw_status === 'Confirmed' || $raw_status === ''));
 $stamp = $is_valid ? 'VALID PASS' : ($is_cancelled || $is_expired ? 'VOID' : ($raw_status === 'Pending' ? 'PENDING PAYMENT' : 'COMPLETED'));
-$verify_hash = strtoupper(substr(hash('crc32b', $booking['pnr'] . $booking['date']), 0, 6));
+$sig = get_ticket_signature($booking);
+$verify_hash = strtoupper($sig);
+
+$verify_path = (defined('BASE_URL') ? BASE_URL : '') . '/user/verify.php?pnr=' . urlencode($booking['pnr']) . '&sig=' . urlencode($sig);
+$proto = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') ? 'https://' : 'http://';
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+$full_verify_url = $proto . $host . $verify_path;
 ?>
 
 <style>
@@ -223,16 +229,17 @@ $verify_hash = strtoupper(substr(hash('crc32b', $booking['pnr'] . $booking['date
                     <?php endif; ?>
                 </div>
                 <div class="text-center ml-sm-4 mt-3 mt-sm-0">
-                    <!-- Phase 2.1: Digital Security Seal & Verification Badge -->
-                    <div class="p-3 bg-light border rounded text-center shadow-sm" style="min-width: 150px;">
+                    <!-- Phase 2.1: Digital Security Seal & QR Code (Issue 5) -->
+                    <div class="p-3 bg-light border rounded text-center shadow-sm" style="min-width: 160px;">
+                        <div id="ticket-qrcode" class="d-inline-block bg-white p-2 border rounded mb-2"></div>
                         <div class="text-muted font-weight-bold text-uppercase" style="font-size: 10px; letter-spacing: 0.05em;">Digital Pass</div>
                         <div class="font-weight-bold text-primary font-monospace my-1" style="font-size: 1.25rem;">
                             <?= e($booking['pnr']) ?>
                         </div>
-                        <div class="badge badge-light border text-muted px-2 py-1 font-monospace" style="font-size: 11px;">
+                        <a href="<?= e($verify_path) ?>" target="_blank" class="badge badge-light border text-muted px-2 py-1 font-monospace text-decoration-none d-inline-block mb-1" style="font-size: 11px;" title="Verify Ticket Authenticity">
                             SEAL: <?= e($verify_hash) ?>
-                        </div>
-                        <div class="text-muted small mt-1 font-weight-medium" style="font-size: 10px;">
+                        </a>
+                        <div class="text-muted small font-weight-medium" style="font-size: 10px;">
                             <?= e($stamp) ?>
                         </div>
                     </div>
@@ -241,5 +248,24 @@ $verify_hash = strtoupper(substr(hash('crc32b', $booking['pnr'] . $booking['date
         </div>
     </div>
 </div>
+
+<script src="<?= BASE_URL ?>/assets/js/vendor/qrcode.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof QRCode !== 'undefined') {
+        var qrEl = document.getElementById('ticket-qrcode');
+        if (qrEl) {
+            new QRCode(qrEl, {
+                text: <?= json_encode($full_verify_url) ?>,
+                width: 96,
+                height: 96,
+                colorDark: "#1e293b",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        }
+    }
+});
+</script>
 
 <?php require_once __DIR__ . '/../includes/layout/footer-user.php'; ?>

@@ -46,6 +46,16 @@ function flash_get(): array {
     return $f;
 }
 
+/* ---------- Ticket HMAC Security & Verification (Issue 5) ---------- */
+function get_ticket_signature(array $booking): string {
+    $pnr = (string)($booking['pnr'] ?? '');
+    $date = (string)($booking['date'] ?? '');
+    $time = (string)($booking['time'] ?? '');
+    $seat = (string)($booking['seat'] ?? '');
+    $secret = defined('TICKET_HMAC_SECRET') ? TICKET_HMAC_SECRET : 'busres-ticket-secret-salt';
+    return substr(hash_hmac('sha256', $pnr . '|' . $date . '|' . $time . '|' . $seat, $secret), 0, 12);
+}
+
 /* ---------- Date & Time Formatting (U-18) ---------- */
 function fmt_date(?string $date, string $format = 'D, j M Y'): string {
     if ($date === null || $date === '') {
