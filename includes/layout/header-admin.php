@@ -147,7 +147,8 @@ require_once __DIR__ . '/../config.php';
             <button type="button" class="btn btn-sm btn-outline-secondary" id="sidebarToggle" aria-controls="adminSidebar" aria-expanded="false" aria-label="Toggle navigation menu">
                 &#9776; Menu
             </button>
-            <span class="font-weight-bold text-dark ml-2"><?= e($title ?? 'Admin Area') ?></span>
+            <span class="font-weight-bold text-dark ml-2 d-lg-none"><?= e($title ?? 'Admin Area') ?></span>
+            <span class="text-muted small ml-2 d-none d-lg-inline">Operations Console</span>
             
             <div class="ml-auto d-flex align-items-center">
                 <button type="button" class="theme-toggle-btn ml-2" aria-label="Toggle dark mode" title="Toggle dark mode">
