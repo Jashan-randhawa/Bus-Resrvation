@@ -98,12 +98,12 @@ $total_earnings = number_format((float)($kpi['total_revenue'] ?? 0), 2);
             <div>
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="stat-label">Transit Routes</span>
-                    <span class="badge badge-warning">Active</span>
+                    <span class="badge badge-warning text-dark">Active</span>
                 </div>
                 <div class="stat-value"><?= e($total_routes) ?></div>
             </div>
             <div>
-                <a href="<?= BASE_URL ?>/admin/routes.php" class="stat-link text-warning text-decoration-none">
+                <a href="<?= BASE_URL ?>/admin/routes.php" class="stat-link stat-link-warn text-decoration-none">
                     Manage Routes &rarr;
                 </a>
             </div>
@@ -121,7 +121,7 @@ $total_earnings = number_format((float)($kpi['total_revenue'] ?? 0), 2);
                 <div class="stat-value"><?= e($total_seats) ?></div>
             </div>
             <div>
-                <a href="<?= BASE_URL ?>/admin/seats.php" class="stat-link text-info text-decoration-none">
+                <a href="<?= BASE_URL ?>/admin/seats.php" class="stat-link stat-link-info text-decoration-none">
                     Seat Visualizer &rarr;
                 </a>
             </div>

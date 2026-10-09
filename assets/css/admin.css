@@ -224,3 +224,33 @@
     padding: 1.25rem;
   }
 }
+
+/* ==========================================================================
+   WCAG AA Compliant Status & Link Contrast Tokens (A4)
+   ========================================================================== */
+.stat-link-warn {
+  color: #92400e !important;
+  font-weight: 600;
+}
+.stat-link-warn:hover {
+  color: #78350f !important;
+}
+.stat-link-info {
+  color: #0e7490 !important;
+  font-weight: 600;
+}
+.stat-link-info:hover {
+  color: #155e75 !important;
+}
+.badge-warning, .btn-warning {
+  color: #1f2937 !important;
+}
+[data-theme="dark"] .stat-link-warn {
+  color: #fbbf24 !important;
+}
+[data-theme="dark"] .stat-link-info {
+  color: #38bdf8 !important;
+}
+[data-theme="dark"] .badge-warning, [data-theme="dark"] .btn-warning {
+  color: #111827 !important;
+}

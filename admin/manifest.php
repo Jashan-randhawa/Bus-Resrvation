@@ -277,7 +277,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             <div class="col-6 col-md-3 mb-2">
                 <div class="manifest-metric-box">
                     <div class="small text-muted font-weight-bold">OCCUPANCY RATE</div>
-                    <div class="h5 font-weight-bold mb-0 text-info"><?= $occupancy_rate ?>%</div>
+                    <div class="h5 font-weight-bold mb-0 stat-link-info"><?= $occupancy_rate ?>%</div>
                 </div>
             </div>
         </div>
@@ -334,7 +334,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                                 <td><code><?= e($p['pnr'] ?? ('#' . $p['sno'])) ?></code></td>
                                 <td class="text-right"><?= CURRENCY ?><?= e(number_format((float)($p['price'] ?? 0), 2)) ?></td>
                                 <td class="text-center">
-                                    <span class="badge badge-<?= ($p['status'] ?? 'Confirmed') === 'Confirmed' ? 'success' : 'warning' ?>">
+                                    <span class="badge badge-<?= ($p['status'] ?? 'Confirmed') === 'Confirmed' ? 'success' : 'warning text-dark' ?>">
                                         <?= e($p['status'] ?? 'Confirmed') ?>
                                     </span>
                                 </td>

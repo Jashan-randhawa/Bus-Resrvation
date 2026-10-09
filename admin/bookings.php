@@ -371,7 +371,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             $is_curr = ($selected_filter === $st);
             $btn_style = match($st) {
                 'Confirmed' => $is_curr ? 'btn-success' : 'btn-outline-success',
-                'Pending'   => $is_curr ? 'btn-warning text-white' : 'btn-outline-warning',
+                'Pending'   => $is_curr ? 'btn-warning text-dark font-weight-bold' : 'btn-outline-warning text-dark',
                 'Expired'   => $is_curr ? 'btn-secondary' : 'btn-outline-secondary',
                 'Cancelled' => $is_curr ? 'btn-danger' : 'btn-outline-danger',
                 default     => $is_curr ? 'btn-dark' : 'btn-outline-secondary',
@@ -449,7 +449,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         $is_pending = ($status === 'Pending');
 
                         $badge_class = 'success';
-                        if ($is_pending) $badge_class = 'warning text-white';
+                        if ($is_pending) $badge_class = 'warning text-dark';
                         elseif ($is_expired) $badge_class = 'secondary';
                         elseif ($is_cancelled) $badge_class = 'danger';
                         ?>
