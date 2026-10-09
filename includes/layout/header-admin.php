@@ -110,8 +110,16 @@ require_once __DIR__ . '/../config.php';
                             $has_q_status = isset($link) && function_exists('table_has_column') && table_has_column($link, 'query', 'status');
                             $unread_count = 0;
                             if ($has_q_status) {
-                                $unread_res = db_one($link, "SELECT COUNT(*) AS c FROM `query` WHERE status = 'new'");
-                                $unread_count = (int)($unread_res['c'] ?? 0);
+                                $now = time();
+                                $cached_time = (int)($_SESSION['unread_queries_checked_at'] ?? 0);
+                                if ($current_script === 'queries.php' || ($now - $cached_time) > 60 || !isset($_SESSION['unread_queries_count'])) {
+                                    $unread_res = db_one($link, "SELECT COUNT(*) AS c FROM `query` WHERE status = 'new'");
+                                    $unread_count = (int)($unread_res['c'] ?? 0);
+                                    $_SESSION['unread_queries_count'] = $unread_count;
+                                    $_SESSION['unread_queries_checked_at'] = $now;
+                                } else {
+                                    $unread_count = (int)$_SESSION['unread_queries_count'];
+                                }
                             }
                             if ($unread_count > 0) {
                                 $badge_html = ' <span class="badge badge-danger badge-pill ml-auto font-weight-bold">' . $unread_count . '</span>';
