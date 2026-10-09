@@ -1060,6 +1060,9 @@ if (isset($_POST['subbtn'])) {
             <button type="submit" class="btn btn-primary btn-block py-2 font-weight-bold" name="user" style="min-height: 44px;">
               Sign In to Account
             </button>
+            <div class="text-center mt-3 pt-2 border-top">
+              <small class="text-muted">Staff or Administrator? <a href="#" data-dismiss="modal" data-toggle="modal" data-target="#loginModal" class="font-weight-bold text-dark">Admin Portal &rarr;</a></small>
+            </div>
           </form>
         </div>
         <!-- Register Pane -->
@@ -1178,6 +1181,9 @@ if (isset($_POST['subbtn'])) {
           </button>
           <div class="text-center mt-3 pt-2 border-top">
             <small class="text-muted">Need a password reset? Contact a super administrator.</small>
+            <div class="mt-1">
+              <small class="text-muted">Looking for passenger tickets? <a href="#" data-dismiss="modal" data-toggle="modal" data-target="#userlogin" class="font-weight-bold">Passenger Sign In &rarr;</a></small>
+            </div>
           </div>
         </form>
       </div>

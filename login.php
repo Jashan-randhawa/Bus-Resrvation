@@ -34,6 +34,11 @@ require_once __DIR__ . '/includes/layout/header-login.php';
                 </button>
             </form>
             <div class="text-center mt-4">
+                <a href="<?= BASE_URL ?>/homepage.php?login=admin" class="small text-muted font-weight-bold">
+                    Administrator Sign In &rarr;
+                </a>
+            </div>
+            <div class="text-center mt-2">
                 <a href="<?= BASE_URL ?>/homepage.php" class="small text-muted text-decoration-none">
                     &larr; Return to Homepage
                 </a>

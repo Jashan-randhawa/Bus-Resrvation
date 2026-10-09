@@ -129,7 +129,12 @@ $user_role = $_SESSION['role'] ?? null;
               </form>
             </li>
           <?php else: ?>
-            <li class="nav-item ml-lg-3 mt-2 mt-lg-0">
+            <li class="nav-item ml-lg-2 mt-2 mt-lg-0">
+              <button type="button" class="btn btn-outline-secondary btn-nav-action" data-toggle="modal" data-target="#loginModal">
+                Admin Portal
+              </button>
+            </li>
+            <li class="nav-item ml-lg-2 mt-2 mt-lg-0">
               <button type="button" class="btn btn-primary btn-nav-action" data-toggle="modal" data-target="#userlogin">
                 Passenger Sign In
               </button>
