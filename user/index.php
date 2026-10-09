@@ -224,7 +224,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                     </a>
                     <div class="d-flex align-items-center">
                         <label for="sort-select" class="small text-muted font-weight-bold mb-0 mr-2">Sort:</label>
-                        <select id="sort-select" class="form-control form-control-sm" style="width: auto;" onchange="updateSort(this.value)">
+                        <select id="sort-select" class="form-control form-control-sm" style="width: auto;">
                             <option value="time_asc" <?= $sort === 'time_asc' ? 'selected' : '' ?>>Departure (Earliest)</option>
                             <option value="price_asc" <?= $sort === 'price_asc' ? 'selected' : '' ?>>Fare (Lowest)</option>
                             <option value="seats_desc" <?= $sort === 'seats_desc' ? 'selected' : '' ?>>Available Seats (Most)</option>
@@ -492,6 +492,9 @@ function updateSort(val) {
     url.searchParams.set('sort', val);
     window.location.href = url.toString();
 }
+document.getElementById('sort-select')?.addEventListener('change', function() {
+    updateSort(this.value);
+});
 </script>
 
 <?php require_once __DIR__ . '/../includes/layout/footer-user.php'; ?>

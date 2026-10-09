@@ -427,7 +427,7 @@ if (isset($_POST['subbtn'])) {
           </form>
         <?php else: ?>
           <!-- Guest search form: saves to sessionStorage and opens sign-in modal -->
-          <form id="guestSearchForm" onsubmit="handleGuestSearch(event)">
+          <form id="guestSearchForm">
             <div class="booking-form-grid">
               <div class="form-group mb-0">
                 <label for="guest_from" class="booking-field-label">
@@ -506,6 +506,7 @@ if (isset($_POST['subbtn'])) {
                 $('#userlogin').modal('show');
               }
             }
+            document.getElementById('guestSearchForm')?.addEventListener('submit', handleGuestSearch);
           </script>
         <?php endif; ?>
 
@@ -527,6 +528,15 @@ if (isset($_POST['subbtn'])) {
               }, 60);
             }
           }
+
+          document.addEventListener('click', function(e) {
+            var btn = e.target.closest ? e.target.closest('.prefill-route-btn') : null;
+            if (btn) {
+              var fromCity = btn.getAttribute('data-from') || '';
+              var toCity = btn.getAttribute('data-to') || '';
+              prefillSearch(fromCity, toCity);
+            }
+          });
           (function() {
             function setupRouteSelectors(fromId, toId, swapBtnId) {
               var fromSelect = document.getElementById(fromId);
@@ -668,7 +678,7 @@ if (isset($_POST['subbtn'])) {
                           <p class="card-text text-muted small">Daily scheduled coaches with reserved seating.</p>
                         </div>
                         <div class="mt-3 pt-3 border-top">
-                          <a href="#search" class="btn btn-outline-primary btn-sm btn-block font-weight-bold" onclick="prefillSearch('<?= e($pr['city1']) ?>', '<?= e($pr['city2']) ?>');">
+                          <a href="#search" class="btn btn-outline-primary btn-sm btn-block font-weight-bold prefill-route-btn" data-from="<?= e($pr['city1']) ?>" data-to="<?= e($pr['city2']) ?>">
                             Book This Route &rarr;
                           </a>
                         </div>
