@@ -213,7 +213,12 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                             </td>
                             <td class="text-right">
                                 <?php if (can_write()): ?>
-                                    <button type="button" class="btn btn-outline-primary btn-sm mr-1" data-toggle="modal" data-target="#replyModal<?= $qid ?>">
+                                    <button type="button" class="btn btn-outline-primary btn-sm mr-1 btn-open-reply"
+                                            data-toggle="modal" data-target="#singleReplyModal"
+                                            data-id="<?= e($qid) ?>"
+                                            data-name="<?= e($name) ?>"
+                                            data-email="<?= e($email) ?>"
+                                            data-subject="<?= e($subject ?: 'Inquiry #' . $qid) ?>">
                                         Reply
                                     </button>
                                 <?php endif; ?>
@@ -226,42 +231,6 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                                         </button>
                                     </form>
                                 <?php endif; ?>
-
-                                <!-- Reply Modal -->
-                                <div class="modal fade text-left" id="replyModal<?= $qid ?>" tabindex="-1" role="dialog" aria-labelledby="replyModalLabel<?= $qid ?>" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content">
-                                            <div class="modal-header bg-dark text-white">
-                                                <h5 class="modal-title font-weight-bold" id="replyModalLabel<?= $qid ?>">Reply to <?= e($name) ?></h5>
-                                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                                                    <span aria-hidden="true">&times;</span>
-                                                </button>
-                                            </div>
-                                            <form action="" method="post">
-                                                <?= csrf_field() ?>
-                                                <input type="hidden" name="query_id" value="<?= e($qid) ?>">
-                                                <div class="modal-body p-4">
-                                                    <div class="form-group">
-                                                        <label class="small font-weight-bold text-muted">Recipient Email</label>
-                                                        <input type="text" class="form-control" value="<?= e($email) ?>" disabled>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label class="small font-weight-bold text-muted">Inquiry Subject</label>
-                                                        <input type="text" class="form-control" value="<?= e($subject ?: 'Inquiry #' . $qid) ?>" disabled>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label for="reply_message<?= $qid ?>" class="small font-weight-bold text-muted">Your Response</label>
-                                                        <textarea name="reply_message" id="reply_message<?= $qid ?>" class="form-control" rows="5" placeholder="Type your response to the passenger here..." required></textarea>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
-                                                    <button type="submit" name="send_reply" class="btn btn-primary btn-sm">Send Email Response</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -271,5 +240,74 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </div>
     <?= render_pagination($pagination, $filter_status !== 'all' ? ['status' => $filter_status] : []) ?>
 </div>
+
+<!-- Single Reusable Reply Modal (A10) -->
+<div class="modal fade text-left" id="singleReplyModal" tabindex="-1" role="dialog" aria-labelledby="singleReplyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title font-weight-bold" id="singleReplyModalLabel">Reply to Passenger</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="" method="post" id="replyQueryForm">
+                <?= csrf_field() ?>
+                <input type="hidden" name="query_id" id="replyQueryId" value="">
+                <div class="modal-body p-4">
+                    <div class="form-group">
+                        <label for="replyModalEmail" class="small font-weight-bold text-muted">Recipient Email</label>
+                        <input type="text" id="replyModalEmail" class="form-control" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="replyModalSubject" class="small font-weight-bold text-muted">Inquiry Subject</label>
+                        <input type="text" id="replyModalSubject" class="form-control" readonly>
+                    </div>
+                    <div class="form-group mb-0">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="reply_message" class="small font-weight-bold text-muted mb-0">Your Response</label>
+                            <span class="small text-muted" id="replyCharCounter">0 / 2000 chars</span>
+                        </div>
+                        <textarea name="reply_message" id="reply_message" class="form-control" rows="5" maxlength="2000" placeholder="Type your response to the passenger here..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+                    <button type="submit" name="send_reply" class="btn btn-primary btn-sm font-weight-bold">Send Email Response</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.jQuery) {
+        jQuery('.btn-open-reply').on('click', function() {
+            var $btn = jQuery(this);
+            var id = $btn.data('id');
+            var name = $btn.data('name');
+            var email = $btn.data('email');
+            var subject = $btn.data('subject');
+
+            jQuery('#replyQueryId').val(id);
+            jQuery('#singleReplyModalLabel').text('Reply to ' + name);
+            jQuery('#replyModalEmail').val(email);
+            jQuery('#replyModalSubject').val(subject);
+            jQuery('#reply_message').val('');
+            jQuery('#replyCharCounter').text('0 / 2000 chars');
+        });
+
+        var replyText = document.getElementById('reply_message');
+        var counter = document.getElementById('replyCharCounter');
+        if (replyText && counter) {
+            replyText.addEventListener('input', function() {
+                var len = this.value.length;
+                counter.textContent = len + ' / 2000 chars';
+            });
+        }
+    }
+});
+</script>
 
 <?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>
