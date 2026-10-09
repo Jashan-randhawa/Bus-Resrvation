@@ -10,16 +10,6 @@ $now_ts = time();
 $alert = null;
 $alert_type = 'info';
 
-// U-08: Verify PNR from database for signed-in customer before displaying confirmation
-if (!empty($_GET['booked']) && !empty($_GET['pnr'])) {
-    $pnr_param = trim((string)$_GET['pnr']);
-    $verified_booking = db_one($link, 'SELECT pnr FROM booking WHERE pnr = ? AND id = ?', 'si', [$pnr_param, $uid]);
-    if ($verified_booking && !empty($verified_booking['pnr'])) {
-        $alert = 'Your reservation was confirmed! Your unique PNR is ' . $verified_booking['pnr'];
-        $alert_type = 'success';
-    }
-}
-
 $has_status = table_has_column($link, 'booking', 'status');
 $cutoff_min = defined('APP_CANCEL_CUTOFF_MIN') ? (int)APP_CANCEL_CUTOFF_MIN : 120;
 $cutoff_display = ($cutoff_min >= 60 && $cutoff_min % 60 === 0) ? ($cutoff_min / 60) . ' hours' : $cutoff_min . ' minutes';
