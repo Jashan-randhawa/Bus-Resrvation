@@ -14,6 +14,11 @@ if (!$admin_row) {
     exit;
 }
 
+if (!headers_sent()) {
+    header('Cache-Control: no-store, no-cache, must-revalidate');
+    header('Referrer-Policy: no-referrer');
+}
+
 $alert = null;
 $alert_type = 'info';
 
@@ -176,7 +181,6 @@ if (!$is_totp_enabled) {
     }
     $enroll_secret = $_SESSION['totp_enroll_secret'];
     $otpauth_uri = totp_get_otpauth_uri($enroll_secret, (string)($admin_row['Email_id'] ?? 'admin@busres.local'));
-    $qr_image_url = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' . rawurlencode($otpauth_uri);
 }
 
 $title = 'Admin Profile & Security';
@@ -327,7 +331,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         <div class="col-md-4 text-center mb-4 mb-md-0">
                             <div class="p-3 bg-light border rounded d-inline-block" style="min-width: 196px; min-height: 196px;">
                                 <div id="totp-qrcode" class="d-flex justify-content-center align-items-center" style="min-width: 180px; min-height: 180px;">
-                                    <img src="<?= e($qr_image_url) ?>" id="totp-qr-img" alt="TOTP QR Code" width="180" height="180" class="img-fluid" onerror="this.style.display='none';">
+                                    <span class="spinner-border spinner-border-sm text-secondary" id="totp-qr-loading" role="status" aria-hidden="true"></span>
                                 </div>
                             </div>
                             <div class="mt-2">
@@ -369,15 +373,16 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 </div>
 
 <?php if (!$is_totp_enabled): ?>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="<?= BASE_URL ?>/assets/js/vendor/qrcode.min.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     var qrBox = document.getElementById("totp-qrcode");
-    var qrImg = document.getElementById("totp-qr-img");
+    var qrLoading = document.getElementById("totp-qr-loading");
     if (typeof QRCode !== "undefined" && qrBox) {
-        if (qrImg) { qrImg.remove(); }
+        if (qrLoading) { qrLoading.remove(); }
+        var uri = <?= json_encode($otpauth_uri, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         new QRCode(qrBox, {
-            text: "<?= addslashes($otpauth_uri) ?>",
+            text: uri,
             width: 180,
             height: 180,
             correctLevel: QRCode.CorrectLevel.M
