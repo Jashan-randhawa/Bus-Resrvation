@@ -219,7 +219,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                     <div class="form-group">
                         <label for="capacity" class="font-weight-bold small text-muted">Total Seating Capacity</label>
                         <input type="number" id="capacity" name="capacity" class="form-control" value="<?= e((string)($form_old['capacity'] ?? 36)) ?>" min="10" max="60" required />
-                        <small class="form-text text-muted">Standard coaches seat between 20 and 52 passengers.</small>
+                        <small class="form-text text-muted">Standard coaches seat between 10 and 60 passengers.</small>
                     </div>
                     <div class="form-group mb-4">
                         <label for="layout" class="font-weight-bold small text-muted">Seating Layout Pattern</label>
