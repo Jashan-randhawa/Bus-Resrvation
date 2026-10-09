@@ -7,9 +7,6 @@ require_once __DIR__ . '/../includes/admin-crud.php';
 // Detect primary key column for route table
 $route_pk = table_has_column($link, 'route', 'sno') ? 'sno' : 'id';
 
-$alert = null;
-$alert_type = 'info';
-
 // Handle Add Route (O11, O12, Phase A Item 1)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
     csrf_verify();
@@ -152,8 +149,6 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </button>
     <?php endif; ?>
 </div>
-
-<?= render_admin_alert($alert, $alert_type) ?>
 
 <?= $has_archived_col ? admin_archive_tabs_html($view_tab, 'Active Routes', 'Archived Schedules') : '' ?>
 

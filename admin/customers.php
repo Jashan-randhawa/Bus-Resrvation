@@ -7,9 +7,6 @@ require_once __DIR__ . '/../includes/admin-crud.php';
 // Detect primary key column for customer table
 $cust_pk = table_has_column($link, 'costumer', 'sno') ? 'sno' : 'id';
 
-$alert = null;
-$alert_type = 'info';
-
 // Handle Add Customer (Phase A Item 1)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
     csrf_verify();
@@ -192,8 +189,6 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <?php endif; ?>
     </div>
 </div>
-
-<?= render_admin_alert($alert, $alert_type) ?>
 
 <!-- Search Bar (Item 8) -->
 <div class="card border-0 shadow-sm mb-3">

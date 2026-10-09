@@ -7,9 +7,6 @@ require_once __DIR__ . '/../includes/admin-crud.php';
 // Detect primary key column for buses (supports both `id` and `sno` schemas)
 $bus_pk = table_has_column($link, 'buses', 'sno') ? 'sno' : 'id';
 
-$alert = null;
-$alert_type = 'info';
-
 // Handle Add Bus (O8, O12, Phase A Item 1)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
     csrf_verify();
@@ -133,8 +130,6 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </button>
     <?php endif; ?>
 </div>
-
-<?= render_admin_alert($alert, $alert_type) ?>
 
 <?= $has_archived_col ? admin_archive_tabs_html($view_tab, 'Active Fleet', 'Archived Buses') : '' ?>
 
