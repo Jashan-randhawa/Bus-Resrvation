@@ -398,7 +398,7 @@ if (isset($_POST['subbtn'])) {
                 <label for="home_date" class="booking-field-label">
                   <span>📅</span> Travel Date
                 </label>
-                <input type="date" min="<?= date('Y-m-d') ?>" name="date" id="home_date" value="<?= date('Y-m-d') ?>" class="form-control" required>
+                <input type="date" min="<?= date('Y-m-d') ?>" max="<?= date('Y-m-d', strtotime('+90 days')) ?>" name="date" id="home_date" value="<?= date('Y-m-d') ?>" class="form-control" required>
               </div>
 
               <div class="form-group mb-0">
@@ -443,7 +443,7 @@ if (isset($_POST['subbtn'])) {
                 <label for="guest_date" class="booking-field-label">
                   <span>📅</span> Travel Date
                 </label>
-                <input type="date" min="<?= date('Y-m-d') ?>" id="guest_date" value="<?= date('Y-m-d') ?>" class="form-control" required>
+                <input type="date" min="<?= date('Y-m-d') ?>" max="<?= date('Y-m-d', strtotime('+90 days')) ?>" id="guest_date" value="<?= date('Y-m-d') ?>" class="form-control" required>
               </div>
 
               <div class="form-group mb-0">
@@ -559,6 +559,27 @@ if (isset($_POST['subbtn'])) {
             document.addEventListener('DOMContentLoaded', function() {
               setupRouteSelectors('home_from', 'home_to', 'home_swap_btn');
               setupRouteSelectors('guest_from', 'guest_to', 'guest_swap_btn');
+
+              // Initialize client local date and max limit (P11)
+              try {
+                var d = new Date();
+                d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                var today = d.toISOString().slice(0, 10);
+                var dMax = new Date();
+                dMax.setDate(dMax.getDate() + 90);
+                dMax.setMinutes(dMax.getMinutes() - dMax.getTimezoneOffset());
+                var maxDay = dMax.toISOString().slice(0, 10);
+
+                ['home_date', 'guest_date'].forEach(function(id) {
+                  var el = document.getElementById(id);
+                  if (!el) return;
+                  el.min = today;
+                  el.max = maxDay;
+                  if (!el.value || el.value < today) {
+                    el.value = today;
+                  }
+                });
+              } catch (e) {}
             });
           })();
         </script>
