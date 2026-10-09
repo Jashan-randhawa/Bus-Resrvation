@@ -132,17 +132,21 @@
             </div>
 
             <script>
-            // U-14, Phase 5.2: 28-minute idle session detection, focus trap & heartbeat
+            // U-14, Phase 5.2, Issue 8: Accurate idle session detection using Date.now() and visibilitychange
             (function() {
-                var idleTime = 0;
+                var lastActivity = Date.now();
                 var warningShown = false;
                 var countdownVal = 120;
                 var countdownInterval = null;
                 var prevActiveElement = null;
 
+                function getLoginRedirectUrl() {
+                    return '<?= BASE_URL ?>/homepage.php?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+                }
+
                 function resetIdle() {
                     if (!warningShown) {
-                        idleTime = 0;
+                        lastActivity = Date.now();
                     }
                 }
                 ['mousemove', 'keydown', 'scroll', 'touchstart', 'click'].forEach(function(evt) {
@@ -172,10 +176,18 @@
                     }
                 });
 
-                setInterval(function() {
-                    idleTime++;
-                    // 28 minutes = 1680 seconds
-                    if (idleTime >= 1680 && !warningShown) {
+                function checkIdleState() {
+                    var elapsedSec = Math.floor((Date.now() - lastActivity) / 1000);
+
+                    // If idle time already exceeds 1800s (30m session limit), redirect immediately to login
+                    if (elapsedSec >= 1800) {
+                        if (countdownInterval) clearInterval(countdownInterval);
+                        window.location.href = getLoginRedirectUrl();
+                        return;
+                    }
+
+                    // 28 minutes = 1680 seconds: show warning modal if not already shown
+                    if (elapsedSec >= 1680 && !warningShown) {
                         warningShown = true;
                         prevActiveElement = document.activeElement;
                         if (typeof $ !== 'undefined' && $('#idleSessionModal').length) {
@@ -187,27 +199,40 @@
                         if (stayBtn) {
                             setTimeout(function() { stayBtn.focus(); }, 100);
                         }
-                        countdownVal = 120;
+                        countdownVal = Math.max(1, 1800 - elapsedSec);
+                        var cd = document.getElementById('idle-countdown');
+                        if (cd) cd.textContent = countdownVal;
+
+                        if (countdownInterval) clearInterval(countdownInterval);
                         countdownInterval = setInterval(function() {
-                            countdownVal--;
-                            var cd = document.getElementById('idle-countdown');
+                            var curElapsed = Math.floor((Date.now() - lastActivity) / 1000);
+                            countdownVal = Math.max(0, 1800 - curElapsed);
                             if (cd) cd.textContent = countdownVal;
-                            if (countdownVal <= 0) {
+                            if (countdownVal <= 0 || curElapsed >= 1800) {
                                 clearInterval(countdownInterval);
-                                window.location.href = '<?= BASE_URL ?>/homepage.php?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+                                window.location.href = getLoginRedirectUrl();
                             }
                         }, 1000);
                     }
-                }, 1000);
+                }
+
+                setInterval(checkIdleState, 1000);
+
+                // Recalculate immediately when tab regains focus or becomes visible (Issue 8)
+                document.addEventListener('visibilitychange', function() {
+                    if (!document.hidden) {
+                        checkIdleState();
+                    }
+                });
 
                 if (stayBtn) {
                     stayBtn.addEventListener('click', function() {
                         fetch('<?= BASE_URL ?>/user/api-heartbeat.php')
                             .then(function(res) { return res.json(); })
                             .then(function(data) {
-                                idleTime = 0;
+                                lastActivity = Date.now();
                                 warningShown = false;
-                                clearInterval(countdownInterval);
+                                if (countdownInterval) clearInterval(countdownInterval);
                                 if (typeof $ !== 'undefined' && $('#idleSessionModal').length) {
                                     $('#idleSessionModal').modal('hide');
                                 } else {
