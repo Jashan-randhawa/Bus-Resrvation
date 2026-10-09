@@ -342,10 +342,12 @@ if (isset($_POST['subbtn'])) {
         </div>
         <div class="col-lg-6 hero-animate-in">
           <div class="hero-image-wrapper">
-            <img src="<?= BASE_URL ?>/assets/images/sbtbsimg.jpg" 
+            <img src="<?= BASE_URL ?>/assets/images/hero-800.webp"
+                 srcset="<?= BASE_URL ?>/assets/images/hero-480.webp 480w, <?= BASE_URL ?>/assets/images/hero-800.webp 800w, <?= BASE_URL ?>/assets/images/hero-1200.webp 1200w"
+                 sizes="(max-width: 991px) 100vw, 50vw"
                  alt="Modern Bus Travel Illustration" 
-                 width="1920" 
-                 height="864"
+                 width="1200" 
+                 height="540"
                  fetchpriority="high">
           </div>
         </div>
