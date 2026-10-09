@@ -12,7 +12,7 @@
         });
       }
 
-      // Smooth scroll for in-page anchors excluding Bootstrap tabs/modals
+      // Smooth scroll for in-page anchors excluding Bootstrap tabs/modals (P5, P6)
       document.querySelectorAll('a[href^="#"]:not([data-toggle])').forEach(function(anchor) {
         anchor.addEventListener('click', function(e) {
           var targetId = this.getAttribute('href');
@@ -23,6 +23,11 @@
               target.scrollIntoView({
                 behavior: 'smooth'
               });
+              // Auto-close mobile navigation menu after link tap (P5)
+              var nav = document.getElementById('mycollapsediv');
+              if (nav && nav.classList.contains('show') && window.jQuery) {
+                $(nav).collapse('hide');
+              }
             }
           }
         });
