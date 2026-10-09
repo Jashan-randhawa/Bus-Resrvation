@@ -77,9 +77,23 @@ $user_role = $_SESSION['role'] ?? null;
             <a href="#contact" class="nav-link nav-link-custom">Contact</a>
           </li>
 
-          <!-- Presentation-only Session-Aware Nav Elements -->
+          <!-- Presentation-only Session-Aware Nav Elements (P16) -->
           <?php if ($user_role === 'user'): ?>
-            <li class="nav-item ml-lg-3 mt-2 mt-lg-0">
+            <?php
+            $display_first_name = '';
+            if (!empty($_SESSION['name'])) {
+              $name_parts = explode(' ', trim($_SESSION['name']));
+              $display_first_name = $name_parts[0];
+            }
+            ?>
+            <?php if (!empty($display_first_name)): ?>
+              <li class="nav-item ml-lg-3 mt-2 mt-lg-0 d-flex align-items-center">
+                <span class="text-muted small font-weight-bold">
+                  Hi, <?= e($display_first_name) ?>
+                </span>
+              </li>
+            <?php endif; ?>
+            <li class="nav-item ml-lg-2 mt-2 mt-lg-0">
               <a href="<?= BASE_URL ?>/user/my-bookings.php" class="btn btn-outline-primary btn-nav-action">
                 My Bookings
               </a>
@@ -89,11 +103,27 @@ $user_role = $_SESSION['role'] ?? null;
                 Dashboard &rarr;
               </a>
             </li>
+            <li class="nav-item ml-lg-2 mt-2 mt-lg-0">
+              <form method="post" action="<?= BASE_URL ?>/homepage.php" class="d-inline">
+                <?= csrf_field() ?>
+                <button type="submit" name="logout" value="logout" class="btn btn-outline-danger btn-nav-action" title="Sign out of passenger account">
+                  Sign Out
+                </button>
+              </form>
+            </li>
           <?php elseif ($user_role === 'admin'): ?>
             <li class="nav-item ml-lg-3 mt-2 mt-lg-0">
               <a href="<?= BASE_URL ?>/admin/index.php" class="btn btn-dark btn-nav-action">
                 Admin Panel &rarr;
               </a>
+            </li>
+            <li class="nav-item ml-lg-2 mt-2 mt-lg-0">
+              <form method="post" action="<?= BASE_URL ?>/homepage.php" class="d-inline">
+                <?= csrf_field() ?>
+                <button type="submit" name="logout" value="logout" class="btn btn-outline-danger btn-nav-action" title="Sign out of administrative session">
+                  Sign Out
+                </button>
+              </form>
             </li>
           <?php else: ?>
             <li class="nav-item ml-lg-3 mt-2 mt-lg-0">
