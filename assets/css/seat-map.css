@@ -671,3 +671,73 @@ html[data-theme="dark"] .bus-legend-type-pill strong {
     border-style: dashed;
   }
 }
+
+/* ==========================================================================
+   Admin Seat Visualizer Component Styles (A8)
+   ========================================================================== */
+.seat-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  align-items: center;
+}
+.seat-legend .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--c-text-muted, #475569);
+}
+.seat-legend .legend-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: inline-block;
+}
+.seat-legend .legend-confirmed {
+  background-color: var(--c-error, #dc2626);
+}
+.seat-legend .legend-pending {
+  background-color: #f59e0b;
+}
+.seat-legend .legend-available {
+  background-color: #ffffff;
+  border: 1.5px solid var(--c-border-dark, #cbd5e1);
+}
+.seat-grid-container {
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+  background: var(--c-surface-subtle, #f8fafc);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: 12px;
+}
+.seat-grid-coach {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.seat-grid-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.seat-aisle-gap {
+  width: 28px;
+  flex-shrink: 0;
+}
+.seat-btn {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: 8px;
+}
+.seat-btn-empty {
+  visibility: hidden;
+}

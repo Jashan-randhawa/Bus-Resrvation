@@ -64,7 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     if ($qid > 0 && in_array($new_st, ['new', 'replied', 'closed'], true) && $has_status) {
         db_exec($link, "UPDATE `query` SET `status` = ? WHERE `{$query_pk}` = ?", 'si', [$new_st, $qid]);
         audit($link, 'UPDATE', 'query', $qid, null, ['status' => $new_st]);
-        flash_set('success', "Status updated to '{$new_st}'.");
+        $alert = "Status updated to '{$new_st}'.";
+        flash_set('success', $alert);
     } else {
         flash_set('danger', 'Failed to update query status.');
     }

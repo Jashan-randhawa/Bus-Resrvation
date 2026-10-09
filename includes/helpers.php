@@ -549,35 +549,66 @@ function build_seat_layout(int $capacity, string $pattern = '2+2'): array {
 }
 
 /**
- * Render HTML seat grid based on capacity and taken seats (P-08).
+ * Render HTML seat grid based on capacity, layout pattern, and seat statuses (P-08, A8).
  *
  * @param int $capacity Total bus seat capacity
- * @param array $taken Array of booked seat numbers [seat_no => true] or [seat_no, ...]
+ * @param array $taken Array of booked seat numbers [seat_no => true|'Confirmed'|'Pending'] or [seat_no, ...]
  * @param int $perRow Number of seats per row (default 4)
+ * @param string $layout Seating layout pattern ('2+2', '2+1', '1+2', '1+1')
  * @return string HTML grid markup
  */
-function render_seat_grid(int $capacity, array $taken, int $perRow = 4): string {
+function render_seat_grid(int $capacity, array $taken, int $perRow = 4, string $layout = '2+2'): string {
     $capacity = max(1, $capacity);
-    $perRow = max(1, $perRow);
+    $layout_data = build_seat_layout($capacity, $layout);
+    $left = $layout_data['left'];
+    $right = $layout_data['right'];
+    $rows = $layout_data['rows'];
+
     $takenMap = [];
     foreach ($taken as $k => $v) {
-        if ($v === true) {
-            $takenMap[(int)$k] = true;
+        if (is_numeric($k)) {
+            $takenMap[(int)$k] = is_string($v) ? $v : 'Confirmed';
         } elseif (is_numeric($v)) {
-            $takenMap[(int)$v] = true;
+            $takenMap[(int)$v] = 'Confirmed';
         }
     }
 
-    $html = '<div class="seat-grid" style="display: grid; grid-template-columns: repeat(' . $perRow . ', 1fr); gap: 10px;">';
-    for ($i = 1; $i <= $capacity; $i++) {
-        $isBooked = isset($takenMap[$i]);
-        $btnClass = $isBooked ? 'btn-danger' : 'btn-outline-secondary';
-        $statusLabel = $isBooked ? 'Booked' : 'Available';
-        $html .= '<button type="button" class="btn seat-btn ' . $btnClass . '" disabled title="Seat ' . $i . ' (' . $statusLabel . ')">';
-        $html .= $i;
-        $html .= '</button>';
+    $html = '<div class="seat-grid-container"><div class="seat-grid-coach">';
+    foreach ($rows as $r_idx => $row) {
+        $html .= '<div class="seat-grid-row" data-row="' . ($r_idx + 1) . '">';
+        $c = 0;
+        for ($i = 0; $i < $left; $i++) {
+            $s = $row[$c++] ?? null;
+            if ($s === null) {
+                $html .= '<span class="seat-btn seat-btn-empty" aria-hidden="true"></span>';
+            } else {
+                $s_no = (int)$s['no'];
+                $status = $takenMap[$s_no] ?? null;
+                $isPending = ($status === 'Pending');
+                $isConfirmed = ($status !== null && !$isPending);
+                $btnClass = $isConfirmed ? 'btn-danger' : ($isPending ? 'btn-warning text-dark font-weight-bold' : 'btn-outline-secondary');
+                $statusLabel = $isConfirmed ? 'Confirmed' : ($isPending ? 'Pending Hold' : 'Available');
+                $html .= '<button type="button" class="btn seat-btn ' . $btnClass . '" disabled title="Seat ' . $s_no . ' (' . $statusLabel . ')">' . $s_no . '</button>';
+            }
+        }
+        $html .= '<div class="seat-aisle-gap" aria-hidden="true"></div>';
+        for ($i = 0; $i < $right; $i++) {
+            $s = $row[$c++] ?? null;
+            if ($s === null) {
+                $html .= '<span class="seat-btn seat-btn-empty" aria-hidden="true"></span>';
+            } else {
+                $s_no = (int)$s['no'];
+                $status = $takenMap[$s_no] ?? null;
+                $isPending = ($status === 'Pending');
+                $isConfirmed = ($status !== null && !$isPending);
+                $btnClass = $isConfirmed ? 'btn-danger' : ($isPending ? 'btn-warning text-dark font-weight-bold' : 'btn-outline-secondary');
+                $statusLabel = $isConfirmed ? 'Confirmed' : ($isPending ? 'Pending Hold' : 'Available');
+                $html .= '<button type="button" class="btn seat-btn ' . $btnClass . '" disabled title="Seat ' . $s_no . ' (' . $statusLabel . ')">' . $s_no . '</button>';
+            }
+        }
+        $html .= '</div>';
     }
-    $html .= '</div>';
+    $html .= '</div></div>';
     return $html;
 }
 
