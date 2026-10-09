@@ -21,17 +21,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
     $address = trim((string)($_POST['address'] ?? ''));
 
     if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $alert = 'Please provide a valid name and email address.';
-        $alert_type = 'danger';
+        $_SESSION['form_old'] = ['unm' => $name, 'email' => $email, 'phone' => $phone, 'address' => $address];
+        flash_set('danger', 'Please provide a valid name and email address.');
     } elseif (strlen($pwd) < 8) {
-        $alert = 'Password must be at least 8 characters.';
-        $alert_type = 'danger';
+        $_SESSION['form_old'] = ['unm' => $name, 'email' => $email, 'phone' => $phone, 'address' => $address];
+        flash_set('danger', 'Password must be at least 8 characters.');
     } else {
         $existing = db_one($link, 'SELECT * FROM costumer WHERE email = ?', 's', [$email]);
         if ($existing) {
-            $alert = 'A customer with that email already exists.';
-            $alert_type = 'danger';
+            $_SESSION['form_old'] = ['unm' => $name, 'email' => $email, 'phone' => $phone, 'address' => $address];
+            flash_set('danger', 'A customer with that email already exists.');
         } else {
+            unset($_SESSION['form_old']);
             $hashed = password_hash($pwd, PASSWORD_DEFAULT);
             db_exec($link,
                 "INSERT INTO costumer (name, email, pwd, phone, address) VALUES (?, ?, ?, ?, ?)",
@@ -39,10 +40,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
                 [$name, $email, $hashed, $phone, $address]
             );
             audit($link, 'CREATE', 'customer', (int)mysqli_insert_id($link), null, ['name' => $name, 'email' => $email, 'phone' => $phone]);
-            $alert = 'Customer added successfully.';
-            $alert_type = 'success';
+            flash_set('success', 'Customer added successfully.');
         }
     }
+    $redirect_url = BASE_URL . '/admin/customers.php' . (!empty($_GET) ? '?' . http_build_query($_GET) : '');
+    header('Location: ' . $redirect_url, true, 303);
+    exit;
 }
 
 $has_archived_col = table_has_column($link, 'costumer', 'archived_at');
@@ -59,20 +62,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_customer'])) {
             'i', [$delete_id]
         );
         if ((int)($active_bookings['c'] ?? 0) > 0) {
-            $alert = 'Cannot archive customer account because they have active ticket reservations.';
-            $alert_type = 'danger';
+            flash_set('danger', 'Cannot archive customer account because they have active ticket reservations.');
         } else {
             if ($has_archived_col) {
                 admin_archive_record($link, 'costumer', $cust_pk, $delete_id, 'customer', $old_customer ?: null);
-                // soft-delete audit: UPDATE costumer SET archived_at = NOW()
-                $alert = 'Customer archived successfully.';
+                flash_set('success', 'Customer archived successfully.');
             } else {
                 admin_archive_record($link, 'costumer', $cust_pk, $delete_id, 'customer', $old_customer ?: null);
-                $alert = 'Customer deleted successfully.';
+                flash_set('success', 'Customer deleted successfully.');
             }
-            $alert_type = 'success';
         }
     }
+    $redirect_url = BASE_URL . '/admin/customers.php' . (!empty($_GET) ? '?' . http_build_query($_GET) : '');
+    header('Location: ' . $redirect_url, true, 303);
+    exit;
 }
 
 // Handle Restore Customer (Phase B Item 4)
@@ -84,11 +87,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore_customer'])) 
         $cust_row = db_one($link, "SELECT name, email FROM costumer WHERE `{$cust_pk}` = ?", 'i', [$restore_id]);
         if ($cust_row) {
             admin_restore_record($link, 'costumer', $cust_pk, $restore_id, 'customer');
-            // soft-restore audit: UPDATE costumer SET archived_at = NULL
-            $alert = "Customer '{$cust_row['name']}' restored successfully.";
-            $alert_type = 'success';
+            flash_set('success', "Customer '{$cust_row['name']}' restored successfully.");
         }
     }
+    $redirect_url = BASE_URL . '/admin/customers.php' . (!empty($_GET) ? '?' . http_build_query($_GET) : '');
+    header('Location: ' . $redirect_url, true, 303);
+    exit;
 }
 
 // Tab Filter: active vs archived
@@ -165,6 +169,9 @@ $keep_params = array_filter([
     'tab' => $view_tab !== 'active' ? $view_tab : null,
     'q'   => $search !== '' ? $search : null,
 ], fn($v) => $v !== null);
+
+$form_old = $_SESSION['form_old'] ?? [];
+unset($_SESSION['form_old']);
 
 $title = 'Customers';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
@@ -281,11 +288,11 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                     <?= csrf_field() ?>
                     <div class="form-group">
                         <label for="unm" class="font-weight-bold small text-muted">Full Name</label>
-                        <input type="text" id="unm" name="unm" class="form-control" placeholder="Jane Doe" required />
+                        <input type="text" id="unm" name="unm" class="form-control" value="<?= e($form_old['unm'] ?? '') ?>" placeholder="Jane Doe" required />
                     </div>
                     <div class="form-group">
                         <label for="email" class="font-weight-bold small text-muted">Email Address</label>
-                        <input type="email" id="email" name="email" class="form-control" placeholder="jane@example.com" required />
+                        <input type="email" id="email" name="email" class="form-control" value="<?= e($form_old['email'] ?? '') ?>" placeholder="jane@example.com" required />
                     </div>
                     <div class="form-row">
                         <div class="col-6 form-group">
@@ -294,12 +301,12 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         </div>
                         <div class="col-6 form-group">
                             <label for="phone" class="font-weight-bold small text-muted">Phone Number</label>
-                            <input type="tel" id="phone" name="phone" class="form-control" placeholder="Phone" required />
+                            <input type="tel" id="phone" name="phone" class="form-control" value="<?= e($form_old['phone'] ?? '') ?>" placeholder="Phone" required />
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="address" class="font-weight-bold small text-muted">Address</label>
-                        <textarea id="address" name="address" class="form-control" placeholder="Street, city..." rows="2"></textarea>
+                        <textarea id="address" name="address" class="form-control" placeholder="Street, city..." rows="2"><?= e($form_old['address'] ?? '') ?></textarea>
                     </div>
                     <div class="d-flex justify-content-end mt-3">
                         <button type="button" class="btn btn-outline-secondary mr-2" data-dismiss="modal">Cancel</button>

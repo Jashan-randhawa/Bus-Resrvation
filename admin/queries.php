@@ -7,9 +7,6 @@ require_once __DIR__ . '/../includes/db_con.php';
 $query_pk = table_has_column($link, 'query', 'sno') ? 'sno' : 'id';
 $has_status = table_has_column($link, 'query', 'status');
 
-$alert = null;
-$alert_type = 'info';
-
 // Handle Reply to Query (Item 10)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_reply'])) {
     csrf_verify();
@@ -34,8 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_reply'])) {
             $mail_result = send_app_mail($to_email, $subject, $mail_body);
 
             if (!$mail_result['ok']) {
-                $alert = 'Reply not sent: ' . $mail_result['error'];
-                $alert_type = 'danger';
+                flash_set('danger', 'Reply not sent: ' . $mail_result['error']);
                 try {
                     audit($link, 'UPDATE', 'query', $reply_id, null, ['reply_sent' => false, 'error' => $mail_result['error']]);
                 } catch (Throwable $e) {}
@@ -46,11 +42,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_reply'])) {
                 try {
                     audit($link, 'UPDATE', 'query', $reply_id, ['status' => $q_row['status'] ?? 'new'], ['status' => 'replied', 'reply_sent' => true]);
                 } catch (Throwable $e) {}
-                $alert = 'Reply sent to ' . $to_email . ' successfully.';
-                $alert_type = 'success';
+                flash_set('success', 'Reply sent to ' . $to_email . ' successfully.');
             }
+        } else {
+            flash_set('danger', 'Query record not found.');
         }
+    } else {
+        flash_set('danger', 'Please provide a valid query and reply message.');
     }
+    $redirect_url = BASE_URL . '/admin/queries.php' . (!empty($_GET) ? '?' . http_build_query($_GET) : '');
+    header('Location: ' . $redirect_url, true, 303);
+    exit;
 }
 
 // Handle Mark Closed / Open (Item 10)
@@ -62,9 +64,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     if ($qid > 0 && in_array($new_st, ['new', 'replied', 'closed'], true) && $has_status) {
         db_exec($link, "UPDATE `query` SET `status` = ? WHERE `{$query_pk}` = ?", 'si', [$new_st, $qid]);
         audit($link, 'UPDATE', 'query', $qid, null, ['status' => $new_st]);
-        $alert = "Status updated to '{$new_st}'.";
-        $alert_type = 'success';
+        flash_set('success', "Status updated to '{$new_st}'.");
+    } else {
+        flash_set('danger', 'Failed to update query status.');
     }
+    $redirect_url = BASE_URL . '/admin/queries.php' . (!empty($_GET) ? '?' . http_build_query($_GET) : '');
+    header('Location: ' . $redirect_url, true, 303);
+    exit;
 }
 
 // Handle Delete Query (Phase A Items 1 & 3)
@@ -76,9 +82,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_query'])) {
         $old_query = db_one($link, "SELECT * FROM `query` WHERE `{$query_pk}` = ?", 'i', [$delete_id]);
         db_exec($link, "DELETE FROM `query` WHERE `{$query_pk}` = ?", 'i', [$delete_id]);
         audit($link, 'DELETE', 'query', $delete_id, $old_query ?: null, null);
-        $alert = 'Query deleted successfully.';
-        $alert_type = 'success';
+        flash_set('success', 'Query deleted successfully.');
+    } else {
+        flash_set('danger', 'Invalid query ID for deletion.');
     }
+    $redirect_url = BASE_URL . '/admin/queries.php' . (!empty($_GET) ? '?' . http_build_query($_GET) : '');
+    header('Location: ' . $redirect_url, true, 303);
+    exit;
 }
 
 // Status filtering (Item 10)
@@ -112,12 +122,6 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </div>
 </div>
 
-<?php if ($alert): ?>
-    <div class="alert alert-<?= e($alert_type) ?> alert-dismissible fade show" role="alert">
-        <?= e($alert) ?>
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-    </div>
-<?php endif; ?>
 
 <!-- Status Filter Tabs (Item 10) -->
 <?php if ($has_status): ?>

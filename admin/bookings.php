@@ -4,10 +4,6 @@ require_once __DIR__ . '/../includes/auth/admin-session.php';
 require_once __DIR__ . '/../includes/db_con.php';
 require_once __DIR__ . '/../includes/helpers.php';
 
-$alert = null;
-$alert_type = 'info';
-
-$has_pnr = table_has_column($link, 'booking', 'pnr');
 $has_status = table_has_column($link, 'booking', 'status');
 
 // Handle Add Booking (O6 / P-03 / P-04, Phase A Item 1)
@@ -32,8 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
     $matched_route = db_one($link, $route_query, 'ssss', [$bus, $from, $to, $time]);
 
     if (!$matched_route) {
-        $alert = "No active route found for bus '{$bus}' from '{$from}' to '{$to}' departing at {$time}. Please verify schedule.";
-        $alert_type = 'danger';
+        $_SESSION['form_old'] = $_POST;
+        flash_set('danger', "No active route found for bus '{$bus}' from '{$from}' to '{$to}' departing at {$time}. Please verify schedule.");
     } else {
         $official_tariff = (float)$matched_route['price'];
         $override_reason = trim((string)($_POST['override_reason'] ?? ''));
@@ -59,6 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
         $res = create_booking($link, $booking_params);
 
         if ($res['ok']) {
+            unset($_SESSION['form_old']);
             $audit_payload = ['pnr' => $res['pnr'], 'bus' => $bus, 'seat' => $seat, 'name' => $unm, 'date' => $date];
             if (!empty($booking_params['price_override'])) {
                 $audit_payload['price_override'] = $price_override;
@@ -68,13 +65,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['check'])) {
             try {
                 audit($link, 'CREATE', 'booking', null, null, $audit_payload);
             } catch (Throwable $e) {}
-            $alert = "Booking confirmed! PNR: {$res['pnr']}, Seat: #{$seat}";
-            $alert_type = 'success';
+            flash_set('success', "Booking confirmed! PNR: {$res['pnr']}, Seat: #{$seat}");
         } else {
-            $alert = $res['error'];
-            $alert_type = 'danger';
+            $_SESSION['form_old'] = $_POST;
+            flash_set('danger', $res['error']);
         }
     }
+    $redirect_url = BASE_URL . '/admin/bookings.php' . (!empty($_GET) ? '?' . http_build_query($_GET) : '');
+    header('Location: ' . $redirect_url, true, 303);
+    exit;
 }
 
 // Handle Cancel Booking (O4, Phase A Item 3)
@@ -86,14 +85,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_booking'])) {
         $old_booking = db_one($link, "SELECT sno, pnr, bus, seat, date, time, status, name, contact FROM booking WHERE sno = ?", 'i', [$delete_id]);
         $changed = cancel_booking($link, $delete_id);
         if ($changed > 0) {
-            $alert = 'Booking status marked as Cancelled (seat liberated, audit preserved).';
-            $alert_type = 'success';
             audit($link, 'CANCEL', 'booking', $delete_id, $old_booking ?: null, ['status' => 'Cancelled']);
+            flash_set('success', 'Booking status marked as Cancelled (seat liberated, audit preserved).');
         } else {
-            $alert = 'Booking was already cancelled or could not be found.';
-            $alert_type = 'info';
+            flash_set('info', 'Booking was already cancelled or could not be found.');
         }
     }
+    $redirect_url = BASE_URL . '/admin/bookings.php' . (!empty($_GET) ? '?' . http_build_query($_GET) : '');
+    header('Location: ' . $redirect_url, true, 303);
+    exit;
 }
 
 // Handle Bulk Actions (Phase D Item 12)
@@ -103,8 +103,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
     $selected_ids = array_values(array_filter(array_map('intval', (array)($_POST['selected_ids'] ?? [])), fn($v) => $v > 0));
 
     if (empty($selected_ids)) {
-        $alert = 'Please select at least one reservation to perform bulk operations.';
-        $alert_type = 'warning';
+        flash_set('warning', 'Please select at least one reservation to perform bulk operations.');
+        $redirect_url = BASE_URL . '/admin/bookings.php' . (!empty($_GET) ? '?' . http_build_query($_GET) : '');
+        header('Location: ' . $redirect_url, true, 303);
+        exit;
     } elseif ($bulk_action === 'cancel') {
         require_role('super_admin');
         $cancelled_count = 0;
@@ -118,8 +120,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
                 }
             }
         }
-        $alert = "Bulk cancel complete: {$cancelled_count} reservation(s) cancelled and seats liberated.";
-        $alert_type = 'success';
+        flash_set('success', "Bulk cancel complete: {$cancelled_count} reservation(s) cancelled and seats liberated.");
+        $redirect_url = BASE_URL . '/admin/bookings.php' . (!empty($_GET) ? '?' . http_build_query($_GET) : '');
+        header('Location: ' . $redirect_url, true, 303);
+        exit;
     } elseif ($bulk_action === 'export') {
         $is_viewer = !can_write();
         $placeholders = implode(',', array_fill(0, count($selected_ids), '?'));
@@ -248,6 +252,9 @@ $keep_params = array_filter([
 ], fn($v) => $v !== null);
 
 $title = 'Bookings';
+$form_old = $_SESSION['form_old'] ?? [];
+unset($_SESSION['form_old']);
+
 require_once __DIR__ . '/../includes/layout/header-admin.php';
 ?>
 <div class="page-header">
@@ -266,13 +273,6 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <?php endif; ?>
     </div>
 </div>
-
-<?php if ($alert): ?>
-    <div class="alert alert-<?= e($alert_type) ?> alert-dismissible fade show" role="alert">
-        <?= e($alert) ?>
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-    </div>
-<?php endif; ?>
 
 <!-- Search & Filter Card (Item 8) -->
 <div class="card border-0 shadow-sm mb-4">
@@ -455,7 +455,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                             <select name="bus" id="bus" class="form-control" required>
                                 <option value="" data-capacity="36">Select Bus Number</option>
                                 <?php foreach ($buses as $row): ?>
-                                    <option value="<?= e($row['bus_number']) ?>" data-capacity="<?= (int)($row['capacity'] ?? 36) ?>">
+                                    <option value="<?= e($row['bus_number']) ?>" data-capacity="<?= (int)($row['capacity'] ?? 36) ?>" <?= ($form_old['bus'] ?? '') === $row['bus_number'] ? 'selected' : '' ?>>
                                         <?= e($row['bus_number']) ?> (<?= (int)($row['capacity'] ?? 36) ?> seats)
                                     </option>
                                 <?php endforeach; ?>
@@ -463,18 +463,18 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         </div>
                         <div class="col-md-6 form-group">
                             <label for="unm" class="font-weight-bold small text-muted">Passenger Name</label>
-                            <input type="text" name="unm" id="unm" class="form-control" placeholder="Full name" required />
+                            <input type="text" name="unm" id="unm" class="form-control" value="<?= e($form_old['unm'] ?? '') ?>" placeholder="Full name" required />
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="col-md-6 form-group">
                             <label for="num" class="font-weight-bold small text-muted">Contact Phone</label>
-                            <input type="tel" name="num" id="num" class="form-control" placeholder="Phone number" required />
+                            <input type="tel" name="num" id="num" class="form-control" value="<?= e($form_old['num'] ?? '') ?>" placeholder="Phone number" required />
                         </div>
                         <div class="col-md-6 form-group">
                             <label for="date" class="font-weight-bold small text-muted">Travel Date</label>
-                            <input type="date" min="<?= date('Y-m-d') ?>" name="date" id="date" class="form-control" required />
+                            <input type="date" min="<?= date('Y-m-d') ?>" name="date" id="date" class="form-control" value="<?= e($form_old['date'] ?? '') ?>" required />
                         </div>
                     </div>
 
@@ -484,7 +484,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                             <select name="from" id="from" class="form-control" required>
                                 <option value="">Select Origin City</option>
                                 <?php foreach ($from_cities as $row): ?>
-                                    <option value="<?= e($row['city1']) ?>"><?= e($row['city1']) ?></option>
+                                    <option value="<?= e($row['city1']) ?>" <?= ($form_old['from'] ?? '') === $row['city1'] ? 'selected' : '' ?>><?= e($row['city1']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -493,7 +493,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                             <select name="to" id="to" class="form-control" required>
                                 <option value="">Select Destination City</option>
                                 <?php foreach ($to_cities as $row): ?>
-                                    <option value="<?= e($row['city2']) ?>"><?= e($row['city2']) ?></option>
+                                    <option value="<?= e($row['city2']) ?>" <?= ($form_old['to'] ?? '') === $row['city2'] ? 'selected' : '' ?>><?= e($row['city2']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -502,15 +502,15 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                     <div class="form-row">
                         <div class="col-md-4 form-group">
                             <label for="time" class="font-weight-bold small text-muted">Departure Time</label>
-                            <input type="time" name="time" id="time" class="form-control" required />
+                            <input type="time" name="time" id="time" class="form-control" value="<?= e($form_old['time'] ?? '') ?>" required />
                         </div>
                         <div class="col-md-4 form-group">
                             <label for="seat_no" id="seat_label" class="font-weight-bold small text-muted">Seat Number</label>
-                            <input type="number" min="1" max="36" name="seat" class="form-control" id="seat_no" placeholder="Seat #" required>
+                            <input type="number" min="1" max="36" name="seat" class="form-control" id="seat_no" value="<?= e((string)($form_old['seat'] ?? '')) ?>" placeholder="Seat #" required>
                         </div>
                         <div class="col-md-4 form-group">
                             <label for="amount" class="font-weight-bold small text-muted">Price (<?= CURRENCY ?>)</label>
-                            <input type="number" step="0.01" min="1" name="amount" class="form-control" id="amount" placeholder="0.00" required>
+                            <input type="number" step="0.01" min="1" name="amount" class="form-control" id="amount" value="<?= e((string)($form_old['amount'] ?? '')) ?>" placeholder="0.00" required>
                         </div>
                     </div>
 

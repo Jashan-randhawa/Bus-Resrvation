@@ -24,17 +24,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
     }
 
     if ($busno === '' || mb_strlen($busno) < 2 || mb_strlen($busno) > 50) {
-        $alert = 'Bus number must be between 2 and 50 characters.';
-        $alert_type = 'danger';
+        $_SESSION['form_old'] = ['busno' => $busno, 'capacity' => $capacity, 'layout' => $layout];
+        flash_set('danger', 'Bus number must be between 2 and 50 characters.');
     } elseif ($capacity < 10 || $capacity > 60) {
-        $alert = 'Bus capacity must be between 10 and 60 seats.';
-        $alert_type = 'danger';
+        $_SESSION['form_old'] = ['busno' => $busno, 'capacity' => $capacity, 'layout' => $layout];
+        flash_set('danger', 'Bus capacity must be between 10 and 60 seats.');
     } else {
         $existing = db_one($link, 'SELECT * FROM buses WHERE bus_number = ?', 's', [$busno]);
         if ($existing) {
-            $alert = 'A bus with that number already exists.';
-            $alert_type = 'danger';
+            $_SESSION['form_old'] = ['busno' => $busno, 'capacity' => $capacity, 'layout' => $layout];
+            flash_set('danger', 'A bus with that number already exists.');
         } else {
+            unset($_SESSION['form_old']);
             $has_cap = table_has_column($link, 'buses', 'capacity');
             $has_layout = table_has_column($link, 'buses', 'layout');
             if ($has_cap && $has_layout) {
@@ -45,10 +46,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
                 db_exec($link, 'INSERT INTO buses (bus_number) VALUES (?)', 's', [$busno]);
             }
             audit($link, 'CREATE', 'bus', (int)mysqli_insert_id($link), null, ['bus_number' => $busno, 'capacity' => $capacity, 'layout' => $layout]);
-            $alert = 'Bus added successfully.';
-            $alert_type = 'success';
+            flash_set('success', 'Bus added successfully.');
         }
     }
+    $redirect_url = BASE_URL . '/admin/buses.php' . (!empty($_GET) ? '?' . http_build_query($_GET) : '');
+    header('Location: ' . $redirect_url, true, 303);
+    exit;
 }
 
 $has_archived_col = table_has_column($link, 'buses', 'archived_at');
@@ -61,32 +64,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_bus'])) {
     if ($delete_id > 0) {
         $bus_row = db_one($link, "SELECT bus_number FROM buses WHERE `{$bus_pk}` = ?", 'i', [$delete_id]);
         if (!$bus_row) {
-            $alert = 'Bus not found.';
-            $alert_type = 'danger';
+            flash_set('danger', 'Bus not found.');
         } else {
             $b_num = (string)$bus_row['bus_number'];
             $active_routes = db_one($link, 'SELECT COUNT(*) AS n FROM route WHERE (busno = ? OR bus_id = ?) AND (archived_at IS NULL)', 'si', [$b_num, $delete_id]);
             $active_bookings = db_one($link, "SELECT COUNT(*) AS n FROM booking WHERE (bus = ? OR bus_id = ?) AND (status IS NULL OR status NOT IN ('Cancelled', 'Expired'))", 'si', [$b_num, $delete_id]);
 
             if ((int)($active_routes['n'] ?? 0) > 0) {
-                $alert = "Cannot archive bus '{$b_num}' because it is assigned to active routes. Remove or reassign those routes first.";
-                $alert_type = 'danger';
+                flash_set('danger', "Cannot archive bus '{$b_num}' because it is assigned to active routes. Remove or reassign those routes first.");
             } elseif ((int)($active_bookings['n'] ?? 0) > 0) {
-                $alert = "Cannot archive bus '{$b_num}' because it has active passenger bookings.";
-                $alert_type = 'danger';
+                flash_set('danger', "Cannot archive bus '{$b_num}' because it has active passenger bookings.");
             } else {
                 if ($has_archived_col) {
                     admin_archive_record($link, 'buses', $bus_pk, $delete_id, 'bus', ['bus_number' => $b_num]);
-                    // soft-delete audit: UPDATE buses SET archived_at = NOW()
-                    $alert = "Bus '{$b_num}' archived successfully.";
+                    flash_set('success', "Bus '{$b_num}' archived successfully.");
                 } else {
                     admin_archive_record($link, 'buses', $bus_pk, $delete_id, 'bus', ['bus_number' => $b_num]);
-                    $alert = 'Bus deleted successfully.';
+                    flash_set('success', 'Bus deleted successfully.');
                 }
-                $alert_type = 'success';
             }
         }
     }
+    $redirect_url = BASE_URL . '/admin/buses.php' . (!empty($_GET) ? '?' . http_build_query($_GET) : '');
+    header('Location: ' . $redirect_url, true, 303);
+    exit;
 }
 
 // Handle Restore Bus (Item 4)
@@ -98,11 +99,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore_bus'])) {
         $bus_row = db_one($link, "SELECT bus_number FROM buses WHERE `{$bus_pk}` = ?", 'i', [$restore_id]);
         if ($bus_row) {
             admin_restore_record($link, 'buses', $bus_pk, $restore_id, 'bus');
-            // soft-restore audit: UPDATE buses SET archived_at = NULL
-            $alert = "Bus '{$bus_row['bus_number']}' restored to active fleet.";
-            $alert_type = 'success';
+            flash_set('success', "Bus '{$bus_row['bus_number']}' restored to active fleet.");
         }
     }
+    $redirect_url = BASE_URL . '/admin/buses.php' . (!empty($_GET) ? '?' . http_build_query($_GET) : '');
+    header('Location: ' . $redirect_url, true, 303);
+    exit;
 }
 
 // Tab Filter: active vs archived
@@ -113,6 +115,9 @@ $where_archive = ($has_archived_col && $view_tab === 'archived') ? 'WHERE archiv
 $total_buses = (int)(db_one($link, "SELECT COUNT(*) AS c FROM buses {$where_archive}")['c'] ?? 0);
 $pagination = paginate($total_buses, 25);
 $buses = db_all($link, "SELECT * FROM buses {$where_archive} ORDER BY {$bus_pk} ASC LIMIT ? OFFSET ?", 'ii', [$pagination['per_page'], $pagination['offset']]);
+
+$form_old = $_SESSION['form_old'] ?? [];
+unset($_SESSION['form_old']);
 
 $title = 'Buses';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
@@ -212,20 +217,20 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                     <?= csrf_field() ?>
                     <div class="form-group">
                         <label for="busno" class="font-weight-bold small text-muted">Bus Number / License Plate</label>
-                        <input type="text" id="busno" name="busno" class="form-control" placeholder="e.g. DL-01-AB-1234" required />
+                        <input type="text" id="busno" name="busno" class="form-control" value="<?= e($form_old['busno'] ?? '') ?>" placeholder="e.g. DL-01-AB-1234" required />
                     </div>
                     <div class="form-group">
                         <label for="capacity" class="font-weight-bold small text-muted">Total Seating Capacity</label>
-                        <input type="number" id="capacity" name="capacity" class="form-control" value="36" min="10" max="60" required />
+                        <input type="number" id="capacity" name="capacity" class="form-control" value="<?= e((string)($form_old['capacity'] ?? 36)) ?>" min="10" max="60" required />
                         <small class="form-text text-muted">Standard coaches seat between 20 and 52 passengers.</small>
                     </div>
                     <div class="form-group mb-4">
                         <label for="layout" class="font-weight-bold small text-muted">Seating Layout Pattern</label>
                         <select id="layout" name="layout" class="form-control" required>
-                            <option value="2+2" selected>2+2 (Standard Coach -- 2 Left, 2 Right)</option>
-                            <option value="2+1">2+1 (Executive Coach -- 2 Left, 1 Right)</option>
-                            <option value="1+2">1+2 (Executive Coach -- 1 Left, 2 Right)</option>
-                            <option value="1+1">1+1 (VIP / Luxury Sleeper)</option>
+                            <option value="2+2" <?= ($form_old['layout'] ?? '2+2') === '2+2' ? 'selected' : '' ?>>2+2 (Standard Coach -- 2 Left, 2 Right)</option>
+                            <option value="2+1" <?= ($form_old['layout'] ?? '') === '2+1' ? 'selected' : '' ?>>2+1 (Executive Coach -- 2 Left, 1 Right)</option>
+                            <option value="1+2" <?= ($form_old['layout'] ?? '') === '1+2' ? 'selected' : '' ?>>1+2 (Executive Coach -- 1 Left, 2 Right)</option>
+                            <option value="1+1" <?= ($form_old['layout'] ?? '') === '1+1' ? 'selected' : '' ?>>1+1 (VIP / Luxury Sleeper)</option>
                         </select>
                         <small class="form-text text-muted">Defines seat column distribution around central aisle.</small>
                     </div>

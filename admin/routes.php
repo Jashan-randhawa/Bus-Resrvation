@@ -21,28 +21,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
     $price = (float)($_POST['price'] ?? 0);
 
     if ($from === '' || $to === '' || $bus === '' || $time === '' || $price <= 0) {
-        $alert = 'Please fill all route fields with valid values.';
-        $alert_type = 'danger';
+        $_SESSION['form_old'] = ['From' => $from, 'To' => $to, 'bus' => $bus, 'time' => $time, 'price' => $price];
+        flash_set('danger', 'Please fill all route fields with valid values.');
     } elseif (strcasecmp($from, $to) === 0) {
-        $alert = 'Origin and destination cities cannot be the same.';
-        $alert_type = 'danger';
+        $_SESSION['form_old'] = ['From' => $from, 'To' => $to, 'bus' => $bus, 'time' => $time, 'price' => $price];
+        flash_set('danger', 'Origin and destination cities cannot be the same.');
     } else {
         $has_archived_col = table_has_column($link, 'route', 'archived_at');
         $conflict_where = $has_archived_col ? " AND archived_at IS NULL" : "";
         // O11 & Issue 12: Check for route conflict on active schedules only
         $conflict = db_one($link, "SELECT * FROM route WHERE busno = ? AND `time` = ?{$conflict_where}", 'ss', [$bus, $time]);
         if ($conflict) {
-            $alert = "Bus '{$bus}' is already scheduled to depart at {$time} ({$conflict['city1']} -> {$conflict['city2']}).";
-            $alert_type = 'danger';
+            $_SESSION['form_old'] = ['From' => $from, 'To' => $to, 'bus' => $bus, 'time' => $time, 'price' => $price];
+            flash_set('danger', "Bus '{$bus}' is already scheduled to depart at {$time} ({$conflict['city1']} -> {$conflict['city2']}).");
         } else {
             // Issue 13: Bus assignment validation (must exist and not be archived)
             $has_bus_arch = table_has_column($link, 'buses', 'archived_at');
             $bus_where = $has_bus_arch ? " AND archived_at IS NULL" : "";
             $bus_row = db_one($link, "SELECT id FROM buses WHERE bus_number = ?{$bus_where} LIMIT 1", 's', [$bus]);
             if (!$bus_row || empty($bus_row['id'])) {
-                $alert = "The selected bus '{$bus}' does not exist or is inactive/archived.";
-                $alert_type = 'danger';
+                $_SESSION['form_old'] = ['From' => $from, 'To' => $to, 'bus' => $bus, 'time' => $time, 'price' => $price];
+                flash_set('danger', "The selected bus '{$bus}' does not exist or is inactive/archived.");
             } else {
+                unset($_SESSION['form_old']);
                 $bus_id = (int)$bus_row['id'];
                 $has_bus_id = table_has_column($link, 'route', 'bus_id');
 
@@ -60,11 +61,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
                     );
                 }
                 audit($link, 'CREATE', 'route', (int)mysqli_insert_id($link), null, ['city1' => $from, 'city2' => $to, 'busno' => $bus, 'time' => $time, 'price' => $price]);
-                $alert = 'Route added successfully.';
-                $alert_type = 'success';
+                flash_set('success', 'Route added successfully.');
             }
         }
     }
+    $redirect_url = BASE_URL . '/admin/routes.php' . (!empty($_GET) ? '?' . http_build_query($_GET) : '');
+    header('Location: ' . $redirect_url, true, 303);
+    exit;
 }
 
 $has_archived_col = table_has_column($link, 'route', 'archived_at');
@@ -77,8 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_route'])) {
     if ($delete_id > 0) {
         $route_row = db_one($link, "SELECT * FROM route WHERE `{$route_pk}` = ?", 'i', [$delete_id]);
         if (!$route_row) {
-            $alert = 'Route not found.';
-            $alert_type = 'danger';
+            flash_set('danger', 'Route not found.');
         } else {
             $r_bus = (string)$route_row['busno'];
             $r_time = (string)$route_row['time'];
@@ -89,21 +91,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_route'])) {
             );
 
             if ((int)($active_bookings['n'] ?? 0) > 0) {
-                $alert = "Cannot archive route ({$route_row['city1']} -> {$route_row['city2']} at {$r_time}) because there are active upcoming bookings.";
-                $alert_type = 'danger';
+                flash_set('danger', "Cannot archive route ({$route_row['city1']} -> {$route_row['city2']} at {$r_time}) because there are active upcoming bookings.");
             } else {
                 if ($has_archived_col) {
                     admin_archive_record($link, 'route', $route_pk, $delete_id, 'route', ['city1' => $route_row['city1'], 'city2' => $route_row['city2'], 'busno' => $r_bus, 'time' => $r_time]);
-                    // soft-delete audit: UPDATE route SET archived_at = NOW()
-                    $alert = 'Route archived successfully.';
+                    flash_set('success', 'Route archived successfully.');
                 } else {
                     admin_archive_record($link, 'route', $route_pk, $delete_id, 'route', ['city1' => $route_row['city1'], 'city2' => $route_row['city2'], 'busno' => $r_bus, 'time' => $r_time]);
-                    $alert = 'Route deleted successfully.';
+                    flash_set('success', 'Route deleted successfully.');
                 }
-                $alert_type = 'success';
             }
         }
     }
+    $redirect_url = BASE_URL . '/admin/routes.php' . (!empty($_GET) ? '?' . http_build_query($_GET) : '');
+    header('Location: ' . $redirect_url, true, 303);
+    exit;
 }
 
 // Handle Restore Route (Phase B Item 4)
@@ -115,11 +117,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore_route'])) {
         $route_row = db_one($link, "SELECT * FROM route WHERE `{$route_pk}` = ?", 'i', [$restore_id]);
         if ($route_row) {
             admin_restore_record($link, 'route', $route_pk, $restore_id, 'route');
-            // soft-restore audit: UPDATE route SET archived_at = NULL
-            $alert = "Route schedule ({$route_row['city1']} -> {$route_row['city2']}) restored successfully.";
-            $alert_type = 'success';
+            flash_set('success', "Route schedule ({$route_row['city1']} -> {$route_row['city2']}) restored successfully.");
         }
     }
+    $redirect_url = BASE_URL . '/admin/routes.php' . (!empty($_GET) ? '?' . http_build_query($_GET) : '');
+    header('Location: ' . $redirect_url, true, 303);
+    exit;
 }
 
 // Tab Filter: active vs archived
@@ -131,6 +134,9 @@ $buses = db_all($link, "SELECT bus_number FROM buses " . (table_has_column($link
 $total_routes = (int)(db_one($link, "SELECT COUNT(*) AS c FROM route {$where_archive}")['c'] ?? 0);
 $pagination = paginate($total_routes, 25);
 $routes = db_all($link, "SELECT * FROM route {$where_archive} ORDER BY `{$route_pk}` ASC LIMIT ? OFFSET ?", 'ii', [$pagination['per_page'], $pagination['offset']]);
+
+$form_old = $_SESSION['form_old'] ?? [];
+unset($_SESSION['form_old']);
 
 $title = 'Routes';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
@@ -225,11 +231,11 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                     <div class="form-row">
                         <div class="col-6 form-group">
                             <label for="From" class="font-weight-bold small text-muted">From City</label>
-                            <input type="text" id="From" name="From" class="form-control" placeholder="Origin" required />
+                            <input type="text" id="From" name="From" class="form-control" value="<?= e($form_old['From'] ?? '') ?>" placeholder="Origin" required />
                         </div>
                         <div class="col-6 form-group">
                             <label for="To" class="font-weight-bold small text-muted">To City</label>
-                            <input type="text" id="To" name="To" class="form-control" placeholder="Destination" required />
+                            <input type="text" id="To" name="To" class="form-control" value="<?= e($form_old['To'] ?? '') ?>" placeholder="Destination" required />
                         </div>
                     </div>
                     <div class="form-group">
@@ -237,18 +243,18 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         <select name="bus" id="bus" class="form-control" required>
                             <option value="">Select Fleet Bus</option>
                             <?php foreach ($buses as $b): ?>
-                                <option value="<?= e($b['bus_number']) ?>"><?= e($b['bus_number']) ?></option>
+                                <option value="<?= e($b['bus_number']) ?>" <?= ($form_old['bus'] ?? '') === $b['bus_number'] ? 'selected' : '' ?>><?= e($b['bus_number']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="form-row">
                         <div class="col-6 form-group">
                             <label for="time" class="font-weight-bold small text-muted">Departure Time</label>
-                            <input type="time" id="time" name="time" class="form-control" required />
+                            <input type="time" id="time" name="time" class="form-control" value="<?= e($form_old['time'] ?? '') ?>" required />
                         </div>
                         <div class="col-6 form-group">
                             <label for="price" class="font-weight-bold small text-muted">Ticket Tariff (<?= CURRENCY ?>)</label>
-                            <input type="number" step="0.01" min="1" id="price" name="price" class="form-control" placeholder="0.00" required />
+                            <input type="number" step="0.01" min="1" id="price" name="price" class="form-control" value="<?= e((string)($form_old['price'] ?? '')) ?>" placeholder="0.00" required />
                         </div>
                     </div>
                     <div class="d-flex justify-content-end mt-3">

@@ -36,17 +36,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
     $pwd_errors = validate_new_password($pwd, 'admin');
 
     if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $alert = 'Please provide a valid name and email address.';
-        $alert_type = 'danger';
+        $_SESSION['form_old'] = ['unm' => $name, 'email' => $email, 'phone' => $phone, 'role' => $role];
+        flash_set('danger', 'Please provide a valid name and email address.');
     } elseif (!empty($pwd_errors)) {
-        $alert = implode(' ', $pwd_errors);
-        $alert_type = 'danger';
+        $_SESSION['form_old'] = ['unm' => $name, 'email' => $email, 'phone' => $phone, 'role' => $role];
+        flash_set('danger', implode(' ', $pwd_errors));
     } else {
         $existing = db_one($link, 'SELECT * FROM admin WHERE Email_id = ?', 's', [$email]);
         if ($existing) {
-            $alert = 'An administrator with that email already exists.';
-            $alert_type = 'danger';
+            $_SESSION['form_old'] = ['unm' => $name, 'email' => $email, 'phone' => $phone, 'role' => $role];
+            flash_set('danger', 'An administrator with that email already exists.');
         } else {
+            unset($_SESSION['form_old']);
             $hashed = password_hash($pwd, PASSWORD_DEFAULT);
             if ($has_role_col) {
                 db_exec($link,
@@ -63,10 +64,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subbtn'])) {
             }
             $new_id = (int)mysqli_insert_id($link);
             audit($link, 'CREATE', 'admin', $new_id, null, ['name' => $name, 'email' => $email, 'role' => $role]);
-            $alert = "New administrator created successfully with '{$role}' privileges.";
-            $alert_type = 'success';
+            flash_set('success', "New administrator created successfully with '{$role}' privileges.");
         }
     }
+    header('Location: ' . BASE_URL . '/admin/add-admin.php', true, 303);
+    exit;
 }
 
 // Handle Role Change (Item 5 & Issue 21: Self-demotion guard)
@@ -76,36 +78,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_role'])) {
     $new_role = trim((string)($_POST['new_role'] ?? ''));
 
     if ($target_id === $current_admin_id) {
-        $alert = 'You cannot change your own role.';
-        $alert_type = 'danger';
+        flash_set('danger', 'You cannot change your own role.');
     } elseif (!in_array($new_role, ['super_admin', 'operator', 'viewer'], true)) {
-        $alert = 'Invalid role specified.';
-        $alert_type = 'danger';
+        flash_set('danger', 'Invalid role specified.');
     } elseif ($target_id <= 0) {
-        $alert = 'Invalid administrator ID.';
-        $alert_type = 'danger';
+        flash_set('danger', 'Invalid administrator ID.');
     } else {
         $target_row = db_one($link, "SELECT * FROM `admin` WHERE `{$admin_pk}` = ?", 'i', [$target_id]);
         if (!$target_row) {
-            $alert = 'Administrator not found.';
-            $alert_type = 'danger';
+            flash_set('danger', 'Administrator not found.');
         } else {
             $old_role = (string)($target_row['role'] ?? 'operator');
-            if ($old_role === 'super_admin' && $new_role !== 'super_admin') {
-                if (count_active_super_admins($link) <= 1) {
-                    $alert = 'Cannot demote the last remaining active Super Admin.';
-                    $alert_type = 'danger';
-                }
-            }
-
-            if (!$alert) {
+            if ($old_role === 'super_admin' && $new_role !== 'super_admin' && count_active_super_admins($link) <= 1) {
+                flash_set('danger', 'Cannot demote the last remaining active Super Admin.');
+            } else {
                 db_exec($link, "UPDATE `admin` SET `role` = ? WHERE `{$admin_pk}` = ?", 'si', [$new_role, $target_id]);
                 audit($link, 'ROLE_CHANGE', 'admin', $target_id, ['role' => $old_role], ['role' => $new_role]);
-                $alert = "Role updated successfully to '{$new_role}'.";
-                $alert_type = 'success';
+                flash_set('success', "Role updated successfully to '{$new_role}'.");
             }
         }
     }
+    header('Location: ' . BASE_URL . '/admin/add-admin.php', true, 303);
+    exit;
 }
 
 // Handle Toggle Active/Deactivate (Item 5)
@@ -113,28 +107,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_active'])) {
     csrf_verify();
     $target_id = (int)($_POST['target_id'] ?? 0);
     if ($target_id === $current_admin_id) {
-        $alert = 'You cannot deactivate your own account.';
-        $alert_type = 'danger';
+        flash_set('danger', 'You cannot deactivate your own account.');
     } else {
         $target_row = db_one($link, "SELECT * FROM `admin` WHERE `{$admin_pk}` = ?", 'i', [$target_id]);
         if (!$target_row) {
-            $alert = 'Administrator not found.';
-            $alert_type = 'danger';
+            flash_set('danger', 'Administrator not found.');
         } else {
             $curr_active = (int)($target_row['is_active'] ?? 1);
             $new_active = $curr_active === 1 ? 0 : 1;
 
             if ($curr_active === 1 && ($target_row['role'] ?? '') === 'super_admin' && count_active_super_admins($link) <= 1) {
-                $alert = 'Cannot deactivate the last remaining active Super Admin.';
-                $alert_type = 'danger';
+                flash_set('danger', 'Cannot deactivate the last remaining active Super Admin.');
             } else {
                 db_exec($link, "UPDATE `admin` SET `is_active` = ? WHERE `{$admin_pk}` = ?", 'ii', [$new_active, $target_id]);
                 audit($link, 'UPDATE', 'admin', $target_id, ['is_active' => $curr_active], ['is_active' => $new_active]);
-                $alert = ($new_active === 1) ? 'Administrator account activated.' : 'Administrator account deactivated.';
-                $alert_type = 'success';
+                flash_set('success', ($new_active === 1) ? 'Administrator account activated.' : 'Administrator account deactivated.');
             }
         }
     }
+    header('Location: ' . BASE_URL . '/admin/add-admin.php', true, 303);
+    exit;
 }
 
 // Handle Force Password Reset (Issues 1, 24, 29)
@@ -147,27 +139,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_pwd'])) {
     $pwd_errors = validate_new_password($new_pwd, 'admin');
 
     if ($target_id <= 0) {
-        $alert = 'Invalid administrator ID.';
-        $alert_type = 'danger';
+        flash_set('danger', 'Invalid administrator ID.');
     } elseif ($new_pwd !== $confirm_pwd) {
-        $alert = 'New password and confirmation do not match.';
-        $alert_type = 'danger';
+        flash_set('danger', 'New password and confirmation do not match.');
     } elseif (!empty($pwd_errors)) {
-        $alert = implode(' ', $pwd_errors);
-        $alert_type = 'danger';
+        flash_set('danger', implode(' ', $pwd_errors));
     } else {
         $target_row = db_one($link, "SELECT * FROM `admin` WHERE `{$admin_pk}` = ?", 'i', [$target_id]);
         if (!$target_row) {
-            $alert = 'Administrator not found.';
-            $alert_type = 'danger';
+            flash_set('danger', 'Administrator not found.');
         } else {
             $hashed = password_hash($new_pwd, PASSWORD_DEFAULT);
             db_exec($link, "UPDATE `admin` SET `Password` = ?, `password_changed_at` = NOW() WHERE `{$admin_pk}` = ?", 'si', [$hashed, $target_id]);
             audit($link, 'UPDATE', 'admin', $target_id, null, ['action' => 'password_reset_by_admin']);
-            $alert = 'Password has been reset successfully.';
-            $alert_type = 'success';
+            flash_set('success', 'Password has been reset successfully.');
         }
     }
+    header('Location: ' . BASE_URL . '/admin/add-admin.php', true, 303);
+    exit;
 }
 
 // Handle Delete Admin (Item 5)
@@ -176,26 +165,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_admin'])) {
     $target_id = (int)($_POST['target_id'] ?? 0);
 
     if ($target_id === $current_admin_id) {
-        $alert = 'You cannot delete your own account.';
-        $alert_type = 'danger';
+        flash_set('danger', 'You cannot delete your own account.');
     } else {
         $target_row = db_one($link, "SELECT * FROM `admin` WHERE `{$admin_pk}` = ?", 'i', [$target_id]);
         if (!$target_row) {
-            $alert = 'Administrator not found.';
-            $alert_type = 'danger';
+            flash_set('danger', 'Administrator not found.');
         } elseif (($target_row['role'] ?? '') === 'super_admin' && count_active_super_admins($link) <= 1) {
-            $alert = 'Cannot delete the last remaining active Super Admin.';
-            $alert_type = 'danger';
+            flash_set('danger', 'Cannot delete the last remaining active Super Admin.');
         } else {
             db_exec($link, "DELETE FROM `admin` WHERE `{$admin_pk}` = ?", 'i', [$target_id]);
             audit($link, 'DELETE', 'admin', $target_id, ['email' => $target_row['Email_id'] ?? ''], null);
-            $alert = 'Administrator deleted successfully.';
-            $alert_type = 'success';
+            flash_set('success', 'Administrator deleted successfully.');
         }
     }
+    header('Location: ' . BASE_URL . '/admin/add-admin.php', true, 303);
+    exit;
 }
 
 $admins = db_all($link, "SELECT * FROM admin ORDER BY `{$admin_pk}` ASC");
+$form_old = $_SESSION['form_old'] ?? [];
+unset($_SESSION['form_old']);
 
 $title = 'Administrators';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
@@ -206,13 +195,6 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <p class="page-subtitle">Configure system administrator accounts with role-based access control (super_admin, operator, viewer).</p>
     </div>
 </div>
-
-<?php if ($alert): ?>
-    <div class="alert alert-<?= e($alert_type) ?> alert-dismissible fade show" role="alert">
-        <?= e($alert) ?>
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-    </div>
-<?php endif; ?>
 
 <div class="row">
     <!-- Creation Card -->
@@ -226,11 +208,11 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                     <?= csrf_field() ?>
                     <div class="form-group">
                         <label for="unm" class="font-weight-bold small text-muted">Admin Full Name</label>
-                        <input type="text" id="unm" class="form-control" name="unm" placeholder="Admin Name" required>
+                        <input type="text" id="unm" class="form-control" name="unm" value="<?= e($form_old['unm'] ?? '') ?>" placeholder="Admin Name" required>
                     </div>
                     <div class="form-group">
                         <label for="email" class="font-weight-bold small text-muted">Corporate Email Address</label>
-                        <input type="email" id="email" class="form-control" name="email" placeholder="admin@domain.com" required>
+                        <input type="email" id="email" class="form-control" name="email" value="<?= e($form_old['email'] ?? '') ?>" placeholder="admin@domain.com" required>
                     </div>
                     <div class="form-group">
                         <label for="pwd" class="font-weight-bold small text-muted">Master Password (Min 12 chars)</label>
@@ -238,14 +220,14 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                     </div>
                     <div class="form-group">
                         <label for="phone" class="font-weight-bold small text-muted">Telephone / Contact</label>
-                        <input type="tel" id="phone" class="form-control" name="phone" placeholder="Contact number" required>
+                        <input type="tel" id="phone" class="form-control" name="phone" value="<?= e($form_old['phone'] ?? '') ?>" placeholder="Contact number" required>
                     </div>
                     <div class="form-group mb-4">
                         <label for="role" class="font-weight-bold small text-muted">Assigned Administrative Role</label>
                         <select id="role" name="role" class="form-control">
-                            <option value="operator" selected>Operator (Fleet operations, bookings & dispatch)</option>
-                            <option value="viewer">Viewer (Read-only observation access)</option>
-                            <option value="super_admin">Super Admin (Full administrative & diagnostics control)</option>
+                            <option value="operator" <?= ($form_old['role'] ?? 'operator') === 'operator' ? 'selected' : '' ?>>Operator (Fleet operations, bookings & dispatch)</option>
+                            <option value="viewer" <?= ($form_old['role'] ?? '') === 'viewer' ? 'selected' : '' ?>>Viewer (Read-only observation access)</option>
+                            <option value="super_admin" <?= ($form_old['role'] ?? '') === 'super_admin' ? 'selected' : '' ?>>Super Admin (Full administrative & diagnostics control)</option>
                         </select>
                     </div>
                     <button type="submit" class="btn btn-primary btn-block py-2 font-weight-bold shadow-sm" name="subbtn">
