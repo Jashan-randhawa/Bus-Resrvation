@@ -1,7 +1,8 @@
 /**
  * assets/js/perf-chart.js
- * Performance Overview: Charts & Indicators (A12)
- * Renders daily combo chart (stacked volume + revenue line) and outcome donut.
+ * Performance Overview: Charts & Indicators (Redesigned Business Analytics Workspace)
+ * Renders daily combo chart (stacked volume by verified status + confirmed revenue line)
+ * and outcome status distribution donut chart.
  */
 (function() {
     'use strict';
@@ -26,7 +27,7 @@
             var container = chartCanvas.parentElement;
             if (container) {
                 container.innerHTML = '<div class="alert alert-light border text-muted small p-4 text-center my-auto">' +
-                    'Interactive charts could not be loaded. Please refer to the daily breakdown table below.' +
+                    'Interactive charts could not be loaded. Please refer to the detailed daily breakdown table below.' +
                     '</div>';
             }
             var donutEl = document.getElementById('perfDonut');
@@ -38,20 +39,21 @@
 
         var donutCanvas = document.getElementById('perfDonut');
         var labels = chartData.labels || [];
-        var bookings = chartData.bookings || [];
-        var cancelled = chartData.cancelled || [];
+        var totalBookings = chartData.total_bookings || 0;
+        var totalConfirmed = chartData.total_confirmed || 0;
+        var totalPending = chartData.total_pending || 0;
+        var totalCancelled = chartData.total_cancelled || 0;
+        var totalExpired = chartData.total_expired || 0;
+        var cancelRate = chartData.cancel_rate || 0.0;
         var revenue = chartData.revenue || [];
         var currency = chartData.currency || '₹';
         var windowDays = chartData.window_days || 30;
-        var totalBookings = chartData.total_bookings || 0;
-        var totalCancelled = chartData.total_cancelled || 0;
-        var cancelRate = chartData.cancel_rate || 0.0;
 
-        // Active bookings = total minus cancelled
-        var activeBookings = bookings.map(function(b, idx) {
-            var c = cancelled[idx] || 0;
-            return Math.max(0, b - c);
-        });
+        // Daily series broken down by verified status
+        var dailyConfirmed = chartData.confirmed || [];
+        var dailyPending = chartData.pending || [];
+        var dailyCancelled = chartData.cancelled || [];
+        var dailyExpired = chartData.expired || [];
 
         // Date formatting helpers
         function formatDateLabel(dStr) {
@@ -84,9 +86,11 @@
             return {
                 primary: cs.getPropertyValue('--c-primary').trim() || '#2563eb',
                 primaryBg: isDark ? 'rgba(59, 130, 246, 0.85)' : 'rgba(37, 99, 235, 0.85)',
-                success: cs.getPropertyValue('--c-success').trim() || '#16a34a',
-                warning: cs.getPropertyValue('--c-warning').trim() || '#d97706',
-                error: cs.getPropertyValue('--c-error').trim() || '#dc2626',
+                confirmed: isDark ? '#22c55e' : '#16a34a',
+                pending: isDark ? '#f59e0b' : '#d97706',
+                cancelled: isDark ? '#ef4444' : '#dc2626',
+                expired: isDark ? '#94a3b8' : '#64748b',
+                revenueLine: isDark ? '#38bdf8' : '#0284c7',
                 text: cs.getPropertyValue('--c-text').trim() || (isDark ? '#f8fafc' : '#1e293b'),
                 textMuted: cs.getPropertyValue('--c-text-muted').trim() || (isDark ? '#94a3b8' : '#64748b'),
                 border: cs.getPropertyValue('--c-border').trim() || (isDark ? '#334155' : '#e2e8f0'),
@@ -95,51 +99,79 @@
         }
 
         var isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        var animDuration = isReducedMotion ? 0 : 400;
+        var animDuration = isReducedMotion ? 0 : 350;
 
         var formattedLabels = labels.map(formatDateLabel);
         var colors = getThemeColors();
 
-        // 1. Combo Chart (Daily Stacked Volume Bars + Revenue Line)
+        // 1. Combo Chart (Daily Stacked Volume Bars by Status + Confirmed Revenue Line)
+        var comboDatasets = [
+            {
+                type: 'bar',
+                label: 'Confirmed',
+                data: dailyConfirmed,
+                backgroundColor: colors.confirmed,
+                borderRadius: { topLeft: 3, topRight: 3 },
+                borderSkipped: false,
+                stack: 'bookings',
+                order: 2,
+            },
+            {
+                type: 'bar',
+                label: 'Pending',
+                data: dailyPending,
+                backgroundColor: colors.pending,
+                borderRadius: { topLeft: 3, topRight: 3 },
+                borderSkipped: false,
+                stack: 'bookings',
+                order: 3,
+            },
+            {
+                type: 'bar',
+                label: 'Cancelled',
+                data: dailyCancelled,
+                backgroundColor: colors.cancelled,
+                borderRadius: { topLeft: 3, topRight: 3 },
+                borderSkipped: false,
+                stack: 'bookings',
+                order: 4,
+            }
+        ];
+
+        // Include expired if any exist in the dataset
+        if (totalExpired > 0) {
+            comboDatasets.push({
+                type: 'bar',
+                label: 'Expired',
+                data: dailyExpired,
+                backgroundColor: colors.expired,
+                borderRadius: { topLeft: 3, topRight: 3 },
+                borderSkipped: false,
+                stack: 'bookings',
+                order: 5,
+            });
+        }
+
+        // Confirmed revenue line on right Y-axis
+        comboDatasets.push({
+            type: 'line',
+            label: 'Confirmed Revenue (' + currency + ')',
+            data: revenue,
+            borderColor: colors.revenueLine,
+            backgroundColor: colors.revenueLine,
+            borderWidth: 2.2,
+            tension: 0.25,
+            pointRadius: windowDays === 7 ? 4 : (windowDays <= 30 ? 2 : 0),
+            pointHoverRadius: 6,
+            yAxisID: 'y1',
+            order: 1,
+        });
+
         var comboChart = new Chart(chartCanvas, {
             type: 'bar',
             data: {
                 labels: formattedLabels,
-                datasets: [
-                    {
-                        type: 'bar',
-                        label: 'Active Bookings',
-                        data: activeBookings,
-                        backgroundColor: colors.primaryBg,
-                        borderRadius: { topLeft: 4, topRight: 4 },
-                        borderSkipped: false,
-                        stack: 'bookings',
-                        order: 2,
-                    },
-                    {
-                        type: 'bar',
-                        label: 'Cancelled',
-                        data: cancelled,
-                        backgroundColor: colors.error,
-                        borderRadius: { topLeft: 4, topRight: 4 },
-                        borderSkipped: false,
-                        stack: 'bookings',
-                        order: 3,
-                    },
-                    {
-                        type: 'line',
-                        label: 'Confirmed Revenue (' + currency + ')',
-                        data: revenue,
-                        borderColor: colors.success,
-                        backgroundColor: colors.success,
-                        borderWidth: 2,
-                        tension: 0.3,
-                        pointRadius: windowDays === 7 ? 4 : 0,
-                        pointHoverRadius: 6,
-                        yAxisID: 'y1',
-                        order: 1,
-                    }
-                ]
+                datasets: comboDatasets
             },
             options: {
                 responsive: true,
@@ -151,17 +183,17 @@
                 },
                 plugins: {
                     legend: {
-                        position: window.innerWidth < 768 ? 'bottom' : 'top',
+                        position: 'top',
                         labels: {
                             color: colors.text,
-                            boxWidth: 12,
-                            boxHeight: 12,
-                            padding: 12,
-                            font: { size: 12 }
+                            boxWidth: 10,
+                            boxHeight: 10,
+                            padding: 10,
+                            font: { size: 11, weight: '500' }
                         }
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                        backgroundColor: 'rgba(15, 23, 42, 0.94)',
                         titleColor: '#ffffff',
                         bodyColor: '#e2e8f0',
                         padding: 10,
@@ -173,20 +205,23 @@
                             },
                             label: function(ctx) {
                                 var idx = ctx.dataIndex;
-                                var dsIndex = ctx.datasetIndex;
-                                if (dsIndex === 0) {
-                                    return ' Active: ' + activeBookings[idx] + ' bookings';
-                                } else if (dsIndex === 1) {
-                                    return ' Cancelled: ' + cancelled[idx] + ' bookings';
-                                } else if (dsIndex === 2) {
-                                    return ' Revenue: ' + currency + Number(revenue[idx]).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                var ds = ctx.dataset;
+                                if (ds.type === 'line') {
+                                    return ' Revenue: ' + currency + Number(revenue[idx] || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                                 }
-                                return ' ' + ctx.dataset.label + ': ' + ctx.formattedValue;
+                                var val = ds.data[idx] || 0;
+                                return ' ' + ds.label + ': ' + val;
                             },
                             afterBody: function(items) {
                                 var idx = items[0].dataIndex;
-                                var b = bookings[idx] || 0;
-                                return [' Total Bookings: ' + b];
+                                var b = (chartData.bookings && chartData.bookings[idx]) || 0;
+                                var c = dailyCancelled[idx] || 0;
+                                var rate = b > 0 ? ((c / b) * 100).toFixed(1) + '%' : '0.0%';
+                                return [
+                                    ' ---',
+                                    ' Total Bookings: ' + b,
+                                    ' Cancel Rate: ' + rate
+                                ];
                             }
                         }
                     }
@@ -235,24 +270,22 @@
             }
         });
 
-        // 2. Outcome Donut Chart
+        // 2. Outcome Status Donut Chart
         var donutChart = null;
         if (donutCanvas) {
-            var activeTotal = Math.max(0, totalBookings - totalCancelled);
+            var donutLabels = ['Confirmed', 'Pending', 'Cancelled'];
             var donutData = totalBookings > 0
-                ? [activeTotal, totalCancelled]
-                : [1, 0];
+                ? [totalConfirmed, totalPending, totalCancelled]
+                : [1, 0, 0];
+            var donutPalette = totalBookings > 0
+                ? [colors.confirmed, colors.pending, colors.cancelled]
+                : [colors.border, colors.border, colors.border];
 
-            var donutColor = colors.success;
-            if (cancelRate >= 20.0) {
-                donutColor = colors.error;
-            } else if (cancelRate >= 10.0) {
-                donutColor = colors.warning;
+            if (totalExpired > 0) {
+                donutLabels.push('Expired');
+                donutData.push(totalExpired);
+                donutPalette.push(colors.expired);
             }
-
-            var donutColors = totalBookings > 0
-                ? [colors.primaryBg, donutColor]
-                : [colors.border, colors.border];
 
             var centerTextPlugin = {
                 id: 'perfCenterText',
@@ -264,8 +297,15 @@
                     var th = getThemeColors();
 
                     var rateText = totalBookings > 0 ? cancelRate.toFixed(1) + '%' : '0%';
+                    var rateColor = th.confirmed;
+                    if (cancelRate >= 20.0) {
+                        rateColor = th.cancelled;
+                    } else if (cancelRate >= 10.0) {
+                        rateColor = th.pending;
+                    }
+
                     ctx.font = 'bold 1.25rem -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-                    ctx.fillStyle = totalBookings > 0 ? donutColor : th.textMuted;
+                    ctx.fillStyle = totalBookings > 0 ? rateColor : th.textMuted;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillText(rateText, width / 2, height / 2 - 8);
@@ -280,10 +320,10 @@
             donutChart = new Chart(donutCanvas, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Confirmed / Active', 'Cancelled'],
+                    labels: donutLabels,
                     datasets: [{
                         data: donutData,
-                        backgroundColor: donutColors,
+                        backgroundColor: donutPalette,
                         borderWidth: 2,
                         borderColor: colors.border,
                     }]
@@ -295,37 +335,14 @@
                     animation: { duration: animDuration },
                     plugins: {
                         legend: {
-                            position: 'bottom',
-                            labels: {
-                                color: colors.text,
-                                boxWidth: 10,
-                                boxHeight: 10,
-                                padding: 10,
-                                font: { size: 11 },
-                                generateLabels: function() {
-                                    return [
-                                        {
-                                            text: 'Active: ' + activeTotal,
-                                            fillStyle: colors.primaryBg,
-                                            strokeStyle: colors.border,
-                                            lineWidth: 1
-                                        },
-                                        {
-                                            text: 'Cancelled: ' + totalCancelled,
-                                            fillStyle: donutColor,
-                                            strokeStyle: colors.border,
-                                            lineWidth: 1
-                                        }
-                                    ];
-                                }
-                            }
+                            display: false // Using custom accessible legend HTML below the canvas
                         },
                         tooltip: {
                             enabled: totalBookings > 0,
                             callbacks: {
                                 label: function(ctx) {
                                     var val = ctx.raw || 0;
-                                    var pct = totalBookings > 0 ? Math.round((val / totalBookings) * 100) : 0;
+                                    var pct = totalBookings > 0 ? ((val / totalBookings) * 100).toFixed(1) : 0;
                                     return ' ' + ctx.label + ': ' + val + ' (' + pct + '%)';
                                 }
                             }
@@ -336,14 +353,17 @@
             });
         }
 
-        // Theme Toggle Observer: re-reads CSS variables and updates charts
+        // Theme Toggle Observer: re-reads CSS variables and live-updates charts
         function updateChartsTheme() {
             var th = getThemeColors();
             if (comboChart) {
-                comboChart.data.datasets[0].backgroundColor = th.primaryBg;
-                comboChart.data.datasets[1].backgroundColor = th.error;
-                comboChart.data.datasets[2].borderColor = th.success;
-                comboChart.data.datasets[2].backgroundColor = th.success;
+                if (comboChart.data.datasets[0]) comboChart.data.datasets[0].backgroundColor = th.confirmed;
+                if (comboChart.data.datasets[1]) comboChart.data.datasets[1].backgroundColor = th.pending;
+                if (comboChart.data.datasets[2]) comboChart.data.datasets[2].backgroundColor = th.cancelled;
+                var revIndex = comboChart.data.datasets.length - 1;
+                comboChart.data.datasets[revIndex].borderColor = th.revenueLine;
+                comboChart.data.datasets[revIndex].backgroundColor = th.revenueLine;
+
                 if (comboChart.options.plugins.legend) {
                     comboChart.options.plugins.legend.labels.color = th.text;
                 }
@@ -355,17 +375,14 @@
                 comboChart.update('none');
             }
             if (donutChart) {
-                var dColor = th.success;
-                if (cancelRate >= 20.0) dColor = th.error;
-                else if (cancelRate >= 10.0) dColor = th.warning;
-
-                donutChart.data.datasets[0].backgroundColor = totalBookings > 0
-                    ? [th.primaryBg, dColor]
-                    : [th.border, th.border];
-                donutChart.data.datasets[0].borderColor = th.border;
-                if (donutChart.options.plugins.legend) {
-                    donutChart.options.plugins.legend.labels.color = th.text;
+                var palette = totalBookings > 0
+                    ? [th.confirmed, th.pending, th.cancelled]
+                    : [th.border, th.border, th.border];
+                if (totalExpired > 0) {
+                    palette.push(th.expired);
                 }
+                donutChart.data.datasets[0].backgroundColor = palette;
+                donutChart.data.datasets[0].borderColor = th.border;
                 donutChart.update('none');
             }
         }

@@ -451,7 +451,7 @@ body.overflow-hidden {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 1.25rem;
-  align-items: center;
+  align-items: stretch;
 }
 
 @media (max-width: 991.98px) {
@@ -459,6 +459,34 @@ body.overflow-hidden {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
+}
+
+.perf-chart-box,
+.perf-donut-box {
+  background: var(--c-surface, #ffffff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--radius-md, 8px);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.perf-box-header {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--c-text, #1e293b);
+}
+
+.perf-chart-container {
+  position: relative;
+  height: 280px;
+  width: 100%;
+}
+
+.perf-donut-container {
+  position: relative;
+  height: 200px;
+  width: 100%;
 }
 
 .perf-chart,
@@ -469,10 +497,135 @@ body.overflow-hidden {
 }
 
 @media (max-width: 575.98px) {
-  .perf-chart,
-  .perf-donut {
-    height: 220px;
+  .perf-chart-container,
+  .perf-chart {
+    height: 230px;
   }
+  .perf-donut-container {
+    height: 180px;
+  }
+}
+
+.perf-context-lbl {
+  font-size: 0.7rem;
+  color: var(--c-text-muted, #64748b);
+  display: block;
+  margin-top: 0.35rem;
+  line-height: 1.25;
+}
+
+/* Outcome Legend */
+.perf-outcomes-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--c-border-subtle, #f1f5f9);
+}
+
+.outcome-legend-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.76rem;
+  color: var(--c-text, #1e293b);
+  gap: 0.4rem;
+}
+
+.outcome-color-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-confirmed { background-color: #16a34a; }
+.dot-pending   { background-color: #d97706; }
+.dot-cancelled { background-color: #dc2626; }
+.dot-expired   { background-color: #64748b; }
+
+.outcome-label {
+  color: var(--c-text-muted, #64748b);
+}
+
+.outcome-val {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Key Insights */
+.perf-insights-wrap {
+  background: var(--c-bg, #f8fafc);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--radius-md, 8px);
+  padding: 0.85rem 1rem;
+}
+
+.perf-insights-title {
+  font-size: 0.84rem;
+  color: var(--c-text, #1e293b);
+}
+
+.perf-insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.perf-insight-card {
+  background: var(--c-surface, #ffffff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--radius-sm, 6px);
+  padding: 0.65rem 0.85rem;
+}
+
+.perf-insight-top {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+}
+
+.perf-insight-icon {
+  font-size: 0.85rem;
+}
+
+.perf-insight-lbl {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--c-text-muted, #64748b);
+}
+
+.perf-insight-val {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--c-text, #1e293b);
+  line-height: 1.2;
+}
+
+.perf-insight-sub {
+  font-size: 0.72rem;
+  margin-top: 0.15rem;
+  line-height: 1.25;
+}
+
+.perf-table-scroll {
+  max-height: 320px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.perf-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: #f8fafc;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid var(--c-border, #e2e8f0);
 }
 
 .perf-highlights {
@@ -483,9 +636,30 @@ body.overflow-hidden {
 }
 
 /* Dark mode overrides for Performance Overview */
-html[data-theme="dark"] .perf-tile {
+html[data-theme="dark"] .perf-tile,
+html[data-theme="dark"] .perf-chart-box,
+html[data-theme="dark"] .perf-donut-box,
+html[data-theme="dark"] .perf-insight-card {
   background: var(--c-surface, #131b2e);
   border-color: var(--c-border, #334155);
+}
+
+html[data-theme="dark"] .perf-insights-wrap {
+  background: #0b1120;
+  border-color: var(--c-border, #334155);
+}
+
+html[data-theme="dark"] .perf-box-header,
+html[data-theme="dark"] .perf-insight-val,
+html[data-theme="dark"] .perf-insights-title,
+html[data-theme="dark"] .outcome-legend-item {
+  color: var(--c-text, #f8fafc);
+}
+
+html[data-theme="dark"] .perf-table thead th {
+  background-color: #0b1120;
+  color: var(--c-text-muted, #94a3b8);
+  border-bottom-color: var(--c-border, #334155);
 }
 
 html[data-theme="dark"] .perf-value {

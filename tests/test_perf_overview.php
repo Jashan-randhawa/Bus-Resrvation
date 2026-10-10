@@ -62,8 +62,8 @@ assert_test("dashboard.php renders 4 indicator tiles with delta badges",
     str_contains($dash_content, 'class="perf-tiles') && 
     str_contains($dash_content, 'Reservations') && 
     str_contains($dash_content, 'Confirmed Revenue') && 
-    str_contains($dash_content, 'Cancel Rate') && 
-    str_contains($dash_content, 'Avg / Day') && 
+    str_contains($dash_content, 'Cancellation Rate') && 
+    (str_contains($dash_content, 'Avg Confirmed Value') || str_contains($dash_content, 'Avg / Day')) && 
     str_contains($dash_content, 'perf-delta'));
 
 assert_test("dashboard.php renders combo chart canvas and donut canvas", 

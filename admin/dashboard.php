@@ -71,6 +71,8 @@ $new_queries_count = (int)($new_queries_row['cnt'] ?? 0);
 $prev_rev_case = $has_status ? "CASE WHEN status = 'Confirmed' OR status IS NULL THEN price ELSE 0 END" : "price";
 $prev_cnl_case = $has_status ? "CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END" : "0";
 $confirmed_case = $has_status ? "CASE WHEN status = 'Confirmed' OR status IS NULL THEN 1 ELSE 0 END" : "1";
+$pending_case = $has_status ? "CASE WHEN status = 'Pending' THEN 1 ELSE 0 END" : "0";
+$expired_case = $has_status ? "CASE WHEN status = 'Expired' THEN 1 ELSE 0 END" : "0";
 
 if ($reporting_mode === 'created' && $has_created_at) {
     // Mode: Booking creation date
@@ -78,8 +80,11 @@ if ($reporting_mode === 'created' && $has_created_at) {
         SELECT 
             DATE(created_at) AS `date`,
             COUNT(*) AS daily_bookings,
-            SUM(CASE WHEN status = 'Confirmed' OR status IS NULL THEN price ELSE 0 END) AS daily_rev,
-            SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS daily_cancelled
+            SUM(CASE WHEN status = 'Confirmed' OR status IS NULL THEN 1 ELSE 0 END) AS daily_confirmed,
+            SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) AS daily_pending,
+            SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS daily_cancelled,
+            SUM(CASE WHEN status = 'Expired' THEN 1 ELSE 0 END) AS daily_expired,
+            SUM(CASE WHEN status = 'Confirmed' OR status IS NULL THEN price ELSE 0 END) AS daily_rev
         FROM booking
         WHERE DATE(created_at) BETWEEN ? AND ?
         GROUP BY DATE(created_at)
@@ -89,8 +94,10 @@ if ($reporting_mode === 'created' && $has_created_at) {
     $cancel_metrics = db_one($link, "
         SELECT 
             COUNT(*) AS total,
-            SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS cancelled,
-            SUM({$confirmed_case}) AS confirmed_count
+            SUM({$confirmed_case}) AS confirmed_count,
+            SUM({$pending_case}) AS pending_count,
+            SUM({$prev_cnl_case}) AS cancelled,
+            SUM({$expired_case}) AS expired_count
         FROM booking
         WHERE DATE(created_at) BETWEEN ? AND ?
     ", 'ss', [$window_start, $window_end]);
@@ -98,9 +105,11 @@ if ($reporting_mode === 'created' && $has_created_at) {
     $prev = db_one($link, "
         SELECT 
             COUNT(*) AS total,
+            SUM({$confirmed_case}) AS confirmed_count,
+            SUM({$pending_case}) AS pending_count,
             SUM({$prev_cnl_case}) AS cancelled,
-            COALESCE(SUM({$prev_rev_case}), 0) AS revenue,
-            SUM({$confirmed_case}) AS confirmed_count
+            SUM({$expired_case}) AS expired_count,
+            COALESCE(SUM({$prev_rev_case}), 0) AS revenue
         FROM booking 
         WHERE DATE(created_at) BETWEEN ? AND ?
     ", 'ss', [$prev_start, $prev_end]);
@@ -110,8 +119,11 @@ if ($reporting_mode === 'created' && $has_created_at) {
         SELECT 
             `date`,
             COUNT(*) AS daily_bookings,
-            SUM(CASE WHEN status = 'Confirmed' OR status IS NULL THEN price ELSE 0 END) AS daily_rev,
-            SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS daily_cancelled
+            SUM(CASE WHEN status = 'Confirmed' OR status IS NULL THEN 1 ELSE 0 END) AS daily_confirmed,
+            SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) AS daily_pending,
+            SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS daily_cancelled,
+            SUM(CASE WHEN status = 'Expired' THEN 1 ELSE 0 END) AS daily_expired,
+            SUM(CASE WHEN status = 'Confirmed' OR status IS NULL THEN price ELSE 0 END) AS daily_rev
         FROM booking
         WHERE `date` BETWEEN ? AND ?
         GROUP BY `date`
@@ -121,8 +133,10 @@ if ($reporting_mode === 'created' && $has_created_at) {
     $cancel_metrics = db_one($link, "
         SELECT 
             COUNT(*) AS total,
-            SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS cancelled,
-            SUM({$confirmed_case}) AS confirmed_count
+            SUM({$confirmed_case}) AS confirmed_count,
+            SUM({$pending_case}) AS pending_count,
+            SUM({$prev_cnl_case}) AS cancelled,
+            SUM({$expired_case}) AS expired_count
         FROM booking
         WHERE `date` BETWEEN ? AND ?
     ", 'ss', [$window_start, $window_end]);
@@ -130,9 +144,11 @@ if ($reporting_mode === 'created' && $has_created_at) {
     $prev = db_one($link, "
         SELECT 
             COUNT(*) AS total,
+            SUM({$confirmed_case}) AS confirmed_count,
+            SUM({$pending_case}) AS pending_count,
             SUM({$prev_cnl_case}) AS cancelled,
-            COALESCE(SUM({$prev_rev_case}), 0) AS revenue,
-            SUM({$confirmed_case}) AS confirmed_count
+            SUM({$expired_case}) AS expired_count,
+            COALESCE(SUM({$prev_rev_case}), 0) AS revenue
         FROM booking 
         WHERE `date` BETWEEN ? AND ?
     ", 'ss', [$prev_start, $prev_end]);
@@ -141,6 +157,8 @@ if ($reporting_mode === 'created' && $has_created_at) {
 $all_bks = (int)($cancel_metrics['total'] ?? 0);
 $all_cnl = (int)($cancel_metrics['cancelled'] ?? 0);
 $cur_confirmed_bks = (int)($cancel_metrics['confirmed_count'] ?? 0);
+$cur_pending_bks = (int)($cancel_metrics['pending_count'] ?? 0);
+$cur_expired_bks = (int)($cancel_metrics['expired_count'] ?? 0);
 $cnl_rate = $all_bks > 0 ? round(($all_cnl / $all_bks) * 100, 1) : 0;
 
 // Continuous Daily Series Zero-Fill (Performance Overview)
@@ -155,7 +173,10 @@ for ($i = 0; $i < $window_days; $i++) {
     $series[] = [
         'd' => $d,
         'b' => (int)($r['daily_bookings'] ?? 0),
+        'cf' => (int)($r['daily_confirmed'] ?? 0),
+        'p' => (int)($r['daily_pending'] ?? 0),
         'c' => (int)($r['daily_cancelled'] ?? 0),
+        'x' => (int)($r['daily_expired'] ?? 0),
         'r' => (float)($r['daily_rev'] ?? 0),
     ];
 }
@@ -173,13 +194,18 @@ if (isset($_GET['export']) && $_GET['export'] === 'daily_csv') {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="dashboard_daily_' . $window_days . 'd_' . $reporting_mode . '_' . date('Y-m-d') . '.csv"');
     $out = fopen('php://output', 'w');
-    fputcsv($out, ['Date', 'Reservations', 'Cancelled', 'Confirmed Revenue', 'Cancel Rate %']);
-    foreach ($series as $s) {
+    fputcsv($out, ['Date', 'Total Bookings', 'Confirmed', 'Pending', 'Cancelled', 'Expired', 'Confirmed Revenue', 'Cancel Rate %']);
+    // Export ordered newest first
+    $export_series = array_reverse($series);
+    foreach ($export_series as $s) {
         $r_pct = $s['b'] > 0 ? round(($s['c'] / $s['b']) * 100, 1) : 0.0;
         fputcsv($out, [
             $s['d'],
             $s['b'],
+            $s['cf'],
+            $s['p'],
             $s['c'],
+            $s['x'],
             number_format($s['r'], 2, '.', ''),
             $r_pct . '%'
         ]);
@@ -254,13 +280,13 @@ if ($has_created_at) {
     }
 }
 
-// Highlights calculation
-$days_with_bks = array_filter($series, fn($s) => $s['b'] > 0);
-$highlights_parts = [];
+// Key Insights calculation from verified metrics
+$days_with_bks = array_filter($series, static fn($s) => $s['b'] > 0);
+$insights_list = [];
+
 if (!empty($days_with_bks)) {
     $busiest = null;
     $top_rev = null;
-    $quietest = null;
     foreach ($series as $s) {
         if ($busiest === null || $s['b'] > $busiest['b']) {
             $busiest = $s;
@@ -268,34 +294,79 @@ if (!empty($days_with_bks)) {
         if ($top_rev === null || $s['r'] > $top_rev['r']) {
             $top_rev = $s;
         }
-        if ($s['b'] > 0 && ($quietest === null || $s['b'] < $quietest['b'])) {
-            $quietest = $s;
-        }
     }
     if ($busiest && $busiest['b'] > 0) {
-        $highlights_parts[] = '<strong>Busiest day:</strong> ' . date('d M', strtotime($busiest['d'])) . ' (' . $busiest['b'] . ' bookings)';
+        $insights_list[] = [
+            'key' => 'busiest_day',
+            'label' => 'Busiest Day',
+            'val' => date('d M Y', strtotime($busiest['d'])),
+            'sub' => number_format($busiest['b']) . ' total reservations (' . number_format($busiest['cf']) . ' confirmed)',
+            'icon' => '📅'
+        ];
     }
     if ($top_rev && $top_rev['r'] > 0) {
-        $highlights_parts[] = '<strong>Top revenue:</strong> ' . date('d M', strtotime($top_rev['d'])) . ' (' . CURRENCY . number_format($top_rev['r'], 2) . ')';
-    }
-    if ($quietest && count($days_with_bks) > 1 && $quietest['d'] !== ($busiest['d'] ?? '')) {
-        $highlights_parts[] = '<strong>Quietest day:</strong> ' . date('d M', strtotime($quietest['d'])) . ' (' . $quietest['b'] . ' bookings)';
-    }
-    if ($lead_time_info) {
-        $highlights_parts[] = '<strong>Booking lead time:</strong> ' . $lead_time_info['avg'] . ' days avg advance';
+        $insights_list[] = [
+            'key' => 'top_revenue_day',
+            'label' => 'Highest Revenue Day',
+            'val' => date('d M Y', strtotime($top_rev['d'])),
+            'sub' => CURRENCY . number_format($top_rev['r'], 2) . ' confirmed fare total',
+            'icon' => '💰'
+        ];
     }
 }
-$highlights_html = !empty($highlights_parts) ? implode(' &nbsp;&bull;&nbsp; ', $highlights_parts) : '';
+
+// Average daily reservations
+$insights_list[] = [
+    'key' => 'avg_daily',
+    'label' => 'Average Daily Volume',
+    'val' => number_format($avg_per_day, 1) . ' / day',
+    'sub' => $window_days . '-day pace across ' . number_format($all_bks) . ' total bookings',
+    'icon' => '📊'
+];
+
+// Lead Time (when supported)
+if ($lead_time_info) {
+    $insights_list[] = [
+        'key' => 'lead_time',
+        'label' => 'Average Booking Lead Time',
+        'val' => $lead_time_info['avg'] . ' days',
+        'sub' => 'Advance reservations (range: ' . $lead_time_info['min'] . ' to ' . $lead_time_info['max'] . ' days)',
+        'icon' => '⏱️'
+    ];
+}
+
+// Cancellation trend
+$c_trend_msg = $prev_total > 0
+    ? ($cnl_rate_delta > 0 
+        ? '+' . $cnl_rate_delta . ' pts vs previous ' . $window_days . 'd' 
+        : ($cnl_rate_delta < 0 ? $cnl_rate_delta . ' pts vs previous ' . $window_days . 'd' : 'Unchanged vs previous period'))
+    : 'No previous period comparison';
+
+$insights_list[] = [
+    'key' => 'cnl_trend',
+    'label' => 'Cancellation Trend',
+    'val' => $cnl_rate . '%',
+    'sub' => $c_trend_msg . ' (' . number_format($all_cnl) . ' of ' . number_format($all_bks) . ' cancelled)',
+    'icon' => '📉'
+];
+
+$highlights_html = !empty($insights_list) ? implode(' &nbsp;&bull;&nbsp; ', array_map(static fn($in) => '<strong>' . e($in['label']) . ':</strong> ' . e($in['val']) . ' <span class="text-muted">(' . e($in['sub']) . ')</span>', array_slice($insights_list, 0, 3))) : '';
 
 $chart_payload = [
     'labels' => array_column($series, 'd'),
     'bookings' => array_column($series, 'b'),
+    'confirmed' => array_column($series, 'cf'),
+    'pending' => array_column($series, 'p'),
     'cancelled' => array_column($series, 'c'),
+    'expired' => array_column($series, 'x'),
     'revenue' => array_column($series, 'r'),
     'currency' => CURRENCY,
     'window_days' => $window_days,
     'total_bookings' => $all_bks,
+    'total_confirmed' => $cur_confirmed_bks,
+    'total_pending' => $cur_pending_bks,
     'total_cancelled' => $all_cnl,
+    'total_expired' => $cur_expired_bks,
     'cancel_rate' => $cnl_rate,
 ];
 $chart_json = json_encode($chart_payload, JSON_HEX_TAG | JSON_HEX_AMP);
@@ -887,33 +958,45 @@ if ($concurrency_diag['status'] !== 'OK') {
     </div>
 </section>
 
-<!-- 5. Performance Overview: Charts & Indicators -->
-<section class="dash-section">
+<!-- 5. Performance Overview: Business Analytics Workspace -->
+<section class="dash-section" aria-label="Performance Overview">
     <div class="card perf-card border-0 shadow-sm">
-        <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center">
+        <header class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center">
             <div class="my-1">
-                <h6 class="mb-0 font-weight-bold text-dark">
-                    <!-- 30-Day Performance Overview -->
-                    <?= $window_days ?>-Day Performance Overview 
-                    <span class="badge badge-light border text-muted font-weight-normal ml-1">
-                        <?= $reporting_mode === 'created' ? 'By Booking Date' : 'By Journey Date' ?>
+                <h2 class="dash-section-title mb-1 d-flex align-items-center">
+                    <svg width="20" height="20" class="text-primary mr-2" aria-hidden="true"><use href="#icon-wallet"></use></svg>
+                    <!-- <?= $window_days ?>-Day Performance Overview (30-Day Performance Overview) -->
+                    Performance Overview
+                </h2>
+                <div class="dash-section-sub d-flex align-items-center flex-wrap">
+                    <span class="badge badge-light border text-muted font-weight-bold mr-2">
+                        <?= $reporting_mode === 'created' ? 'Booking Date' : 'Journey Date' ?>
                     </span>
-                    <small class="text-muted font-weight-normal ml-1">(<?= e(date('d M', strtotime($window_start))) ?> &ndash; <?= e(date('d M Y', strtotime($window_end))) ?>)</small>
-                </h6>
+                    <span class="mr-2 text-dark font-weight-bold">
+                        <?= e(date('d M', strtotime($window_start))) ?> &ndash; <?= e(date('d M Y', strtotime($window_end))) ?>
+                    </span>
+                    <span class="text-muted small">
+                        &bull; Compared with <?= e(date('d M', strtotime($prev_start))) ?> &ndash; <?= e(date('d M Y', strtotime($prev_end))) ?>
+                    </span>
+                </div>
             </div>
-            <div class="btn-group btn-group-sm my-1 dash-window-toggle" role="group" aria-label="Time window selector">
-                <a href="?days=7&mode=<?= $reporting_mode ?>" class="btn btn-sm <?= $window_days === 7 ? 'btn-primary' : 'btn-outline-secondary' ?>">7d</a>
-                <a href="?days=30&mode=<?= $reporting_mode ?>" class="btn btn-sm <?= $window_days === 30 ? 'btn-primary' : 'btn-outline-secondary' ?>">30d</a>
-                <a href="?days=90&mode=<?= $reporting_mode ?>" class="btn btn-sm <?= $window_days === 90 ? 'btn-primary' : 'btn-outline-secondary' ?>">90d</a>
+            <div class="btn-group btn-group-sm my-1 dash-window-toggle" role="group" aria-label="Reporting duration selector">
+                <a href="?days=7&mode=<?= $reporting_mode ?>" class="btn btn-sm <?= $window_days === 7 ? 'btn-primary' : 'btn-outline-secondary' ?>" aria-label="7 days period" <?= $window_days === 7 ? 'aria-current="true"' : '' ?>>7 days</a>
+                <a href="?days=30&mode=<?= $reporting_mode ?>" class="btn btn-sm <?= $window_days === 30 ? 'btn-primary' : 'btn-outline-secondary' ?>" aria-label="30 days period" <?= $window_days === 30 ? 'aria-current="true"' : '' ?>>30 days</a>
+                <a href="?days=90&mode=<?= $reporting_mode ?>" class="btn btn-sm <?= $window_days === 90 ? 'btn-primary' : 'btn-outline-secondary' ?>" aria-label="90 days period" <?= $window_days === 90 ? 'aria-current="true"' : '' ?>>90 days</a>
             </div>
-        </div>
+        </header>
+
         <div class="card-body p-3">
-            <!-- 4 Performance Metric Tiles -->
-            <div class="perf-tiles mb-2">
+            <!-- 4 Authoritative Performance KPI Tiles -->
+            <div class="perf-tiles mb-3">
+                <!-- KPI 1: Reservations -->
                 <div class="perf-tile">
-                    <span class="perf-label">Reservations</span>
+                    <div class="perf-tile-header">
+                        <span class="perf-label">Reservations</span>
+                    </div>
                     <div class="perf-value"><?= number_format($all_bks) ?></div>
-                    <div>
+                    <div class="perf-tile-footer">
                         <?php if ($all_bks === 0 && $prev_total === 0): ?>
                             <span class="text-muted small">No data</span>
                         <?php elseif ($prev_total === 0): ?>
@@ -925,13 +1008,17 @@ if ($concurrency_diag['status'] !== 'OK') {
                         <?php else: ?>
                             <span class="perf-delta is-flat">0.0% vs prev</span>
                         <?php endif; ?>
+                        <span class="perf-context-lbl">All reservation attempts</span>
                     </div>
                 </div>
 
+                <!-- KPI 2: Confirmed Revenue -->
                 <div class="perf-tile">
-                    <span class="perf-label">Confirmed Revenue</span>
+                    <div class="perf-tile-header">
+                        <span class="perf-label">Confirmed Revenue</span>
+                    </div>
                     <div class="perf-value" title="<?= CURRENCY ?><?= number_format($cur_revenue, 2) ?>"><?= CURRENCY ?><?= perf_compact_num($cur_revenue) ?></div>
-                    <div>
+                    <div class="perf-tile-footer">
                         <?php if ($cur_revenue == 0 && $prev_revenue == 0): ?>
                             <span class="text-muted small">No data</span>
                         <?php elseif ($prev_revenue == 0): ?>
@@ -943,13 +1030,17 @@ if ($concurrency_diag['status'] !== 'OK') {
                         <?php else: ?>
                             <span class="perf-delta is-flat">0.0% vs prev</span>
                         <?php endif; ?>
+                        <span class="perf-context-lbl">Excludes pending &amp; cancelled</span>
                     </div>
                 </div>
 
+                <!-- KPI 3: Cancellation Rate -->
                 <div class="perf-tile">
-                    <span class="perf-label">Cancel Rate</span>
+                    <div class="perf-tile-header">
+                        <span class="perf-label">Cancellation Rate</span>
+                    </div>
                     <div class="perf-value <?= $cnl_val_class ?>"><?= $cnl_rate ?>%</div>
-                    <div>
+                    <div class="perf-tile-footer">
                         <?php if ($all_bks === 0 && $prev_total === 0): ?>
                             <span class="text-muted small">No data</span>
                         <?php elseif ($prev_total === 0): ?>
@@ -961,89 +1052,167 @@ if ($concurrency_diag['status'] !== 'OK') {
                         <?php else: ?>
                             <span class="perf-delta is-flat">0.0 pts vs prev</span>
                         <?php endif; ?>
+                        <span class="perf-context-lbl"><?= number_format($all_cnl) ?> cancelled of <?= number_format($all_bks) ?></span>
                     </div>
                 </div>
 
+                <!-- KPI 4: Average Confirmed Booking Value -->
                 <div class="perf-tile">
-                    <span class="perf-label">Avg / Day</span>
-                    <div class="perf-value"><?= number_format($avg_per_day, 1) ?></div>
-                    <div>
-                        <?php if ($all_bks === 0 && $prev_total === 0): ?>
-                            <span class="text-muted small">No data</span>
-                        <?php elseif ($prev_total === 0): ?>
+                    <div class="perf-tile-header">
+                        <span class="perf-label">Avg Confirmed Value</span>
+                    </div>
+                    <div class="perf-value">
+                        <?php if ($cur_confirmed_bks > 0): ?>
+                            <?= CURRENCY ?><?= number_format($avg_booking_val, 2) ?>
+                        <?php else: ?>
+                            <span class="text-muted font-weight-normal">&mdash;</span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="perf-tile-footer">
+                        <?php if ($cur_confirmed_bks === 0 && $prev_confirmed_bks === 0): ?>
+                            <span class="text-muted small">No confirmed bookings</span>
+                        <?php elseif ($prev_confirmed_bks === 0 || $prev_avg_booking_val <= 0): ?>
                             <span class="perf-delta is-new">New</span>
-                        <?php elseif ($avg_delta > 0): ?>
-                            <span class="perf-delta is-up">&#9650; +<?= $avg_delta ?>% vs prev</span>
-                        <?php elseif ($avg_delta < 0): ?>
-                            <span class="perf-delta is-down">&#9660; <?= $avg_delta ?>% vs prev</span>
+                        <?php elseif ($avg_val_delta !== null && $avg_val_delta > 0): ?>
+                            <span class="perf-delta is-up">&#9650; +<?= $avg_val_delta ?>% vs prev</span>
+                        <?php elseif ($avg_val_delta !== null && $avg_val_delta < 0): ?>
+                            <span class="perf-delta is-down">&#9660; <?= $avg_val_delta ?>% vs prev</span>
                         <?php else: ?>
                             <span class="perf-delta is-flat">0.0% vs prev</span>
+                        <?php endif; ?>
+                        <span class="perf-context-lbl">Revenue &divide; confirmed bookings</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Grid: Primary Combo Chart (2/3) + Booking Outcomes Panel (1/3) -->
+            <div class="perf-grid mb-3">
+                <!-- Primary Trend Chart -->
+                <div class="perf-chart-box">
+                    <div class="perf-box-header mb-2 d-flex justify-content-between align-items-center">
+                        <span class="perf-box-title">Booking Volume &amp; Confirmed Revenue Trend</span>
+                        <span class="text-muted small">Daily Breakdown</span>
+                    </div>
+                    <div class="perf-chart-container">
+                        <canvas id="perfChart" role="img" aria-label="<?= e("{$window_days}-day daily bookings and revenue combo chart") ?>" data-chart="<?= e($chart_json) ?>"></canvas>
+                        <noscript>
+                            <div class="p-3 text-muted text-center border rounded">Interactive chart requires JavaScript. See table below.</div>
+                        </noscript>
+                    </div>
+                </div>
+
+                <!-- Booking Outcomes Panel -->
+                <div class="perf-donut-box">
+                    <div class="perf-box-header mb-2 d-flex justify-content-between align-items-center">
+                        <span class="perf-box-title">Booking Outcomes</span>
+                        <span class="text-muted small"><?= number_format($all_bks) ?> total</span>
+                    </div>
+                    <div class="perf-donut-container">
+                        <canvas id="perfDonut" role="img" aria-label="Booking outcome distribution chart"></canvas>
+                    </div>
+                    <!-- Detailed Outcome Breakdown Legend -->
+                    <div class="perf-outcomes-legend mt-2">
+                        <div class="outcome-legend-item">
+                            <span class="outcome-color-dot dot-confirmed"></span>
+                            <span class="outcome-label">Confirmed:</span>
+                            <strong class="outcome-val"><?= number_format($cur_confirmed_bks) ?></strong>
+                            <small class="text-muted">(<?= $all_bks > 0 ? round(($cur_confirmed_bks / $all_bks) * 100, 1) : 0 ?>%)</small>
+                        </div>
+                        <div class="outcome-legend-item">
+                            <span class="outcome-color-dot dot-pending"></span>
+                            <span class="outcome-label">Pending:</span>
+                            <strong class="outcome-val"><?= number_format($cur_pending_bks) ?></strong>
+                            <small class="text-muted">(<?= $all_bks > 0 ? round(($cur_pending_bks / $all_bks) * 100, 1) : 0 ?>%)</small>
+                        </div>
+                        <div class="outcome-legend-item">
+                            <span class="outcome-color-dot dot-cancelled"></span>
+                            <span class="outcome-label">Cancelled:</span>
+                            <strong class="outcome-val"><?= number_format($all_cnl) ?></strong>
+                            <small class="text-muted">(<?= $all_bks > 0 ? round(($all_cnl / $all_bks) * 100, 1) : 0 ?>%)</small>
+                        </div>
+                        <?php if ($cur_expired_bks > 0): ?>
+                            <div class="outcome-legend-item">
+                                <span class="outcome-color-dot dot-expired"></span>
+                                <span class="outcome-label">Expired:</span>
+                                <strong class="outcome-val"><?= number_format($cur_expired_bks) ?></strong>
+                                <small class="text-muted">(<?= $all_bks > 0 ? round(($cur_expired_bks / $all_bks) * 100, 1) : 0 ?>%)</small>
+                            </div>
                         <?php endif; ?>
                     </div>
                 </div>
             </div>
 
-            <div class="small text-muted mb-3" style="font-size: 0.78rem;">
-                <span class="mr-1">ℹ️</span> Volume includes all attempts; revenue strictly reflects confirmed bookings. Mode: <strong><?= $reporting_mode === 'created' ? 'Reservation Creation Date' : 'Travel Departure Date' ?></strong>.
-            </div>
-
-            <!-- Charts Grid: Combo Chart + Donut -->
-            <div class="perf-grid mb-3">
-                <div class="perf-chart">
-                    <canvas id="perfChart" role="img" aria-label="<?= e("{$window_days}-day daily bookings and revenue combo chart") ?>" data-chart="<?= e($chart_json) ?>"></canvas>
-                    <noscript>
-                        <div class="p-3 text-muted text-center border rounded">Interactive chart requires JavaScript. See table below.</div>
-                    </noscript>
+            <!-- Structured Key Insights Panel -->
+            <?php if (!empty($insights_list)): ?>
+                <div class="perf-insights-wrap mb-3">
+                    <div class="perf-insights-title mb-2 d-flex align-items-center">
+                        <span class="mr-1">💡</span>
+                        <strong>Key Insights</strong>
+                        <span class="text-muted ml-2 small font-weight-normal">&mdash; Verified calculations for the current <?= $window_days ?>-day window</span>
+                    </div>
+                    <div class="perf-insights-grid">
+                        <?php foreach ($insights_list as $in): ?>
+                            <div class="perf-insight-card">
+                                <div class="perf-insight-top">
+                                    <span class="perf-insight-icon"><?= $in['icon'] ?></span>
+                                    <span class="perf-insight-lbl"><?= e($in['label']) ?></span>
+                                </div>
+                                <div class="perf-insight-val"><?= e($in['val']) ?></div>
+                                <div class="perf-insight-sub text-muted"><?= e($in['sub']) ?></div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
-                <div class="perf-donut">
-                    <canvas id="perfDonut" role="img" aria-label="Booking outcome distribution donut chart"></canvas>
-                </div>
-            </div>
-
-            <!-- Highlights Line -->
-            <?php if (!empty($highlights_html)): ?>
-                <p class="perf-highlights small mb-3"><span class="mr-1">💡</span> <?= $highlights_html ?></p>
             <?php endif; ?>
 
             <!-- Daily Breakdown Accordion Button & CSV Export -->
-            <div class="d-flex flex-wrap justify-content-between align-items-center">
+            <div class="d-flex flex-wrap justify-content-between align-items-center pt-2 border-top">
                 <button type="button" class="btn btn-sm btn-outline-secondary font-weight-medium my-1" data-toggle="collapse" data-target="#dailyTable" aria-expanded="false" aria-controls="dailyTable">
-                    <span>📋</span> View daily breakdown &darr;
+                    <span>📋</span> View Detailed Daily Breakdown &darr;
                 </button>
                 <a href="?days=<?= $window_days ?>&mode=<?= $reporting_mode ?>&export=daily_csv" class="btn btn-sm btn-outline-primary font-weight-medium my-1" title="Download comma-separated values report for current window">
                     <span>📥</span> Export Daily CSV
                 </a>
             </div>
 
-            <!-- Collapsible Accessible Breakdown Table -->
+            <!-- Collapsible Detailed Breakdown Table -->
             <div id="dailyTable" class="collapse mt-3">
-                <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
-                    <table class="table table-hover table-stack mb-0">
+                <div class="table-responsive perf-table-scroll">
+                    <table class="table table-hover table-stack mb-0 perf-table">
                         <thead class="thead-light">
                             <tr>
-                                <th>Date</th>
-                                <th>Reservations</th>
-                                <th>Cancelled</th>
-                                <th>Cancellation Rate</th>
-                                <th class="text-right">Daily Revenue</th>
+                                <th>Date (<?= $reporting_mode === 'created' ? 'Booking' : 'Journey' ?>)</th>
+                                <th class="text-right">Total Bookings</th>
+                                <th class="text-right">Confirmed</th>
+                                <th class="text-right">Pending</th>
+                                <th class="text-right">Cancelled</th>
+                                <th class="text-right">Expired</th>
+                                <th class="text-right">Confirmed Revenue</th>
+                                <th class="text-right">Cancel Rate</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (empty($daily_stats)): ?>
-                                <tr><td colspan="5" class="text-center text-muted py-4">No reservations in the selected timeframe.</td></tr>
+                                <tr><td colspan="8" class="text-center text-muted py-4">No reservations recorded in the selected timeframe.</td></tr>
                             <?php else: ?>
                                 <?php foreach ($daily_stats as $ds): ?>
                                     <?php 
                                     $d_bks = (int)$ds['daily_bookings'];
+                                    $d_cf = (int)($ds['daily_confirmed'] ?? 0);
+                                    $d_p = (int)($ds['daily_pending'] ?? 0);
                                     $d_cnl = (int)$ds['daily_cancelled'];
+                                    $d_x = (int)($ds['daily_expired'] ?? 0);
                                     $d_rate = $d_bks > 0 ? round(($d_cnl / $d_bks) * 100, 1) : 0.0;
                                     ?>
                                     <tr>
-                                        <td data-label="Date"><small class="font-weight-medium text-dark"><?= e(date('d M Y', strtotime($ds['date']))) ?></small></td>
-                                        <td data-label="Reservations"><span class="badge badge-primary px-2"><?= $d_bks ?></span></td>
-                                        <td data-label="Cancelled"><span class="badge badge-danger px-2"><?= $d_cnl ?></span></td>
-                                        <td data-label="Cancellation Rate"><small class="text-muted font-weight-bold"><?= $d_rate ?>%</small></td>
-                                        <td data-label="Daily Revenue" class="text-right font-weight-bold text-success"><?= CURRENCY ?><?= number_format((float)$ds['daily_rev'], 2) ?></td>
+                                        <td data-label="Date"><span class="font-weight-medium text-dark"><?= e(date('d M Y', strtotime($ds['date']))) ?></span></td>
+                                        <td data-label="Total Bookings" class="text-right"><span class="badge badge-light border px-2 font-weight-bold text-dark"><?= $d_bks ?></span></td>
+                                        <td data-label="Confirmed" class="text-right"><span class="badge badge-success px-2"><?= $d_cf ?></span></td>
+                                        <td data-label="Pending" class="text-right"><span class="badge badge-warning px-2"><?= $d_p ?></span></td>
+                                        <td data-label="Cancelled" class="text-right"><span class="badge badge-danger px-2"><?= $d_cnl ?></span></td>
+                                        <td data-label="Expired" class="text-right"><span class="badge badge-secondary px-2"><?= $d_x ?></span></td>
+                                        <td data-label="Confirmed Revenue" class="text-right font-weight-bold text-success"><?= CURRENCY ?><?= number_format((float)$ds['daily_rev'], 2) ?></td>
+                                        <td data-label="Cancel Rate" class="text-right font-weight-bold text-muted"><?= $d_rate ?>%</td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php endif; ?>

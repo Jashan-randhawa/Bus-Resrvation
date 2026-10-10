@@ -4,6 +4,15 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- **Admin Dashboard Performance Overview Business Analytics Workspace**:
+  - Redesigned the Performance Overview section into a self-contained business analytics workspace with dynamic date context, comparison range indication, and synchronized 7d/30d/90d duration selectors.
+  - Implemented 4 authoritative primary KPI tiles with semantic delta indicators and context footnotes: **Reservations**, **Confirmed Revenue** (strictly excluding pending, cancelled, and expired holds), **Cancellation Rate** (with restrained threshold color coding and percentage point change), and **Average Confirmed Booking Value** (`Confirmed Revenue / Eligible Confirmed Bookings`).
+  - Corrected Chart.js dataset semantics in `assets/js/perf-chart.js`: replaced crude `total - cancelled` estimation with true status aggregation (`Confirmed`, `Pending`, `Cancelled`, `Expired`), rendering stacked daily volume bars alongside the confirmed revenue line.
+  - Upgraded the Booking Outcomes donut panel to display a full status distribution breakdown with exact counts, percentages, and centered cancellation rate.
+  - Added a structured **Key Insights** panel showcasing Busiest Day, Highest Revenue Day, Average Daily Volume, Booking Lead Time, and Cancellation Trend.
+  - Enhanced the collapsible **Daily Breakdown Table** with sticky table headers and full status columns (Total Bookings, Confirmed, Pending, Cancelled, Expired, Confirmed Revenue, Cancel Rate).
+  - Synchronized the streaming, formula-safe **Daily Breakdown CSV Export** with the extended status breakdown and audit logging.
+  - Verified 100% test pass rate across all suites including `tests/test_perf_overview.php`.
 - **Today's Departures Section Simplification & Optimization**:
   - Replaced the horizontal auto-scrolling carousel with a clean, vertically scrollable compact operational list (`.dep-card-wrap`, `.dep-table-head`, `.dep-list-scroll`, `.dep-row`).
   - Streamlined departure rows to show only essential operational data: departure time, origin &rarr; destination, bus vehicle badge, status chip (`Boarding soon` / `Upcoming`), seat occupancy count with slim progress bar, seats remaining (with `OVERBOOKED` detection), and direct manifest action.
