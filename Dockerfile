@@ -4,7 +4,7 @@ FROM php:8.4-apache
 ENV PORT=80
 
 RUN docker-php-ext-install mysqli \
- && a2enmod rewrite headers \
+ && a2enmod rewrite headers deflate expires \
  && mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
 COPY docker/php-extra.ini "$PHP_INI_DIR/conf.d/zz-app.ini"

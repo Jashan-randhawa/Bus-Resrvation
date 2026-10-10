@@ -23,10 +23,10 @@ $user_role = $_SESSION['role'] ?? null;
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/assets/images/bus.svg">
 
-  <!-- Google Fonts: Inter & JetBrains Mono (400, 500, 600, 700) -->
+  <!-- Google Fonts: Inter (400, 500, 600, 700) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
@@ -35,9 +35,9 @@ $user_role = $_SESSION['role'] ?? null;
   <title>Bus Service - Safe &amp; Simple Ticket Booking</title>
   
   <!-- Design System & Custom CSS -->
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/home.css">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/public.css">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css?v=2026-10-10">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/home.css?v=2026-10-10">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/public.css?v=2026-10-10">
   
   <!-- Global Theme Toggle (Head load to avoid FOUC) -->
   <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>
