@@ -704,72 +704,6 @@ html[data-theme="dark"] .stat-value {
   color: var(--c-text, #f8fafc);
 }
 
-html[data-theme="dark"] .dep-card {
-  background: var(--c-surface, #131b2e);
-  border-color: var(--c-border, #334155);
-}
-
-html[data-theme="dark"] .dep-card:hover,
-html[data-theme="dark"] .dep-card:focus-within {
-  border-color: var(--c-primary, #3b82f6);
-  box-shadow: 0 8px 18px rgba(59, 130, 246, 0.15);
-}
-
-html[data-theme="dark"] .dep-time,
-html[data-theme="dark"] .dep-route-row {
-  color: var(--c-text, #f8fafc);
-}
-
-html[data-theme="dark"] .dep-info-grid {
-  background: #0b1120;
-}
-
-html[data-theme="dark"] .dep-info-val {
-  color: var(--c-text, #f8fafc);
-}
-
-html[data-theme="dark"] .dep-btn,
-html[data-theme="dark"] .dep-prev,
-html[data-theme="dark"] .dep-next,
-html[data-theme="dark"] .dep-toggle-pause,
-html[data-theme="dark"] .dep-counter,
-html[data-theme="dark"] .dep-summary-pill {
-  background: var(--c-surface, #131b2e);
-  border-color: var(--c-border, #334155);
-  color: var(--c-text, #f8fafc);
-}
-
-html[data-theme="dark"] .dep-btn:hover,
-html[data-theme="dark"] .dep-btn:focus,
-html[data-theme="dark"] .dep-prev:hover,
-html[data-theme="dark"] .dep-prev:focus,
-html[data-theme="dark"] .dep-next:hover,
-html[data-theme="dark"] .dep-next:focus,
-html[data-theme="dark"] .dep-toggle-pause:hover,
-html[data-theme="dark"] .dep-toggle-pause:focus {
-  background: #1e293b;
-  border-color: var(--c-primary, #3b82f6);
-  color: var(--c-primary, #3b82f6);
-}
-
-html[data-theme="dark"] .dep-chip.is-departed {
-  background: #1e293b;
-  color: #94a3b8;
-  border-color: #334155;
-}
-
-html[data-theme="dark"] .dep-chip.is-boarding {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
-  border-color: rgba(245, 158, 11, 0.4);
-}
-
-html[data-theme="dark"] .dep-chip.is-upcoming {
-  background: rgba(59, 130, 246, 0.2);
-  color: #93c5fd;
-  border-color: rgba(59, 130, 246, 0.4);
-}
-
 html[data-theme="dark"] .corridor-row {
   background: var(--c-surface, #131b2e);
   border-color: var(--c-border, #334155);
@@ -1018,8 +952,7 @@ html[data-theme="dark"] .attention-empty {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dep-card,
-  .dep-progress-bar,
+  .departure-row,
   .corridor-bar-fill,
   .attention-item {
     transition: none !important;
