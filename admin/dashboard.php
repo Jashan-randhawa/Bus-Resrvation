@@ -334,10 +334,9 @@ $today_date = date('Y-m-d');
 $today_bookings_row = db_one($link, "SELECT COUNT(*) AS today_bks FROM booking WHERE `date` = ?", 's', [$today_date]);
 $today_bookings_count = (int)($today_bookings_row['today_bks'] ?? 0);
 
-// Today's Scheduled Departures (LIMIT 24)
-if (!defined('DEPARTURES_LIMIT')) {
-    define('DEPARTURES_LIMIT', 24);
-}
+// Today's departures: prioritize trips that have not departed yet.
+// The dashboard shows the next 24 schedule rows; the full route list remains available in Routes.
+$current_time = date('H:i:s');
 $today_departures = db_all($link, "
     SELECT r.sno AS route_sno, r.busno, r.city1, r.city2, r.`time`,
            (SELECT COUNT(*) FROM booking b 
@@ -351,9 +350,9 @@ $today_departures = db_all($link, "
     FROM route r
     LEFT JOIN buses bu ON r.busno = bu.bus_number
     WHERE (r.archived_at IS NULL)
-    ORDER BY r.`time` ASC
-    LIMIT " . DEPARTURES_LIMIT . "
-", 's', [$today_date]);
+    ORDER BY CASE WHEN r.`time` >= ? THEN 0 ELSE 1 END ASC, r.`time` ASC
+    LIMIT 24
+", 'ss', [$today_date, $current_time]);
 
 // Process departures for live status chips & seat counts
 $now = time();
@@ -424,6 +423,10 @@ foreach ($today_departures as $idx => $dep) {
     ];
 }
 $total_deps = count($processed_deps);
+$upcoming_departures = array_values(array_filter(
+    $processed_deps,
+    static fn(array $dep): bool => $dep['status_chip'] !== 'Departed'
+));
 if (!$next_dep_time && $total_deps > 0) {
     $next_dep_time = $processed_deps[0]['formatted_time'];
 }
@@ -759,107 +762,95 @@ if ($concurrency_diag['status'] !== 'OK') {
     </div>
 </div>
 
-<!-- 4. Today's Departures (5-Second Scrolling Card Strip) -->
-<section class="dash-section dep-strip">
-    <div class="dep-carousel" data-interval="5000" aria-roledescription="carousel" aria-label="Today's departures">
-    <header class="dash-section-head">
-        <div class="dash-head-left">
-            <h2 class="dash-section-title">
-                <svg width="20" height="20" class="text-primary"><use href="#icon-bus"></use></svg>
-                Today's Departures
-            </h2>
-            <div class="dash-section-sub">
-                <span class="mr-2"><?= e(date('l, d F Y', strtotime($today_date))) ?></span>
-                <?php if ($total_deps > 0): ?>
-                    <span class="dep-summary-pill"><?= $dep_summary_text ?></span>
-                <?php endif; ?>
+<!-- 4. Today's Departures (Compact Operations List) -->
+<section class="dash-section departures-section" aria-labelledby="departuresTitle">
+    <div class="card departures-card border-0 shadow-sm">
+        <header class="card-header departures-header">
+            <div>
+                <h2 class="departures-title" id="departuresTitle">
+                    <svg width="19" height="19" aria-hidden="true"><use href="#icon-bus"></use></svg>
+                    Today's Departures
+                </h2>
+                <p class="departures-subtitle">
+                    <?= e(date('l, d F Y', strtotime($today_date))) ?>
+                    <?php if (!empty($upcoming_departures)): ?>
+                        <span class="departures-separator" aria-hidden="true">·</span>
+                        <?= count($upcoming_departures) ?> upcoming in this dashboard view
+                        <?php if ($next_dep_time): ?>
+                            <span class="departures-separator" aria-hidden="true">·</span>
+                            Next at <?= e($next_dep_time) ?>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        <span class="departures-separator" aria-hidden="true">·</span>
+                        No upcoming departures in this view
+                    <?php endif; ?>
+                </p>
             </div>
-        </div>
-        <div class="dash-head-right">
-            <?php if ($total_deps > 0): ?>
-                <span class="dep-counter" aria-hidden="true"><span class="dep-counter-curr"><?= ($first_active_idx + 1) ?></span> / <?= $total_deps ?></span>
-                <div class="dep-nav-btns mr-2">
-                    <button type="button" class="dep-prev" aria-label="Previous departure">&lsaquo;</button>
-                    <button type="button" class="dep-toggle-pause" aria-label="Pause automatic sliding" title="Pause automatic sliding">
-                        <span class="dep-pause-icon" aria-hidden="true">⏸</span>
-                    </button>
-                    <button type="button" class="dep-next" aria-label="Next departure">&rsaquo;</button>
-                    <div class="dep-dots" role="tablist" style="display:none;" aria-hidden="true"></div>
-                </div>
-            <?php endif; ?>
-            <a href="<?= BASE_URL ?>/admin/manifest.php" class="btn btn-outline-primary btn-sm font-weight-bold">
-                View Full Manifest &rarr;
+            <a href="<?= BASE_URL ?>/admin/manifest.php" class="btn btn-outline-primary btn-sm departures-manifest-link">
+                Full manifest <span aria-hidden="true">&rarr;</span>
             </a>
-        </div>
-    </header>
+        </header>
 
-    <?php if ($total_deps > 0): ?>
-        <!-- 5-Second Animated Progress Bar -->
-        <div class="dep-progress" aria-hidden="true"><span class="dep-progress-bar"></span></div>
-    <?php endif; ?>
-
-    <?php if ($total_deps === 0): ?>
-        <div class="card p-4 text-center text-muted border-0 shadow-sm">
-            <div class="mb-2"><svg width="36" height="36" class="text-muted"><use href="#icon-bus"></use></svg></div>
-            <h6 class="font-weight-bold text-dark">No active departures configured for today.</h6>
-            <p class="small text-muted mb-0">Check your <a href="<?= BASE_URL ?>/admin/routes.php">route schedules</a> to configure today's transit corridors.</p>
-        </div>
-    <?php else: ?>
-        <div class="dep-viewport">
-            <div class="dep-track" tabindex="0" role="region" aria-label="Today's departures card strip">
-                <?php foreach ($processed_deps as $idx => $dep): ?>
-                    <article class="dep-card" data-status="<?= $dep['status_class'] ?>" role="group" aria-roledescription="slide" aria-label="Departure <?= ($idx + 1) ?> of <?= $total_deps ?>">
-                        <div class="dep-card-top">
-                            <div>
-                                <span class="dep-time-lbl">DEPARTS</span>
-                                <strong class="dep-time"><?= e($dep['formatted_time']) ?></strong>
-                            </div>
-                            <span class="dep-chip <?= $dep['status_class'] ?>"><?= $dep['status_chip'] ?></span>
+        <?php if ($total_deps === 0): ?>
+            <div class="departures-empty">
+                <svg width="30" height="30" aria-hidden="true"><use href="#icon-bus"></use></svg>
+                <strong>No active route schedules found.</strong>
+                <span>Review the configured schedules in <a href="<?= BASE_URL ?>/admin/routes.php">Routes</a>.</span>
+            </div>
+        <?php elseif (empty($upcoming_departures)): ?>
+            <div class="departures-empty">
+                <strong>All listed departures have departed.</strong>
+                <span>Open the manifest to review passenger details or visit <a href="<?= BASE_URL ?>/admin/routes.php">Routes</a> to manage schedules.</span>
+            </div>
+        <?php else: ?>
+            <div class="departures-list" role="list" aria-label="Upcoming departures">
+                <?php foreach ($upcoming_departures as $dep): ?>
+                    <article class="departure-row<?= $dep['is_overbooked'] ? ' is-overbooked' : '' ?>" role="listitem">
+                        <div class="departure-time">
+                            <time datetime="<?= e($today_date . 'T' . $dep['raw_time']) ?>"><?= e($dep['formatted_time']) ?></time>
+                            <span class="departure-status <?= e($dep['status_class']) ?>"><?= e($dep['status_chip']) ?></span>
                         </div>
 
-                        <div class="dep-route-row">
-                            <span class="dep-city" title="<?= e($dep['city1']) ?>"><?= e($dep['city1']) ?></span>
-                            <span class="dep-route-line" aria-hidden="true"></span>
-                            <span class="dep-city" title="<?= e($dep['city2']) ?>"><?= e($dep['city2']) ?></span>
+                        <div class="departure-route">
+                            <div class="departure-cities">
+                                <span title="<?= e($dep['city1']) ?>"><?= e($dep['city1']) ?></span>
+                                <span class="departure-arrow" aria-hidden="true">&rarr;</span>
+                                <span title="<?= e($dep['city2']) ?>"><?= e($dep['city2']) ?></span>
+                            </div>
+                            <div class="departure-bus">Bus <?= e($dep['busno']) ?></div>
                         </div>
 
-                        <div class="dep-info-grid">
-                            <div class="dep-info-col">
-                                <span class="dep-info-lbl">BUS</span>
-                                <span class="dep-info-val">🚌 <?= e($dep['busno']) ?></span>
+                        <div class="departure-capacity">
+                            <div class="departure-capacity-heading">
+                                <span>Seat occupancy</span>
+                                <?php if ($dep['is_overbooked']): ?>
+                                    <strong class="departure-overbooked-label">Over capacity</strong>
+                                <?php else: ?>
+                                    <strong><?= (int)$dep['pct'] ?>%</strong>
+                                <?php endif; ?>
                             </div>
-                            <div class="dep-info-col">
-                                <span class="dep-info-lbl">SEATS LEFT</span>
-                                <span class="dep-info-val">
-                                    <?php if ($dep['is_overbooked']): ?>
-                                        <strong class="text-danger">0</strong> <small class="text-danger font-weight-bold">(OVERBOOKED)</small>
-                                    <?php else: ?>
-                                        <strong><?= $dep['seats_left'] ?></strong> <small class="text-muted">of <?= $dep['cap'] ?></small>
-                                    <?php endif; ?>
-                                </span>
+                            <div class="departure-progress-track" role="progressbar"
+                                 aria-label="Seat occupancy for <?= e($dep['city1'] . ' to ' . $dep['city2']) ?>"
+                                 aria-valuenow="<?= (int)$dep['pct'] ?>" aria-valuemin="0" aria-valuemax="100">
+                                <span class="departure-progress-fill <?= e($dep['bar_class']) ?>" style="width: <?= (int)$dep['pct'] ?>%;"></span>
                             </div>
-                        </div>
-
-                        <div class="dep-occ-block">
-                            <div class="d-flex justify-content-between small text-muted mb-1">
-                                <span>Occupancy</span>
-                                <span class="font-weight-bold"><?= $dep['pct'] === 100 ? 'Full (100%)' : ($dep['pct'] . '%') ?></span>
-                            </div>
-                            <div class="progress" style="height: 6px;">
-                                <div class="progress-bar <?= $dep['bar_class'] ?>" role="progressbar" style="width: <?= $dep['pct'] ?>%;" aria-valuenow="<?= $dep['pct'] ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div class="departure-capacity-detail">
+                                <?php if ($dep['is_overbooked']): ?>
+                                    <?= (int)$dep['booked'] ?> booked · Capacity <?= (int)$dep['cap'] ?>
+                                <?php else: ?>
+                                    <?= (int)$dep['booked'] ?> / <?= (int)$dep['cap'] ?> seats · <?= (int)$dep['seats_left'] ?> left
+                                <?php endif; ?>
                             </div>
                         </div>
 
-                        <div class="dep-card-footer mt-auto">
-                            <a href="<?= BASE_URL ?>/admin/manifest.php?bus=<?= urlencode($dep['busno']) ?>&date=<?= urlencode($today_date) ?>&time=<?= urlencode($dep['raw_time']) ?>" class="btn btn-outline-primary btn-sm btn-block font-weight-bold">
-                                Manifest &rarr;
-                            </a>
-                        </div>
+                        <a class="departure-row-action"
+                           href="<?= BASE_URL ?>/admin/manifest.php?bus=<?= urlencode($dep['busno']) ?>&amp;date=<?= urlencode($today_date) ?>&amp;time=<?= urlencode($dep['raw_time']) ?>">
+                            Manifest <span aria-hidden="true">&rarr;</span>
+                        </a>
                     </article>
                 <?php endforeach; ?>
             </div>
-        </div>
-    <?php endif; ?>
+        <?php endif; ?>
     </div>
 </section>
 
@@ -1195,5 +1186,3 @@ function switchCorridorRank(type) {
     integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
     crossorigin="anonymous" defer></script>
 <script src="<?= BASE_URL ?>/assets/js/perf-chart.js" defer></script>
-<script src="<?= BASE_URL ?>/assets/js/dep-strip.js" defer></script>
-<script src="<?= BASE_URL ?>/assets/js/dep-carousel.js" defer></script>
