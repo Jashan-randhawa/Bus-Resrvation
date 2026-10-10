@@ -4,13 +4,33 @@ require_once __DIR__ . '/../includes/auth/admin-session.php';
 require_once __DIR__ . '/../includes/db_con.php';
 require_once __DIR__ . '/../includes/helpers.php';
 
-// Consolidated Executive KPIs via single DB round-trip (P-10, Issues 9, 10)
+$is_super_admin = (($_SESSION['role'] ?? '') === 'super_admin');
+
+// Time window filter for operational analytics (A12)
+$allowed_windows = [7, 30, 90];
+$window_days = (int)($_GET['days'] ?? 30);
+if (!in_array($window_days, $allowed_windows, true)) {
+    $window_days = 30;
+}
+$allowed_modes = ['journey', 'created'];
+$reporting_mode = (string)($_GET['mode'] ?? 'journey');
+if (!in_array($reporting_mode, $allowed_modes, true)) {
+    $reporting_mode = 'journey';
+}
+
+$window_end = date('Y-m-d');
+$window_start = date('Y-m-d', strtotime('-' . ($window_days - 1) . ' days'));
+$prev_end = date('Y-m-d', strtotime("$window_start -1 day"));
+$prev_start = date('Y-m-d', strtotime("$prev_end -" . ($window_days - 1) . " days"));
+
+// Consolidated Executive KPIs schema checks (P-10, Issues 9, 10)
 $has_status = table_has_column($link, 'booking', 'status');
 $has_cap = table_has_column($link, 'buses', 'capacity');
 $has_bus_arch = table_has_column($link, 'buses', 'archived_at');
 $has_route_arch = table_has_column($link, 'route', 'archived_at');
 $has_cust_arch = table_has_column($link, 'costumer', 'archived_at');
 $has_admin_active = table_has_column($link, 'admin', 'is_active');
+$has_created_at = table_has_column($link, 'booking', 'created_at');
 
 $rev_where = $has_status ? "WHERE status = 'Confirmed' OR status IS NULL" : "";
 $bus_where = $has_bus_arch ? "WHERE archived_at IS NULL" : "";
@@ -43,38 +63,84 @@ $total_queries = (int)($kpi['total_queries'] ?? 0);
 $total_seats = (int)($kpi['total_seats'] ?? 0);
 $total_earnings = number_format((float)($kpi['total_revenue'] ?? 0), 2);
 
-// Time window filter for operational analytics (A12)
-$allowed_windows = [7, 30, 90];
-$window_days = (int)($_GET['days'] ?? 30);
-if (!in_array($window_days, $allowed_windows, true)) {
-    $window_days = 30;
+// Support Inquiries breakdown (new vs total)
+$new_queries_row = db_one($link, "SELECT COUNT(*) AS cnt FROM `query` WHERE status = 'new'");
+$new_queries_count = (int)($new_queries_row['cnt'] ?? 0);
+
+// Daily stats & cancellation metrics within window (Issue 9)
+$prev_rev_case = $has_status ? "CASE WHEN status = 'Confirmed' OR status IS NULL THEN price ELSE 0 END" : "price";
+$prev_cnl_case = $has_status ? "CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END" : "0";
+$confirmed_case = $has_status ? "CASE WHEN status = 'Confirmed' OR status IS NULL THEN 1 ELSE 0 END" : "1";
+
+if ($reporting_mode === 'created' && $has_created_at) {
+    // Mode: Booking creation date
+    $daily_stats = db_all($link, "
+        SELECT 
+            DATE(created_at) AS `date`,
+            COUNT(*) AS daily_bookings,
+            SUM(CASE WHEN status = 'Confirmed' OR status IS NULL THEN price ELSE 0 END) AS daily_rev,
+            SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS daily_cancelled
+        FROM booking
+        WHERE DATE(created_at) BETWEEN ? AND ?
+        GROUP BY DATE(created_at)
+        ORDER BY DATE(created_at) DESC
+    ", 'ss', [$window_start, $window_end]);
+
+    $cancel_metrics = db_one($link, "
+        SELECT 
+            COUNT(*) AS total,
+            SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS cancelled,
+            SUM({$confirmed_case}) AS confirmed_count
+        FROM booking
+        WHERE DATE(created_at) BETWEEN ? AND ?
+    ", 'ss', [$window_start, $window_end]);
+
+    $prev = db_one($link, "
+        SELECT 
+            COUNT(*) AS total,
+            SUM({$prev_cnl_case}) AS cancelled,
+            COALESCE(SUM({$prev_rev_case}), 0) AS revenue,
+            SUM({$confirmed_case}) AS confirmed_count
+        FROM booking 
+        WHERE DATE(created_at) BETWEEN ? AND ?
+    ", 'ss', [$prev_start, $prev_end]);
+} else {
+    // Mode: Journey date (Travel / fleet utilization perspective)
+    $daily_stats = db_all($link, "
+        SELECT 
+            `date`,
+            COUNT(*) AS daily_bookings,
+            SUM(CASE WHEN status = 'Confirmed' OR status IS NULL THEN price ELSE 0 END) AS daily_rev,
+            SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS daily_cancelled
+        FROM booking
+        WHERE `date` BETWEEN ? AND ?
+        GROUP BY `date`
+        ORDER BY `date` DESC
+    ", 'ss', [$window_start, $window_end]);
+
+    $cancel_metrics = db_one($link, "
+        SELECT 
+            COUNT(*) AS total,
+            SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS cancelled,
+            SUM({$confirmed_case}) AS confirmed_count
+        FROM booking
+        WHERE `date` BETWEEN ? AND ?
+    ", 'ss', [$window_start, $window_end]);
+
+    $prev = db_one($link, "
+        SELECT 
+            COUNT(*) AS total,
+            SUM({$prev_cnl_case}) AS cancelled,
+            COALESCE(SUM({$prev_rev_case}), 0) AS revenue,
+            SUM({$confirmed_case}) AS confirmed_count
+        FROM booking 
+        WHERE `date` BETWEEN ? AND ?
+    ", 'ss', [$prev_start, $prev_end]);
 }
-$window_end = date('Y-m-d');
-$window_start = date('Y-m-d', strtotime('-' . ($window_days - 1) . ' days'));
 
-// Daily stats query with explicit date window (Issue 9)
-$daily_stats = db_all($link, "
-    SELECT 
-        `date`,
-        COUNT(*) AS daily_bookings,
-        SUM(CASE WHEN status = 'Confirmed' OR status IS NULL THEN price ELSE 0 END) AS daily_rev,
-        SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS daily_cancelled
-    FROM booking
-    WHERE `date` BETWEEN ? AND ?
-    GROUP BY `date`
-    ORDER BY `date` DESC
-", 'ss', [$window_start, $window_end]);
-
-// Cancellation metrics strictly within the window (Issue 9)
-$cancel_metrics = db_one($link, "
-    SELECT 
-        COUNT(*) AS total,
-        SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS cancelled
-    FROM booking
-    WHERE `date` BETWEEN ? AND ?
-", 'ss', [$window_start, $window_end]);
 $all_bks = (int)($cancel_metrics['total'] ?? 0);
 $all_cnl = (int)($cancel_metrics['cancelled'] ?? 0);
+$cur_confirmed_bks = (int)($cancel_metrics['confirmed_count'] ?? 0);
 $cnl_rate = $all_bks > 0 ? round(($all_cnl / $all_bks) * 100, 1) : 0;
 
 // Continuous Daily Series Zero-Fill (Performance Overview)
@@ -94,27 +160,41 @@ for ($i = 0; $i < $window_days; $i++) {
     ];
 }
 
-// Previous-Period Totals Query (shifted window of identical duration)
-$prev_end = date('Y-m-d', strtotime("$window_start -1 day"));
-$prev_start = date('Y-m-d', strtotime("$prev_end -" . ($window_days - 1) . " days"));
-$prev_rev_case = $has_status ? "CASE WHEN status = 'Confirmed' OR status IS NULL THEN price ELSE 0 END" : "price";
-$prev_cnl_case = $has_status ? "CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END" : "0";
+$cur_revenue = (float)array_sum(array_column($series, 'r'));
+$avg_booking_val = $cur_confirmed_bks > 0 ? round($cur_revenue / $cur_confirmed_bks, 2) : 0.0;
 
-$prev = db_one($link, "
-    SELECT 
-        COUNT(*) AS total,
-        SUM({$prev_cnl_case}) AS cancelled,
-        COALESCE(SUM({$prev_rev_case}), 0) AS revenue
-    FROM booking 
-    WHERE `date` BETWEEN ? AND ?
-", 'ss', [$prev_start, $prev_end]);
+// Safe CSV Export Handler
+if (isset($_GET['export']) && $_GET['export'] === 'daily_csv') {
+    require_role('admin');
+    audit($link, 'EXPORT_DASHBOARD_CSV', 'reporting', null, null, [
+        'window_days' => $window_days,
+        'mode' => $reporting_mode
+    ]);
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="dashboard_daily_' . $window_days . 'd_' . $reporting_mode . '_' . date('Y-m-d') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fputcsv($out, ['Date', 'Reservations', 'Cancelled', 'Confirmed Revenue', 'Cancel Rate %']);
+    foreach ($series as $s) {
+        $r_pct = $s['b'] > 0 ? round(($s['c'] / $s['b']) * 100, 1) : 0.0;
+        fputcsv($out, [
+            $s['d'],
+            $s['b'],
+            $s['c'],
+            number_format($s['r'], 2, '.', ''),
+            $r_pct . '%'
+        ]);
+    }
+    fclose($out);
+    exit;
+}
 
 $prev_total = (int)($prev['total'] ?? 0);
 $prev_cancelled = (int)($prev['cancelled'] ?? 0);
 $prev_revenue = (float)($prev['revenue'] ?? 0);
+$prev_confirmed_bks = (int)($prev['confirmed_count'] ?? 0);
+$prev_avg_booking_val = $prev_confirmed_bks > 0 ? round($prev_revenue / $prev_confirmed_bks, 2) : 0.0;
 $prev_cnl_rate = $prev_total > 0 ? round(($prev_cancelled / $prev_total) * 100, 1) : 0;
 
-$cur_revenue = (float)array_sum(array_column($series, 'r'));
 $avg_per_day = $window_days > 0 ? round($all_bks / $window_days, 1) : 0.0;
 $prev_avg_per_day = $window_days > 0 ? round($prev_total / $window_days, 1) : 0.0;
 
@@ -137,6 +217,7 @@ $bks_delta = perf_pct_change($all_bks, $prev_total);
 $rev_delta = perf_pct_change($cur_revenue, $prev_revenue);
 $cnl_rate_delta = round($cnl_rate - $prev_cnl_rate, 1);
 $avg_delta = perf_pct_change($avg_per_day, $prev_avg_per_day);
+$avg_val_delta = perf_pct_change($avg_booking_val, $prev_avg_booking_val);
 
 if (!defined('CANCEL_RATE_WARN_THRESHOLD')) {
     define('CANCEL_RATE_WARN_THRESHOLD', 10.0);
@@ -147,6 +228,31 @@ if (!defined('CANCEL_RATE_DANGER_THRESHOLD')) {
 $cnl_val_class = $cnl_rate >= CANCEL_RATE_DANGER_THRESHOLD 
     ? 'is-bad' 
     : ($cnl_rate >= CANCEL_RATE_WARN_THRESHOLD ? 'is-warn' : 'is-ok');
+
+// Booking Lead Time calculation (days between booking creation and travel date)
+$lead_time_info = null;
+if ($has_created_at) {
+    $lead_date_clause = ($reporting_mode === 'created') ? "DATE(created_at) BETWEEN ? AND ?" : "`date` BETWEEN ? AND ?";
+    $lead_row = db_one($link, "
+        SELECT 
+            AVG(DATEDIFF(`date`, DATE(created_at))) AS avg_lead,
+            MIN(DATEDIFF(`date`, DATE(created_at))) AS min_lead,
+            MAX(DATEDIFF(`date`, DATE(created_at))) AS max_lead,
+            COUNT(*) AS sample_count
+        FROM booking
+        WHERE {$lead_date_clause}
+          AND (status = 'Confirmed' OR status IS NULL)
+          AND created_at IS NOT NULL
+          AND DATEDIFF(`date`, DATE(created_at)) >= 0
+    ", 'ss', [$window_start, $window_end]);
+    if ($lead_row && $lead_row['avg_lead'] !== null && (int)$lead_row['sample_count'] > 0) {
+        $lead_time_info = [
+            'avg' => round((float)$lead_row['avg_lead'], 1),
+            'min' => (int)$lead_row['min_lead'],
+            'max' => (int)$lead_row['max_lead'],
+        ];
+    }
+}
 
 // Highlights calculation
 $days_with_bks = array_filter($series, fn($s) => $s['b'] > 0);
@@ -175,6 +281,9 @@ if (!empty($days_with_bks)) {
     if ($quietest && count($days_with_bks) > 1 && $quietest['d'] !== ($busiest['d'] ?? '')) {
         $highlights_parts[] = '<strong>Quietest day:</strong> ' . date('d M', strtotime($quietest['d'])) . ' (' . $quietest['b'] . ' bookings)';
     }
+    if ($lead_time_info) {
+        $highlights_parts[] = '<strong>Booking lead time:</strong> ' . $lead_time_info['avg'] . ' days avg advance';
+    }
 }
 $highlights_html = !empty($highlights_parts) ? implode(' &nbsp;&bull;&nbsp; ', $highlights_parts) : '';
 
@@ -191,27 +300,7 @@ $chart_payload = [
 ];
 $chart_json = json_encode($chart_payload, JSON_HEX_TAG | JSON_HEX_AMP);
 
-
-// Top 5 Popular Routes (Issue 10: strictly Confirmed or NULL for legacy)
-$top_routes_where = $has_status ? "WHERE status = 'Confirmed' OR status IS NULL" : "";
-$top_routes = db_all($link, "
-    SELECT 
-        city1, city2, bus,
-        COUNT(*) AS total_tickets,
-        SUM(price) AS route_revenue
-    FROM booking
-    {$top_routes_where}
-    GROUP BY city1, city2, bus
-    ORDER BY total_tickets DESC
-    LIMIT 5
-");
-
-// Today's bookings count for Reservations card sub-line
-$today_date = date('Y-m-d');
-$today_bookings_row = db_one($link, "SELECT COUNT(*) AS today_bks FROM booking WHERE `date` = ?", 's', [$today_date]);
-$today_bookings_count = (int)($today_bookings_row['today_bks'] ?? 0);
-
-// Top 5 Popular Routes (Issue 10: strictly Confirmed or NULL for legacy)
+// Top 5 Popular Routes by Ticket Volume (Issue 10: strictly Confirmed or NULL for legacy)
 $top_routes_where = $has_status ? "WHERE status = 'Confirmed' OR status IS NULL" : "";
 $top_routes = db_all($link, "
     SELECT 
@@ -226,14 +315,39 @@ $top_routes = db_all($link, "
 ");
 $max_corridor_tickets = !empty($top_routes) ? max(1, (int)$top_routes[0]['total_tickets']) : 1;
 
-// Today's Scheduled Departures (Plan v2: LIMIT 24 for full-day scrolling)
+// Top 5 Corridors by Route Revenue
+$top_routes_revenue = db_all($link, "
+    SELECT 
+        city1, city2, bus,
+        COUNT(*) AS total_tickets,
+        SUM(price) AS route_revenue
+    FROM booking
+    {$top_routes_where}
+    GROUP BY city1, city2, bus
+    ORDER BY route_revenue DESC
+    LIMIT 5
+");
+$max_corridor_revenue = !empty($top_routes_revenue) ? max(1.0, (float)$top_routes_revenue[0]['route_revenue']) : 1.0;
+
+// Today's bookings count for Reservations card sub-line
+$today_date = date('Y-m-d');
+$today_bookings_row = db_one($link, "SELECT COUNT(*) AS today_bks FROM booking WHERE `date` = ?", 's', [$today_date]);
+$today_bookings_count = (int)($today_bookings_row['today_bks'] ?? 0);
+
+// Today's Scheduled Departures (LIMIT 24)
 if (!defined('DEPARTURES_LIMIT')) {
     define('DEPARTURES_LIMIT', 24);
 }
 $today_departures = db_all($link, "
-    SELECT r.busno, r.city1, r.city2, r.`time`,
-           (SELECT COUNT(*) FROM booking b WHERE b.bus = r.busno AND b.`date` = ? AND b.`time` = r.`time` AND (b.status = 'Confirmed' OR b.status IS NULL)) AS booked_count,
-           COALESCE(bu.capacity, 36) AS total_capacity
+    SELECT r.sno AS route_sno, r.busno, r.city1, r.city2, r.`time`,
+           (SELECT COUNT(*) FROM booking b 
+            WHERE b.bus = r.busno 
+              AND b.`date` = ? 
+              AND b.`time` = r.`time` 
+              AND (b.city1 = r.city1 AND b.city2 = r.city2)
+              AND (b.status IN ('Confirmed', 'Pending') OR b.status IS NULL)) AS booked_count,
+           COALESCE(bu.capacity, 36) AS total_capacity,
+           bu.id AS bus_id
     FROM route r
     LEFT JOIN buses bu ON r.busno = bu.bus_number
     WHERE (r.archived_at IS NULL)
@@ -241,7 +355,7 @@ $today_departures = db_all($link, "
     LIMIT " . DEPARTURES_LIMIT . "
 ", 's', [$today_date]);
 
-// Process departures for v2 strip with live status chips & seat counts
+// Process departures for live status chips & seat counts
 $now = time();
 $departed_count = 0;
 $boarding_count = 0;
@@ -251,12 +365,19 @@ $first_active_idx = 0;
 $found_active = false;
 
 $processed_deps = [];
+$today_total_capacity = 0;
+$today_total_booked = 0;
+
 foreach ($today_departures as $idx => $dep) {
     $booked = (int)$dep['booked_count'];
     $cap = (int)$dep['total_capacity'];
     $seats_left = max(0, $cap - $booked);
     $pct = $cap > 0 ? min(100, round(($booked / $cap) * 100)) : 0;
     $bar_class = $pct > 80 ? 'bg-danger' : ($pct > 50 ? 'bg-warning' : 'bg-success');
+    $is_overbooked = $cap > 0 && ($booked > $cap);
+
+    $today_total_capacity += $cap;
+    $today_total_booked += $booked;
 
     $dep_timestamp = strtotime($today_date . ' ' . $dep['time']);
     $diff_minutes = (int)round(($dep_timestamp - $now) / 60);
@@ -286,6 +407,7 @@ foreach ($today_departures as $idx => $dep) {
     }
 
     $processed_deps[] = [
+        'route_sno' => $dep['route_sno'],
         'busno' => $dep['busno'],
         'city1' => $dep['city1'],
         'city2' => $dep['city2'],
@@ -298,16 +420,97 @@ foreach ($today_departures as $idx => $dep) {
         'bar_class' => $bar_class,
         'status_chip' => $status_chip,
         'status_class' => $status_class,
+        'is_overbooked' => $is_overbooked,
     ];
 }
 $total_deps = count($processed_deps);
 if (!$next_dep_time && $total_deps > 0) {
     $next_dep_time = $processed_deps[0]['formatted_time'];
 }
-?>
 
-<!-- Dashboard Specific Stylesheet -->
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/dashboard.css">
+$dep_summary_text = $total_deps > 0 
+    ? "{$total_deps} departures scheduled today &bull; Next: " . ($next_dep_time ?? 'None')
+    : "No departures scheduled today";
+
+$overall_trip_occupancy = $today_total_capacity > 0 ? min(100, round(($today_total_booked / $today_total_capacity) * 100, 1)) : 0.0;
+
+// Attention-Needed Operational Panel Items
+$attention_items = [];
+
+// 1. Unanswered Inquiries
+if ($new_queries_count > 0) {
+    $attention_items[] = [
+        'type' => 'inquiry',
+        'level' => 'warning',
+        'icon' => 'icon-mail',
+        'title' => $new_queries_count . ' Unanswered Customer ' . ($new_queries_count === 1 ? 'Inquiry' : 'Inquiries'),
+        'desc' => 'Customer questions awaiting administrative reply in the support inbox.',
+        'action_label' => 'Open Inbox &rarr;',
+        'action_url' => BASE_URL . '/admin/queries.php?filter=new',
+    ];
+}
+
+// 2. Overbooked Departures (Integrity Alert)
+$overbooked_deps = array_filter($processed_deps, fn($d) => $d['is_overbooked']);
+if (!empty($overbooked_deps)) {
+    foreach ($overbooked_deps as $od) {
+        $attention_items[] = [
+            'type' => 'overbooked',
+            'level' => 'danger',
+            'icon' => 'icon-shield',
+            'title' => 'Overbooked Trip: ' . $od['busno'] . ' (' . $od['formatted_time'] . ')',
+            'desc' => 'Reserved seats (' . $od['booked'] . ') exceed vehicle capacity (' . $od['cap'] . ') for corridor ' . $od['city1'] . ' &rarr; ' . $od['city2'] . '.',
+            'action_label' => 'Inspect Manifest &rarr;',
+            'action_url' => BASE_URL . '/admin/manifest.php?bus=' . urlencode($od['busno']) . '&date=' . urlencode($today_date) . '&time=' . urlencode($od['raw_time']),
+        ];
+    }
+}
+
+// 3. Departures Boarding Soon (within 60 mins)
+$boarding_deps = array_filter($processed_deps, fn($d) => $d['status_chip'] === 'Boarding soon');
+if (!empty($boarding_deps)) {
+    $first_boarding = reset($boarding_deps);
+    $attention_items[] = [
+        'type' => 'boarding',
+        'level' => 'info',
+        'icon' => 'icon-clock',
+        'title' => count($boarding_deps) . ' Departure(s) Boarding Soon',
+        'desc' => 'Next boarding: ' . $first_boarding['city1'] . ' &rarr; ' . $first_boarding['city2'] . ' (' . $first_boarding['busno'] . ') at ' . $first_boarding['formatted_time'] . '.',
+        'action_label' => 'View Manifest &rarr;',
+        'action_url' => BASE_URL . '/admin/manifest.php?bus=' . urlencode($first_boarding['busno']) . '&date=' . urlencode($today_date) . '&time=' . urlencode($first_boarding['raw_time']),
+    ];
+}
+
+// 4. Low-Occupancy Trips departing today (< 30%)
+$low_occ_deps = array_filter($processed_deps, fn($d) => $d['status_chip'] !== 'Departed' && $d['cap'] > 0 && ($d['pct'] < 30));
+if (!empty($low_occ_deps)) {
+    $first_low = reset($low_occ_deps);
+    $attention_items[] = [
+        'type' => 'low_occupancy',
+        'level' => 'neutral',
+        'icon' => 'icon-bus',
+        'title' => count($low_occ_deps) . ' Low-Occupancy Departure(s) Today',
+        'desc' => 'E.g. ' . $first_low['city1'] . ' &rarr; ' . $first_low['city2'] . ' at ' . $first_low['formatted_time'] . ' is currently at ' . $first_low['pct'] . '% capacity.',
+        'action_label' => 'Review Seats &rarr;',
+        'action_url' => BASE_URL . '/admin/seats.php?bus=' . urlencode($first_low['busno']) . '&date=' . urlencode($today_date) . '&time=' . urlencode($first_low['raw_time']),
+    ];
+}
+
+// 5. System & Concurrency Integrity Check
+$concurrency_diag = booking_concurrency_status($link);
+if ($concurrency_diag['status'] !== 'OK') {
+    $diag_errors = array_merge($concurrency_diag['errors'] ?? [], $concurrency_diag['warnings'] ?? []);
+    $attention_items[] = [
+        'type' => 'integrity',
+        'level' => 'warning',
+        'icon' => 'icon-shield',
+        'title' => 'Seat-Lock Concurrency Warning',
+        'desc' => !empty($diag_errors) ? e(implode('; ', array_slice($diag_errors, 0, 2))) : 'Index verification required.',
+        'action_label' => $is_super_admin ? 'Run Diagnostics &rarr;' : 'Notify Administrator',
+        'action_url' => $is_super_admin ? BASE_URL . '/admin/diagnostics.php' : '#',
+    ];
+}
+?>
 
 <!-- Inline SVG Icon Sprite -->
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
@@ -343,38 +546,63 @@ if (!$next_dep_time && $total_deps > 0) {
     </symbol>
 </svg>
 
-<!-- 1. Executive Dashboard Header (Plan v2) -->
+<!-- 1. Executive Dashboard Header -->
 <div class="dash-header">
     <div>
         <h1 class="dash-header-title">Executive Dashboard</h1>
-        <p class="dash-header-sub">Real-time overview of ticket operations, fleet availability, user queries, and revenue.</p>
+        <p class="dash-header-sub">Operational intelligence, revenue metrics, fleet availability, and real-time dispatch alerts.</p>
     </div>
     <div class="dash-header-actions">
-        <span class="dash-date-chip">
+        <!-- Date mode switcher -->
+        <div class="btn-group btn-group-sm mr-2 dash-mode-toggle" role="group" aria-label="Reporting date filter mode">
+            <a href="?days=<?= $window_days ?>&mode=journey" class="btn btn-sm <?= $reporting_mode === 'journey' ? 'btn-primary' : 'btn-outline-secondary' ?>" title="Filter by physical travel departure date">
+                Journey Date
+            </a>
+            <a href="?days=<?= $window_days ?>&mode=created" class="btn btn-sm <?= $reporting_mode === 'created' ? 'btn-primary' : 'btn-outline-secondary' ?>" title="Filter by transaction reservation timestamp">
+                Booking Date
+            </a>
+        </div>
+
+        <span class="dash-date-chip" title="Selected reporting timeframe">
             <svg width="14" height="14"><use href="#icon-clock"></use></svg>
-            <?= e(date('D, d M Y')) ?>
+            <?= e(date('d M Y', strtotime($window_start))) ?> &ndash; <?= e(date('d M Y', strtotime($window_end))) ?>
         </span>
-        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.location.reload();" title="Refresh dashboard data">
+
+        <span class="dash-time-chip" title="Last page generation timestamp">
+            <span>⏱️</span> <?= date('h:i:s A') ?>
+        </span>
+
+        <button type="button" class="btn btn-outline-secondary btn-sm font-weight-medium" onclick="window.location.reload();" title="Refresh dashboard data">
             <svg width="14" height="14" class="mr-1"><use href="#icon-refresh"></use></svg>
             Refresh
         </button>
-        <a href="<?= BASE_URL ?>/admin/diagnostics.php" class="btn btn-outline-primary btn-sm">
-            <span class="mr-1">⚡</span> System Health
-        </a>
+
+        <?php if ($is_super_admin): ?>
+            <a href="<?= BASE_URL ?>/admin/diagnostics.php" class="btn btn-outline-primary btn-sm font-weight-medium" title="Inspect system health diagnostics">
+                <span class="mr-1">⚡</span> System Health
+            </a>
+        <?php endif; ?>
     </div>
 </div>
 
-<!-- 2. Unified 8-Card KPI Grid (2 Rows of 4) -->
-<div class="kpi-grid">
-    <!-- Row 1: Business Metrics -->
+<!-- 2. Primary KPI Row (4 Cards) -->
+<div class="kpi-grid mb-3">
+    <!-- Confirmed Revenue -->
     <div class="stat-card stat-revenue">
         <div class="stat-card-top">
             <span class="stat-label">Confirmed Revenue</span>
             <div class="kpi-icon"><svg width="18" height="18"><use href="#icon-wallet"></use></svg></div>
         </div>
         <div>
-            <div class="stat-value text-success"><?= CURRENCY ?><?= e($total_earnings) ?></div>
-            <span class="stat-subline">Confirmed bookings only</span>
+            <div class="stat-value text-success"><?= CURRENCY ?><?= perf_compact_num($cur_revenue) ?></div>
+            <span class="stat-subline">
+                <?= $window_days ?>d window &bull; 
+                <?php if ($prev_revenue > 0 && $rev_delta !== null): ?>
+                    <span class="<?= $rev_delta >= 0 ? 'text-success' : 'text-danger' ?>"><?= $rev_delta >= 0 ? '+' : '' ?><?= $rev_delta ?>% vs prev</span>
+                <?php else: ?>
+                    All-time: <?= CURRENCY ?><?= e($total_earnings) ?>
+                <?php endif; ?>
+            </span>
         </div>
         <a href="<?= BASE_URL ?>/admin/bookings.php" class="stat-footer-link">
             <span>Sales Ledger</span>
@@ -382,14 +610,22 @@ if (!$next_dep_time && $total_deps > 0) {
         </a>
     </div>
 
+    <!-- Reservations -->
     <div class="stat-card stat-bookings">
         <div class="stat-card-top">
             <span class="stat-label">Reservations</span>
             <div class="kpi-icon"><svg width="18" height="18"><use href="#icon-ticket"></use></svg></div>
         </div>
         <div>
-            <div class="stat-value"><?= number_format($total_bookings) ?></div>
-            <span class="stat-subline"><?= $today_bookings_count ?> today &bull; All-time total</span>
+            <div class="stat-value"><?= number_format($all_bks) ?></div>
+            <span class="stat-subline">
+                <?= $window_days ?>d window &bull; 
+                <?php if ($prev_total > 0 && $bks_delta !== null): ?>
+                    <span class="<?= $bks_delta >= 0 ? 'text-success' : 'text-danger' ?>"><?= $bks_delta >= 0 ? '+' : '' ?><?= $bks_delta ?>% vs prev</span>
+                <?php else: ?>
+                    <?= $today_bookings_count ?> today
+                <?php endif; ?>
+            </span>
         </div>
         <a href="<?= BASE_URL ?>/admin/bookings.php" class="stat-footer-link">
             <span>Review Bookings</span>
@@ -397,75 +633,17 @@ if (!$next_dep_time && $total_deps > 0) {
         </a>
     </div>
 
-    <div class="stat-card stat-customers">
-        <div class="stat-card-top">
-            <span class="stat-label">Customers</span>
-            <div class="kpi-icon"><svg width="18" height="18"><use href="#icon-users"></use></svg></div>
-        </div>
-        <div>
-            <div class="stat-value"><?= number_format($total_customers) ?></div>
-            <span class="stat-subline">Registered, active accounts</span>
-        </div>
-        <a href="<?= BASE_URL ?>/admin/customers.php" class="stat-footer-link">
-            <span>Customer Roster</span>
-            <span>&rarr;</span>
-        </a>
-    </div>
-
-    <div class="stat-card stat-queries">
-        <div class="stat-card-top">
-            <span class="stat-label">Inquiries</span>
-            <div class="kpi-icon"><svg width="18" height="18"><use href="#icon-mail"></use></svg></div>
-        </div>
-        <div>
-            <div class="stat-value"><?= number_format($total_queries) ?></div>
-            <span class="stat-subline">Customer inbox messages</span>
-        </div>
-        <a href="<?= BASE_URL ?>/admin/queries.php" class="stat-footer-link">
-            <span>Support Messages</span>
-            <span>&rarr;</span>
-        </a>
-    </div>
-
-    <!-- Row 2: Operational Metrics -->
-    <div class="stat-card stat-buses">
-        <div class="stat-card-top">
-            <span class="stat-label">Active Fleet</span>
-            <div class="kpi-icon"><svg width="18" height="18"><use href="#icon-bus"></use></svg></div>
-        </div>
-        <div>
-            <div class="stat-value"><?= number_format($total_buses) ?></div>
-            <span class="stat-subline">Active fleet vehicles</span>
-        </div>
-        <a href="<?= BASE_URL ?>/admin/buses.php" class="stat-footer-link">
-            <span>Fleet Catalog</span>
-            <span>&rarr;</span>
-        </a>
-    </div>
-
-    <div class="stat-card stat-routes">
-        <div class="stat-card-top">
-            <span class="stat-label">Transit Routes</span>
-            <div class="kpi-icon"><svg width="18" height="18"><use href="#icon-route"></use></svg></div>
-        </div>
-        <div>
-            <div class="stat-value"><?= number_format($total_routes) ?></div>
-            <span class="stat-subline">Active transit corridors</span>
-        </div>
-        <a href="<?= BASE_URL ?>/admin/routes.php" class="stat-footer-link">
-            <span>Manage Routes</span>
-            <span>&rarr;</span>
-        </a>
-    </div>
-
+    <!-- Trip Occupancy -->
     <div class="stat-card stat-seats">
         <div class="stat-card-top">
-            <span class="stat-label">Fleet Capacity</span>
+            <span class="stat-label">Trip Occupancy</span>
             <div class="kpi-icon"><svg width="18" height="18"><use href="#icon-seat"></use></svg></div>
         </div>
         <div>
-            <div class="stat-value"><?= number_format($total_seats) ?></div>
-            <span class="stat-subline">Total fleet seat capacity</span>
+            <div class="stat-value <?= $overall_trip_occupancy >= 70 ? 'text-success' : ($overall_trip_occupancy >= 40 ? 'text-warning' : '') ?>">
+                <?= $overall_trip_occupancy ?>%
+            </div>
+            <span class="stat-subline">Today's load &bull; <?= $today_total_booked ?> of <?= $today_total_capacity ?> seats</span>
         </div>
         <a href="<?= BASE_URL ?>/admin/seats.php" class="stat-footer-link">
             <span>Seat Occupancy Map</span>
@@ -473,19 +651,98 @@ if (!$next_dep_time && $total_deps > 0) {
         </a>
     </div>
 
+    <!-- Cancellation Rate -->
     <div class="stat-card stat-admins">
         <div class="stat-card-top">
-            <span class="stat-label">Administrators</span>
+            <span class="stat-label">Cancellation Rate</span>
             <div class="kpi-icon"><svg width="18" height="18"><use href="#icon-shield"></use></svg></div>
         </div>
         <div>
-            <div class="stat-value"><?= number_format($total_admins) ?></div>
-            <span class="stat-subline">Active system administrators</span>
+            <div class="stat-value <?= $cnl_val_class ?>"><?= $cnl_rate ?>%</div>
+            <span class="stat-subline">
+                <?= number_format($all_cnl) ?> of <?= number_format($all_bks) ?> bookings
+                <?php if ($prev_total > 0): ?>
+                    &bull; <span class="<?= $cnl_rate_delta <= 0 ? 'text-success' : 'text-danger' ?>"><?= $cnl_rate_delta > 0 ? '+' : '' ?><?= $cnl_rate_delta ?> pts</span>
+                <?php endif; ?>
+            </span>
         </div>
-        <a href="<?= BASE_URL ?>/admin/add-admin.php" class="stat-footer-link">
-            <span>Admin Governance</span>
+        <a href="<?= BASE_URL ?>/admin/bookings.php" class="stat-footer-link">
+            <span>Cancellation Policy</span>
             <span>&rarr;</span>
         </a>
+    </div>
+</div>
+
+<!-- 3. Secondary Operational Metrics (6 Cards) -->
+<div class="kpi-grid mb-3" style="grid-template-columns: repeat(6, 1fr);">
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span class="stat-label">Confirmed Bookings</span>
+            <div class="kpi-icon"><svg width="16" height="16"><use href="#icon-ticket"></use></svg></div>
+        </div>
+        <div>
+            <div class="stat-value" style="font-size: 1.25rem;"><?= number_format($cur_confirmed_bks) ?></div>
+            <span class="stat-subline">Completed checkouts</span>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span class="stat-label">Avg Booking Value</span>
+            <div class="kpi-icon"><svg width="16" height="16"><use href="#icon-wallet"></use></svg></div>
+        </div>
+        <div>
+            <div class="stat-value" style="font-size: 1.25rem;"><?= CURRENCY ?><?= number_format($avg_booking_val, 2) ?></div>
+            <span class="stat-subline">Per confirmed ticket</span>
+        </div>
+    </div>
+
+    <div class="stat-card stat-customers">
+        <div class="stat-card-top">
+            <span class="stat-label">Active Customers</span>
+            <div class="kpi-icon"><svg width="16" height="16"><use href="#icon-users"></use></svg></div>
+        </div>
+        <div>
+            <div class="stat-value" style="font-size: 1.25rem;"><?= number_format($total_customers) ?></div>
+            <span class="stat-subline">Registered profiles</span>
+        </div>
+        <a href="<?= BASE_URL ?>/admin/customers.php" class="stat-footer-link"><span>Directory &rarr;</span></a>
+    </div>
+
+    <div class="stat-card stat-buses">
+        <div class="stat-card-top">
+            <span class="stat-label">Active Fleet</span>
+            <div class="kpi-icon"><svg width="16" height="16"><use href="#icon-bus"></use></svg></div>
+        </div>
+        <div>
+            <div class="stat-value" style="font-size: 1.25rem;"><?= number_format($total_buses) ?></div>
+            <span class="stat-subline">Total capacity <?= number_format($total_seats) ?></span>
+        </div>
+        <a href="<?= BASE_URL ?>/admin/buses.php" class="stat-footer-link"><span>Fleet &rarr;</span></a>
+    </div>
+
+    <div class="stat-card stat-routes">
+        <div class="stat-card-top">
+            <span class="stat-label">Transit Routes</span>
+            <div class="kpi-icon"><svg width="16" height="16"><use href="#icon-route"></use></svg></div>
+        </div>
+        <div>
+            <div class="stat-value" style="font-size: 1.25rem;"><?= number_format($total_routes) ?></div>
+            <span class="stat-subline">Active corridors</span>
+        </div>
+        <a href="<?= BASE_URL ?>/admin/routes.php" class="stat-footer-link"><span>Routes &rarr;</span></a>
+    </div>
+
+    <div class="stat-card stat-queries">
+        <div class="stat-card-top">
+            <span class="stat-label">Support Inquiries</span>
+            <div class="kpi-icon"><svg width="16" height="16"><use href="#icon-mail"></use></svg></div>
+        </div>
+        <div>
+            <div class="stat-value <?= $new_queries_count > 0 ? 'text-warning' : '' ?>" style="font-size: 1.25rem;"><?= number_format($new_queries_count) ?></div>
+            <span class="stat-subline">Unanswered (<?= number_format($total_queries) ?> total)</span>
+        </div>
+        <a href="<?= BASE_URL ?>/admin/queries.php" class="stat-footer-link"><span>Inbox &rarr;</span></a>
     </div>
 </div>
 
@@ -497,12 +754,12 @@ if (!$next_dep_time && $total_deps > 0) {
     </a>
     <div class="collapse mt-2" id="kpiDefinitions">
         <div class="card card-body bg-light border-0 py-2 px-3 small text-muted">
-            <strong>Definitions:</strong> Fleet, Transit Routes, and Customers count active (non-archived) records. Administrators count active system accounts. Confirmed Revenue reflects completed reservations only.
+            <strong>Definitions:</strong> Fleet, Transit Routes, and Customers count active (non-archived) records. Administrators count active system accounts. Confirmed Revenue reflects completed reservations only. Cancellation rate denominator reflects all booking attempts (Confirmed, Pending, Cancelled, Expired) in the active window. Trip occupancy measures seats reserved by Confirmed and Pending passengers against scheduled vehicle capacity.
         </div>
     </div>
 </div>
 
-<!-- 3. Today's Departures (5-Second Scrolling Card Strip - Plan v2) -->
+<!-- 4. Today's Departures (5-Second Scrolling Card Strip) -->
 <section class="dash-section dep-strip">
     <div class="dep-carousel" data-interval="5000" aria-roledescription="carousel" aria-label="Today's departures">
     <header class="dash-section-head">
@@ -573,7 +830,13 @@ if (!$next_dep_time && $total_deps > 0) {
                             </div>
                             <div class="dep-info-col">
                                 <span class="dep-info-lbl">SEATS LEFT</span>
-                                <span class="dep-info-val"><strong><?= $dep['seats_left'] ?></strong> <small class="text-muted">of <?= $dep['cap'] ?></small></span>
+                                <span class="dep-info-val">
+                                    <?php if ($dep['is_overbooked']): ?>
+                                        <strong class="text-danger">0</strong> <small class="text-danger font-weight-bold">(OVERBOOKED)</small>
+                                    <?php else: ?>
+                                        <strong><?= $dep['seats_left'] ?></strong> <small class="text-muted">of <?= $dep['cap'] ?></small>
+                                    <?php endif; ?>
+                                </span>
                             </div>
                         </div>
 
@@ -600,21 +863,24 @@ if (!$next_dep_time && $total_deps > 0) {
     </div>
 </section>
 
-<!-- 4. Performance Overview: Charts & Indicators (Plan v2: Full Width) -->
+<!-- 5. Performance Overview: Charts & Indicators -->
 <section class="dash-section">
     <div class="card perf-card border-0 shadow-sm">
         <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center">
             <div class="my-1">
                 <h6 class="mb-0 font-weight-bold text-dark">
                     <!-- 30-Day Performance Overview -->
-                    <?= $window_days ?>-Day Performance Overview
-                    <small class="text-muted font-weight-normal">(<?= e(date('d M', strtotime($window_start))) ?> &ndash; <?= e(date('d M Y', strtotime($window_end))) ?>)</small>
+                    <?= $window_days ?>-Day Performance Overview 
+                    <span class="badge badge-light border text-muted font-weight-normal ml-1">
+                        <?= $reporting_mode === 'created' ? 'By Booking Date' : 'By Journey Date' ?>
+                    </span>
+                    <small class="text-muted font-weight-normal ml-1">(<?= e(date('d M', strtotime($window_start))) ?> &ndash; <?= e(date('d M Y', strtotime($window_end))) ?>)</small>
                 </h6>
             </div>
-            <div class="btn-group btn-group-sm my-1" role="group" aria-label="Time window selector">
-                <a href="?days=7" class="btn btn-sm <?= $window_days === 7 ? 'btn-primary' : 'btn-outline-secondary' ?>">7d</a>
-                <a href="?days=30" class="btn btn-sm <?= $window_days === 30 ? 'btn-primary' : 'btn-outline-secondary' ?>">30d</a>
-                <a href="?days=90" class="btn btn-sm <?= $window_days === 90 ? 'btn-primary' : 'btn-outline-secondary' ?>">90d</a>
+            <div class="btn-group btn-group-sm my-1 dash-window-toggle" role="group" aria-label="Time window selector">
+                <a href="?days=7&mode=<?= $reporting_mode ?>" class="btn btn-sm <?= $window_days === 7 ? 'btn-primary' : 'btn-outline-secondary' ?>">7d</a>
+                <a href="?days=30&mode=<?= $reporting_mode ?>" class="btn btn-sm <?= $window_days === 30 ? 'btn-primary' : 'btn-outline-secondary' ?>">30d</a>
+                <a href="?days=90&mode=<?= $reporting_mode ?>" class="btn btn-sm <?= $window_days === 90 ? 'btn-primary' : 'btn-outline-secondary' ?>">90d</a>
             </div>
         </div>
         <div class="card-body p-3">
@@ -694,7 +960,7 @@ if (!$next_dep_time && $total_deps > 0) {
             </div>
 
             <div class="small text-muted mb-3" style="font-size: 0.78rem;">
-                <span class="mr-1">ℹ️</span> Pending bookings are included in volume; revenue reflects confirmed bookings only.
+                <span class="mr-1">ℹ️</span> Volume includes all attempts; revenue strictly reflects confirmed bookings. Mode: <strong><?= $reporting_mode === 'created' ? 'Reservation Creation Date' : 'Travel Departure Date' ?></strong>.
             </div>
 
             <!-- Charts Grid: Combo Chart + Donut -->
@@ -715,34 +981,44 @@ if (!$next_dep_time && $total_deps > 0) {
                 <p class="perf-highlights small mb-3"><span class="mr-1">💡</span> <?= $highlights_html ?></p>
             <?php endif; ?>
 
-            <!-- Daily Breakdown Accordion Button -->
-            <div>
-                <button type="button" class="btn btn-sm btn-outline-secondary font-weight-medium" data-toggle="collapse" data-target="#dailyTable" aria-expanded="false" aria-controls="dailyTable">
+            <!-- Daily Breakdown Accordion Button & CSV Export -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                <button type="button" class="btn btn-sm btn-outline-secondary font-weight-medium my-1" data-toggle="collapse" data-target="#dailyTable" aria-expanded="false" aria-controls="dailyTable">
                     <span>📋</span> View daily breakdown &darr;
                 </button>
+                <a href="?days=<?= $window_days ?>&mode=<?= $reporting_mode ?>&export=daily_csv" class="btn btn-sm btn-outline-primary font-weight-medium my-1" title="Download comma-separated values report for current window">
+                    <span>📥</span> Export Daily CSV
+                </a>
             </div>
 
             <!-- Collapsible Accessible Breakdown Table -->
             <div id="dailyTable" class="collapse mt-3">
-                <div class="table-responsive" style="max-height: 260px; overflow-y: auto;">
+                <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
                     <table class="table table-hover table-stack mb-0">
                         <thead class="thead-light">
                             <tr>
                                 <th>Date</th>
                                 <th>Reservations</th>
                                 <th>Cancelled</th>
+                                <th>Cancellation Rate</th>
                                 <th class="text-right">Daily Revenue</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (empty($daily_stats)): ?>
-                                <tr><td colspan="4" class="text-center text-muted py-4">No reservations in the selected timeframe.</td></tr>
+                                <tr><td colspan="5" class="text-center text-muted py-4">No reservations in the selected timeframe.</td></tr>
                             <?php else: ?>
                                 <?php foreach ($daily_stats as $ds): ?>
+                                    <?php 
+                                    $d_bks = (int)$ds['daily_bookings'];
+                                    $d_cnl = (int)$ds['daily_cancelled'];
+                                    $d_rate = $d_bks > 0 ? round(($d_cnl / $d_bks) * 100, 1) : 0.0;
+                                    ?>
                                     <tr>
                                         <td data-label="Date"><small class="font-weight-medium text-dark"><?= e(date('d M Y', strtotime($ds['date']))) ?></small></td>
-                                        <td data-label="Reservations"><span class="badge badge-primary px-2"><?= (int)$ds['daily_bookings'] ?></span></td>
-                                        <td data-label="Cancelled"><span class="badge badge-danger px-2"><?= (int)$ds['daily_cancelled'] ?></span></td>
+                                        <td data-label="Reservations"><span class="badge badge-primary px-2"><?= $d_bks ?></span></td>
+                                        <td data-label="Cancelled"><span class="badge badge-danger px-2"><?= $d_cnl ?></span></td>
+                                        <td data-label="Cancellation Rate"><small class="text-muted font-weight-bold"><?= $d_rate ?>%</small></td>
                                         <td data-label="Daily Revenue" class="text-right font-weight-bold text-success"><?= CURRENCY ?><?= number_format((float)$ds['daily_rev'], 2) ?></td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -755,24 +1031,36 @@ if (!$next_dep_time && $total_deps > 0) {
     </div>
 </section>
 
-<!-- 5. Top Transit Corridors (Ranked List - Plan v2) -->
+<!-- 6. Route Intelligence: Top Transit Corridors -->
 <section class="dash-section">
     <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h6 class="mb-0 font-weight-bold text-dark d-flex align-items-center">
+        <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center">
+            <h6 class="mb-0 font-weight-bold text-dark d-flex align-items-center my-1">
                 <svg width="18" height="18" class="mr-2 text-primary"><use href="#icon-route"></use></svg>
                 Top Transit Corridors
             </h6>
-            <span class="badge badge-light border">Most Traveled</span>
+            <div class="corridor-nav-tabs my-1">
+                <button type="button" class="btn btn-sm btn-primary active" id="btnRankVolume" onclick="switchCorridorRank('volume')">
+                    By Reservation Volume
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnRankRevenue" onclick="switchCorridorRank('revenue')">
+                    By Route Revenue
+                </button>
+            </div>
         </div>
         <div class="card-body p-3">
-            <?php if (empty($top_routes)): ?>
-                <div class="p-4 text-center text-muted">
-                    <svg width="32" height="32" class="text-muted mb-2"><use href="#icon-route"></use></svg>
-                    <div>No route booking data yet.</div>
-                </div>
-            <?php else: ?>
-                <div class="corridor-list">
+            <div class="corridor-meta-note mb-3">
+                <span id="corridorRankCaption">Ranked by total confirmed ticket reservations.</span>
+            </div>
+
+            <!-- Volume View -->
+            <div id="corridorVolumeList" class="corridor-list">
+                <?php if (empty($top_routes)): ?>
+                    <div class="p-4 text-center text-muted">
+                        <svg width="32" height="32" class="text-muted mb-2"><use href="#icon-route"></use></svg>
+                        <div>No route booking data yet.</div>
+                    </div>
+                <?php else: ?>
                     <?php foreach ($top_routes as $i => $tr): ?>
                         <?php
                         $ticket_cnt = (int)$tr['total_tickets'];
@@ -795,11 +1083,112 @@ if (!$next_dep_time && $total_deps > 0) {
                             </div>
                         </div>
                     <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+
+            <!-- Revenue View (Hidden by default) -->
+            <div id="corridorRevenueList" class="corridor-list" style="display: none;">
+                <?php if (empty($top_routes_revenue)): ?>
+                    <div class="p-4 text-center text-muted">
+                        <div>No route revenue data available.</div>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($top_routes_revenue as $i => $tr): ?>
+                        <?php
+                        $rev_val = (float)$tr['route_revenue'];
+                        $bar_pct = min(100, round(($rev_val / $max_corridor_revenue) * 100));
+                        ?>
+                        <div class="corridor-row">
+                            <span class="corridor-rank"><?= ($i + 1) ?></span>
+                            <div class="corridor-main">
+                                <div class="corridor-route-header">
+                                    <span class="corridor-title"><?= e($tr['city1']) ?> &rarr; <?= e($tr['city2']) ?></span>
+                                    <span class="corridor-bus-badge">🚌 <?= e($tr['bus']) ?></span>
+                                </div>
+                                <div class="corridor-bar-track">
+                                    <div class="corridor-bar-fill bg-success" style="width: <?= $bar_pct ?>%;"></div>
+                                </div>
+                            </div>
+                            <div class="corridor-stats">
+                                <span class="corridor-revenue text-success font-weight-bold"><?= CURRENCY ?><?= number_format($rev_val, 2) ?></span>
+                                <span class="corridor-tickets"><?= (int)$tr['total_tickets'] ?> tickets</span>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 7. Attention-Needed Operational Panel -->
+<section class="dash-section">
+    <div class="card attention-card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 font-weight-bold text-dark d-flex align-items-center">
+                <span class="mr-2">🔔</span> Attention-Needed Items
+            </h6>
+            <?php if (!empty($attention_items)): ?>
+                <span class="badge badge-warning text-dark font-weight-bold"><?= count($attention_items) ?> Operational Items</span>
+            <?php else: ?>
+                <span class="badge badge-success font-weight-bold">All Systems Normal</span>
+            <?php endif; ?>
+        </div>
+        <div class="card-body p-3">
+            <?php if (empty($attention_items)): ?>
+                <div class="attention-empty">
+                    <div class="mb-2" style="font-size: 2rem;">✅</div>
+                    <h6 class="font-weight-bold text-dark mb-1">All Operational Systems Normal</h6>
+                    <p class="small text-muted mb-0">No overbooked trips, pending customer support inquiries, or concurrency integrity warnings.</p>
+                </div>
+            <?php else: ?>
+                <div class="attention-grid">
+                    <?php foreach ($attention_items as $item): ?>
+                        <div class="attention-item level-<?= e($item['level']) ?>">
+                            <div class="attention-icon-wrap">
+                                <svg width="18" height="18"><use href="#<?= e($item['icon']) ?>"></use></svg>
+                            </div>
+                            <div class="attention-content">
+                                <div class="attention-title"><?= e($item['title']) ?></div>
+                                <div class="attention-desc"><?= e($item['desc']) ?></div>
+                                <?php if (!empty($item['action_url'])): ?>
+                                    <a href="<?= e($item['action_url']) ?>" class="attention-action-link">
+                                        <?= e($item['action_label']) ?>
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
             <?php endif; ?>
         </div>
     </div>
 </section>
+
+<!-- Corridor Switcher Script -->
+<script>
+function switchCorridorRank(type) {
+    var volList = document.getElementById('corridorVolumeList');
+    var revList = document.getElementById('corridorRevenueList');
+    var btnVol = document.getElementById('btnRankVolume');
+    var btnRev = document.getElementById('btnRankRevenue');
+    var caption = document.getElementById('corridorRankCaption');
+
+    if (type === 'revenue') {
+        volList.style.display = 'none';
+        revList.style.display = 'block';
+        btnVol.className = 'btn btn-sm btn-outline-secondary';
+        btnRev.className = 'btn btn-sm btn-primary active';
+        caption.textContent = 'Ranked by total gross route revenue from confirmed bookings.';
+    } else {
+        volList.style.display = 'block';
+        revList.style.display = 'none';
+        btnVol.className = 'btn btn-sm btn-primary active';
+        btnRev.className = 'btn btn-sm btn-outline-secondary';
+        caption.textContent = 'Ranked by total confirmed ticket reservations.';
+    }
+}
+</script>
 
 <!-- Dashboard Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
@@ -808,6 +1197,3 @@ if (!$next_dep_time && $total_deps > 0) {
 <script src="<?= BASE_URL ?>/assets/js/perf-chart.js" defer></script>
 <script src="<?= BASE_URL ?>/assets/js/dep-strip.js" defer></script>
 <script src="<?= BASE_URL ?>/assets/js/dep-carousel.js" defer></script>
-
-
-

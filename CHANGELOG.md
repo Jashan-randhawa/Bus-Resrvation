@@ -5,8 +5,17 @@ All notable changes to this project are documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Admin Executive Dashboard Deep Audit & Upgrade**:
+  - Established authoritative definitions for all executive and operational KPIs, segregating window performance from all-time directory counts.
+  - Implemented dual date reporting modes: **By Journey Date** (`mode=journey`, default for transport operations) and **By Booking Date** (`mode=created`, for revenue/sales tracking).
+  - Eliminated duplicate `$top_routes` SQL execution and introduced dual ranking for Top Transit Corridors: **By Reservation Volume** and **By Confirmed Route Revenue**.
+  - Added operational **Attention-Needed Panel** surfacing actionable customer support inquiries, overbooked departures, trips boarding within 60 minutes, low-occupancy departures (<30%), and real-time seat-lock concurrency checks.
+  - Added **Average Confirmed Booking Value** calculation and **Booking Lead Time** analytics (`DATEDIFF(journey_date, booking_creation_date)`).
+  - Integrated streaming, formula-safe **Daily Breakdown CSV Export** (`?export=daily_csv`) with administrative audit logging.
+  - Role-gated System Health and diagnostic endpoints to `super_admin` only to prevent unauthorized privilege exposure.
+  - Added dedicated test suite `tests/test_dashboard_audit.php` (25/25 passing).
 - **Admin Dashboard Redesign (Plan v2)**:
-  - Unified all 8 KPI cards into a 2x4 executive grid (`.stat-card`) with real context sublines (Today's bookings, Active routes, Active vehicles, Total fleet capacity, Non-archived customers, Open inquiries, Active administrators, Confirmed revenue).
+  - Unified all 8 KPI cards into an executive grid (`.stat-card`) with real context sublines (Today's bookings, Active routes, Active vehicles, Total fleet capacity, Non-archived customers, Open inquiries, Active administrators, Confirmed revenue).
   - Streamlined KPI card design by removing redundant header badges and replacing legacy emoji with an inline SVG icon sprite (`#icon-wallet`, `#icon-ticket`, `#icon-users`, `#icon-mail`, `#icon-bus`, `#icon-route`, `#icon-seat`, `#icon-shield`, `#icon-clock`, `#icon-refresh`).
   - Added collapsible KPI Definitions & Methodology footnote under the KPI grid (`#kpiDefinitions`).
   - Relocated Today's Scheduled Departures directly beneath the KPI grid as a 5-second auto-advancing card strip (`.dep-strip`, `dep-strip.js`) featuring real-time status chips (Departed, Boarding soon, Upcoming), animated progress bar, slide counter, seat availability, occupancy progress meters, and dotted route line.

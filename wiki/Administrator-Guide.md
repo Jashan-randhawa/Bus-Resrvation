@@ -50,19 +50,44 @@ Administrative accounts can be protected using industry-standard Time-Based One-
 
 ## 2. Executive Dashboard KPIs (`admin/dashboard.php`)
 
-The executive dashboard consolidates operational and revenue KPIs with 30-day analytics and corridor trends:
+The executive analytics workspace consolidates operational, dispatch, and revenue KPIs with configurable reporting windows (7d, 30d, 90d), dual date filtering modes, route intelligence, and attention-needed alerts:
 
-| Metric Card | Badge / Context | Aggregation | Description |
+### 2.1 Authoritative Metric Definitions
+
+| Metric | Source & Aggregation | Scope & Semantics | Description |
 |---|---|---|---|
-| **Reservations** | 30-Day Window | `COUNT(*) FROM booking` | Confirmed bookings created in the last 30 days |
-| **Fleet** | Active Fleet | `COUNT(*) FROM buses WHERE archived_at IS NULL` | Operational vehicles registered |
-| **Routes** | Active Schedules | `COUNT(*) FROM route WHERE archived_at IS NULL` | Active transit connections |
-| **Fleet Seats** | Total Capacity | `SUM(capacity) FROM buses WHERE archived_at IS NULL` | Real passenger seats across all active buses |
-| **Passenger Accounts** | Active Directory | `COUNT(*) FROM costumer WHERE archived_at IS NULL` | Active customer accounts |
-| **System Staff** | Active RBAC | `COUNT(*) FROM admin WHERE is_active = 1` | Operational staff accounts |
-| **Passenger Inquiries** | Unread Inbox | `COUNT(*) FROM query WHERE status = 'new'` | Unread customer submissions |
-| **Total Revenue** | 30-Day Gross | `SUM(price) FROM booking WHERE status = 'Confirmed'` | Net earnings in current reporting window |
-| **Cancellation Rate** | 30-Day KPI | `(Cancelled / Total Bookings) * 100` | Percentage of bookings cancelled |
+| **Confirmed Revenue** | `SUM(price) FROM booking WHERE status = 'Confirmed' OR status IS NULL` | Selected Window (or All-time) | Net gross receipts from completed reservations. Excludes Pending holds, Cancelled, and Expired tickets. |
+| **Reservations** | `COUNT(*) FROM booking` | Selected Window (or All-time) | Gross volume of all booking attempts (Confirmed, Pending, Cancelled, Expired) within the reporting window. |
+| **Trip Occupancy** | `SUM(active_seats) / SUM(capacity) * 100` | Today's Departures | Real-time percentage of today's scheduled departure seats reserved by active passengers (`Confirmed` and `Pending`). |
+| **Cancellation Rate** | `(Cancelled / Total Window Reservations) * 100` | Selected Window | Percentage of reservations cancelled. Changes versus equal-length previous period are measured strictly in **percentage points (pts)**. |
+| **Confirmed Bookings** | `COUNT(*) FROM booking WHERE status = 'Confirmed'` | Selected Window | Successfully issued tickets that completed checkout without subsequent cancellation. |
+| **Average Booking Value** | `Confirmed Revenue / Confirmed Bookings` | Selected Window | Average transaction revenue generated per confirmed ticket. |
+| **Average Lead Time** | `AVG(DATEDIFF(date, DATE(created_at)))` | Selected Window (Confirmed) | Mean number of days between customer reservation creation and scheduled travel departure. |
+| **Active Customers** | `COUNT(*) FROM costumer WHERE archived_at IS NULL` | All-Time Directory | Registered, active customer passenger profiles. |
+| **Active Fleet** | `COUNT(*) FROM buses WHERE archived_at IS NULL` | Real-time Fleet | Operational buses currently in service. |
+| **Active Schedules** | `COUNT(*) FROM route WHERE archived_at IS NULL` | Real-time Timetable | Active scheduled transit corridors. |
+| **Total Fleet Capacity** | `SUM(capacity) FROM buses WHERE archived_at IS NULL` | Real-time Fleet | Total physical seating capacity across all active fleet vehicles. |
+| **Unanswered Inquiries** | `COUNT(*) FROM query WHERE status = 'new'` | Actionable Support | Customer contact submissions awaiting administrative response. |
+
+### 2.2 Reporting Date Modes
+
+The dashboard provides a dedicated mode toggle allowing administrators to view data from two distinct operational perspectives:
+- **By Journey Date (`mode=journey`, default):** Analyzes reservations by physical travel departure date (`booking.date`). This view is essential for fleet dispatchers, depot managers, and capacity planners monitoring on-the-road volume.
+- **By Booking Date (`mode=created`):** Analyzes reservations by transaction timestamp (`DATE(booking.created_at)`). This view is essential for finance officers and revenue managers tracking daily cash inflow and marketing conversion.
+
+### 2.3 Operational Alerting & Attention-Needed Panel
+
+The Attention-Needed panel surfaces real-time dispatch and governance items requiring immediate action:
+- **Actionable Inquiries:** Direct link and count of open customer queries requiring response.
+- **Full Capacity Departures:** Today's trips at 100% capacity where walk-ins must be diverted to alternative departures.
+- **Low Occupancy Departures:** Upcoming departures with <30% seat occupancy departing within the operational window.
+- **Boarding Soon:** Trips scheduled to depart within 60 minutes.
+- **System Integrity:** Automated verification of `seat_lock` table constraints and generated `active_seat` uniqueness to guarantee double-booking prevention.
+
+### 2.4 Data Export & Breakdown Table
+
+- **Daily Breakdown Table:** Continuous daily sequence showing reservations, cancellations, and daily revenue with previous-period delta context.
+- **Safe CSV Export (`?export=daily_csv`):** Memory-efficient streaming export with formula-injection mitigation (`escape_csv_formula`) and administrative audit logging.
 
 ---
 

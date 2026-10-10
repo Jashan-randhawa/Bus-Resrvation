@@ -751,10 +751,228 @@ html[data-theme="dark"] .corridor-bus-badge {
   color: var(--c-text-muted, #94a3b8);
 }
 
+/* ==========================================================================
+   Dashboard Reporting Controls & Mode Switcher
+   ========================================================================== */
+.dash-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dash-mode-toggle .btn,
+.dash-window-toggle .btn {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+}
+
+.dash-time-chip {
+  background: var(--c-surface, #ffffff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  color: var(--c-text-muted, #64748b);
+  border-radius: var(--radius-md, 8px);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* ==========================================================================
+   Attention-Needed Operational Panel
+   ========================================================================== */
+.attention-card {
+  border-radius: var(--radius-lg, 12px);
+  overflow: hidden;
+}
+
+.attention-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 0.75rem;
+}
+
+.attention-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.95rem 1.1rem;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--c-border, #e2e8f0);
+  background: var(--c-surface, #ffffff);
+  transition: all 0.2s ease;
+}
+
+.attention-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.attention-item.level-danger {
+  border-left: 4px solid var(--c-error, #dc2626);
+  background: #fff8f8;
+}
+
+.attention-item.level-warning {
+  border-left: 4px solid var(--c-warning, #d97706);
+  background: #fffdf5;
+}
+
+.attention-item.level-info {
+  border-left: 4px solid var(--c-primary, #2563eb);
+  background: #f8faff;
+}
+
+.attention-item.level-neutral {
+  border-left: 4px solid var(--c-text-muted, #64748b);
+  background: #fbfcfd;
+}
+
+.attention-icon-wrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.level-danger .attention-icon-wrap {
+  background: rgba(220, 38, 38, 0.12);
+  color: var(--c-error, #dc2626);
+}
+
+.level-warning .attention-icon-wrap {
+  background: rgba(217, 119, 6, 0.12);
+  color: var(--c-warning, #d97706);
+}
+
+.level-info .attention-icon-wrap {
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--c-primary, #2563eb);
+}
+
+.level-neutral .attention-icon-wrap {
+  background: rgba(100, 116, 139, 0.12);
+  color: var(--c-text-muted, #64748b);
+}
+
+.attention-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.attention-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--c-text, #1e293b);
+  margin-bottom: 0.15rem;
+}
+
+.attention-desc {
+  font-size: 0.78rem;
+  color: var(--c-text-muted, #64748b);
+  margin-bottom: 0.5rem;
+  line-height: 1.35;
+}
+
+.attention-action-link {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--c-primary, #2563eb);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.attention-action-link:hover {
+  text-decoration: underline;
+}
+
+.attention-empty {
+  padding: 1.5rem;
+  text-align: center;
+  background: var(--c-surface, #ffffff);
+  border-radius: var(--radius-md, 8px);
+  border: 1px dashed var(--c-border, #e2e8f0);
+}
+
+/* ==========================================================================
+   Corridor Tabs & Ranking Methodology
+   ========================================================================== */
+.corridor-nav-tabs {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.corridor-nav-tabs .btn {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+}
+
+.corridor-meta-note {
+  font-size: 0.76rem;
+  color: var(--c-text-muted, #64748b);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* ==========================================================================
+   Dark Mode Overrides for Attention, Tabs & Export
+   ========================================================================== */
+html[data-theme="dark"] .dash-time-chip {
+  background: var(--c-surface, #131b2e);
+  border-color: var(--c-border, #334155);
+  color: var(--c-text, #f8fafc);
+}
+
+html[data-theme="dark"] .attention-item {
+  background: var(--c-surface, #131b2e);
+  border-color: var(--c-border, #334155);
+}
+
+html[data-theme="dark"] .attention-item.level-danger {
+  background: rgba(220, 38, 38, 0.08);
+}
+
+html[data-theme="dark"] .attention-item.level-warning {
+  background: rgba(245, 158, 11, 0.08);
+}
+
+html[data-theme="dark"] .attention-item.level-info {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+html[data-theme="dark"] .attention-item.level-neutral {
+  background: rgba(148, 163, 184, 0.05);
+}
+
+html[data-theme="dark"] .attention-title {
+  color: var(--c-text, #f8fafc);
+}
+
+html[data-theme="dark"] .attention-desc {
+  color: var(--c-text-muted, #94a3b8);
+}
+
+html[data-theme="dark"] .attention-empty {
+  background: var(--c-surface, #131b2e);
+  border-color: var(--c-border, #334155);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dep-card,
   .dep-progress-bar,
-  .corridor-bar-fill {
+  .corridor-bar-fill,
+  .attention-item {
     transition: none !important;
   }
 }
