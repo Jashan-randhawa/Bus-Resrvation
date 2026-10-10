@@ -4,7 +4,15 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
-### Added
+- **Today's Departures Section Simplification & Optimization**:
+  - Replaced the horizontal auto-scrolling carousel with a clean, vertically scrollable compact operational list (`.dep-card-wrap`, `.dep-table-head`, `.dep-list-scroll`, `.dep-row`).
+  - Streamlined departure rows to show only essential operational data: departure time, origin &rarr; destination, bus vehicle badge, status chip (`Boarding soon` / `Upcoming`), seat occupancy count with slim progress bar, seats remaining (with `OVERBOOKED` detection), and direct manifest action.
+  - Prioritized active departures in chronological order (nearest departure first) and excluded completed trips (`Departed`) from the primary upcoming list.
+  - Added clean empty states distinguishing between "all departures completed today" and "no departures configured for today" with shortcuts to route schedules and full manifest.
+  - Removed carousel overhead: eliminated auto-rotation timer, 5-second progress bars, prev/next buttons, pause toggles, slide counters, and navigation dots.
+  - Safely removed obsolete single-use JavaScript files (`assets/js/dep-strip.js`, `assets/js/dep-carousel.js`) and carousel-only CSS declarations.
+  - Implemented responsive desktop grid, tablet column compaction (<992px), and mobile stacked card view (<576px) with dark theme overrides and `prefers-reduced-motion` compliance.
+  - Updated departure test suite `tests/test_departure_carousel.php` (26/26 passing).
 - **Admin Executive Dashboard Deep Audit & Upgrade**:
   - Established authoritative definitions for all executive and operational KPIs, segregating window performance from all-time directory counts.
   - Implemented dual date reporting modes: **By Journey Date** (`mode=journey`, default for transport operations) and **By Booking Date** (`mode=created`, for revenue/sales tracking).
