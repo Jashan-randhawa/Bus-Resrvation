@@ -428,7 +428,7 @@ if (isset($_POST['subbtn'])) {
             </div>
           </form>
         <?php else: ?>
-          <!-- Guest search form: saves to sessionStorage and opens sign-in modal -->
+          <!-- Guest search: encodes the query into the hidden next field, then opens the sign-in modal -->
           <form id="guestSearchForm">
             <div class="booking-form-grid">
               <div class="form-group mb-0">
@@ -527,9 +527,7 @@ if (isset($_POST['subbtn'])) {
               fromEl.dispatchEvent(new Event('change'));
             }
             if (toEl) {
-              setTimeout(function() {
-                toEl.value = toCity;
-              }, 60);
+              toEl.value = toCity;
             }
           }
 

@@ -525,6 +525,12 @@ input[type="date"].form-control {
 }
 
 @media (max-width: 991.98px) {
+  #mycollapsediv.show,
+  #mycollapsediv.collapsing {
+    max-height: calc(100dvh - 72px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
   .nav-link-custom {
     padding: .7rem .85rem !important;
   }
