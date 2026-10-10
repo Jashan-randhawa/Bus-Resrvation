@@ -494,6 +494,42 @@ section[id] {
   }
 }
 
+.swap-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  min-width: 44px;
+  min-height: 44px;
+  margin-block: -.75rem;
+  padding: 0 .5rem;
+  background: none;
+  border: 0;
+  color: var(--home-primary);
+  font-size: .875rem;
+  font-weight: 600;
+}
+
+.btn-touch {
+  min-height: 44px;
+}
+
+.btn-block.btn-touch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+input[type="date"].form-control {
+  min-height: calc(1.5em + .75rem + 2px);
+  line-height: 1.5;
+}
+
+@media (max-width: 991.98px) {
+  .nav-link-custom {
+    padding: .7rem .85rem !important;
+  }
+}
+
 @media (max-width: 575.98px) {
   .home-section {
     padding-block: 2.5rem;
@@ -521,6 +557,14 @@ section[id] {
   .booking-search-card .card-title-bar {
     margin-bottom: 1rem;
     padding-bottom: .75rem;
+  }
+  .booking-search-card .form-control,
+  .pnr-search-box .form-control {
+    min-height: 44px;
+  }
+  .public-footer .list-inline-item a {
+    display: inline-block;
+    padding: .55rem .35rem;
   }
 }
 

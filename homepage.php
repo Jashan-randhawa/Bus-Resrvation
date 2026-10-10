@@ -401,7 +401,9 @@ if (isset($_POST['subbtn'])) {
                   <label for="home_to" class="booking-field-label mb-0">
                     <span aria-hidden="true">🏁</span> Destination City
                   </label>
-                  <button type="button" class="btn btn-link btn-sm p-0 text-primary text-decoration-none" id="home_swap_btn" title="Swap Departure and Destination" style="font-size: 0.8rem; line-height: 1;">⇄ Swap</button>
+                  <button type="button" class="swap-btn" id="home_swap_btn" aria-label="Swap departure and destination">
+                    <span aria-hidden="true">&#8644;</span> Swap
+                  </button>
                 </div>
                 <select name="to" id="home_to" class="form-control mt-1" required>
                   <option value="">Select Destination City</option>
@@ -446,7 +448,9 @@ if (isset($_POST['subbtn'])) {
                   <label for="guest_to" class="booking-field-label mb-0">
                     <span aria-hidden="true">🏁</span> Destination City
                   </label>
-                  <button type="button" class="btn btn-link btn-sm p-0 text-primary text-decoration-none" id="guest_swap_btn" title="Swap Departure and Destination" style="font-size: 0.8rem; line-height: 1;">⇄ Swap</button>
+                  <button type="button" class="swap-btn" id="guest_swap_btn" aria-label="Swap departure and destination">
+                    <span aria-hidden="true">&#8644;</span> Swap
+                  </button>
                 </div>
                 <select id="guest_to" class="form-control mt-1" required>
                   <option value="">Select Destination City</option>
@@ -666,7 +670,7 @@ if (isset($_POST['subbtn'])) {
               <p class="card-text text-muted small">Daily scheduled coaches with reserved seating.</p>
             </div>
             <div class="mt-3 pt-3 border-top">
-              <a href="#search" class="btn btn-outline-primary btn-sm btn-block font-weight-bold prefill-route-btn" data-from="<?= e($pr['city1']) ?>" data-to="<?= e($pr['city2']) ?>">
+              <a href="#search" class="btn btn-outline-primary btn-block font-weight-bold btn-touch prefill-route-btn" data-from="<?= e($pr['city1']) ?>" data-to="<?= e($pr['city2']) ?>">
                 Book This Route &rarr;
               </a>
             </div>
@@ -820,7 +824,7 @@ if (isset($_POST['subbtn'])) {
                    required>
           </div>
           <div class="col-md-3 d-flex align-items-end">
-            <button class="btn btn-primary btn-block py-2" id="pnrSubmitBtn" type="submit" style="min-height: 40px;">
+            <button class="btn btn-primary btn-block py-2 btn-touch" id="pnrSubmitBtn" type="submit">
               Search Ticket
             </button>
           </div>
@@ -1165,11 +1169,11 @@ if (isset($_POST['subbtn'])) {
             <?= csrf_field() ?>
             <input type="hidden" name="next" value="<?= e(safe_next_url($_GET['next'] ?? $_POST['next'] ?? null) ?? '') ?>">
             <div class="form-row">
-              <div class="form-group col-6">
+              <div class="form-group col-12 col-sm-6">
                 <label for="fname" class="font-weight-bold small text-muted">First Name</label>
                 <input type="text" class="form-control" name="fname" id="fname" value="<?= e($old_register['fname']) ?>" placeholder="First" required />
               </div>
-              <div class="form-group col-6">
+              <div class="form-group col-12 col-sm-6">
                 <label for="lname" class="font-weight-bold small text-muted">Last Name</label>
                 <input type="text" class="form-control" name="lname" id="lname" value="<?= e($old_register['lname']) ?>" placeholder="Last" required />
               </div>
