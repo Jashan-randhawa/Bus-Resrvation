@@ -642,9 +642,40 @@ if (isset($_POST['subbtn'])) {
         </p>
       </div>
 
+      <div class="text-right mb-2">
+        <button type="button" id="routesPauseBtn" class="btn btn-link btn-sm" aria-pressed="false">Pause</button>
+      </div>
+
       <!-- Popular Routes Bootstrap Carousel (3s auto-cycle) -->
-      <?php $route_chunks = array_chunk($popular_routes, 3); ?>
-      <div id="popularRoutesCarousel" class="carousel slide" data-ride="carousel" data-interval="3000" data-pause="hover">
+      <?php
+      $render_route_card = function (array $pr): void { ?>
+        <div class="card h-100 border-0 shadow-sm popular-route-card">
+          <div class="card-body p-4 d-flex flex-column justify-content-between">
+            <div>
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="badge badge-light border text-muted px-2 py-1 small">
+                  <span aria-hidden="true">🚌</span> <?= e((string)($pr['bus_count'] ?? 1)) ?> Daily Departure<?= ((int)($pr['bus_count'] ?? 1) > 1) ? 's' : '' ?>
+                </span>
+                <span class="text-success font-weight-bold">
+                  from <?= CURRENCY ?><?= e(number_format((float)$pr['min_price'], 2)) ?>
+                </span>
+              </div>
+              <h5 class="card-title font-weight-bold text-dark mb-1">
+                <?= e($pr['city1']) ?> <span class="text-primary mx-1">&rarr;</span> <?= e($pr['city2']) ?>
+              </h5>
+              <p class="card-text text-muted small">Daily scheduled coaches with reserved seating.</p>
+            </div>
+            <div class="mt-3 pt-3 border-top">
+              <a href="#search" class="btn btn-outline-primary btn-sm btn-block font-weight-bold prefill-route-btn" data-from="<?= e($pr['city1']) ?>" data-to="<?= e($pr['city2']) ?>">
+                Book This Route &rarr;
+              </a>
+            </div>
+          </div>
+        </div>
+      <?php };
+      $route_chunks = array_chunk($popular_routes, 3);
+      ?>
+      <div id="popularRoutesCarousel" class="carousel slide d-none d-md-block" aria-roledescription="carousel" aria-label="Popular routes">
         <?php if (count($route_chunks) > 1): ?>
         <!-- Carousel Indicators -->
         <ol class="carousel-indicators">
@@ -661,29 +692,7 @@ if (isset($_POST['subbtn'])) {
               <div class="row">
                 <?php foreach ($chunk as $pr): ?>
                   <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100 border-0 shadow-sm popular-route-card">
-                      <div class="card-body p-4 d-flex flex-column justify-content-between">
-                        <div>
-                          <div class="d-flex align-items-center justify-content-between mb-2">
-                            <span class="badge badge-light border text-muted px-2 py-1 small">
-                              <span aria-hidden="true">🚌</span> <?= e((string)($pr['bus_count'] ?? 1)) ?> Daily Departure<?= ((int)($pr['bus_count'] ?? 1) > 1) ? 's' : '' ?>
-                            </span>
-                            <span class="text-success font-weight-bold">
-                              from <?= CURRENCY ?><?= e(number_format((float)$pr['min_price'], 2)) ?>
-                            </span>
-                          </div>
-                          <h5 class="card-title font-weight-bold text-dark mb-1">
-                            <?= e($pr['city1']) ?> <span class="text-primary mx-1">&rarr;</span> <?= e($pr['city2']) ?>
-                          </h5>
-                          <p class="card-text text-muted small">Daily scheduled coaches with reserved seating.</p>
-                        </div>
-                        <div class="mt-3 pt-3 border-top">
-                          <a href="#search" class="btn btn-outline-primary btn-sm btn-block font-weight-bold prefill-route-btn" data-from="<?= e($pr['city1']) ?>" data-to="<?= e($pr['city2']) ?>">
-                            Book This Route &rarr;
-                          </a>
-                        </div>
-                      </div>
-                    </div>
+                    <?php $render_route_card($pr); ?>
                   </div>
                 <?php endforeach; ?>
               </div>
@@ -704,17 +713,38 @@ if (isset($_POST['subbtn'])) {
         <?php endif; ?>
       </div>
 
+      <div class="routes-snap d-md-none" role="region" aria-label="Popular routes, swipe sideways" tabindex="0">
+        <?php foreach ($popular_routes as $pr): ?>
+          <div class="routes-snap-item"><?php $render_route_card($pr); ?></div>
+        <?php endforeach; ?>
+      </div>
+
       <script>
-        document.addEventListener('DOMContentLoaded', function() {
-          if (window.jQuery && $('#popularRoutesCarousel').length) {
-            $('#popularRoutesCarousel').carousel({
-              interval: 3000,
-              ride: 'carousel',
-              pause: 'hover',
-              wrap: true
-            });
-          }
+      document.addEventListener('DOMContentLoaded', function () {
+        if (!window.jQuery) return;
+        var $c = $('#popularRoutesCarousel');
+        if (!$c.length) return;
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var touch = window.matchMedia('(pointer: coarse)').matches;
+        var autoplay = !reduce && !touch; // mouse users only; never on touch or reduced motion
+        $c.carousel({
+          interval: autoplay ? 5000 : false,
+          ride: autoplay ? 'carousel' : false,
+          pause: 'hover', wrap: true, touch: true, keyboard: true
         });
+        // Keyboard focus inside the carousel also stops it.
+        $c.on('focusin', function () { $c.carousel('pause'); });
+        var btn = document.getElementById('routesPauseBtn');
+        if (btn) {
+          if (!autoplay) { btn.hidden = true; return; }
+          btn.addEventListener('click', function () {
+            var paused = btn.getAttribute('aria-pressed') === 'true';
+            $c.carousel(paused ? 'cycle' : 'pause');
+            btn.setAttribute('aria-pressed', String(!paused));
+            btn.textContent = paused ? 'Pause' : 'Play';
+          });
+        }
+      });
       </script>
 
       <!-- Trust signals / Facts row -->

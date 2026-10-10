@@ -604,12 +604,15 @@ section[id] {
   margin-bottom: 0;
 }
 
+/* Desktop carousel dots: 12px dot inside a 24px hit area */
 #popularRoutesCarousel .carousel-indicators li {
   width: 12px;
   height: 12px;
   border-radius: 50%;
   background-color: #cbd5e1;
-  border: none;
+  box-sizing: content-box;
+  border: 6px solid transparent;
+  background-clip: padding-box;
   margin: 0 4px;
   opacity: 1;
   transition: all 0.3s ease;
@@ -622,14 +625,26 @@ section[id] {
   border-radius: 9999px;
 }
 
-@media (max-width: 575.98px) {
-  #popularRoutesCarousel {
-    padding: 0 0 35px 0;
-  }
-  #popularRoutesCarousel .carousel-control-prev,
-  #popularRoutesCarousel .carousel-control-next {
-    display: none;
-  }
+.routes-snap {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 15px 16px;
+  margin: 0 -15px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.routes-snap::-webkit-scrollbar {
+  display: none;
+}
+.routes-snap-item {
+  flex: 0 0 82%;
+  scroll-snap-align: center;
+}
+.routes-snap:focus-visible {
+  outline: 2px solid var(--home-primary);
+  outline-offset: 2px;
 }
 
 html[data-theme="dark"] #popularRoutesCarousel .carousel-control-prev,
