@@ -85,7 +85,7 @@
         function compactNumber(val) {
             if (val >= 10000000) return (val / 10000000).toFixed(1) + 'Cr';
             if (val >= 100000) return (val / 100000).toFixed(1) + 'L';
-            if (val >= 1000) return (val / 1000).toFixed(0) + 'k';
+            if (val >= 1000) return (val / 1000).toFixed(0) + 'K';
             return Math.round(val).toString();
         }
 
@@ -95,12 +95,13 @@
             return {
                 primary: cs.getPropertyValue('--c-primary').trim() || '#2563eb',
                 primaryBg: isDark ? 'rgba(59, 130, 246, 0.85)' : 'rgba(37, 99, 235, 0.85)',
-                confirmed: isDark ? '#22c55e' : '#16a34a',
-                pending: isDark ? '#f59e0b' : '#d97706',
-                cancelled: isDark ? '#ef4444' : '#dc2626',
+                confirmed: isDark ? '#22c55e' : '#10b981',
+                pending: isDark ? '#fbbf24' : '#f59e0b',
+                cancelled: isDark ? '#f87171' : '#ef4444',
                 expired: isDark ? '#94a3b8' : '#64748b',
-                barBookings: isDark ? 'rgba(59, 130, 246, 0.72)' : 'rgba(59, 130, 246, 0.75)',
-                revenueLine: isDark ? '#38bdf8' : '#1d4ed8',
+                barBookings: isDark ? 'rgba(96, 165, 250, 0.85)' : '#60a5fa',
+                revenueLine: isDark ? '#60a5fa' : '#2563eb',
+                surface: isDark ? '#131b2e' : '#ffffff',
                 text: cs.getPropertyValue('--c-text').trim() || (isDark ? '#f8fafc' : '#0f172a'),
                 textMuted: cs.getPropertyValue('--c-text-muted').trim() || (isDark ? '#94a3b8' : '#64748b'),
                 border: cs.getPropertyValue('--c-border').trim() || (isDark ? '#334155' : '#e2e8f0'),
@@ -114,68 +115,42 @@
         var formattedLabels = labels.map(formatDateLabel);
         var colors = getThemeColors();
 
-        // 1. Combo Chart (Daily Stacked Volume Bars by Status + Confirmed Revenue Line)
+        // Compute total bookings per day from status arrays
+        var dailyTotals = labels.map(function(_, i) {
+            return (dailyConfirmed[i] || 0) + (dailyPending[i] || 0) + (dailyCancelled[i] || 0) + (dailyExpired[i] || 0);
+        });
+
+        // 1. Combo Chart: Total booking volume bars + Confirmed revenue line
         var comboDatasets = [
             {
                 type: 'bar',
-                label: 'Confirmed',
-                data: dailyConfirmed,
-                backgroundColor: colors.confirmed,
-                borderRadius: { topLeft: 3, topRight: 3 },
+                label: 'Bookings',
+                data: dailyTotals,
+                backgroundColor: colors.barBookings,
+                borderRadius: { topLeft: 4, topRight: 4 },
                 borderSkipped: false,
+                barPercentage: 0.62,
+                categoryPercentage: 0.82,
                 stack: 'bookings',
                 order: 2,
-            },
-            {
-                type: 'bar',
-                label: 'Pending',
-                data: dailyPending,
-                backgroundColor: colors.pending,
-                borderRadius: { topLeft: 3, topRight: 3 },
-                borderSkipped: false,
-                stack: 'bookings',
-                order: 3,
-            },
-            {
-                type: 'bar',
-                label: 'Cancelled',
-                data: dailyCancelled,
-                backgroundColor: colors.cancelled,
-                borderRadius: { topLeft: 3, topRight: 3 },
-                borderSkipped: false,
-                stack: 'bookings',
-                order: 4,
+                yAxisID: 'y',
             }
         ];
-
-        // Include expired if any exist in the dataset
-        if (totalExpired > 0) {
-            comboDatasets.push({
-                type: 'bar',
-                label: 'Expired',
-                data: dailyExpired,
-                backgroundColor: colors.expired,
-                borderRadius: { topLeft: 3, topRight: 3 },
-                borderSkipped: false,
-                stack: 'bookings',
-                order: 5,
-            });
-        }
 
         // Confirmed revenue line on right Y-axis
         comboDatasets.push({
             type: 'line',
-            label: 'Confirmed Revenue (' + currency + ')',
+            label: 'Revenue (' + currency + ')',
             data: revenue,
             borderColor: colors.revenueLine,
             backgroundColor: colors.revenueLine,
-            borderWidth: 2.2,
-            tension: 0.25,
-            pointRadius: windowDays === 7 ? 4 : (windowDays <= 30 ? 3 : 1),
+            borderWidth: 2.5,
+            tension: 0.3,
+            pointRadius: windowDays === 7 ? 4 : (windowDays <= 30 ? 3 : 1.5),
             pointHoverRadius: 6,
-            pointBackgroundColor: colors.revenueLine,
-            pointBorderColor: '#ffffff',
-            pointBorderWidth: 1.5,
+            pointBackgroundColor: '#ffffff',
+            pointBorderColor: colors.revenueLine,
+            pointBorderWidth: 2,
             yAxisID: 'y1',
             order: 1,
         });
@@ -273,7 +248,7 @@
                             color: colors.textMuted,
                             font: { size: 11 },
                             callback: function(val) {
-                                return currency + compactNumber(val);
+                                return compactNumber(val);
                             }
                         },
                         title: {
@@ -294,52 +269,31 @@
                 var interval = this.value;
                 if (interval === 'weekly') {
                     var weekLabels = [];
-                    var weekConfirmed = [];
-                    var weekPending = [];
-                    var weekCancelled = [];
-                    var weekExpired = [];
+                    var weekTotals = [];
                     var weekRevenue = [];
 
                     for (var i = 0; i < labels.length; i += 7) {
                         var chunkEnd = Math.min(i + 6, labels.length - 1);
-                        var wLabel = 'W' + (Math.floor(i / 7) + 1) + ' (' + formatDateLabel(labels[i]) + '-' + formatDateLabel(labels[chunkEnd]) + ')';
+                        var wLabel = 'W' + (Math.floor(i / 7) + 1) + ' (' + formatDateLabel(labels[i]) + ')';
                         weekLabels.push(wLabel);
 
-                        var sumC = 0, sumP = 0, sumX = 0, sumE = 0, sumR = 0;
+                        var sumT = 0, sumR = 0;
                         for (var j = i; j <= chunkEnd; j++) {
-                            sumC += (dailyConfirmed[j] || 0);
-                            sumP += (dailyPending[j] || 0);
-                            sumX += (dailyCancelled[j] || 0);
-                            sumE += (dailyExpired[j] || 0);
+                            sumT += (dailyTotals[j] || 0);
                             sumR += (revenue[j] || 0);
                         }
-                        weekConfirmed.push(sumC);
-                        weekPending.push(sumP);
-                        weekCancelled.push(sumX);
-                        weekExpired.push(sumE);
+                        weekTotals.push(sumT);
                         weekRevenue.push(sumR);
                     }
 
                     comboChart.data.labels = weekLabels;
-                    comboChart.data.datasets[0].data = weekConfirmed;
-                    comboChart.data.datasets[1].data = weekPending;
-                    comboChart.data.datasets[2].data = weekCancelled;
-                    if (totalExpired > 0 && comboChart.data.datasets[3]) {
-                        comboChart.data.datasets[3].data = weekExpired;
-                    }
-                    var revIdx = comboChart.data.datasets.length - 1;
-                    comboChart.data.datasets[revIdx].data = weekRevenue;
+                    comboChart.data.datasets[0].data = weekTotals;
+                    comboChart.data.datasets[1].data = weekRevenue;
                     comboChart.update();
                 } else {
                     comboChart.data.labels = formattedLabels;
-                    comboChart.data.datasets[0].data = dailyConfirmed;
-                    comboChart.data.datasets[1].data = dailyPending;
-                    comboChart.data.datasets[2].data = dailyCancelled;
-                    if (totalExpired > 0 && comboChart.data.datasets[3]) {
-                        comboChart.data.datasets[3].data = dailyExpired;
-                    }
-                    var revIdx2 = comboChart.data.datasets.length - 1;
-                    comboChart.data.datasets[revIdx2].data = revenue;
+                    comboChart.data.datasets[0].data = dailyTotals;
+                    comboChart.data.datasets[1].data = revenue;
                     comboChart.update();
                 }
             });
@@ -374,25 +328,22 @@
                     var bText = totalBookings > 0 ? totalBookings.toLocaleString('en-US') : '0';
                     var cPct = totalBookings > 0 ? ((totalConfirmed / totalBookings) * 100).toFixed(1) + '%' : '0.0%';
 
-                    // Center plugin Cancel Rate threshold reference:
-                    // Cancel Rate: cancelRate.toFixed(1) + '%'
-
                     // Primary count in center
-                    ctx.font = 'bold 1.45rem -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                    ctx.font = 'bold 1.55rem -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
                     ctx.fillStyle = th.text;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText(bText, width / 2, height / 2 - 12);
+                    ctx.fillText(bText, width / 2, height / 2 - 14);
 
                     // Subtitle
-                    ctx.font = '600 0.72rem -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                    ctx.font = '600 0.75rem -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
                     ctx.fillStyle = th.textMuted;
                     ctx.fillText('Bookings', width / 2, height / 2 + 5);
 
                     // Confirmation share percentage
-                    ctx.font = '700 0.8rem -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                    ctx.font = 'bold 0.84rem -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
                     ctx.fillStyle = th.confirmed;
-                    ctx.fillText(cPct, width / 2, height / 2 + 21);
+                    ctx.fillText(cPct, width / 2, height / 2 + 23);
 
                     ctx.restore();
                 }
@@ -405,8 +356,8 @@
                     datasets: [{
                         data: donutData,
                         backgroundColor: donutPalette,
-                        borderWidth: 2,
-                        borderColor: colors.border,
+                        borderWidth: 3,
+                        borderColor: colors.surface,
                     }]
                 },
                 options: {
@@ -449,13 +400,13 @@
         function updateChartsTheme() {
             var th = getThemeColors();
             if (comboChart) {
-                if (comboChart.data.datasets[0]) comboChart.data.datasets[0].backgroundColor = th.confirmed;
-                if (comboChart.data.datasets[1]) comboChart.data.datasets[1].backgroundColor = th.pending;
-                if (comboChart.data.datasets[2]) comboChart.data.datasets[2].backgroundColor = th.cancelled;
-                var revIndex = comboChart.data.datasets.length - 1;
-                comboChart.data.datasets[revIndex].borderColor = th.revenueLine;
-                comboChart.data.datasets[revIndex].backgroundColor = th.revenueLine;
-                comboChart.data.datasets[revIndex].pointBackgroundColor = th.revenueLine;
+                // Dataset 0: total bookings bars
+                if (comboChart.data.datasets[0]) comboChart.data.datasets[0].backgroundColor = th.barBookings;
+                // Dataset 1: revenue line
+                if (comboChart.data.datasets[1]) {
+                    comboChart.data.datasets[1].borderColor = th.revenueLine;
+                    comboChart.data.datasets[1].pointBorderColor = th.revenueLine;
+                }
 
                 comboChart.options.scales.x.grid.color = th.grid;
                 comboChart.options.scales.x.ticks.color = th.textMuted;

@@ -1092,7 +1092,7 @@ usort($attention_items, static function($a, $b) {
                 <div class="perf-tile is-blue" data-metric="total_bookings" title="Total Bookings / Reservations">
                     <div class="perf-tile-inner">
                         <div class="perf-kpi-icon is-blue" aria-hidden="true">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path>
                                 <path d="M13 5v2m0 4v2m0 4v2"></path>
                             </svg>
@@ -1123,7 +1123,7 @@ usort($attention_items, static function($a, $b) {
                 <div class="perf-tile is-green" data-metric="confirmed_bookings" title="Confirmed Bookings &amp; Revenue: <?= CURRENCY ?><?= perf_compact_num($cur_revenue) ?>">
                     <div class="perf-tile-inner">
                         <div class="perf-kpi-icon is-green" aria-hidden="true">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="20 6 9 17 4 12"></polyline>
                             </svg>
                         </div>
@@ -1153,7 +1153,7 @@ usort($attention_items, static function($a, $b) {
                 <div class="perf-tile is-amber" data-metric="pending_bookings" title="Pending Bookings awaiting confirmation">
                     <div class="perf-tile-inner">
                         <div class="perf-kpi-icon is-amber" aria-hidden="true">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <polyline points="12 6 12 12 16 14"></polyline>
                             </svg>
@@ -1167,9 +1167,9 @@ usort($attention_items, static function($a, $b) {
                                 <?php elseif ($prev_pending_bks === 0): ?>
                                     <span class="perf-delta is-new">New</span>
                                 <?php elseif ($pending_delta !== null && $pending_delta > 0): ?>
-                                    <span class="perf-delta is-down">&uarr; <?= $pending_delta ?>%</span>
+                                    <span class="perf-delta is-up">&uarr; <?= $pending_delta ?>%</span>
                                 <?php elseif ($pending_delta !== null && $pending_delta < 0): ?>
-                                    <span class="perf-delta is-up">&darr; <?= abs($pending_delta) ?>%</span>
+                                    <span class="perf-delta is-down">&darr; <?= abs($pending_delta) ?>%</span>
                                 <?php else: ?>
                                     <span class="perf-delta is-flat">0.0%</span>
                                 <?php endif; ?>
@@ -1183,7 +1183,7 @@ usort($attention_items, static function($a, $b) {
                 <div class="perf-tile is-red" data-metric="cancellation_rate" title="Cancellation Rate: <?= $cnl_rate ?>% (<?= number_format($all_cnl) ?> of <?= number_format($all_bks) ?>)">
                     <div class="perf-tile-inner">
                         <div class="perf-kpi-icon is-red" aria-hidden="true">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="18" y1="6" x2="6" y2="18"></line>
                                 <line x1="6" y1="6" x2="18" y2="18"></line>
                             </svg>
@@ -1284,26 +1284,34 @@ usort($attention_items, static function($a, $b) {
                         <canvas id="perfDonut" role="img" aria-label="Booking outcome distribution chart"></canvas>
                     </div>
                     <!-- Accessible Status Legend with Counts & Percentages -->
-                    <div class="perf-status-legend mt-2">
-                        <div class="perf-status-legend-item">
-                            <span class="perf-status-dot is-confirmed" aria-hidden="true"></span>
-                            <span class="perf-status-name">Confirmed</span>
+                    <div class="perf-status-legend mt-2" role="list" aria-label="Booking status distribution">
+                        <div class="perf-status-legend-item" role="listitem">
+                            <div class="perf-status-dot-row">
+                                <span class="perf-status-dot is-confirmed" aria-hidden="true"></span>
+                                <span class="perf-status-name">Confirmed</span>
+                            </div>
                             <span class="perf-status-value"><?= number_format($cur_confirmed_bks) ?> (<?= $cur_confirmed_pct ?>%)</span>
                         </div>
-                        <div class="perf-status-legend-item">
-                            <span class="perf-status-dot is-pending" aria-hidden="true"></span>
-                            <span class="perf-status-name">Pending</span>
+                        <div class="perf-status-legend-item" role="listitem">
+                            <div class="perf-status-dot-row">
+                                <span class="perf-status-dot is-pending" aria-hidden="true"></span>
+                                <span class="perf-status-name">Pending</span>
+                            </div>
                             <span class="perf-status-value"><?= number_format($cur_pending_bks) ?> (<?= $cur_pending_pct ?>%)</span>
                         </div>
-                        <div class="perf-status-legend-item">
-                            <span class="perf-status-dot is-cancelled" aria-hidden="true"></span>
-                            <span class="perf-status-name">Cancelled</span>
+                        <div class="perf-status-legend-item" role="listitem">
+                            <div class="perf-status-dot-row">
+                                <span class="perf-status-dot is-cancelled" aria-hidden="true"></span>
+                                <span class="perf-status-name">Cancelled</span>
+                            </div>
                             <span class="perf-status-value"><?= number_format($all_cnl) ?> (<?= $cnl_rate ?>%)</span>
                         </div>
                         <?php if ($cur_expired_bks > 0): ?>
-                            <div class="perf-status-legend-item">
-                                <span class="perf-status-dot is-expired" aria-hidden="true"></span>
-                                <span class="perf-status-name">Expired</span>
+                            <div class="perf-status-legend-item" role="listitem">
+                                <div class="perf-status-dot-row">
+                                    <span class="perf-status-dot is-expired" aria-hidden="true"></span>
+                                    <span class="perf-status-name">Expired</span>
+                                </div>
                                 <span class="perf-status-value"><?= number_format($cur_expired_bks) ?> (<?= $cur_expired_pct ?>%)</span>
                             </div>
                         <?php endif; ?>
