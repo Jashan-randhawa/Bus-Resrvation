@@ -119,17 +119,17 @@ $today_departures = db_all($link, "
 <!-- Primary 4 KPI Stat Cards (A12) -->
 <div class="row">
     <!-- Confirmed Revenue -->
-    <div class="col-xl-3 col-sm-6 mb-4">
+    <div class="col-12 col-sm-6 col-lg-3 mb-4">
         <div class="stat-card stat-revenue h-100 d-flex flex-column justify-content-between bg-white border shadow-sm">
             <div>
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="stat-label">Confirmed Revenue</span>
-                    <span class="badge badge-success">Audited</span>
+                    <span class="badge badge-success badge-sm">Audited</span>
                 </div>
                 <div class="stat-value text-success"><?= CURRENCY ?><?= e($total_earnings) ?></div>
             </div>
             <div>
-                <a href="<?= BASE_URL ?>/admin/bookings.php" class="stat-link text-success text-decoration-none">
+                <a href="<?= BASE_URL ?>/admin/bookings.php" class="stat-link stat-link-sm text-success text-decoration-none">
                     Sales Ledger &rarr;
                 </a>
             </div>
@@ -137,17 +137,17 @@ $today_departures = db_all($link, "
     </div>
 
     <!-- Total Reservations -->
-    <div class="col-xl-3 col-sm-6 mb-4">
+    <div class="col-12 col-sm-6 col-lg-3 mb-4">
         <div class="stat-card stat-bookings h-100 d-flex flex-column justify-content-between shadow-sm">
             <div>
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="stat-label">Reservations</span>
-                    <span class="badge badge-primary">Total</span>
+                    <span class="badge badge-primary badge-sm">Total</span>
                 </div>
                 <div class="stat-value"><?= e($total_bookings) ?></div>
             </div>
             <div>
-                <a href="<?= BASE_URL ?>/admin/bookings.php" class="stat-link text-primary text-decoration-none">
+                <a href="<?= BASE_URL ?>/admin/bookings.php" class="stat-link stat-link-sm text-primary text-decoration-none">
                     Review Bookings &rarr;
                 </a>
             </div>
@@ -155,17 +155,17 @@ $today_departures = db_all($link, "
     </div>
 
     <!-- Active Fleet Buses -->
-    <div class="col-xl-3 col-sm-6 mb-4">
+    <div class="col-12 col-sm-6 col-lg-3 mb-4">
         <div class="stat-card stat-fleet h-100 d-flex flex-column justify-content-between shadow-sm">
             <div>
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="stat-label">Active Fleet</span>
-                    <span class="badge badge-success">Active</span>
+                    <span class="badge badge-success badge-sm">Active</span>
                 </div>
                 <div class="stat-value"><?= e($total_buses) ?></div>
             </div>
             <div>
-                <a href="<?= BASE_URL ?>/admin/buses.php" class="stat-link text-success text-decoration-none">
+                <a href="<?= BASE_URL ?>/admin/buses.php" class="stat-link stat-link-sm text-success text-decoration-none">
                     Fleet Catalog &rarr;
                 </a>
             </div>
@@ -173,17 +173,17 @@ $today_departures = db_all($link, "
     </div>
 
     <!-- Active Transit Routes -->
-    <div class="col-xl-3 col-sm-6 mb-4">
+    <div class="col-12 col-sm-6 col-lg-3 mb-4">
         <div class="stat-card stat-routes h-100 d-flex flex-column justify-content-between shadow-sm">
             <div>
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="stat-label">Transit Routes</span>
-                    <span class="badge badge-warning text-dark">Active</span>
+                    <span class="badge badge-warning text-dark badge-sm">Active</span>
                 </div>
                 <div class="stat-value"><?= e($total_routes) ?></div>
             </div>
             <div>
-                <a href="<?= BASE_URL ?>/admin/routes.php" class="stat-link stat-link-warn text-decoration-none">
+                <a href="<?= BASE_URL ?>/admin/routes.php" class="stat-link stat-link-sm stat-link-warn text-decoration-none">
                     Manage Routes &rarr;
                 </a>
             </div>
@@ -267,7 +267,7 @@ $today_departures = db_all($link, "
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-hover table-stack mb-0">
                         <thead class="thead-light">
                             <tr>
                                 <th>Departure Time</th>
@@ -293,16 +293,16 @@ $today_departures = db_all($link, "
                                     $bar_class = $pct > 80 ? 'bg-danger' : ($pct > 50 ? 'bg-warning' : 'bg-success');
                                     ?>
                                     <tr>
-                                        <td>
+                                        <td data-label="Departure Time">
                                             <span class="font-weight-bold text-dark">⏰ <?= e($dep['time']) ?></span>
                                         </td>
-                                        <td>
+                                        <td data-label="Vehicle">
                                             <span class="badge badge-light border">🚌 <?= e($dep['busno']) ?></span>
                                         </td>
-                                        <td class="font-weight-medium text-dark">
+                                        <td data-label="Route Corridor" class="font-weight-medium text-dark">
                                             <?= e($dep['city1']) ?> &rarr; <?= e($dep['city2']) ?>
                                         </td>
-                                        <td style="min-width: 180px;">
+                                        <td data-label="Occupancy" style="min-width: 120px;">
                                             <div class="d-flex justify-content-between small text-muted mb-1">
                                                 <span><?= $booked ?> / <?= $cap ?> seats</span>
                                                 <span class="font-weight-bold"><?= $pct ?>%</span>
@@ -311,7 +311,7 @@ $today_departures = db_all($link, "
                                                 <div class="progress-bar <?= $bar_class ?>" role="progressbar" style="width: <?= $pct ?>%;" aria-valuenow="<?= $pct ?>" aria-valuemin="0" aria-valuemax="100"></div>
                                             </div>
                                         </td>
-                                        <td class="text-right">
+                                        <td data-label="Action" class="text-right">
                                             <a href="<?= BASE_URL ?>/admin/manifest.php?bus=<?= urlencode($dep['busno']) ?>&date=<?= urlencode($today_date) ?>&time=<?= urlencode($dep['time']) ?>" class="btn btn-sm btn-outline-primary py-1 px-2 font-weight-bold">
                                                 Manifest &rarr;
                                             </a>
@@ -338,7 +338,7 @@ $today_departures = db_all($link, "
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-hover table-stack mb-0">
                         <thead class="thead-light">
                             <tr>
                                 <th>Route Corridor</th>
@@ -353,12 +353,12 @@ $today_departures = db_all($link, "
                             <?php else: ?>
                                 <?php foreach ($top_routes as $tr): ?>
                                     <tr>
-                                        <td class="font-weight-medium text-dark">
+                                        <td data-label="Route Corridor" class="font-weight-medium text-dark">
                                             <?= e($tr['city1']) ?> &rarr; <?= e($tr['city2']) ?>
                                         </td>
-                                        <td><span class="badge badge-light border">🚌 <?= e($tr['bus']) ?></span></td>
-                                        <td><strong><?= (int)$tr['total_tickets'] ?></strong> tickets</td>
-                                        <td class="text-right font-weight-bold text-success">
+                                        <td data-label="Bus"><span class="badge badge-light border">🚌 <?= e($tr['bus']) ?></span></td>
+                                        <td data-label="Bookings"><strong><?= (int)$tr['total_tickets'] ?></strong> tickets</td>
+                                        <td data-label="Revenue" class="text-right font-weight-bold text-success">
                                             <?= CURRENCY ?><?= number_format((float)$tr['route_revenue'], 2) ?>
                                         </td>
                                     </tr>
@@ -381,13 +381,13 @@ $today_departures = db_all($link, "
                         <small class="text-muted font-weight-normal">(<?= e(date('d M', strtotime($window_start))) ?> &ndash; <?= e(date('d M Y', strtotime($window_end))) ?>)</small>
                     </h6>
                 </div>
-                <div class="d-flex align-items-center my-1">
-                    <div class="btn-group btn-group-sm mr-2" role="group" aria-label="Time window selector">
-                        <a href="?days=7" class="btn <?= $window_days === 7 ? 'btn-primary' : 'btn-outline-secondary' ?>">7d</a>
-                        <a href="?days=30" class="btn <?= $window_days === 30 ? 'btn-primary' : 'btn-outline-secondary' ?>">30d</a>
-                        <a href="?days=90" class="btn <?= $window_days === 90 ? 'btn-primary' : 'btn-outline-secondary' ?>">90d</a>
+                <div class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center my-1 gap-2">
+                    <div class="btn-group btn-group-sm w-100 w-sm-auto" role="group" aria-label="Time window selector">
+                        <a href="?days=7" class="btn btn-sm flex-fill <?= $window_days === 7 ? 'btn-primary' : 'btn-outline-secondary' ?>">7d</a>
+                        <a href="?days=30" class="btn btn-sm flex-fill <?= $window_days === 30 ? 'btn-primary' : 'btn-outline-secondary' ?>">30d</a>
+                        <a href="?days=90" class="btn btn-sm flex-fill <?= $window_days === 90 ? 'btn-primary' : 'btn-outline-secondary' ?>">90d</a>
                     </div>
-                    <span class="badge badge-info">Cancel Rate: <?= $cnl_rate ?>%</span>
+                    <span class="badge badge-info align-self-start align-self-sm-center">Cancel Rate: <?= $cnl_rate ?>%</span>
                 </div>
             </div>
             <div class="card-body p-0">
@@ -414,7 +414,7 @@ $today_departures = db_all($link, "
                 <?php endif; ?>
 
                 <div class="table-responsive" style="max-height: 240px; overflow-y: auto;">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-hover table-stack mb-0">
                         <thead class="thead-light">
                             <tr>
                                 <th>Date</th>
@@ -429,10 +429,10 @@ $today_departures = db_all($link, "
                             <?php else: ?>
                                 <?php foreach ($daily_stats as $ds): ?>
                                     <tr>
-                                        <td><small class="font-weight-medium text-dark"><?= e(date('d M Y', strtotime($ds['date']))) ?></small></td>
-                                        <td><span class="badge badge-primary px-2"><?= (int)$ds['daily_bookings'] ?></span></td>
-                                        <td><span class="badge badge-danger px-2"><?= (int)$ds['daily_cancelled'] ?></span></td>
-                                        <td class="text-right font-weight-bold text-success"><?= CURRENCY ?><?= number_format((float)$ds['daily_rev'], 2) ?></td>
+                                        <td data-label="Date"><small class="font-weight-medium text-dark"><?= e(date('d M Y', strtotime($ds['date']))) ?></small></td>
+                                        <td data-label="Reservations"><span class="badge badge-primary px-2"><?= (int)$ds['daily_bookings'] ?></span></td>
+                                        <td data-label="Cancelled"><span class="badge badge-danger px-2"><?= (int)$ds['daily_cancelled'] ?></span></td>
+                                        <td data-label="Daily Revenue" class="text-right font-weight-bold text-success"><?= CURRENCY ?><?= number_format((float)$ds['daily_rev'], 2) ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php endif; ?>
