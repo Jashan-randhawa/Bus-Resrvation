@@ -5,16 +5,16 @@ All notable changes to this project are documented in this file.
 ## [Unreleased]
 
 ### Added
-- **Performance Overview Charts & Indicators (A12)**:
-  - Replaced the basic 14-day bar strip with a full-width quick-read performance dashboard in `admin/dashboard.php`.
-  - Added 4 KPI indicator tiles: Reservations, Confirmed Revenue, Cancel Rate, and Average Reservations/Day with previous-period comparison badges and threshold-based indicator coloring.
-  - Implemented continuous zero-filled daily series query logic supporting 7d, 30d, and 90d operational windows.
-  - Integrated interactive combo chart via Chart.js with SRI hash (stacked active/cancelled booking volume + secondary axis revenue line) and outcome donut chart.
-  - Added summary highlights line for busiest day, top revenue day, and quietest booking day.
-  - Replaced static table clutter with an accessible collapsible daily breakdown accordion.
-  - Added live dark theme synchronization via `MutationObserver` and `prefers-reduced-motion` support.
+- **Admin Dashboard Redesign (Plan v2)**:
+  - Unified all 8 KPI cards into a 2x4 executive grid (`.stat-card`) with real context sublines (Today's bookings, Active routes, Active vehicles, Total fleet capacity, Non-archived customers, Open inquiries, Active administrators, Confirmed revenue).
+  - Streamlined KPI card design by removing redundant header badges and replacing legacy emoji with an inline SVG icon sprite (`#icon-wallet`, `#icon-ticket`, `#icon-users`, `#icon-mail`, `#icon-bus`, `#icon-route`, `#icon-seat`, `#icon-shield`, `#icon-clock`, `#icon-refresh`).
+  - Added collapsible KPI Definitions & Methodology footnote under the KPI grid (`#kpiDefinitions`).
+  - Relocated Today's Scheduled Departures directly beneath the KPI grid as a 5-second auto-advancing card strip (`.dep-strip`, `dep-strip.js`) featuring real-time status chips (Departed, Boarding soon, Upcoming), animated progress bar, slide counter, seat availability, occupancy progress meters, and dotted route line.
+  - Positioned 30-Day Performance Overview full width with KPI indicator tiles, Chart.js interactive combo chart & outcome donut chart, highlights line, and collapsible daily breakdown table.
+  - Redesigned Top Transit Corridors as a full-width ranked card list with proportional volume progress bars, route header, bus badges, and route revenue.
+  - Extracted modular dashboard styles into `assets/css/dashboard.css` with dark mode support (`html[data-theme="dark"]`) and WCAG AA contrast compliance.
 - **Departure Schedule Carousel (A12)**:
-  - Converted static departures table into a moving multi-card departure carousel with 3-second auto-slide, pause guards, touch swipe, and accessibility support.
+  - Multi-card departure carousel with auto-sliding, pause guards, touch swipe, and accessibility support.
 
 
 ## [2.3.0] - 2026-10-08

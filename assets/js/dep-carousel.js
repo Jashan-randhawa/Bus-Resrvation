@@ -8,7 +8,7 @@
 
     function initDepCarousel() {
         var carousel = document.querySelector('.dep-carousel');
-        if (!carousel) return;
+        if (!carousel || carousel.closest('.dep-strip')) return;
 
         var viewport = carousel.querySelector('.dep-viewport');
         var track = carousel.querySelector('.dep-track');
