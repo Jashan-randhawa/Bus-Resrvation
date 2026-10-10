@@ -512,75 +512,36 @@ $dep_summary_text = $total_active_deps > 0
 
 $overall_trip_occupancy = $today_total_capacity > 0 ? min(100, round(($today_total_booked / $today_total_capacity) * 100, 1)) : 0.0;
 
-// Attention-Needed Operational Panel Items
+// Attention-Needed Operational Action Center Items
 $attention_items = [];
 
-// 1. Unanswered Inquiries
-if ($new_queries_count > 0) {
-    $attention_items[] = [
-        'type' => 'inquiry',
-        'level' => 'warning',
-        'icon' => 'icon-mail',
-        'title' => $new_queries_count . ' Unanswered Customer ' . ($new_queries_count === 1 ? 'Inquiry' : 'Inquiries'),
-        'desc' => 'Customer questions awaiting administrative reply in the support inbox.',
-        'action_label' => 'Open Inbox &rarr;',
-        'action_url' => BASE_URL . '/admin/queries.php?filter=new',
-    ];
-}
-
-// 2. Overbooked Departures (Integrity Alert)
-$overbooked_deps = array_filter($processed_deps, fn($d) => $d['is_overbooked']);
+// 1. Overbooked Departures (Critical Integrity Alert)
+$overbooked_deps = array_filter($processed_deps, static fn($d) => $d['is_overbooked']);
 if (!empty($overbooked_deps)) {
     foreach ($overbooked_deps as $od) {
         $attention_items[] = [
             'type' => 'overbooked',
             'level' => 'danger',
+            'priority' => 'critical',
+            'priority_rank' => 1,
             'icon' => 'icon-shield',
             'title' => 'Overbooked Trip: ' . $od['busno'] . ' (' . $od['formatted_time'] . ')',
-            'desc' => 'Reserved seats (' . $od['booked'] . ') exceed vehicle capacity (' . $od['cap'] . ') for corridor ' . $od['city1'] . ' &rarr; ' . $od['city2'] . '.',
+            'desc' => 'Reserved seats (' . $od['booked'] . ') exceed vehicle capacity (' . $od['cap'] . ') on ' . $od['city1'] . ' &rarr; ' . $od['city2'] . '.',
             'action_label' => 'Inspect Manifest &rarr;',
             'action_url' => BASE_URL . '/admin/manifest.php?bus=' . urlencode($od['busno']) . '&date=' . urlencode($today_date) . '&time=' . urlencode($od['raw_time']),
         ];
     }
 }
 
-// 3. Departures Boarding Soon (within 60 mins)
-$boarding_deps = array_filter($processed_deps, fn($d) => $d['status_chip'] === 'Boarding soon');
-if (!empty($boarding_deps)) {
-    $first_boarding = reset($boarding_deps);
-    $attention_items[] = [
-        'type' => 'boarding',
-        'level' => 'info',
-        'icon' => 'icon-clock',
-        'title' => count($boarding_deps) . ' Departure(s) Boarding Soon',
-        'desc' => 'Next boarding: ' . $first_boarding['city1'] . ' &rarr; ' . $first_boarding['city2'] . ' (' . $first_boarding['busno'] . ') at ' . $first_boarding['formatted_time'] . '.',
-        'action_label' => 'View Manifest &rarr;',
-        'action_url' => BASE_URL . '/admin/manifest.php?bus=' . urlencode($first_boarding['busno']) . '&date=' . urlencode($today_date) . '&time=' . urlencode($first_boarding['raw_time']),
-    ];
-}
-
-// 4. Low-Occupancy Trips departing today (< 30%)
-$low_occ_deps = array_filter($processed_deps, fn($d) => $d['status_chip'] !== 'Departed' && $d['cap'] > 0 && ($d['pct'] < 30));
-if (!empty($low_occ_deps)) {
-    $first_low = reset($low_occ_deps);
-    $attention_items[] = [
-        'type' => 'low_occupancy',
-        'level' => 'neutral',
-        'icon' => 'icon-bus',
-        'title' => count($low_occ_deps) . ' Low-Occupancy Departure(s) Today',
-        'desc' => 'E.g. ' . $first_low['city1'] . ' &rarr; ' . $first_low['city2'] . ' at ' . $first_low['formatted_time'] . ' is currently at ' . $first_low['pct'] . '% capacity.',
-        'action_label' => 'Review Seats &rarr;',
-        'action_url' => BASE_URL . '/admin/seats.php?bus=' . urlencode($first_low['busno']) . '&date=' . urlencode($today_date) . '&time=' . urlencode($first_low['raw_time']),
-    ];
-}
-
-// 5. System & Concurrency Integrity Check
+// 2. System & Concurrency Integrity Check (Critical if error, Warning if index notice)
 $concurrency_diag = booking_concurrency_status($link);
 if ($concurrency_diag['status'] !== 'OK') {
     $diag_errors = array_merge($concurrency_diag['errors'] ?? [], $concurrency_diag['warnings'] ?? []);
     $attention_items[] = [
         'type' => 'integrity',
-        'level' => 'warning',
+        'level' => 'danger',
+        'priority' => 'critical',
+        'priority_rank' => 1,
         'icon' => 'icon-shield',
         'title' => 'Seat-Lock Concurrency Warning',
         'desc' => !empty($diag_errors) ? e(implode('; ', array_slice($diag_errors, 0, 2))) : 'Index verification required.',
@@ -588,6 +549,60 @@ if ($concurrency_diag['status'] !== 'OK') {
         'action_url' => $is_super_admin ? BASE_URL . '/admin/diagnostics.php' : '#',
     ];
 }
+
+// 3. Departures Boarding Soon (High Priority, within 60 mins)
+$boarding_deps = array_filter($processed_deps, static fn($d) => $d['status_chip'] === 'Boarding soon');
+if (!empty($boarding_deps)) {
+    $first_boarding = reset($boarding_deps);
+    $attention_items[] = [
+        'type' => 'boarding',
+        'level' => 'warning',
+        'priority' => 'high',
+        'priority_rank' => 2,
+        'icon' => 'icon-clock',
+        'title' => count($boarding_deps) . ' Departure(s) Boarding Soon',
+        'desc' => 'Next: ' . $first_boarding['city1'] . ' &rarr; ' . $first_boarding['city2'] . ' (' . $first_boarding['busno'] . ') at ' . $first_boarding['formatted_time'] . '.',
+        'action_label' => 'View Manifest &rarr;',
+        'action_url' => BASE_URL . '/admin/manifest.php?bus=' . urlencode($first_boarding['busno']) . '&date=' . urlencode($today_date) . '&time=' . urlencode($first_boarding['raw_time']),
+    ];
+}
+
+// 4. Unanswered Customer Inquiries (High Priority)
+if ($new_queries_count > 0) {
+    $attention_items[] = [
+        'type' => 'inquiry',
+        'level' => 'warning',
+        'priority' => 'high',
+        'priority_rank' => 2,
+        'icon' => 'icon-mail',
+        'title' => $new_queries_count . ' Unanswered Customer ' . ($new_queries_count === 1 ? 'Inquiry' : 'Inquiries'),
+        'desc' => 'Customers waiting for administrative response in support inbox.',
+        'action_label' => 'Open Inbox &rarr;',
+        'action_url' => BASE_URL . '/admin/queries.php?filter=new',
+    ];
+}
+
+// 5. Low-Occupancy Trips departing today (< 30%) (Attention / Operational Improvement)
+$low_occ_deps = array_filter($processed_deps, static fn($d) => $d['status_chip'] !== 'Departed' && $d['cap'] > 0 && ($d['pct'] < 30));
+if (!empty($low_occ_deps)) {
+    $first_low = reset($low_occ_deps);
+    $attention_items[] = [
+        'type' => 'low_occupancy',
+        'level' => 'info',
+        'priority' => 'attention',
+        'priority_rank' => 3,
+        'icon' => 'icon-bus',
+        'title' => count($low_occ_deps) . ' Low-Occupancy Departure(s) Today',
+        'desc' => 'E.g. ' . $first_low['city1'] . ' &rarr; ' . $first_low['city2'] . ' (' . $first_low['formatted_time'] . ') at ' . $first_low['pct'] . '% capacity.',
+        'action_label' => 'Review Seats &rarr;',
+        'action_url' => BASE_URL . '/admin/seats.php?bus=' . urlencode($first_low['busno']) . '&date=' . urlencode($today_date) . '&time=' . urlencode($first_low['raw_time']),
+    ];
+}
+
+// Sort attention items by priority rank (Critical first, High second, Attention third)
+usort($attention_items, static function($a, $b) {
+    return ($a['priority_rank'] ?? 2) <=> ($b['priority_rank'] ?? 2);
+});
 ?>
 
 <!-- Inline SVG Icon Sprite -->
@@ -1315,41 +1330,55 @@ if ($concurrency_diag['status'] !== 'OK') {
 </section>
 
 <!-- 7. Attention-Needed Operational Panel -->
-<section class="dash-section">
+<section class="dash-section" aria-label="Attention Needed Items">
     <div class="card attention-card border-0 shadow-sm">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h6 class="mb-0 font-weight-bold text-dark d-flex align-items-center">
-                <span class="mr-2">🔔</span> Attention-Needed Items
-            </h6>
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h6 class="mb-0 font-weight-bold text-dark d-flex align-items-center">
+                    <span class="attention-header-dot mr-2" aria-hidden="true"></span>
+                    Attention Needed
+                    <!-- Attention-Needed Items compatibility -->
+                </h6>
+                <p class="text-muted small mb-0 mt-0">Issues requiring review or action</p>
+            </div>
             <?php if (!empty($attention_items)): ?>
-                <span class="badge badge-warning text-dark font-weight-bold"><?= count($attention_items) ?> Operational Items</span>
+                <span class="badge attention-count-badge font-weight-bold"><?= count($attention_items) ?> issue<?= count($attention_items) === 1 ? '' : 's' ?></span>
             <?php else: ?>
-                <span class="badge badge-success font-weight-bold">All Systems Normal</span>
+                <span class="badge badge-success font-weight-bold">All Clear</span>
             <?php endif; ?>
         </div>
         <div class="card-body p-3">
             <?php if (empty($attention_items)): ?>
                 <div class="attention-empty">
-                    <div class="mb-2" style="font-size: 2rem;">✅</div>
-                    <h6 class="font-weight-bold text-dark mb-1">All Operational Systems Normal</h6>
-                    <p class="small text-muted mb-0">No overbooked trips, pending customer support inquiries, or concurrency integrity warnings.</p>
+                    <div class="attention-empty-icon mb-2">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    </div>
+                    <h6 class="font-weight-bold text-dark mb-1">All clear</h6>
+                    <p class="small text-muted mb-0">No outstanding issues require attention.</p>
                 </div>
             <?php else: ?>
-                <div class="attention-grid">
+                <div class="attention-list">
                     <?php foreach ($attention_items as $item): ?>
-                        <div class="attention-item level-<?= e($item['level']) ?>">
-                            <div class="attention-icon-wrap">
-                                <svg width="18" height="18"><use href="#<?= e($item['icon']) ?>"></use></svg>
+                        <div class="attention-item attention-row priority-<?= e($item['priority'] ?? 'attention') ?> level-<?= e($item['level']) ?>">
+                            <div class="attention-indicator-wrap" aria-hidden="true">
+                                <span class="attention-dot"></span>
                             </div>
                             <div class="attention-content">
-                                <div class="attention-title"><?= e($item['title']) ?></div>
+                                <div class="attention-meta-line">
+                                    <span class="attention-badge priority-badge-<?= e($item['priority'] ?? 'attention') ?>">
+                                        <?= $item['priority'] === 'critical' ? 'Critical' : ($item['priority'] === 'high' ? 'High Priority' : 'Attention') ?>
+                                    </span>
+                                    <span class="attention-title"><?= e($item['title']) ?></span>
+                                </div>
                                 <div class="attention-desc"><?= e($item['desc']) ?></div>
-                                <?php if (!empty($item['action_url'])): ?>
+                            </div>
+                            <?php if (!empty($item['action_url'])): ?>
+                                <div class="attention-action-wrap">
                                     <a href="<?= e($item['action_url']) ?>" class="attention-action-link">
                                         <?= e($item['action_label']) ?>
                                     </a>
-                                <?php endif; ?>
-                            </div>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
                 </div>

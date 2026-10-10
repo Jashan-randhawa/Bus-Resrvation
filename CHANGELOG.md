@@ -4,6 +4,15 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- **Attention-Needed Action Center Interface Upgrade**:
+  - Redesigned the Attention-Needed operational section into a clean, compact, professional action-center interface.
+  - Introduced an operational priority system with strict visual hierarchy: **Critical** (subtle red indicator, e.g. overbooked trips, seat-lock concurrency warnings), **High Priority** (restrained amber indicator, e.g. departures boarding within 60 mins, unanswered inquiries), and **Attention** (informational blue indicator, e.g. low-occupancy departures).
+  - Implemented automatic sorting by severity rank ensuring critical interventions are always surfaced at the top.
+  - Streamlined row layout with compact meta-line, severity badge, clear issue title, concise one-line context, and aligned action links (`Inspect Manifest →`, `View Manifest →`, `Open Inbox →`, `Review Seats →`, `Run Diagnostics →`).
+  - Added a calm, restrained empty state ("All clear: No outstanding issues require attention") when zero operational alerts exist.
+  - Polished responsive behavior for desktop, tablet, and stacked mobile screens with comprehensive dark theme tokens.
+
+
 - **Admin Dashboard Performance Overview Business Analytics Workspace**:
   - Redesigned the Performance Overview section into a self-contained business analytics workspace with dynamic date context, comparison range indication, and synchronized 7d/30d/90d duration selectors.
   - Implemented 4 authoritative primary KPI tiles with semantic delta indicators and context footnotes: **Reservations**, **Confirmed Revenue** (strictly excluding pending, cancelled, and expired holds), **Cancellation Rate** (with restrained threshold color coding and percentage point change), and **Average Confirmed Booking Value** (`Confirmed Revenue / Eligible Confirmed Bookings`).
