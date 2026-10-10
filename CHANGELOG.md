@@ -4,6 +4,16 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- **Redesign Performance Overview — Privacy-First Analytics Dashboard**:
+  - Redesigned the Performance Overview section into a modern, responsive, information-dense SaaS analytics dashboard adhering strictly to privacy-first principles.
+  - Implemented 4 responsive KPI cards: **Total Bookings** (with comparison delta vs previous period), **Confirmed Bookings** (with contextual percentage of total), **Pending Bookings** (with contextual percentage), and **Cancellation Rate** (with status-coded delta and warning threshold indicators).
+  - Enhanced **Booking & Revenue Trends** combo chart with dual Y-axes (Bookings on left, Revenue on right), compact header legend, custom interval aggregation toggle (`Daily` vs `Weekly`), dashed gridlines, and informative hover tooltips without passenger details.
+  - Created a responsive **Booking Status** donut visualization with prominent center total and confirmation percentage, accessible counts and shares legend, and zero-division handling for empty periods.
+  - Replaced dense text lists with a compact **Key Insights** section providing 3 mathematically verified insights (volume trend, confirmation stability, cancellation range) alongside a visible privacy badge (`Aggregate analytics only · Personal booking details hidden`).
+  - Enforced strict privacy safeguards across all layers: server-side aggregated datasets only, no passenger names, phone numbers, email addresses, booking IDs, PNRs, or transaction references in frontend datasets, charts, tooltips, or error handlers.
+  - Maintained full compatibility with dark mode (`html[data-theme="dark"]`), keyboard accessibility, WCAG AA contrast, and `prefers-reduced-motion`.
+  - All test suites passing (24/24 in `test_perf_overview.php`, 25/25 in `test_dashboard_audit.php`, 26/26 in `test_departure_carousel.php`, 68/68 in `test_admin_login.php`).
+
 - **Attention-Needed Action Center Interface Upgrade**:
   - Redesigned the Attention-Needed operational section into a clean, compact, professional action-center interface.
   - Introduced an operational priority system with strict visual hierarchy: **Critical** (subtle red indicator, e.g. overbooked trips, seat-lock concurrency warnings), **High Priority** (restrained amber indicator, e.g. departures boarding within 60 mins, unanswered inquiries), and **Attention** (informational blue indicator, e.g. low-occupancy departures).

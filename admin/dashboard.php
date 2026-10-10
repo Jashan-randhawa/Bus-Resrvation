@@ -218,8 +218,15 @@ $prev_total = (int)($prev['total'] ?? 0);
 $prev_cancelled = (int)($prev['cancelled'] ?? 0);
 $prev_revenue = (float)($prev['revenue'] ?? 0);
 $prev_confirmed_bks = (int)($prev['confirmed_count'] ?? 0);
+$prev_pending_bks = (int)($prev['pending_count'] ?? 0);
 $prev_avg_booking_val = $prev_confirmed_bks > 0 ? round($prev_revenue / $prev_confirmed_bks, 2) : 0.0;
 $prev_cnl_rate = $prev_total > 0 ? round(($prev_cancelled / $prev_total) * 100, 1) : 0;
+$prev_confirmed_pct = $prev_total > 0 ? round(($prev_confirmed_bks / $prev_total) * 100, 1) : 0.0;
+$prev_pending_pct = $prev_total > 0 ? round(($prev_pending_bks / $prev_total) * 100, 1) : 0.0;
+
+$cur_confirmed_pct = $all_bks > 0 ? round(($cur_confirmed_bks / $all_bks) * 100, 1) : 0.0;
+$cur_pending_pct = $all_bks > 0 ? round(($cur_pending_bks / $all_bks) * 100, 1) : 0.0;
+$cur_expired_pct = $all_bks > 0 ? round(($cur_expired_bks / $all_bks) * 100, 1) : 0.0;
 
 $avg_per_day = $window_days > 0 ? round($all_bks / $window_days, 1) : 0.0;
 $prev_avg_per_day = $window_days > 0 ? round($prev_total / $window_days, 1) : 0.0;
@@ -240,6 +247,8 @@ if (!function_exists('perf_compact_num')) {
 }
 
 $bks_delta = perf_pct_change($all_bks, $prev_total);
+$confirmed_delta = perf_pct_change($cur_confirmed_bks, $prev_confirmed_bks);
+$pending_delta = perf_pct_change($cur_pending_bks, $prev_pending_bks);
 $rev_delta = perf_pct_change($cur_revenue, $prev_revenue);
 $cnl_rate_delta = round($cnl_rate - $prev_cnl_rate, 1);
 $avg_delta = perf_pct_change($avg_per_day, $prev_avg_per_day);
@@ -349,6 +358,72 @@ $insights_list[] = [
     'sub' => $c_trend_msg . ' (' . number_format($all_cnl) . ' of ' . number_format($all_bks) . ' cancelled)',
     'icon' => '📉'
 ];
+
+// 3 Verified Key Insights strictly from actual data & thresholds
+$insight_vol_title = 'Booking volume';
+$insight_vol_body = '';
+if ($prev_total > 0 && $bks_delta !== null) {
+    if ($bks_delta > 0) {
+        $insight_vol_title = 'Bookings increased';
+        $insight_vol_body = "Total bookings are {$bks_delta}% higher compared with the previous {$window_days} days, showing steady growth in demand.";
+    } elseif ($bks_delta < 0) {
+        $abs_delta = abs($bks_delta);
+        $insight_vol_title = 'Bookings decreased';
+        $insight_vol_body = "Total bookings are {$abs_delta}% lower compared with the previous {$window_days} days (" . number_format($all_bks) . " vs " . number_format($prev_total) . ").";
+    } else {
+        $insight_vol_title = 'Booking volume steady';
+        $insight_vol_body = "Total bookings matched the previous {$window_days} days at " . number_format($all_bks) . " reservations.";
+    }
+} elseif ($all_bks > 0) {
+    $insight_vol_title = 'Booking volume recorded';
+    $insight_vol_body = "Total bookings reached " . number_format($all_bks) . " for the current {$window_days}-day period.";
+} else {
+    $insight_vol_title = 'No bookings recorded';
+    $insight_vol_body = "No reservations were placed during the selected {$window_days}-day timeframe.";
+}
+
+$insight_conf_title = 'Confirmation rate';
+$insight_conf_body = '';
+if ($all_bks > 0) {
+    if ($prev_total > 0) {
+        $conf_diff = round($cur_confirmed_pct - $prev_confirmed_pct, 1);
+        if (abs($conf_diff) <= 1.5) {
+            $insight_conf_title = 'Confirmation rate is stable';
+            $insight_conf_body = "{$cur_confirmed_pct}% of bookings are confirmed, which is consistent with the recent period.";
+        } elseif ($conf_diff > 1.5) {
+            $insight_conf_title = 'Confirmation rate improved';
+            $insight_conf_body = "{$cur_confirmed_pct}% of bookings are confirmed, up {$conf_diff} percentage points compared with the previous {$window_days} days.";
+        } else {
+            $abs_conf = abs($conf_diff);
+            $insight_conf_title = 'Confirmation rate declined';
+            $insight_conf_body = "{$cur_confirmed_pct}% of bookings are confirmed, down {$abs_conf} percentage points compared with the previous {$window_days} days.";
+        }
+    } else {
+        $insight_conf_title = 'Confirmation distribution';
+        $insight_conf_body = "{$cur_confirmed_pct}% of bookings are confirmed (" . number_format($cur_confirmed_bks) . " of " . number_format($all_bks) . " total reservations).";
+    }
+} else {
+    $insight_conf_title = 'Confirmation baseline';
+    $insight_conf_body = "No reservations in this timeframe to calculate confirmation rate.";
+}
+
+$insight_cnl_title = 'Cancellation rate';
+$insight_cnl_body = '';
+if ($all_bks > 0) {
+    if ($cnl_rate < CANCEL_RATE_WARN_THRESHOLD) {
+        $insight_cnl_title = 'Cancellation rate is within range';
+        $insight_cnl_body = "{$cnl_rate}% of bookings were cancelled, which is within the expected range for this period.";
+    } elseif ($cnl_rate < CANCEL_RATE_DANGER_THRESHOLD) {
+        $insight_cnl_title = 'Cancellation rate is elevated';
+        $insight_cnl_body = "{$cnl_rate}% of bookings were cancelled, exceeding the " . CANCEL_RATE_WARN_THRESHOLD . "% warning threshold.";
+    } else {
+        $insight_cnl_title = 'Cancellation rate requires attention';
+        $insight_cnl_body = "{$cnl_rate}% of bookings were cancelled, exceeding the " . CANCEL_RATE_DANGER_THRESHOLD . "% critical threshold.";
+    }
+} else {
+    $insight_cnl_title = 'Cancellation rate is within range';
+    $insight_cnl_body = "0.0% cancellations recorded during the current {$window_days}-day period.";
+}
 
 $highlights_html = !empty($insights_list) ? implode(' &nbsp;&bull;&nbsp; ', array_map(static fn($in) => '<strong>' . e($in['label']) . ':</strong> ' . e($in['val']) . ' <span class="text-muted">(' . e($in['sub']) . ')</span>', array_slice($insights_list, 0, 3))) : '';
 
@@ -973,212 +1048,328 @@ usort($attention_items, static function($a, $b) {
     </div>
 </section>
 
-<!-- 5. Performance Overview: Business Analytics Workspace -->
+<!-- 5. Performance Overview: Privacy-First Business Analytics Dashboard -->
 <section class="dash-section" aria-label="Performance Overview">
     <div class="card perf-card border-0 shadow-sm">
-        <header class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center">
-            <div class="my-1">
-                <h2 class="dash-section-title mb-1 d-flex align-items-center">
-                    <svg width="20" height="20" class="text-primary mr-2" aria-hidden="true"><use href="#icon-wallet"></use></svg>
-                    <!-- <?= $window_days ?>-Day Performance Overview (30-Day Performance Overview) -->
-                    Performance Overview
-                </h2>
-                <div class="dash-section-sub d-flex align-items-center flex-wrap">
+        <header class="perf-header">
+            <div class="perf-header-main">
+                <div class="perf-title-row">
+                    <div class="perf-header-icon" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="perf-title mb-0">Performance Overview</h2>
+                        <p class="perf-subtitle mb-0">Booking activity and revenue trends</p>
+                    </div>
+                </div>
+                <div class="perf-header-meta">
                     <span class="badge badge-light border text-muted font-weight-bold mr-2">
                         <?= $reporting_mode === 'created' ? 'Booking Date' : 'Journey Date' ?>
                     </span>
-                    <span class="mr-2 text-dark font-weight-bold">
+                    <span class="perf-date-text font-weight-bold text-dark">
                         <?= e(date('d M', strtotime($window_start))) ?> &ndash; <?= e(date('d M Y', strtotime($window_end))) ?>
                     </span>
-                    <span class="text-muted small">
+                    <span class="perf-compare-text text-muted small ml-1">
                         &bull; Compared with <?= e(date('d M', strtotime($prev_start))) ?> &ndash; <?= e(date('d M Y', strtotime($prev_end))) ?>
                     </span>
                 </div>
             </div>
-            <div class="btn-group btn-group-sm my-1 dash-window-toggle" role="group" aria-label="Reporting duration selector">
-                <a href="?days=7&mode=<?= $reporting_mode ?>" class="btn btn-sm <?= $window_days === 7 ? 'btn-primary' : 'btn-outline-secondary' ?>" aria-label="7 days period" <?= $window_days === 7 ? 'aria-current="true"' : '' ?>>7 days</a>
-                <a href="?days=30&mode=<?= $reporting_mode ?>" class="btn btn-sm <?= $window_days === 30 ? 'btn-primary' : 'btn-outline-secondary' ?>" aria-label="30 days period" <?= $window_days === 30 ? 'aria-current="true"' : '' ?>>30 days</a>
-                <a href="?days=90&mode=<?= $reporting_mode ?>" class="btn btn-sm <?= $window_days === 90 ? 'btn-primary' : 'btn-outline-secondary' ?>" aria-label="90 days period" <?= $window_days === 90 ? 'aria-current="true"' : '' ?>>90 days</a>
+            <div class="perf-range-seg" role="group" aria-label="Reporting duration selector">
+                <a href="?days=7&mode=<?= $reporting_mode ?>" class="perf-range-btn <?= $window_days === 7 ? 'is-active' : '' ?>" aria-label="7 days period" <?= $window_days === 7 ? 'aria-current="true"' : '' ?>>7 days</a>
+                <a href="?days=30&mode=<?= $reporting_mode ?>" class="perf-range-btn <?= $window_days === 30 ? 'is-active' : '' ?>" aria-label="30 days period" <?= $window_days === 30 ? 'aria-current="true"' : '' ?>>30 days</a>
+                <a href="?days=90&mode=<?= $reporting_mode ?>" class="perf-range-btn <?= $window_days === 90 ? 'is-active' : '' ?>" aria-label="90 days period" <?= $window_days === 90 ? 'aria-current="true"' : '' ?>>90 days</a>
             </div>
         </header>
 
         <div class="card-body p-3">
-            <!-- 4 Authoritative Performance KPI Tiles -->
+            <!-- 4 Responsive Performance KPI Cards -->
             <div class="perf-tiles mb-3">
-                <!-- KPI 1: Reservations -->
-                <div class="perf-tile">
-                    <div class="perf-tile-header">
-                        <span class="perf-label">Reservations</span>
-                    </div>
-                    <div class="perf-value"><?= number_format($all_bks) ?></div>
-                    <div class="perf-tile-footer">
-                        <?php if ($all_bks === 0 && $prev_total === 0): ?>
-                            <span class="text-muted small">No data</span>
-                        <?php elseif ($prev_total === 0): ?>
-                            <span class="perf-delta is-new">New</span>
-                        <?php elseif ($bks_delta > 0): ?>
-                            <span class="perf-delta is-up">&#9650; +<?= $bks_delta ?>% vs prev</span>
-                        <?php elseif ($bks_delta < 0): ?>
-                            <span class="perf-delta is-down">&#9660; <?= $bks_delta ?>% vs prev</span>
-                        <?php else: ?>
-                            <span class="perf-delta is-flat">0.0% vs prev</span>
-                        <?php endif; ?>
-                        <span class="perf-context-lbl">All reservation attempts</span>
-                    </div>
-                </div>
-
-                <!-- KPI 2: Confirmed Revenue -->
-                <div class="perf-tile">
-                    <div class="perf-tile-header">
-                        <span class="perf-label">Confirmed Revenue</span>
-                    </div>
-                    <div class="perf-value" title="<?= CURRENCY ?><?= number_format($cur_revenue, 2) ?>"><?= CURRENCY ?><?= perf_compact_num($cur_revenue) ?></div>
-                    <div class="perf-tile-footer">
-                        <?php if ($cur_revenue == 0 && $prev_revenue == 0): ?>
-                            <span class="text-muted small">No data</span>
-                        <?php elseif ($prev_revenue == 0): ?>
-                            <span class="perf-delta is-new">New</span>
-                        <?php elseif ($rev_delta > 0): ?>
-                            <span class="perf-delta is-up">&#9650; +<?= $rev_delta ?>% vs prev</span>
-                        <?php elseif ($rev_delta < 0): ?>
-                            <span class="perf-delta is-down">&#9660; <?= $rev_delta ?>% vs prev</span>
-                        <?php else: ?>
-                            <span class="perf-delta is-flat">0.0% vs prev</span>
-                        <?php endif; ?>
-                        <span class="perf-context-lbl">Excludes pending &amp; cancelled</span>
+                <!-- KPI 1: Total Bookings -->
+                <div class="perf-tile is-blue" data-metric="total_bookings" title="Total Bookings / Reservations">
+                    <div class="perf-tile-inner">
+                        <div class="perf-kpi-icon is-blue" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path>
+                                <path d="M13 5v2m0 4v2m0 4v2"></path>
+                            </svg>
+                        </div>
+                        <div class="perf-kpi-body">
+                            <span class="perf-label">Total Bookings</span>
+                            <!-- Reservations -->
+                            <div class="perf-val-row">
+                                <span class="perf-value"><?= number_format($all_bks) ?></span>
+                                <?php if ($all_bks === 0 && $prev_total === 0): ?>
+                                    <span class="perf-delta is-flat">0.0%</span>
+                                <?php elseif ($prev_total === 0): ?>
+                                    <span class="perf-delta is-new">New</span>
+                                <?php elseif ($bks_delta > 0): ?>
+                                    <span class="perf-delta is-up">&uarr; <?= $bks_delta ?>%</span>
+                                <?php elseif ($bks_delta < 0): ?>
+                                    <span class="perf-delta is-down">&darr; <?= abs($bks_delta) ?>%</span>
+                                <?php else: ?>
+                                    <span class="perf-delta is-flat">0.0%</span>
+                                <?php endif; ?>
+                            </div>
+                            <span class="perf-subtext">vs previous <?= $window_days ?> days</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- KPI 3: Cancellation Rate -->
-                <div class="perf-tile">
-                    <div class="perf-tile-header">
-                        <span class="perf-label">Cancellation Rate</span>
-                    </div>
-                    <div class="perf-value <?= $cnl_val_class ?>"><?= $cnl_rate ?>%</div>
-                    <div class="perf-tile-footer">
-                        <?php if ($all_bks === 0 && $prev_total === 0): ?>
-                            <span class="text-muted small">No data</span>
-                        <?php elseif ($prev_total === 0): ?>
-                            <span class="perf-delta is-new">New</span>
-                        <?php elseif ($cnl_rate_delta > 0): ?>
-                            <span class="perf-delta is-down">&#9650; +<?= $cnl_rate_delta ?> pts vs prev</span>
-                        <?php elseif ($cnl_rate_delta < 0): ?>
-                            <span class="perf-delta is-up">&#9660; <?= $cnl_rate_delta ?> pts vs prev</span>
-                        <?php else: ?>
-                            <span class="perf-delta is-flat">0.0 pts vs prev</span>
-                        <?php endif; ?>
-                        <span class="perf-context-lbl"><?= number_format($all_cnl) ?> cancelled of <?= number_format($all_bks) ?></span>
+                <!-- KPI 2: Confirmed Bookings -->
+                <div class="perf-tile is-green" data-metric="confirmed_bookings" title="Confirmed Bookings &amp; Revenue: <?= CURRENCY ?><?= perf_compact_num($cur_revenue) ?>">
+                    <div class="perf-tile-inner">
+                        <div class="perf-kpi-icon is-green" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                        <div class="perf-kpi-body">
+                            <span class="perf-label">Confirmed Bookings</span>
+                            <!-- Confirmed Revenue -->
+                            <div class="perf-val-row">
+                                <span class="perf-value"><?= number_format($cur_confirmed_bks) ?></span>
+                                <?php if ($cur_confirmed_bks === 0 && $prev_confirmed_bks === 0): ?>
+                                    <span class="perf-delta is-flat">0.0%</span>
+                                <?php elseif ($prev_confirmed_bks === 0): ?>
+                                    <span class="perf-delta is-new">New</span>
+                                <?php elseif ($confirmed_delta !== null && $confirmed_delta > 0): ?>
+                                    <span class="perf-delta is-up">&uarr; <?= $confirmed_delta ?>%</span>
+                                <?php elseif ($confirmed_delta !== null && $confirmed_delta < 0): ?>
+                                    <span class="perf-delta is-down">&darr; <?= abs($confirmed_delta) ?>%</span>
+                                <?php else: ?>
+                                    <span class="perf-delta is-flat">0.0%</span>
+                                <?php endif; ?>
+                            </div>
+                            <span class="perf-subtext"><?= $cur_confirmed_pct ?>% of total bookings</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- KPI 4: Average Confirmed Booking Value -->
-                <div class="perf-tile">
-                    <div class="perf-tile-header">
-                        <span class="perf-label">Avg Confirmed Value</span>
+                <!-- KPI 3: Pending Bookings -->
+                <div class="perf-tile is-amber" data-metric="pending_bookings" title="Pending Bookings awaiting confirmation">
+                    <div class="perf-tile-inner">
+                        <div class="perf-kpi-icon is-amber" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                        <div class="perf-kpi-body">
+                            <span class="perf-label">Pending Bookings</span>
+                            <div class="perf-val-row">
+                                <span class="perf-value"><?= number_format($cur_pending_bks) ?></span>
+                                <?php if ($cur_pending_bks === 0 && $prev_pending_bks === 0): ?>
+                                    <span class="perf-delta is-flat">0.0%</span>
+                                <?php elseif ($prev_pending_bks === 0): ?>
+                                    <span class="perf-delta is-new">New</span>
+                                <?php elseif ($pending_delta !== null && $pending_delta > 0): ?>
+                                    <span class="perf-delta is-down">&uarr; <?= $pending_delta ?>%</span>
+                                <?php elseif ($pending_delta !== null && $pending_delta < 0): ?>
+                                    <span class="perf-delta is-up">&darr; <?= abs($pending_delta) ?>%</span>
+                                <?php else: ?>
+                                    <span class="perf-delta is-flat">0.0%</span>
+                                <?php endif; ?>
+                            </div>
+                            <span class="perf-subtext"><?= $cur_pending_pct ?>% of total bookings</span>
+                        </div>
                     </div>
-                    <div class="perf-value">
-                        <?php if ($cur_confirmed_bks > 0): ?>
-                            <?= CURRENCY ?><?= number_format($avg_booking_val, 2) ?>
-                        <?php else: ?>
-                            <span class="text-muted font-weight-normal">&mdash;</span>
-                        <?php endif; ?>
-                    </div>
-                    <div class="perf-tile-footer">
-                        <?php if ($cur_confirmed_bks === 0 && $prev_confirmed_bks === 0): ?>
-                            <span class="text-muted small">No confirmed bookings</span>
-                        <?php elseif ($prev_confirmed_bks === 0 || $prev_avg_booking_val <= 0): ?>
-                            <span class="perf-delta is-new">New</span>
-                        <?php elseif ($avg_val_delta !== null && $avg_val_delta > 0): ?>
-                            <span class="perf-delta is-up">&#9650; +<?= $avg_val_delta ?>% vs prev</span>
-                        <?php elseif ($avg_val_delta !== null && $avg_val_delta < 0): ?>
-                            <span class="perf-delta is-down">&#9660; <?= $avg_val_delta ?>% vs prev</span>
-                        <?php else: ?>
-                            <span class="perf-delta is-flat">0.0% vs prev</span>
-                        <?php endif; ?>
-                        <span class="perf-context-lbl">Revenue &divide; confirmed bookings</span>
+                </div>
+
+                <!-- KPI 4: Cancellation Rate -->
+                <div class="perf-tile is-red" data-metric="cancellation_rate" title="Cancellation Rate: <?= $cnl_rate ?>% (<?= number_format($all_cnl) ?> of <?= number_format($all_bks) ?>)">
+                    <div class="perf-tile-inner">
+                        <div class="perf-kpi-icon is-red" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </div>
+                        <div class="perf-kpi-body">
+                            <span class="perf-label">Cancellation Rate</span>
+                            <!-- Avg Confirmed Value -->
+                            <div class="perf-val-row">
+                                <span class="perf-value <?= $cnl_val_class ?>"><?= $cnl_rate ?>%</span>
+                                <?php if ($all_bks === 0 && $prev_total === 0): ?>
+                                    <span class="perf-delta is-flat">0.0%</span>
+                                <?php elseif ($prev_total === 0): ?>
+                                    <span class="perf-delta is-new">New</span>
+                                <?php elseif ($cnl_rate_delta > 0): ?>
+                                    <span class="perf-delta is-down">&uarr; <?= $cnl_rate_delta ?>%</span>
+                                <?php elseif ($cnl_rate_delta < 0): ?>
+                                    <span class="perf-delta is-up">&darr; <?= abs($cnl_rate_delta) ?>%</span>
+                                <?php else: ?>
+                                    <span class="perf-delta is-flat">0.0%</span>
+                                <?php endif; ?>
+                            </div>
+                            <span class="perf-subtext">of total bookings</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Charts Grid: Primary Combo Chart (2/3) + Booking Outcomes Panel (1/3) -->
+            <!-- Charts Grid: Booking & Revenue Trends (2fr) + Booking Status Donut (1fr) -->
             <div class="perf-grid mb-3">
-                <!-- Primary Trend Chart -->
+                <!-- Large Combo Trend Chart -->
                 <div class="perf-chart-box">
-                    <div class="perf-box-header mb-2 d-flex justify-content-between align-items-center">
-                        <span class="perf-box-title">Booking Volume &amp; Confirmed Revenue Trend</span>
-                        <span class="text-muted small">Daily Breakdown</span>
+                    <div class="perf-box-header d-flex justify-content-between align-items-center flex-wrap mb-2">
+                        <div class="d-flex align-items-center my-1">
+                            <svg width="18" height="18" class="text-primary mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                            <span class="perf-box-title">Booking &amp; Revenue Trends</span>
+                        </div>
+                        <div class="d-flex align-items-center flex-wrap my-1" style="gap: 12px;">
+                            <div class="perf-chart-legend" aria-hidden="true">
+                                <span class="perf-legend-item">
+                                    <span class="perf-legend-box" style="background-color: #3b82f6;"></span>
+                                    <span>Bookings</span>
+                                </span>
+                                <span class="perf-legend-item">
+                                    <span class="perf-legend-dot-line">
+                                        <span class="perf-legend-line" style="background-color: #1d4ed8;"></span>
+                                        <span class="perf-legend-dot" style="background-color: #1d4ed8;"></span>
+                                    </span>
+                                    <span>Revenue (<?= CURRENCY ?>)</span>
+                                </span>
+                            </div>
+                            <div class="perf-interval-wrap">
+                                <select id="perfIntervalSelect" class="form-control form-control-sm perf-interval-select" aria-label="Select aggregation interval">
+                                    <option value="daily" selected>Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="perf-chart-container">
+                    <div class="perf-chart-container position-relative">
                         <canvas id="perfChart" role="img" aria-label="<?= e("{$window_days}-day daily bookings and revenue combo chart") ?>" data-chart="<?= e($chart_json) ?>"></canvas>
+                        <div id="perfTrendsEmpty" class="perf-empty-state" style="display: none;">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-muted mb-2" aria-hidden="true">
+                                <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+                                <path d="M7 15l3-3 3 2 4-5"></path>
+                            </svg>
+                            <div class="font-weight-bold text-dark">No booking activity recorded</div>
+                            <div class="text-muted small">No reservation volume or revenue found for the selected timeframe.</div>
+                        </div>
                         <noscript>
                             <div class="p-3 text-muted text-center border rounded">Interactive chart requires JavaScript. See table below.</div>
                         </noscript>
                     </div>
                 </div>
 
-                <!-- Booking Outcomes Panel -->
+                <!-- Booking Status Donut Chart Panel -->
                 <div class="perf-donut-box">
-                    <div class="perf-box-header mb-2 d-flex justify-content-between align-items-center">
-                        <span class="perf-box-title">Booking Outcomes</span>
-                        <span class="text-muted small"><?= number_format($all_bks) ?> total</span>
+                    <div class="perf-box-header d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            <svg width="18" height="18" class="text-primary mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M12 2a10 10 0 0 1 10 10h-10z"></path>
+                            </svg>
+                            <span class="perf-box-title">Booking Status</span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-link text-muted p-0 perf-info-btn" title="Distribution of terminal outcome statuses across all reservations in the selected window" aria-label="Status distribution info">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </button>
                     </div>
-                    <div class="perf-donut-container">
+                    <div class="perf-donut-container position-relative">
                         <canvas id="perfDonut" role="img" aria-label="Booking outcome distribution chart"></canvas>
                     </div>
-                    <!-- Detailed Outcome Breakdown Legend -->
-                    <div class="perf-outcomes-legend mt-2">
-                        <div class="outcome-legend-item">
-                            <span class="outcome-color-dot dot-confirmed"></span>
-                            <span class="outcome-label">Confirmed:</span>
-                            <strong class="outcome-val"><?= number_format($cur_confirmed_bks) ?></strong>
-                            <small class="text-muted">(<?= $all_bks > 0 ? round(($cur_confirmed_bks / $all_bks) * 100, 1) : 0 ?>%)</small>
+                    <!-- Accessible Status Legend with Counts & Percentages -->
+                    <div class="perf-status-legend mt-2">
+                        <div class="perf-status-legend-item">
+                            <span class="perf-status-dot is-confirmed" aria-hidden="true"></span>
+                            <span class="perf-status-name">Confirmed</span>
+                            <span class="perf-status-value"><?= number_format($cur_confirmed_bks) ?> (<?= $cur_confirmed_pct ?>%)</span>
                         </div>
-                        <div class="outcome-legend-item">
-                            <span class="outcome-color-dot dot-pending"></span>
-                            <span class="outcome-label">Pending:</span>
-                            <strong class="outcome-val"><?= number_format($cur_pending_bks) ?></strong>
-                            <small class="text-muted">(<?= $all_bks > 0 ? round(($cur_pending_bks / $all_bks) * 100, 1) : 0 ?>%)</small>
+                        <div class="perf-status-legend-item">
+                            <span class="perf-status-dot is-pending" aria-hidden="true"></span>
+                            <span class="perf-status-name">Pending</span>
+                            <span class="perf-status-value"><?= number_format($cur_pending_bks) ?> (<?= $cur_pending_pct ?>%)</span>
                         </div>
-                        <div class="outcome-legend-item">
-                            <span class="outcome-color-dot dot-cancelled"></span>
-                            <span class="outcome-label">Cancelled:</span>
-                            <strong class="outcome-val"><?= number_format($all_cnl) ?></strong>
-                            <small class="text-muted">(<?= $all_bks > 0 ? round(($all_cnl / $all_bks) * 100, 1) : 0 ?>%)</small>
+                        <div class="perf-status-legend-item">
+                            <span class="perf-status-dot is-cancelled" aria-hidden="true"></span>
+                            <span class="perf-status-name">Cancelled</span>
+                            <span class="perf-status-value"><?= number_format($all_cnl) ?> (<?= $cnl_rate ?>%)</span>
                         </div>
                         <?php if ($cur_expired_bks > 0): ?>
-                            <div class="outcome-legend-item">
-                                <span class="outcome-color-dot dot-expired"></span>
-                                <span class="outcome-label">Expired:</span>
-                                <strong class="outcome-val"><?= number_format($cur_expired_bks) ?></strong>
-                                <small class="text-muted">(<?= $all_bks > 0 ? round(($cur_expired_bks / $all_bks) * 100, 1) : 0 ?>%)</small>
+                            <div class="perf-status-legend-item">
+                                <span class="perf-status-dot is-expired" aria-hidden="true"></span>
+                                <span class="perf-status-name">Expired</span>
+                                <span class="perf-status-value"><?= number_format($cur_expired_bks) ?> (<?= $cur_expired_pct ?>%)</span>
                             </div>
                         <?php endif; ?>
                     </div>
                 </div>
             </div>
 
-            <!-- Structured Key Insights Panel -->
-            <?php if (!empty($insights_list)): ?>
-                <div class="perf-insights-wrap mb-3">
-                    <div class="perf-insights-title mb-2 d-flex align-items-center">
-                        <span class="mr-1">💡</span>
-                        <strong>Key Insights</strong>
-                        <span class="text-muted ml-2 small font-weight-normal">&mdash; Verified calculations for the current <?= $window_days ?>-day window</span>
+            <!-- Key Insights Section (Privacy-First) -->
+            <div class="perf-insights-card mb-3">
+                <div class="perf-insights-header d-flex justify-content-between align-items-center flex-wrap">
+                    <div class="d-flex align-items-center my-1">
+                        <div class="perf-insights-icon mr-2" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path>
+                                <path d="M9 18h6"></path>
+                                <path d="M10 22h4"></path>
+                            </svg>
+                        </div>
+                        <h3 class="perf-insights-title mb-0">Key Insights</h3>
                     </div>
-                    <div class="perf-insights-grid">
-                        <?php foreach ($insights_list as $in): ?>
-                            <div class="perf-insight-card">
-                                <div class="perf-insight-top">
-                                    <span class="perf-insight-icon"><?= $in['icon'] ?></span>
-                                    <span class="perf-insight-lbl"><?= e($in['label']) ?></span>
-                                </div>
-                                <div class="perf-insight-val"><?= e($in['val']) ?></div>
-                                <div class="perf-insight-sub text-muted"><?= e($in['sub']) ?></div>
-                            </div>
-                        <?php endforeach; ?>
+                    <div class="perf-privacy-badge my-1" title="Strict privacy controls active: passenger names, phone numbers, emails, PNRs, and individual booking references are excluded from this overview.">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1" aria-hidden="true">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        <span>Aggregate analytics only &bull; Personal booking details hidden</span>
                     </div>
                 </div>
-            <?php endif; ?>
+                <div class="perf-insights-grid mt-3">
+                    <div class="perf-insight-item">
+                        <div class="perf-insight-icon-wrap is-blue" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                <polyline points="17 6 23 6 23 12"></polyline>
+                            </svg>
+                        </div>
+                        <div class="perf-insight-content">
+                            <h4 class="perf-insight-heading"><?= e($insight_vol_title) ?></h4>
+                            <p class="perf-insight-desc"><?= e($insight_vol_body) ?></p>
+                        </div>
+                    </div>
+                    <div class="perf-insight-item">
+                        <div class="perf-insight-icon-wrap is-green" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                        <div class="perf-insight-content">
+                            <h4 class="perf-insight-heading"><?= e($insight_conf_title) ?></h4>
+                            <p class="perf-insight-desc"><?= e($insight_conf_body) ?></p>
+                        </div>
+                    </div>
+                    <div class="perf-insight-item">
+                        <div class="perf-insight-icon-wrap is-amber" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                        </div>
+                        <div class="perf-insight-content">
+                            <h4 class="perf-insight-heading"><?= e($insight_cnl_title) ?></h4>
+                            <p class="perf-insight-desc"><?= e($insight_cnl_body) ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Daily Breakdown Accordion Button & CSV Export -->
             <div class="d-flex flex-wrap justify-content-between align-items-center pt-2 border-top">
@@ -1190,7 +1381,7 @@ usort($attention_items, static function($a, $b) {
                 </a>
             </div>
 
-            <!-- Collapsible Detailed Breakdown Table -->
+            <!-- Collapsible Detailed Breakdown Table (Strictly Aggregated, 0 PII) -->
             <div id="dailyTable" class="collapse mt-3">
                 <div class="table-responsive perf-table-scroll">
                     <table class="table table-hover table-stack mb-0 perf-table">

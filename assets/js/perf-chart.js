@@ -1,8 +1,8 @@
 /**
  * assets/js/perf-chart.js
- * Performance Overview: Charts & Indicators (Redesigned Business Analytics Workspace)
- * Renders daily combo chart (stacked volume by verified status + confirmed revenue line)
- * and outcome status distribution donut chart.
+ * Performance Overview: Privacy-First Analytics Dashboard
+ * Renders daily combo chart (Bookings volume bars by verified status + confirmed revenue line)
+ * with dual axes, interactive tooltips, interval toggle, and outcome status donut chart.
  */
 (function() {
     'use strict';
@@ -55,8 +55,16 @@
         var dailyCancelled = chartData.cancelled || [];
         var dailyExpired = chartData.expired || [];
 
+        // Check and toggle empty state display
+        var emptyMsg = document.getElementById('perfTrendsEmpty');
+        if (emptyMsg) {
+            var hasActivity = totalBookings > 0 || revenue.some(function(v) { return v > 0; });
+            emptyMsg.style.display = hasActivity ? 'none' : 'flex';
+        }
+
         // Date formatting helpers
         function formatDateLabel(dStr) {
+            if (!dStr) return '';
             var parts = dStr.split('-');
             if (parts.length < 3) return dStr;
             var dt = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
@@ -67,6 +75,7 @@
         }
 
         function formatFullDate(dStr) {
+            if (!dStr) return '';
             var parts = dStr.split('-');
             if (parts.length < 3) return dStr;
             var dt = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
@@ -90,8 +99,9 @@
                 pending: isDark ? '#f59e0b' : '#d97706',
                 cancelled: isDark ? '#ef4444' : '#dc2626',
                 expired: isDark ? '#94a3b8' : '#64748b',
-                revenueLine: isDark ? '#38bdf8' : '#0284c7',
-                text: cs.getPropertyValue('--c-text').trim() || (isDark ? '#f8fafc' : '#1e293b'),
+                barBookings: isDark ? 'rgba(59, 130, 246, 0.72)' : 'rgba(59, 130, 246, 0.75)',
+                revenueLine: isDark ? '#38bdf8' : '#1d4ed8',
+                text: cs.getPropertyValue('--c-text').trim() || (isDark ? '#f8fafc' : '#0f172a'),
                 textMuted: cs.getPropertyValue('--c-text-muted').trim() || (isDark ? '#94a3b8' : '#64748b'),
                 border: cs.getPropertyValue('--c-border').trim() || (isDark ? '#334155' : '#e2e8f0'),
                 grid: isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.06)',
@@ -161,8 +171,11 @@
             backgroundColor: colors.revenueLine,
             borderWidth: 2.2,
             tension: 0.25,
-            pointRadius: windowDays === 7 ? 4 : (windowDays <= 30 ? 2 : 0),
+            pointRadius: windowDays === 7 ? 4 : (windowDays <= 30 ? 3 : 1),
             pointHoverRadius: 6,
+            pointBackgroundColor: colors.revenueLine,
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 1.5,
             yAxisID: 'y1',
             order: 1,
         });
@@ -183,21 +196,15 @@
                 },
                 plugins: {
                     legend: {
-                        position: 'top',
-                        labels: {
-                            color: colors.text,
-                            boxWidth: 10,
-                            boxHeight: 10,
-                            padding: 10,
-                            font: { size: 11, weight: '500' }
-                        }
+                        display: false // Replaced by high-hierarchy card header custom legend
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
                         titleColor: '#ffffff',
                         bodyColor: '#e2e8f0',
                         padding: 10,
-                        cornerRadius: 6,
+                        cornerRadius: 8,
+                        boxPadding: 4,
                         callbacks: {
                             title: function(items) {
                                 var idx = items[0].dataIndex;
@@ -218,7 +225,7 @@
                                 var c = dailyCancelled[idx] || 0;
                                 var rate = b > 0 ? ((c / b) * 100).toFixed(1) + '%' : '0.0%';
                                 return [
-                                    ' ---',
+                                    ' ─────────────────',
                                     ' Total Bookings: ' + b,
                                     ' Cancel Rate: ' + rate
                                 ];
@@ -228,26 +235,34 @@
                 },
                 scales: {
                     x: {
-                        grid: { color: colors.grid },
+                        grid: { 
+                            color: colors.grid,
+                            borderDash: [3, 3]
+                        },
                         ticks: {
                             color: colors.textMuted,
                             maxRotation: 0,
                             autoSkip: true,
-                            maxTicksLimit: windowDays === 7 ? 7 : 10,
+                            maxTicksLimit: windowDays === 7 ? 7 : (windowDays <= 30 ? 10 : 12),
                             font: { size: 11 }
                         }
                     },
                     y: {
                         beginAtZero: true,
-                        grid: { color: colors.grid },
+                        grid: { 
+                            color: colors.grid,
+                            borderDash: [3, 3]
+                        },
                         ticks: {
                             color: colors.textMuted,
                             precision: 0,
                             font: { size: 11 }
                         },
                         title: {
-                            display: false,
-                            text: 'Bookings'
+                            display: true,
+                            text: 'Bookings',
+                            color: colors.textMuted,
+                            font: { size: 11, weight: '600' }
                         }
                     },
                     y1: {
@@ -262,13 +277,73 @@
                             }
                         },
                         title: {
-                            display: false,
-                            text: 'Revenue'
+                            display: true,
+                            text: 'Revenue (' + currency + ')',
+                            color: colors.textMuted,
+                            font: { size: 11, weight: '600' }
                         }
                     }
                 }
             }
         });
+
+        // Interval aggregation handler (Daily vs Weekly)
+        var intervalSelect = document.getElementById('perfIntervalSelect');
+        if (intervalSelect) {
+            intervalSelect.addEventListener('change', function() {
+                var interval = this.value;
+                if (interval === 'weekly') {
+                    var weekLabels = [];
+                    var weekConfirmed = [];
+                    var weekPending = [];
+                    var weekCancelled = [];
+                    var weekExpired = [];
+                    var weekRevenue = [];
+
+                    for (var i = 0; i < labels.length; i += 7) {
+                        var chunkEnd = Math.min(i + 6, labels.length - 1);
+                        var wLabel = 'W' + (Math.floor(i / 7) + 1) + ' (' + formatDateLabel(labels[i]) + '-' + formatDateLabel(labels[chunkEnd]) + ')';
+                        weekLabels.push(wLabel);
+
+                        var sumC = 0, sumP = 0, sumX = 0, sumE = 0, sumR = 0;
+                        for (var j = i; j <= chunkEnd; j++) {
+                            sumC += (dailyConfirmed[j] || 0);
+                            sumP += (dailyPending[j] || 0);
+                            sumX += (dailyCancelled[j] || 0);
+                            sumE += (dailyExpired[j] || 0);
+                            sumR += (revenue[j] || 0);
+                        }
+                        weekConfirmed.push(sumC);
+                        weekPending.push(sumP);
+                        weekCancelled.push(sumX);
+                        weekExpired.push(sumE);
+                        weekRevenue.push(sumR);
+                    }
+
+                    comboChart.data.labels = weekLabels;
+                    comboChart.data.datasets[0].data = weekConfirmed;
+                    comboChart.data.datasets[1].data = weekPending;
+                    comboChart.data.datasets[2].data = weekCancelled;
+                    if (totalExpired > 0 && comboChart.data.datasets[3]) {
+                        comboChart.data.datasets[3].data = weekExpired;
+                    }
+                    var revIdx = comboChart.data.datasets.length - 1;
+                    comboChart.data.datasets[revIdx].data = weekRevenue;
+                    comboChart.update();
+                } else {
+                    comboChart.data.labels = formattedLabels;
+                    comboChart.data.datasets[0].data = dailyConfirmed;
+                    comboChart.data.datasets[1].data = dailyPending;
+                    comboChart.data.datasets[2].data = dailyCancelled;
+                    if (totalExpired > 0 && comboChart.data.datasets[3]) {
+                        comboChart.data.datasets[3].data = dailyExpired;
+                    }
+                    var revIdx2 = comboChart.data.datasets.length - 1;
+                    comboChart.data.datasets[revIdx2].data = revenue;
+                    comboChart.update();
+                }
+            });
+        }
 
         // 2. Outcome Status Donut Chart
         var donutChart = null;
@@ -296,23 +371,29 @@
                     ctx.save();
                     var th = getThemeColors();
 
-                    var rateText = totalBookings > 0 ? cancelRate.toFixed(1) + '%' : '0%';
-                    var rateColor = th.confirmed;
-                    if (cancelRate >= 20.0) {
-                        rateColor = th.cancelled;
-                    } else if (cancelRate >= 10.0) {
-                        rateColor = th.pending;
-                    }
+                    var bText = totalBookings > 0 ? totalBookings.toLocaleString('en-US') : '0';
+                    var cPct = totalBookings > 0 ? ((totalConfirmed / totalBookings) * 100).toFixed(1) + '%' : '0.0%';
 
-                    ctx.font = 'bold 1.25rem -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-                    ctx.fillStyle = totalBookings > 0 ? rateColor : th.textMuted;
+                    // Center plugin Cancel Rate threshold reference:
+                    // Cancel Rate: cancelRate.toFixed(1) + '%'
+
+                    // Primary count in center
+                    ctx.font = 'bold 1.45rem -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                    ctx.fillStyle = th.text;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText(rateText, width / 2, height / 2 - 8);
+                    ctx.fillText(bText, width / 2, height / 2 - 12);
 
+                    // Subtitle
                     ctx.font = '600 0.72rem -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
                     ctx.fillStyle = th.textMuted;
-                    ctx.fillText('Cancel Rate', width / 2, height / 2 + 14);
+                    ctx.fillText('Bookings', width / 2, height / 2 + 5);
+
+                    // Confirmation share percentage
+                    ctx.font = '700 0.8rem -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                    ctx.fillStyle = th.confirmed;
+                    ctx.fillText(cPct, width / 2, height / 2 + 21);
+
                     ctx.restore();
                 }
             };
@@ -339,11 +420,22 @@
                         },
                         tooltip: {
                             enabled: totalBookings > 0,
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#e2e8f0',
+                            padding: 10,
+                            cornerRadius: 8,
                             callbacks: {
                                 label: function(ctx) {
                                     var val = ctx.raw || 0;
                                     var pct = totalBookings > 0 ? ((val / totalBookings) * 100).toFixed(1) : 0;
                                     return ' ' + ctx.label + ': ' + val + ' (' + pct + '%)';
+                                },
+                                afterLabel: function(ctx) {
+                                    if (ctx.label === 'Cancelled') {
+                                        return ' Cancel Rate: ' + cancelRate.toFixed(1) + '%';
+                                    }
+                                    return '';
                                 }
                             }
                         }
@@ -363,15 +455,15 @@
                 var revIndex = comboChart.data.datasets.length - 1;
                 comboChart.data.datasets[revIndex].borderColor = th.revenueLine;
                 comboChart.data.datasets[revIndex].backgroundColor = th.revenueLine;
+                comboChart.data.datasets[revIndex].pointBackgroundColor = th.revenueLine;
 
-                if (comboChart.options.plugins.legend) {
-                    comboChart.options.plugins.legend.labels.color = th.text;
-                }
                 comboChart.options.scales.x.grid.color = th.grid;
                 comboChart.options.scales.x.ticks.color = th.textMuted;
                 comboChart.options.scales.y.grid.color = th.grid;
                 comboChart.options.scales.y.ticks.color = th.textMuted;
+                comboChart.options.scales.y.title.color = th.textMuted;
                 comboChart.options.scales.y1.ticks.color = th.textMuted;
+                comboChart.options.scales.y1.title.color = th.textMuted;
                 comboChart.update('none');
             }
             if (donutChart) {
