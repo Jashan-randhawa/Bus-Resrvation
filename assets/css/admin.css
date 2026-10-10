@@ -553,4 +553,178 @@ html[data-theme="dark"] .dep-dot.active {
     transition: none !important;
   }
 }
+
+/* ==========================================================================
+   Performance Overview Charts & Indicators (A12)
+   ========================================================================== */
+.perf-card {
+  overflow: hidden;
+}
+
+.perf-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 767.98px) {
+  .perf-tiles {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+}
+
+.perf-tile {
+  background: var(--c-surface, #ffffff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--radius-md, 8px);
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 105px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.perf-tile:hover {
+  border-color: var(--c-primary, #2563eb);
+}
+
+.perf-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--c-text-muted, #64748b);
+  margin-bottom: 0.35rem;
+  display: block;
+}
+
+.perf-value {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--c-text, #1e293b);
+  line-height: 1.2;
+  margin-bottom: 0.35rem;
+  display: block;
+}
+
+.perf-value.is-ok {
+  color: #16a34a !important;
+}
+
+.perf-value.is-warn {
+  color: #d97706 !important;
+}
+
+.perf-value.is-bad {
+  color: #dc2626 !important;
+}
+
+.perf-delta {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  width: fit-content;
+  line-height: 1.2;
+}
+
+.perf-delta.is-up {
+  color: #15803d;
+  background-color: #dcfce7;
+}
+
+.perf-delta.is-down {
+  color: #b91c1c;
+  background-color: #fee2e2;
+}
+
+.perf-delta.is-flat {
+  color: #64748b;
+  background-color: #f1f5f9;
+}
+
+.perf-delta.is-new {
+  color: #0369a1;
+  background-color: #e0f2fe;
+}
+
+.perf-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+@media (max-width: 991.98px) {
+  .perf-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.perf-chart,
+.perf-donut {
+  position: relative;
+  height: 280px;
+  width: 100%;
+}
+
+@media (max-width: 575.98px) {
+  .perf-chart,
+  .perf-donut {
+    height: 220px;
+  }
+}
+
+.perf-highlights {
+  line-height: 1.5;
+  color: var(--c-text-muted, #64748b);
+  border-left: 3px solid var(--c-primary, #2563eb);
+  padding-left: 0.75rem;
+}
+
+/* Dark mode overrides for Performance Overview */
+html[data-theme="dark"] .perf-tile {
+  background: var(--c-surface, #131b2e);
+  border-color: var(--c-border, #334155);
+}
+
+html[data-theme="dark"] .perf-value {
+  color: var(--c-text, #f8fafc);
+}
+
+html[data-theme="dark"] .perf-label {
+  color: var(--c-text-muted, #94a3b8);
+}
+
+html[data-theme="dark"] .perf-delta.is-up {
+  color: #4ade80;
+  background-color: rgba(74, 222, 128, 0.15);
+}
+
+html[data-theme="dark"] .perf-delta.is-down {
+  color: #f87171;
+  background-color: rgba(248, 113, 113, 0.15);
+}
+
+html[data-theme="dark"] .perf-delta.is-flat {
+  color: #94a3b8;
+  background-color: rgba(148, 163, 184, 0.15);
+}
+
+html[data-theme="dark"] .perf-delta.is-new {
+  color: #38bdf8;
+  background-color: rgba(56, 189, 248, 0.15);
+}
+
+html[data-theme="dark"] .perf-highlights {
+  border-left-color: var(--c-primary, #3b82f6);
+  color: var(--c-text-muted, #94a3b8);
+}
+
 

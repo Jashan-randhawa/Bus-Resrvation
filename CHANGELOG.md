@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **Performance Overview Charts & Indicators (A12)**:
+  - Replaced the basic 14-day bar strip with a full-width quick-read performance dashboard in `admin/dashboard.php`.
+  - Added 4 KPI indicator tiles: Reservations, Confirmed Revenue, Cancel Rate, and Average Reservations/Day with previous-period comparison badges and threshold-based indicator coloring.
+  - Implemented continuous zero-filled daily series query logic supporting 7d, 30d, and 90d operational windows.
+  - Integrated interactive combo chart via Chart.js with SRI hash (stacked active/cancelled booking volume + secondary axis revenue line) and outcome donut chart.
+  - Added summary highlights line for busiest day, top revenue day, and quietest booking day.
+  - Replaced static table clutter with an accessible collapsible daily breakdown accordion.
+  - Added live dark theme synchronization via `MutationObserver` and `prefers-reduced-motion` support.
+- **Departure Schedule Carousel (A12)**:
+  - Converted static departures table into a moving multi-card departure carousel with 3-second auto-slide, pause guards, touch swipe, and accessibility support.
+
+
 ## [2.3.0] - 2026-10-08
 
 ### Added
