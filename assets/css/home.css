@@ -494,6 +494,36 @@ section[id] {
   }
 }
 
+@media (max-width: 575.98px) {
+  .home-section {
+    padding-block: 2.5rem;
+  }
+  .hero-split-section {
+    padding-top: calc(72px + 1.25rem);
+    padding-bottom: 1.5rem;
+  }
+  .hero-pill {
+    margin-bottom: .75rem;
+  }
+  .hero-heading {
+    font-size: 1.875rem;
+    margin-bottom: .75rem;
+  }
+  .hero-subheading {
+    margin-bottom: 1.25rem;
+  }
+  #search.home-section {
+    padding-top: 1.5rem;
+  }
+  .booking-search-card {
+    padding: 1.25rem;
+  }
+  .booking-search-card .card-title-bar {
+    margin-bottom: 1rem;
+    padding-bottom: .75rem;
+  }
+}
+
 /* ── 12. Bootstrap Carousel for Popular Routes (3s auto-scroll) ── */
 #popularRoutesCarousel {
   position: relative;

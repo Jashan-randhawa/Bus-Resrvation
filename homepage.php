@@ -332,7 +332,7 @@ if (isset($_POST['subbtn'])) {
             Reserve your seat on scheduled routes with transparent pricing, instant PNR issuance, and live seat maps.
           </p>
           <div class="hero-actions">
-            <a href="#search" class="btn btn-primary btn-lg shadow-sm">
+            <a href="#search" class="btn btn-primary btn-lg shadow-sm d-none d-sm-inline-block">
               Search &amp; Book Tickets &rarr;
             </a>
             <a href="#pnr" class="btn btn-outline-secondary btn-lg">
@@ -340,7 +340,7 @@ if (isset($_POST['subbtn'])) {
             </a>
           </div>
         </div>
-        <div class="col-lg-6 hero-animate-in">
+        <div class="col-lg-6 hero-animate-in d-none d-lg-block">
           <div class="hero-image-wrapper">
             <img src="<?= BASE_URL ?>/assets/images/hero-800.webp"
                  srcset="<?= BASE_URL ?>/assets/images/hero-480.webp 480w, <?= BASE_URL ?>/assets/images/hero-800.webp 800w, <?= BASE_URL ?>/assets/images/hero-1200.webp 1200w"
