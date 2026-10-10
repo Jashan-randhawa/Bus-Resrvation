@@ -218,15 +218,15 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 
 <!-- Add Route Modal -->
 <div class="modal fade" id="addRouteModal" tabindex="-1" role="dialog" aria-labelledby="addRouteModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header bg-dark text-white">
+            <div class="modal-header bg-dark text-white px-3 py-2">
                 <h5 class="modal-title font-weight-bold" id="addRouteModalLabel">Configure New Route</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close text-white p-0" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body p-4">
+            <div class="modal-body p-3 p-sm-4">
                 <form action="" method="post">
                     <?= csrf_field() ?>
                     <datalist id="citySuggestions">
@@ -237,18 +237,18 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         <?php endforeach; ?>
                     </datalist>
                     <div class="form-row">
-                        <div class="col-6 form-group">
+                        <div class="col-12 col-sm-6 form-group">
                             <label for="From" class="font-weight-bold small text-muted">From City</label>
-                            <input type="text" id="From" name="From" list="citySuggestions" class="form-control" value="<?= e($form_old['From'] ?? '') ?>" placeholder="Origin city" required autocomplete="off" />
+                            <input type="text" id="From" name="From" list="citySuggestions" class="form-control form-control-lg" value="<?= e($form_old['From'] ?? '') ?>" placeholder="Origin city" required autocomplete="off" />
                         </div>
-                        <div class="col-6 form-group">
+                        <div class="col-12 col-sm-6 form-group">
                             <label for="To" class="font-weight-bold small text-muted">To City</label>
-                            <input type="text" id="To" name="To" list="citySuggestions" class="form-control" value="<?= e($form_old['To'] ?? '') ?>" placeholder="Destination city" required autocomplete="off" />
+                            <input type="text" id="To" name="To" list="citySuggestions" class="form-control form-control-lg" value="<?= e($form_old['To'] ?? '') ?>" placeholder="Destination city" required autocomplete="off" />
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="bus" class="font-weight-bold small text-muted">Assigned Fleet Bus</label>
-                        <select name="bus" id="bus" class="form-control" required>
+                        <select name="bus" id="bus" class="form-control form-control-lg" required>
                             <option value="">Select Fleet Bus</option>
                             <?php foreach ($buses as $b): ?>
                                 <option value="<?= e($b['bus_number']) ?>" <?= ($form_old['bus'] ?? '') === $b['bus_number'] ? 'selected' : '' ?>><?= e($b['bus_number']) ?></option>
@@ -256,18 +256,18 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         </select>
                     </div>
                     <div class="form-row">
-                        <div class="col-6 form-group">
+                        <div class="col-12 col-sm-6 form-group">
                             <label for="time" class="font-weight-bold small text-muted">Departure Time</label>
-                            <input type="time" id="time" name="time" class="form-control" value="<?= e($form_old['time'] ?? '') ?>" required />
+                            <input type="time" id="time" name="time" class="form-control form-control-lg" value="<?= e($form_old['time'] ?? '') ?>" required />
                         </div>
-                        <div class="col-6 form-group">
+                        <div class="col-12 col-sm-6 form-group">
                             <label for="price" class="font-weight-bold small text-muted">Ticket Tariff (<?= CURRENCY ?>)</label>
-                            <input type="number" step="0.01" min="1" id="price" name="price" class="form-control" value="<?= e((string)($form_old['price'] ?? '')) ?>" placeholder="0.00" required />
+                            <input type="number" step="0.01" min="1" id="price" name="price" class="form-control form-control-lg" value="<?= e((string)($form_old['price'] ?? '')) ?>" placeholder="0.00" required />
                         </div>
                     </div>
                     <div class="d-flex justify-content-end mt-3">
-                        <button type="button" class="btn btn-outline-secondary mr-2" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" name="add">Save Route</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mr-2" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-sm btn-primary" name="add">Save Route</button>
                     </div>
                 </form>
             </div>

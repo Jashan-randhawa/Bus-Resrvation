@@ -202,29 +202,29 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 
 <!-- Add Bus Modal -->
 <div class="modal fade" id="addBusModal" tabindex="-1" role="dialog" aria-labelledby="addBusModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-sm">
         <div class="modal-content">
-            <div class="modal-header bg-dark text-white">
+            <div class="modal-header bg-dark text-white px-3 py-2">
                 <h5 class="modal-title font-weight-bold" id="addBusModalLabel">Register New Bus</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close text-white p-0" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body p-4">
+            <div class="modal-body p-3 p-sm-4">
                 <form action="" method="post">
                     <?= csrf_field() ?>
                     <div class="form-group">
                         <label for="busno" class="font-weight-bold small text-muted">Bus Number / License Plate</label>
-                        <input type="text" id="busno" name="busno" class="form-control" value="<?= e($form_old['busno'] ?? '') ?>" placeholder="e.g. DL-01-AB-1234" required />
+                        <input type="text" id="busno" name="busno" class="form-control form-control-lg" value="<?= e($form_old['busno'] ?? '') ?>" placeholder="e.g. DL-01-AB-1234" required />
                     </div>
                     <div class="form-group">
                         <label for="capacity" class="font-weight-bold small text-muted">Total Seating Capacity</label>
-                        <input type="number" id="capacity" name="capacity" class="form-control" value="<?= e((string)($form_old['capacity'] ?? 36)) ?>" min="10" max="60" required />
+                        <input type="number" id="capacity" name="capacity" class="form-control form-control-lg" value="<?= e((string)($form_old['capacity'] ?? 36)) ?>" min="10" max="60" required />
                         <small class="form-text text-muted">Standard coaches seat between 10 and 60 passengers.</small>
                     </div>
                     <div class="form-group mb-4">
                         <label for="layout" class="font-weight-bold small text-muted">Seating Layout Pattern</label>
-                        <select id="layout" name="layout" class="form-control" required>
+                        <select id="layout" name="layout" class="form-control form-control-lg" required>
                             <option value="2+2" <?= ($form_old['layout'] ?? '2+2') === '2+2' ? 'selected' : '' ?>>2+2 (Standard Coach -- 2 Left, 2 Right)</option>
                             <option value="2+1" <?= ($form_old['layout'] ?? '') === '2+1' ? 'selected' : '' ?>>2+1 (Executive Coach -- 2 Left, 1 Right)</option>
                             <option value="1+2" <?= ($form_old['layout'] ?? '') === '1+2' ? 'selected' : '' ?>>1+2 (Executive Coach -- 1 Left, 2 Right)</option>
@@ -233,8 +233,8 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         <small class="form-text text-muted">Defines seat column distribution around central aisle.</small>
                     </div>
                     <div class="d-flex justify-content-end">
-                        <button type="button" class="btn btn-outline-secondary mr-2" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" name="add">Register Vehicle</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mr-2" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-sm btn-primary" name="add">Register Vehicle</button>
                     </div>
                 </form>
             </div>

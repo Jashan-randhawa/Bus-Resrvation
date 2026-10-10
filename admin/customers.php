@@ -275,33 +275,33 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 
 <!-- Add Customer Modal -->
 <div class="modal fade" id="addCustomerModal" tabindex="-1" role="dialog" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header bg-dark text-white">
+            <div class="modal-header bg-dark text-white px-3 py-2">
                 <h5 class="modal-title font-weight-bold" id="addCustomerModalLabel">Register Passenger</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close text-white p-0" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body p-4">
+            <div class="modal-body p-3 p-sm-4">
                 <form action="" method="post">
                     <?= csrf_field() ?>
                     <div class="form-group">
                         <label for="unm" class="font-weight-bold small text-muted">Full Name</label>
-                        <input type="text" id="unm" name="unm" class="form-control" value="<?= e($form_old['unm'] ?? '') ?>" placeholder="Jane Doe" required />
+                        <input type="text" id="unm" name="unm" class="form-control form-control-lg" value="<?= e($form_old['unm'] ?? '') ?>" placeholder="Jane Doe" required />
                     </div>
                     <div class="form-group">
                         <label for="email" class="font-weight-bold small text-muted">Email Address</label>
-                        <input type="email" id="email" name="email" class="form-control" value="<?= e($form_old['email'] ?? '') ?>" placeholder="jane@example.com" required />
+                        <input type="email" id="email" name="email" class="form-control form-control-lg" value="<?= e($form_old['email'] ?? '') ?>" placeholder="jane@example.com" required />
                     </div>
                     <div class="form-row">
-                        <div class="col-6 form-group">
+                        <div class="col-12 col-sm-6 form-group">
                             <label for="pwd" class="font-weight-bold small text-muted">Initial Password</label>
-                            <input type="password" id="pwd" name="pwd" class="form-control" placeholder="8+ chars" minlength="8" required />
+                            <input type="password" id="pwd" name="pwd" class="form-control form-control-lg" placeholder="8+ chars" minlength="8" required />
                         </div>
-                        <div class="col-6 form-group">
+                        <div class="col-12 col-sm-6 form-group">
                             <label for="phone" class="font-weight-bold small text-muted">Phone Number</label>
-                            <input type="tel" id="phone" name="phone" class="form-control" value="<?= e($form_old['phone'] ?? '') ?>" placeholder="Phone" required />
+                            <input type="tel" id="phone" name="phone" class="form-control form-control-lg" value="<?= e($form_old['phone'] ?? '') ?>" placeholder="Phone" required />
                         </div>
                     </div>
                     <div class="form-group">
@@ -309,8 +309,8 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         <textarea id="address" name="address" class="form-control" placeholder="Street, city..." rows="2"><?= e($form_old['address'] ?? '') ?></textarea>
                     </div>
                     <div class="d-flex justify-content-end mt-3">
-                        <button type="button" class="btn btn-outline-secondary mr-2" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" name="add">Create Customer</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mr-2" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-sm btn-primary" name="add">Create Customer</button>
                     </div>
                 </form>
             </div>
