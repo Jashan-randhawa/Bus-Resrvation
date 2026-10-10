@@ -302,7 +302,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <?php endif; ?>
 
         <div class="table-responsive">
-            <table class="table table-bordered table-sm mb-0">
+            <table class="table table-bordered table-sm table-stack mb-0">
                 <thead class="thead-light">
                     <tr>
                         <th style="width: 50px;" class="text-center">Seat</th>
@@ -326,17 +326,17 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                     <?php else: ?>
                         <?php foreach ($passengers as $p): ?>
                             <tr>
-                                <td class="text-center font-weight-bold">#<?= e((string)$p['seat']) ?></td>
-                                <td class="text-center no-print">
+                                <td data-label="Seat" class="text-center font-weight-bold">#<?= e((string)$p['seat']) ?></td>
+                                <td data-label="Board" class="text-center no-print">
                                     <input type="checkbox" class="board-checkbox" data-key="manifest_boarded_<?= e($selected_bus) ?>_<?= e($selected_date) ?>_<?= e((string)$p['sno']) ?>" title="Mark Boarded" aria-label="Mark <?= e($p['name']) ?> (Seat #<?= e((string)$p['seat']) ?>) boarded">
                                 </td>
-                                <td class="font-weight-medium text-dark"><?= e($p['name']) ?></td>
-                                <td><?= e($p['contact']) ?></td>
-                                <td><?= e($p['city1']) ?> &rarr; <?= e($p['city2']) ?></td>
-                                <td><?= e($p['time']) ?></td>
-                                <td><code><?= e($p['pnr'] ?? ('#' . $p['sno'])) ?></code></td>
-                                <td class="text-right"><?= CURRENCY ?><?= e(number_format((float)($p['price'] ?? 0), 2)) ?></td>
-                                <td class="text-center">
+                                <td data-label="Passenger" class="font-weight-medium text-dark"><?= e($p['name']) ?></td>
+                                <td data-label="Contact"><?= e($p['contact']) ?></td>
+                                <td data-label="Route"><?= e($p['city1']) ?> &rarr; <?= e($p['city2']) ?></td>
+                                <td data-label="Time"><?= e($p['time']) ?></td>
+                                <td data-label="PNR"><code><?= e($p['pnr'] ?? ('#' . $p['sno'])) ?></code></td>
+                                <td data-label="Fare" class="text-right"><?= CURRENCY ?><?= e(number_format((float)($p['price'] ?? 0), 2)) ?></td>
+                                <td data-label="Status" class="text-center">
                                     <span class="badge badge-<?= ($p['status'] ?? 'Confirmed') === 'Confirmed' ? 'success' : 'warning text-dark' ?>">
                                         <?= e($p['status'] ?? 'Confirmed') ?>
                                     </span>

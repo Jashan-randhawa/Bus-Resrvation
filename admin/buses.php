@@ -140,7 +140,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <span class="record-count"><?= $pagination['total_records'] ?> bus(es)</span>
     </div>
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover table-stack mb-0">
             <caption class="sr-only">List of fleet transit vehicles and seating layouts</caption>
             <thead class="thead-light">
                 <tr>
@@ -171,24 +171,24 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         $is_archived = !empty($row['archived_at']);
                         ?>
                         <tr class="<?= $is_archived ? 'text-muted bg-light' : '' ?>">
-                            <td><span class="text-muted small">#<?= e($bid) ?></span></td>
-                            <td>
+                            <td data-label="ID"><span class="text-muted small">#<?= e($bid) ?></span></td>
+                            <td data-label="Bus Number">
                                 <strong class="text-dark" style="font-size: 0.95rem;"><?= e($row['bus_number'] ?? '') ?></strong>
                                 <?php if ($is_archived): ?>
                                     <span class="badge badge-secondary ml-1">Archived</span>
                                 <?php endif; ?>
                             </td>
-                            <td>
+                            <td data-label="Capacity">
                                 <span class="badge badge-light border text-dark font-weight-bold px-2 py-1">
                                     🪑 <?= $cap ?> Passenger Seats
                                 </span>
                             </td>
-                            <td>
+                            <td data-label="Layout">
                                 <span class="badge badge-info px-2 py-1 font-weight-bold">
                                     <?= e($lyt) ?>
                                 </span>
                             </td>
-                            <td class="text-right">
+                            <td data-label="Actions" class="text-right">
                                 <?= render_crud_action_buttons($bid, BASE_URL . "/admin/edit/edit-bus.php?id=" . $bid, $is_archived, 'delete_bus', 'restore_bus', 'bus') ?>
                             </td>
                         </tr>

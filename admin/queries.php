@@ -150,7 +150,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <span class="record-count"><?= $pagination['total_records'] ?> message(s)</span>
     </div>
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover table-stack mb-0">
             <caption class="sr-only">List of customer support messages and tickets</caption>
             <thead class="thead-light">
                 <tr>
@@ -189,15 +189,15 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         };
                         ?>
                         <tr>
-                            <td><span class="text-muted small">#<?= e($qid) ?></span></td>
-                            <td>
+                            <td data-label="ID"><span class="text-muted small">#<?= e($qid) ?></span></td>
+                            <td data-label="Status">
                                 <span class="badge <?= $status_badge ?>"><?= ucfirst(e($qst)) ?></span>
                             </td>
-                            <td>
+                            <td data-label="Sender">
                                 <strong class="text-dark"><?= e($name) ?></strong>
                                 <div><a href="mailto:<?= e($email) ?>" class="text-primary small"><?= e($email) ?></a></div>
                             </td>
-                            <td style="max-width: 320px;">
+                            <td data-label="Subject & Message" style="max-width: 320px;">
                                 <div class="font-weight-bold text-dark"><?= e($subject ?: '(No Subject)') ?></div>
                                 <div class="text-muted small" style="white-space: pre-wrap;"><?= e($comment) ?></div>
                                 <?php if (!empty($row['reply_text'])): ?>
@@ -207,12 +207,12 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                                     </div>
                                 <?php endif; ?>
                             </td>
-                            <td>
+                            <td data-label="Date Received">
                                 <small class="text-muted">
                                     <?= !empty($row['created_at']) ? e(date('d M Y, H:i', strtotime($row['created_at']))) : 'N/A' ?>
                                 </small>
                             </td>
-                            <td class="text-right">
+                            <td data-label="Action" class="text-right">
                                 <?php if (can_write()): ?>
                                     <button type="button" class="btn btn-outline-primary btn-sm mr-1 btn-open-reply"
                                             data-toggle="modal" data-target="#singleReplyModal"

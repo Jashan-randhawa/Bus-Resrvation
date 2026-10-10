@@ -193,17 +193,19 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 <!-- Search Bar (Item 8) -->
 <div class="card border-0 shadow-sm mb-3">
     <div class="card-body p-3">
-        <form action="customers.php" method="get" class="form-inline">
+        <form action="customers.php" method="get" class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2">
             <?php if ($view_tab !== 'active'): ?>
                 <input type="hidden" name="tab" value="<?= e($view_tab) ?>">
             <?php endif; ?>
-            <div class="form-group mr-2 mb-2 mb-sm-0">
-                <input type="text" name="q" class="form-control form-control-sm" placeholder="Search name, email, phone, city..." value="<?= e($search) ?>" style="min-width: 260px;">
+            <div class="form-group mb-0 flex-grow-1">
+                <input type="text" name="q" class="form-control form-control-sm w-100" placeholder="Search name, email, phone, city..." value="<?= e($search) ?>">
             </div>
-            <button type="submit" class="btn btn-primary btn-sm mr-2">Search</button>
-            <?php if ($search !== ''): ?>
-                <a href="customers.php<?= $view_tab !== 'active' ? '?tab=' . urlencode($view_tab) : '' ?>" class="btn btn-outline-secondary btn-sm">Reset</a>
-            <?php endif; ?>
+            <div class="d-flex align-items-center gap-1">
+                <button type="submit" class="btn btn-primary btn-sm flex-fill flex-sm-auto">Search</button>
+                <?php if ($search !== ''): ?>
+                    <a href="customers.php<?= $view_tab !== 'active' ? '?tab=' . urlencode($view_tab) : '' ?>" class="btn btn-outline-secondary btn-sm flex-fill flex-sm-auto">Reset</a>
+                <?php endif; ?>
+            </div>
         </form>
     </div>
 </div>
@@ -217,7 +219,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <span class="record-count"><?= $pagination['total_records'] ?> user(s)</span>
     </div>
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover table-stack mb-0">
             <caption class="sr-only">Directory of registered customer accounts, contact details, and account status</caption>
             <thead class="thead-light">
                 <tr>
@@ -248,18 +250,18 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         $is_archived = !empty($row['archived_at']);
                         ?>
                         <tr class="<?= $is_archived ? 'text-muted bg-light' : '' ?>">
-                            <td><span class="text-muted small">#<?= e($cid) ?></span></td>
-                            <td class="font-weight-medium text-dark">
+                            <td data-label="ID"><span class="text-muted small">#<?= e($cid) ?></span></td>
+                            <td data-label="Full Name" class="font-weight-medium text-dark">
                                 <?= e($row['name'] ?? '') ?>
                                 <?php if ($is_archived): ?>
                                     <span class="badge badge-secondary ml-1">Archived</span>
                                 <?php endif; ?>
                             </td>
-                            <td><a href="mailto:<?= e($row['email'] ?? '') ?>" class="text-primary"><?= e($row['email'] ?? '') ?></a></td>
-                            <td><span class="badge badge-light border text-muted">••••••••</span></td>
-                            <td><?= e($row['phone'] ?? '') ?></td>
-                            <td><small class="text-muted"><?= e($row['address'] ?? 'N/A') ?></small></td>
-                            <td class="text-right">
+                            <td data-label="Email Address"><a href="mailto:<?= e($row['email'] ?? '') ?>" class="text-primary"><?= e($row['email'] ?? '') ?></a></td>
+                            <td data-label="Security"><span class="badge badge-light border text-muted">••••••••</span></td>
+                            <td data-label="Phone"><?= e($row['phone'] ?? '') ?></td>
+                            <td data-label="Address"><small class="text-muted"><?= e($row['address'] ?? 'N/A') ?></small></td>
+                            <td data-label="Actions" class="text-right">
                                 <?= render_crud_action_buttons($cid, BASE_URL . "/admin/edit/edit-customer.php?id=" . $cid, $is_archived, 'delete_customer', 'restore_customer', 'customer account') ?>
                             </td>
                         </tr>

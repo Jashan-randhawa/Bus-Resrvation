@@ -328,11 +328,11 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body p-3">
         <form action="bookings.php" method="get" class="form-row align-items-end">
-            <div class="col-md-3 mb-2 mb-md-0">
+            <div class="col-12 col-sm-6 col-md-3 mb-2">
                 <label for="filter_q" class="small font-weight-bold text-muted mb-1">Search Keyword</label>
                 <input type="text" id="filter_q" name="q" class="form-control form-control-sm" placeholder="PNR, name, phone, city..." value="<?= e($search) ?>">
             </div>
-            <div class="col-md-2 mb-2 mb-md-0">
+            <div class="col-12 col-sm-6 col-md-2 mb-2">
                 <label for="filter_bus" class="small font-weight-bold text-muted mb-1">Fleet Bus</label>
                 <select id="filter_bus" name="bus" class="form-control form-control-sm">
                     <option value="">All Buses</option>
@@ -343,15 +343,15 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-md-2 mb-2 mb-md-0">
+            <div class="col-12 col-sm-6 col-md-2 mb-2">
                 <label for="filter_from_date" class="small font-weight-bold text-muted mb-1">From Date</label>
                 <input type="date" id="filter_from_date" name="from_date" class="form-control form-control-sm" value="<?= e($filter_date_from) ?>">
             </div>
-            <div class="col-md-2 mb-2 mb-md-0">
+            <div class="col-12 col-sm-6 col-md-2 mb-2">
                 <label for="filter_to_date" class="small font-weight-bold text-muted mb-1">To Date</label>
                 <input type="date" id="filter_to_date" name="to_date" class="form-control form-control-sm" value="<?= e($filter_date_to) ?>">
             </div>
-            <div class="col-md-3 d-flex align-items-center">
+            <div class="col-12 col-md-3 mb-2 d-flex align-items-center">
                 <button type="submit" class="btn btn-primary btn-sm px-3 mr-2">Filter</button>
                 <?php if (!empty($keep_params)): ?>
                     <a href="bookings.php" class="btn btn-outline-secondary btn-sm">Reset</a>
@@ -364,7 +364,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 <!-- Status Filter Tabs -->
 <div class="filter-bar">
     <span class="filter-label">Filter Status:</span>
-    <div class="btn-group btn-group-sm" role="group">
+    <div class="btn-group btn-group-sm flex-wrap w-100" role="group">
         <?php foreach (['All', 'Confirmed', 'Pending', 'Expired', 'Cancelled'] as $st): ?>
             <?php 
             $tab_params = array_merge($keep_params, ['filter_status' => $st]);

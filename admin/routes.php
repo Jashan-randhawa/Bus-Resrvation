@@ -162,7 +162,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <span class="record-count"><?= $pagination['total_records'] ?> route(s)</span>
     </div>
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover table-stack mb-0">
             <caption class="sr-only">List of transit route schedules, origin, destination, assigned buses, and fares</caption>
             <thead class="thead-light">
                 <tr>
@@ -193,18 +193,18 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         $is_archived = !empty($row['archived_at']);
                         ?>
                         <tr class="<?= $is_archived ? 'text-muted bg-light' : '' ?>">
-                            <td><span class="text-muted small">#<?= e($rid) ?></span></td>
-                            <td class="font-weight-medium text-dark">
+                            <td data-label="ID"><span class="text-muted small">#<?= e($rid) ?></span></td>
+                            <td data-label="Origin City" class="font-weight-medium text-dark">
                                 <?= e($row['city1'] ?? '') ?>
                                 <?php if ($is_archived): ?>
                                     <span class="badge badge-secondary ml-1">Archived</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="font-weight-medium text-dark"><?= e($row['city2'] ?? '') ?></td>
-                            <td><span class="badge badge-light border text-dark font-weight-bold">🚌 <?= e($row['busno'] ?? '') ?></span></td>
-                            <td><?= e($row['time'] ?? '') ?></td>
-                            <td class="font-weight-bold text-success h6 mb-0"><?= CURRENCY ?><?= e(number_format((float)($row['price'] ?? 0), 2)) ?></td>
-                            <td class="text-right">
+                            <td data-label="Destination City" class="font-weight-medium text-dark"><?= e($row['city2'] ?? '') ?></td>
+                            <td data-label="Bus Assigned"><span class="badge badge-light border text-dark font-weight-bold">🚌 <?= e($row['busno'] ?? '') ?></span></td>
+                            <td data-label="Departure Time"><?= e($row['time'] ?? '') ?></td>
+                            <td data-label="Ticket Tariff" class="font-weight-bold text-success h6 mb-0"><?= CURRENCY ?><?= e(number_format((float)($row['price'] ?? 0), 2)) ?></td>
+                            <td data-label="Actions" class="text-right">
                                 <?= render_crud_action_buttons($rid, BASE_URL . "/admin/edit/edit-route.php?id=" . $rid, $is_archived, 'delete_route', 'restore_route', 'route schedule') ?>
                             </td>
                         </tr>
