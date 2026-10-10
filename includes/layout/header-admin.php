@@ -156,16 +156,18 @@ require_once __DIR__ . '/../config.php';
     <div class="admin-main">
         <!-- Top bar for mobile toggle & theme switch -->
         <div class="admin-topbar">
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="sidebarToggle" aria-controls="adminSidebar" aria-expanded="false" aria-label="Toggle navigation menu">
-                &#9776; Menu
+            <button type="button" class="btn btn-sm btn-outline-secondary px-2" id="sidebarToggle" aria-controls="adminSidebar" aria-expanded="false" aria-label="Toggle navigation menu">
+                <span class="d-none d-sm-inline mr-1">☰</span>
+                <span class="d-sm-none">MENU</span>
             </button>
-            <span class="font-weight-bold text-dark ml-2 d-lg-none"><?= e($title ?? 'Admin Area') ?></span>
+            <span class="page-title-mobile font-weight-bold text-dark ml-2 d-lg-none" style="font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40vw;">
+                <?= e(strlen($title ?? '') > 15 ? substr($title, 0, 15) . '…' : ($title ?? 'Admin')) ?>
+            </span>
             <span class="text-muted small ml-2 d-none d-lg-inline">Operations Console</span>
             
-            <div class="ml-auto d-flex align-items-center">
-                <button type="button" class="theme-toggle-btn ml-2" aria-label="Toggle dark mode" title="Toggle dark mode">
+            <div class="ml-auto d-flex align-items-center gap-1">
+                <button type="button" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle dark mode">
                     <span class="theme-toggle-icon"></span>
-                    <span class="theme-toggle-text d-none d-sm-inline ml-1">Theme</span>
                 </button>
             </div>
         </div>
