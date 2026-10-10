@@ -265,44 +265,34 @@ $today_departures = db_all($link, "
                     View Full Manifest &rarr;
                 </a>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover table-stack mb-0">
-                        <thead class="thead-light">
-                            <tr>
-                                <th>Departure Time</th>
-                                <th>Vehicle</th>
-                                <th>Route Corridor</th>
-                                <th>Current Occupancy</th>
-                                <th class="text-right">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if (empty($today_departures)): ?>
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">
-                                        No active departures configured for today.
-                                    </td>
-                                </tr>
-                            <?php else: ?>
-                                <?php foreach ($today_departures as $dep): ?>
-                                    <?php 
+            <div class="card-body p-3">
+                <?php if (empty($today_departures)): ?>
+                    <div class="p-4 text-center text-muted">
+                        No active departures configured for today.
+                    </div>
+                <?php else: ?>
+                    <div class="dep-carousel" data-interval="3000" aria-roledescription="carousel" aria-label="Today's Departures">
+                        <div class="dep-viewport">
+                            <div class="dep-track">
+                                <?php 
+                                $total_deps = count($today_departures);
+                                foreach ($today_departures as $idx => $dep): 
                                     $booked = (int)$dep['booked_count'];
                                     $cap = (int)$dep['total_capacity'];
                                     $pct = $cap > 0 ? min(100, round(($booked / $cap) * 100)) : 0;
                                     $bar_class = $pct > 80 ? 'bg-danger' : ($pct > 50 ? 'bg-warning' : 'bg-success');
-                                    ?>
-                                    <tr>
-                                        <td data-label="Departure Time">
-                                            <span class="font-weight-bold text-dark">⏰ <?= e($dep['time']) ?></span>
-                                        </td>
-                                        <td data-label="Vehicle">
+                                ?>
+                                    <article class="dep-card" role="group" aria-roledescription="slide" aria-label="Departure <?= ($idx + 1) ?> of <?= $total_deps ?>">
+                                        <header class="dep-card-header mb-2">
+                                            <span class="dep-time font-weight-bold">
+                                                <span aria-hidden="true">⏰</span> <?= e($dep['time']) ?>
+                                            </span>
                                             <span class="badge badge-light border">🚌 <?= e($dep['busno']) ?></span>
-                                        </td>
-                                        <td data-label="Route Corridor" class="font-weight-medium text-dark">
+                                        </header>
+                                        <div class="dep-route font-weight-medium text-dark mb-3" title="<?= e($dep['city1']) ?> &rarr; <?= e($dep['city2']) ?>">
                                             <?= e($dep['city1']) ?> &rarr; <?= e($dep['city2']) ?>
-                                        </td>
-                                        <td data-label="Occupancy" style="min-width: 120px;">
+                                        </div>
+                                        <div class="dep-occupancy mb-3">
                                             <div class="d-flex justify-content-between small text-muted mb-1">
                                                 <span><?= $booked ?> / <?= $cap ?> seats</span>
                                                 <span class="font-weight-bold"><?= $pct ?>%</span>
@@ -310,18 +300,26 @@ $today_departures = db_all($link, "
                                             <div class="progress" style="height: 6px;">
                                                 <div class="progress-bar <?= $bar_class ?>" role="progressbar" style="width: <?= $pct ?>%;" aria-valuenow="<?= $pct ?>" aria-valuemin="0" aria-valuemax="100"></div>
                                             </div>
-                                        </td>
-                                        <td data-label="Action" class="text-right">
-                                            <a href="<?= BASE_URL ?>/admin/manifest.php?bus=<?= urlencode($dep['busno']) ?>&date=<?= urlencode($today_date) ?>&time=<?= urlencode($dep['time']) ?>" class="btn btn-sm btn-outline-primary py-1 px-2 font-weight-bold">
+                                        </div>
+                                        <div class="dep-card-action mt-auto">
+                                            <a href="<?= BASE_URL ?>/admin/manifest.php?bus=<?= urlencode($dep['busno']) ?>&date=<?= urlencode($today_date) ?>&time=<?= urlencode($dep['time']) ?>" class="btn btn-outline-primary btn-sm btn-block font-weight-bold">
                                                 Manifest &rarr;
                                             </a>
-                                        </td>
-                                    </tr>
+                                        </div>
+                                    </article>
                                 <?php endforeach; ?>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
+                            </div>
+                        </div>
+                        <div class="dep-carousel-controls">
+                            <button type="button" class="dep-prev" aria-label="Previous departures">&lsaquo;</button>
+                            <div class="dep-dots" role="tablist" aria-label="Departure carousel slides"></div>
+                            <button type="button" class="dep-next" aria-label="Next departures">&rsaquo;</button>
+                            <button type="button" class="dep-toggle-pause" aria-label="Pause automatic sliding" title="Pause automatic sliding">
+                                <span class="dep-pause-icon" aria-hidden="true">⏸</span>
+                            </button>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -443,3 +441,5 @@ $today_departures = db_all($link, "
         </div>
     </div>
 </div>
+<script src="<?= BASE_URL ?>/assets/js/dep-carousel.js" defer></script>
+
