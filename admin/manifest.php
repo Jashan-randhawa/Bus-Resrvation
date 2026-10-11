@@ -189,7 +189,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <h1 class="page-title">Passenger Manifest &amp; Trip Sheet</h1>
         <p class="page-subtitle">View, print, and export complete passenger manifests by bus schedule and travel date.</p>
     </div>
-    <div class="d-flex align-items-center">
+    <div class="d-flex align-items-center flex-wrap gap-2 manifest-header-actions">
         <?php if ($selected_bus !== ''): ?>
             <a href="?<?= http_build_query(['bus' => $selected_bus, 'date' => $selected_date, 'route' => $selected_route, 'export' => 'csv']) ?>" class="btn btn-outline-success btn-sm mr-2 shadow-sm font-weight-bold d-inline-flex align-items-center">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1.5" aria-hidden="true">

@@ -1752,6 +1752,25 @@ html[data-theme="dark"] .manifest-metric-val.text-dark {
   color: var(--c-text, #f8fafc) !important;
 }
 
+/* Mobile Responsiveness for Manifest (< 768px) */
+@media (max-width: 767.98px) {
+  .manifest-header-actions {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+  .manifest-header-actions .btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    margin-right: 0 !important;
+  }
+  .manifest-filter-body .form-row > [class*="col-"] {
+    margin-bottom: 0.75rem;
+  }
+  .manifest-filter-body .form-row > [class*="col-"]:last-child {
+    margin-bottom: 0;
+  }
+}
+
 
 
 
