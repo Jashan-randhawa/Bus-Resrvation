@@ -88,6 +88,7 @@ assert_test("manifest.php contains dedicated mobile card (.manifest-mobile-card)
 assert_test("manifest-mobile-card has .d-md-none to render only on mobile", str_contains($manifest_code, "manifest-mobile-card d-md-none"));
 assert_test("manifest-mobile-card form targets ?export=pdf", str_contains($manifest_code, '<input type="hidden" name="export" value="pdf">'));
 assert_test("manifest-mobile-card allows selecting bus by bus number", str_contains($manifest_code, 'name="bus"') && str_contains($manifest_code, 'id="mobile_manifest_bus"'));
+assert_test("Mobile bus select options display strictly bus number without seats/capacity", !preg_match('/id="mobile_manifest_bus"[^>]*>.*?seats/s', $manifest_code));
 assert_test("manifest-mobile-card has Download Manifest (PDF) button", str_contains($manifest_code, 'Download Manifest (PDF)'));
 assert_test("Header CSV export button is hidden on mobile (.d-none .d-md-inline-flex)", (str_contains($manifest_code, "'export' => 'csv'") || str_contains($manifest_code, "export=csv")) && str_contains($manifest_code, "d-none d-md-inline-flex"));
 assert_test("Header Print button is hidden on mobile (.d-none .d-md-inline-flex)", str_contains($manifest_code, "window.print()") && str_contains($manifest_code, "d-none d-md-inline-flex"));

@@ -306,11 +306,11 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                     Select Bus Number
                 </label>
                 <div class="manifest-select-wrap">
-                    <select id="mobile_manifest_bus" name="bus" class="form-control manifest-control form-control-lg" required>
+                    <select id="mobile_manifest_bus" name="bus" class="form-control manifest-control manifest-dropdown-select" required>
                         <option value="">-- Choose Bus Number --</option>
                         <?php foreach ($buses as $b): ?>
                             <option value="<?= e($b['bus_number']) ?>" <?= $selected_bus === $b['bus_number'] ? 'selected' : '' ?>>
-                                <?= e($b['bus_number']) ?> (<?= (int)($b['capacity'] ?? 36) ?> seats)
+                                <?= e($b['bus_number']) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -352,7 +352,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         <option value="">-- Choose Bus --</option>
                         <?php foreach ($buses as $b): ?>
                             <option value="<?= e($b['bus_number']) ?>" <?= $selected_bus === $b['bus_number'] ? 'selected' : '' ?>>
-                                <?= e($b['bus_number']) ?> (<?= (int)($b['capacity'] ?? 36) ?> seats)
+                                <?= e($b['bus_number']) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
