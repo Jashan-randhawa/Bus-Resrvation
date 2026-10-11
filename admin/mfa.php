@@ -170,6 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_mfa'])) {
                        id="mfa_code"
                        class="form-control code-input"
                        placeholder="000000"
+                       inputmode="numeric"
                        autocomplete="one-time-code"
                        autofocus
                        required>

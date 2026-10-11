@@ -392,6 +392,12 @@ html[data-theme="dark"] .table-stack td {
 html[data-theme="dark"] .table-stack td::before {
   color: var(--c-text-muted, #94a3b8);
 }
+html[data-theme="dark"] .table .bg-light,
+html[data-theme="dark"] .table-responsive .bg-light {
+  background-color: #0b1120 !important;
+  border-color: #334155 !important;
+  color: #f8fafc;
+}
 
 /* Table Column Width Utilities (A21) */
 .th-id-xs { width: 50px; }
