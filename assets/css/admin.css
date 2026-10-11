@@ -1344,7 +1344,19 @@ html[data-theme="dark"] .booking-filter-btn.btn-outline-secondary:hover {
   color: #f8fafc;
 }
 
-/* Sticky Bulk Action Bar for Mobile */
+/* Mobile Full-Screen Modal for Inquiries Reply */
+@media (max-width: 575.98px) {
+  #singleReplyModal .modal-dialog {
+    margin: 0.5rem auto;
+    max-width: calc(100vw - 1rem);
+    min-height: calc(100dvh - 1rem);
+    display: flex;
+    align-items: center;
+  }
+  #singleReplyModal .modal-content {
+    width: 100%;
+  }
+}
 @media (max-width: 767.98px) {
   #bulkBookingsForm:not(.d-none) {
     position: fixed;
