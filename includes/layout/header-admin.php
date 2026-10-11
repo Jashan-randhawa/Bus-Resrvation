@@ -52,7 +52,12 @@ require_once __DIR__ . '/../config.php';
                 <img src="<?= BASE_URL ?>/assets/images/bus.svg" alt="Logo" class="brand-logo">
                 <span class="brand-title">Bus Service</span>
             </a>
-            <span class="brand-badge">Admin</span>
+            <div class="d-flex align-items-center">
+                <span class="brand-badge mr-1">Admin</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary d-lg-none sidebar-close-btn ml-1" id="sidebarCloseBtn" aria-label="Close navigation menu" title="Close menu">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
         </div>
 
         <!-- Admin Profile Info -->

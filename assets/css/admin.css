@@ -51,6 +51,25 @@
   border-bottom: 1px solid var(--sidebar-border, rgba(255, 255, 255, 0.06));
 }
 
+.sidebar-close-btn {
+  color: var(--sidebar-text, #94a3b8);
+  border-color: var(--sidebar-border, rgba(255, 255, 255, 0.15));
+  padding: 0.15rem 0.5rem;
+  font-size: 1.15rem;
+  line-height: 1;
+  border-radius: 6px;
+  background: transparent;
+  transition: all 0.15s ease;
+}
+
+.sidebar-close-btn:hover,
+.sidebar-close-btn:focus {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+}
+
 .admin-brand .brand-link {
   display: flex;
   align-items: center;
