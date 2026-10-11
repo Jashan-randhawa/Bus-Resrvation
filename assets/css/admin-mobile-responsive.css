@@ -234,96 +234,12 @@
     }
 }
 
-/* --- TABLE STACKING ENHANCED --- */
+/* --- TABLE STACKING: Unified in admin.css (A13) with dark theme token support --- */
 @media (max-width: 767.98px) {
-    .table-stack {
-        font-size: 0.875rem;
-    }
-
-    .table-stack thead {
-        display: none;
-    }
-
-    .table-stack tbody,
-    .table-stack tr,
-    .table-stack td {
-        display: block;
-        width: 100%;
-    }
-
-    .table-stack tr {
-        margin-bottom: 1rem;
-        border: 1px solid #e2e8f0;
-        border-radius: 6px;
-        background: #ffffff;
-        padding: 0.75rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-
-    .table-stack td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.5rem 0;
-        border: none;
-        border-bottom: 1px solid #f1f5f9;
-        text-align: right;
-    }
-
-    .table-stack td:last-child {
-        border-bottom: none;
-        padding-top: 0.75rem;
-        padding-bottom: 0;
-    }
-
-    .table-stack td::before {
-        content: attr(data-label);
-        font-weight: 600;
-        font-size: 0.7rem;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.025em;
-        text-align: left;
-        margin-right: 1rem;
-        flex: 0 0 auto;
-        min-width: 70px;
-    }
-
-    .table-stack td[data-label="Actions"] {
-        justify-content: flex-end;
-    }
-
-    .table-stack td[data-label="Actions"]::before {
-        display: none;
-    }
-
-    .table-stack td[data-label="Select"] {
-        justify-content: flex-start;
-    }
-
-    .table-stack td[data-label="Select"]::before {
-        margin-right: 0.5rem;
-    }
-
-    /* Stack action buttons in tables */
-    .table-stack .btn-group {
-        flex-direction: column;
-        width: 100%;
-    }
-
-    .table-stack .btn-group .btn {
-        width: 100%;
-        margin-bottom: 0.25rem;
-        border-radius: 4px;
-    }
-
-    .table-stack .btn-group .btn:last-child {
-        margin-bottom: 0;
-    }
-
     td[data-label="Occupancy"] {
         min-width: 100px;
     }
+}
 
     .booking-visualizer {
         max-height: 200px;

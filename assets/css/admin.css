@@ -357,6 +357,32 @@ body.overflow-hidden {
   .table-stack td[data-label="Actions"]::before {
     display: none;
   }
+  /* Stack action buttons in tables on small screens */
+  .table-stack .btn-group {
+    flex-direction: column;
+    width: 100%;
+  }
+  .table-stack .btn-group .btn {
+    width: 100%;
+    margin-bottom: 0.25rem;
+    border-radius: 4px;
+  }
+  .table-stack .btn-group .btn:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/* Explicit Dark Mode Overrides for Stacked Tables */
+html[data-theme="dark"] .table-stack tr {
+  background: var(--c-surface, #131b2e);
+  border-color: var(--c-border, #334155);
+}
+html[data-theme="dark"] .table-stack td {
+  border-bottom-color: var(--c-border-subtle, #1e293b);
+  color: var(--c-text, #f8fafc);
+}
+html[data-theme="dark"] .table-stack td::before {
+  color: var(--c-text-muted, #94a3b8);
 }
 
 /* Table Column Width Utilities (A21) */
