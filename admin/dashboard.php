@@ -842,7 +842,7 @@ usort($attention_items, static function($a, $b) {
 </div>
 
 <!-- 3. Secondary Operational Metrics (6 Cards) -->
-<div class="kpi-grid mb-3" style="grid-template-columns: repeat(6, 1fr);">
+<div class="kpi-grid kpi-grid-6 mb-3">
     <div class="stat-card">
         <div class="stat-card-top">
             <span class="stat-label">Confirmed Bookings</span>

@@ -80,6 +80,30 @@
   }
 }
 
+/* 6-column secondary KPI grid */
+.kpi-grid-6 {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+@media (max-width: 1199.98px) {
+  .kpi-grid-6 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 767.98px) {
+  .kpi-grid-6 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 379.98px) {
+  .kpi-grid-6 {
+    grid-template-columns: 1fr;
+  }
+}
+
 .stat-card {
   background: var(--c-surface, #ffffff);
   border: 1px solid var(--c-border, #e2e8f0);
@@ -1087,3 +1111,258 @@ html[data-theme="dark"] .attention-empty {
     transition: none !important;
   }
 }
+
+/* ==========================================================================
+   Dashboard Mobile Responsiveness — all breakpoints
+   ========================================================================== */
+
+/* --- Dashboard Header --- */
+@media (max-width: 991.98px) {
+  .dash-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .dash-header-title {
+    font-size: 1.35rem;
+  }
+
+  .dash-header-sub {
+    font-size: 0.82rem;
+  }
+
+  .dash-header-actions {
+    width: 100%;
+    gap: 0.4rem;
+  }
+
+  /* Hide the clock timestamp on tablet — too noisy */
+  .dash-time-chip {
+    display: none;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .dash-header-title {
+    font-size: 1.2rem;
+  }
+
+  .dash-header-actions {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  /* Hide date chip on mobile — save space */
+  .dash-date-chip {
+    display: none;
+  }
+
+  /* Mode toggle should stretch full row on mobile */
+  .dash-mode-toggle {
+    width: 100%;
+    margin-right: 0 !important;
+  }
+
+  .dash-mode-toggle .btn {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+/* --- Primary KPI Cards — compact on mobile --- */
+@media (max-width: 575.98px) {
+  .stat-card {
+    min-height: 108px;
+    padding: 0.9rem;
+  }
+
+  .stat-value {
+    font-size: 1.3rem;
+  }
+
+  .kpi-icon {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* --- Today's Departures Section Header --- */
+@media (max-width: 767.98px) {
+  .dep-card-wrap header.dash-section-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dash-head-right {
+    width: 100%;
+    margin-top: 0.4rem;
+  }
+
+  .dash-head-right .btn {
+    flex: 1;
+    text-align: center;
+    font-size: 0.8rem;
+  }
+}
+
+/* --- Performance Overview Header --- */
+@media (max-width: 767.98px) {
+  .perf-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem 1rem 0.75rem;
+  }
+
+  .perf-header-main {
+    width: 100%;
+  }
+
+  .perf-range-seg {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .perf-range-btn {
+    flex: 1;
+    text-align: center;
+    padding: 0.35rem 0.5rem;
+  }
+
+  .perf-header-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+  }
+
+  .perf-compare-text {
+    margin-left: 0 !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .perf-title {
+    font-size: 1.1rem;
+  }
+
+  .perf-value {
+    font-size: 1.45rem;
+  }
+
+  .perf-tile {
+    padding: 0.95rem 1rem;
+  }
+
+  .perf-kpi-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  /* Chart box top actions wrap */
+  .perf-box-header.d-flex {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 0.5rem;
+  }
+
+  .perf-chart-legend {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* Interval select full width */
+  .perf-interval-wrap {
+    width: 100%;
+  }
+
+  .perf-interval-select {
+    width: 100%;
+  }
+
+  /* Daily breakdown action row — stack */
+  .perf-card .d-flex.justify-content-between.align-items-center.pt-2 {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .perf-card .d-flex.justify-content-between.align-items-center.pt-2 .btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* --- Perf Donut status legend: 2 col on small screens --- */
+@media (max-width: 575.98px) {
+  .perf-status-legend,
+  .perf-outcomes-legend {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* --- Top Transit Corridors header --- */
+@media (max-width: 767.98px) {
+  .card-header.d-flex.flex-wrap.justify-content-between.align-items-center {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  .corridor-nav-tabs {
+    width: 100%;
+  }
+
+  .corridor-nav-tabs .btn {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .corridor-row {
+    padding: 0.75rem;
+  }
+
+  .corridor-title {
+    font-size: 0.88rem;
+  }
+
+  .corridor-revenue {
+    font-size: 0.9rem;
+  }
+}
+
+/* --- Attention Needed Panel header --- */
+@media (max-width: 575.98px) {
+  .attention-card .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+/* --- KPI Definitions collapse --- */
+@media (max-width: 575.98px) {
+  #kpiDefinitions .card-body {
+    font-size: 0.78rem;
+  }
+}
+
+/* ==========================================================================
+   Dark mode overrides for new mobile rules
+   ========================================================================== */
+html[data-theme="dark"] .perf-empty-state {
+  background: rgba(15, 23, 42, 0.95);
+}
+
+html[data-theme="dark"] .dash-mode-toggle .btn-outline-secondary {
+  border-color: var(--c-border, #334155);
+  color: var(--c-text-muted, #94a3b8);
+}
+
+html[data-theme="dark"] .dash-mode-toggle .btn-outline-secondary:hover {
+  background: var(--c-surface, #131b2e);
+}
+
