@@ -37,16 +37,101 @@ require_once __DIR__ . '/../config.php';
         <?php endforeach; ?>
     <?php endif; ?>
 
-
     <!-- Global Theme Toggle (Head load to avoid FOUC) -->
     <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>
 </head>
 <body>
+<!-- Inline SVG Sprite for Admin Navigation Icons (Section 3.3) -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+    <symbol id="nav-dashboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="9" rx="1"></rect>
+        <rect x="14" y="3" width="7" height="5" rx="1"></rect>
+        <rect x="14" y="12" width="7" height="9" rx="1"></rect>
+        <rect x="3" y="16" width="7" height="5" rx="1"></rect>
+    </symbol>
+    <symbol id="nav-ticket" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"></path>
+        <line x1="9" y1="9" x2="9" y2="15"></line>
+        <line x1="15" y1="9" x2="15" y2="15"></line>
+    </symbol>
+    <symbol id="nav-seat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 13h10a4 4 0 0 0 4-4V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v4a4 4 0 0 0 4 4z"></path>
+        <path d="M4 13v6a2 2 0 0 0 2 2h1"></path>
+        <path d="M20 13v6a2 2 0 0 1-2 2h-1"></path>
+        <line x1="7" y1="17" x2="17" y2="17"></line>
+    </symbol>
+    <symbol id="nav-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+        <path d="M9 12h6"></path>
+        <path d="M9 16h6"></path>
+    </symbol>
+    <symbol id="nav-bus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="14" rx="3"></rect>
+        <path d="M3 10h18"></path>
+        <circle cx="7" cy="15" r="1.5"></circle>
+        <circle cx="17" cy="15" r="1.5"></circle>
+        <path d="M5 18v2"></path>
+        <path d="M19 18v2"></path>
+    </symbol>
+    <symbol id="nav-route" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="6" cy="19" r="3"></circle>
+        <circle cx="18" cy="5" r="3"></circle>
+        <path d="M12 19h4.5a3.5 3.5 0 0 0 0-7h-9a3.5 3.5 0 0 1 0-7H12"></path>
+    </symbol>
+    <symbol id="nav-user-cog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+        <circle cx="19" cy="11" r="2"></circle>
+    </symbol>
+    <symbol id="nav-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+    </symbol>
+    <symbol id="nav-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+    </symbol>
+    <symbol id="nav-message" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    </symbol>
+    <symbol id="nav-activity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+    </symbol>
+    <symbol id="nav-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"></line>
+        <line x1="8" y1="12" x2="21" y2="12"></line>
+        <line x1="8" y1="18" x2="21" y2="18"></line>
+        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+    </symbol>
+    <symbol id="nav-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+    </symbol>
+    <symbol id="nav-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+    </symbol>
+    <symbol id="nav-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+    </symbol>
+    <symbol id="nav-external-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+        <polyline points="15 3 21 3 21 9"></polyline>
+        <line x1="10" y1="14" x2="21" y2="3"></line>
+    </symbol>
+</svg>
+
 <a class="skip-link sr-only sr-only-focusable" href="#adminMain">Skip to content</a>
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 <div class="admin-shell">
     <aside class="admin-sidebar" id="adminSidebar">
-        <!-- Brand Header -->
+        <!-- Brand Header (Bus Service text visible on all viewports) -->
         <div class="admin-brand">
             <a href="<?= BASE_URL ?>/admin/index.php" class="brand-link">
                 <img src="<?= BASE_URL ?>/assets/images/bus.svg" alt="Logo" class="brand-logo">
@@ -55,7 +140,7 @@ require_once __DIR__ . '/../config.php';
             <div class="d-flex align-items-center">
                 <span class="brand-badge mr-1">Admin</span>
                 <button type="button" class="btn btn-sm btn-outline-secondary d-lg-none sidebar-close-btn ml-1" id="sidebarCloseBtn" aria-label="Close navigation menu" title="Close menu">
-                    <span aria-hidden="true">&times;</span>
+                    <svg width="16" height="16" aria-hidden="true"><use href="#nav-close"></use></svg>
                 </button>
             </div>
         </div>
@@ -74,7 +159,11 @@ require_once __DIR__ . '/../config.php';
                     default => 'Administrator',
                 };
                 ?>
-                <div class="profile-role"><?= e($admin_role_title) ?></div>
+                <div class="profile-role">
+                    <span class="badge <?= $admin_role === 'viewer' ? 'badge-secondary' : 'badge-primary' ?> font-weight-bold">
+                        <?= e($admin_role_title) ?>
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -83,37 +172,64 @@ require_once __DIR__ . '/../config.php';
             <?php
             $is_super = function_exists('is_super_admin') && is_super_admin();
             $people_items = [
-                ['Profile & Security', 'profile.php', null, '⚙️'],
-                ['Customers', 'customers.php', 'edit-customer.php', '👥'],
+                ['Profile & Security', 'profile.php', null, 'nav-user-cog'],
+                ['Customers', 'customers.php', 'edit-customer.php', 'nav-users'],
             ];
             if ($is_super) {
-                $people_items[] = ['Administrators', 'add-admin.php', null, '🛡️'];
+                $people_items[] = ['Administrators', 'add-admin.php', null, 'nav-shield'];
             }
-            $people_items[] = ['Customer Queries', 'queries.php', null, '💬'];
+            $people_items[] = ['Customer Queries', 'queries.php', null, 'nav-message'];
 
             $nav_menu = [
                 'Overview' => [
-                    ['Dashboard', 'index.php', null, '📊'],
+                    ['Dashboard', 'index.php', null, 'nav-dashboard'],
                 ],
                 'Operations' => [
-                    ['Bookings', 'bookings.php', 'edit-booking.php', '🎟️'],
-                    ['Seat Availability', 'seats.php', null, '🪑'],
-                    ['Passenger Manifest', 'manifest.php', null, '📋'],
+                    ['Bookings', 'bookings.php', 'edit-booking.php', 'nav-ticket'],
+                    ['Seat Availability', 'seats.php', null, 'nav-seat'],
+                    ['Passenger Manifest', 'manifest.php', null, 'nav-clipboard'],
                 ],
                 'Fleet & Schedule' => [
-                    ['Buses', 'buses.php', 'edit-bus.php', '🚌'],
-                    ['Routes', 'routes.php', 'edit-route.php', '🗺️'],
+                    ['Buses', 'buses.php', 'edit-bus.php', 'nav-bus'],
+                    ['Routes', 'routes.php', 'edit-route.php', 'nav-route'],
                 ],
                 'People' => $people_items,
             ];
 
             if ($is_super) {
                 $nav_menu['System'] = [
-                    ['Diagnostics', 'diagnostics.php', null, '⚡'],
-                    ['Audit Log', 'audit-log.php', null, '📜'],
+                    ['Diagnostics', 'diagnostics.php', null, 'nav-activity'],
+                    ['Audit Log', 'audit-log.php', null, 'nav-list'],
                 ];
             }
             $current_script = basename($_SERVER['SCRIPT_NAME'] ?? '');
+
+            // Hoist unread queries count for both topbar bell and drawer badge
+            $has_q_status = isset($link) && function_exists('table_has_column') && table_has_column($link, 'query', 'status');
+            $unread_count = 0;
+            if ($has_q_status) {
+                $now = time();
+                $cached_time = (int)($_SESSION['unread_queries_checked_at'] ?? 0);
+                if ($current_script === 'queries.php' || ($now - $cached_time) > 60 || !isset($_SESSION['unread_queries_count'])) {
+                    $unread_res = db_one($link, "SELECT COUNT(*) AS c FROM `query` WHERE status = 'new'");
+                    $unread_count = (int)($unread_res['c'] ?? 0);
+                    $_SESSION['unread_queries_count'] = $unread_count;
+                    $_SESSION['unread_queries_checked_at'] = $now;
+                } else {
+                    $unread_count = (int)$_SESSION['unread_queries_count'];
+                }
+            }
+
+            // Determine current active group for eyebrow header
+            $current_group = 'Overview';
+            foreach ($nav_menu as $grp => $items) {
+                foreach ($items as [$lbl, $file, $child, $icon]) {
+                    if ($current_script === $file || ($child !== null && $current_script === $child)) {
+                        $current_group = $grp;
+                        break 2;
+                    }
+                }
+            }
             ?>
             <?php foreach ($nav_menu as $group => $items): ?>
                 <div class="nav-group-header"><?= e($group) ?></div>
@@ -123,30 +239,16 @@ require_once __DIR__ . '/../config.php';
                         $is_active = ($current_script === $file || ($child !== null && $current_script === $child));
                         $link_url = BASE_URL . '/admin/' . $file;
                         $badge_html = '';
-                        if ($file === 'queries.php') {
-                            $has_q_status = isset($link) && function_exists('table_has_column') && table_has_column($link, 'query', 'status');
-                            $unread_count = 0;
-                            if ($has_q_status) {
-                                $now = time();
-                                $cached_time = (int)($_SESSION['unread_queries_checked_at'] ?? 0);
-                                if ($current_script === 'queries.php' || ($now - $cached_time) > 60 || !isset($_SESSION['unread_queries_count'])) {
-                                    $unread_res = db_one($link, "SELECT COUNT(*) AS c FROM `query` WHERE status = 'new'");
-                                    $unread_count = (int)($unread_res['c'] ?? 0);
-                                    $_SESSION['unread_queries_count'] = $unread_count;
-                                    $_SESSION['unread_queries_checked_at'] = $now;
-                                } else {
-                                    $unread_count = (int)$_SESSION['unread_queries_count'];
-                                }
-                            }
-                            if ($unread_count > 0) {
-                                $badge_html = ' <span class="badge badge-danger badge-pill ml-auto font-weight-bold">' . $unread_count . '</span>';
-                            }
+                        if ($file === 'queries.php' && $unread_count > 0) {
+                            $badge_html = ' <span class="badge badge-danger badge-pill ml-auto font-weight-bold">' . $unread_count . '</span>';
                         }
                         ?>
                         <li class="nav-item">
                             <a class="nav-link d-flex align-items-center <?= $is_active ? 'active' : '' ?>" href="<?= $link_url ?>" <?= $is_active ? 'aria-current="page"' : '' ?>>
-                                <span class="mr-2" style="font-size: 1rem;" aria-hidden="true"><?= $icon ?></span>
-                                <span><?= e($label) ?></span>
+                                <span class="nav-icon-tile mr-2.5" aria-hidden="true">
+                                    <svg class="nav-icon" width="20" height="20"><use href="#<?= e($icon) ?>"></use></svg>
+                                </span>
+                                <span class="nav-label"><?= e($label) ?></span>
                                 <?= $badge_html ?>
                             </a>
                         </li>
@@ -157,8 +259,9 @@ require_once __DIR__ . '/../config.php';
 
         <!-- Sidebar Footer -->
         <div class="admin-sidebar-footer">
-            <a href="<?= BASE_URL ?>/homepage.php" class="btn btn-sm btn-outline-light btn-block mb-2" target="_blank">
-                Public Site &rarr;
+            <a href="<?= BASE_URL ?>/homepage.php" class="btn btn-sm btn-outline-light btn-block mb-2 d-flex align-items-center justify-content-center" target="_blank">
+                <span>Public Site</span>
+                <svg class="ml-1.5" width="14" height="14" aria-hidden="true"><use href="#nav-external-link"></use></svg>
             </a>
             <form action="<?= BASE_URL ?>/admin/index.php" method="post" class="m-0">
                 <?= csrf_field() ?>
@@ -170,18 +273,26 @@ require_once __DIR__ . '/../config.php';
     </aside>
 
     <div class="admin-main">
-        <!-- Top bar for mobile toggle & theme switch -->
+        <!-- Top bar for mobile toggle & theme switch (Section 3.1) -->
         <div class="admin-topbar">
-            <button type="button" class="btn btn-sm btn-outline-secondary px-2" id="sidebarToggle" aria-controls="adminSidebar" aria-expanded="false" aria-label="Toggle navigation menu">
-                <span class="d-none d-sm-inline mr-1">☰</span>
-                <span class="d-sm-none">MENU</span>
+            <button type="button" class="admin-menu-btn" id="sidebarToggle" aria-controls="adminSidebar" aria-expanded="false" aria-label="Open navigation menu">
+                <svg width="22" height="22" aria-hidden="true"><use href="#nav-menu"></use></svg>
             </button>
-            <span class="page-title-mobile font-weight-bold text-dark ml-2 d-lg-none" style="font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw;">
-                <?= e($title ?? 'Admin') ?>
-            </span>
-            <span class="text-muted small ml-2 d-none d-lg-inline">Operations Console</span>
+            <div class="topbar-title-block">
+                <span class="topbar-eyebrow d-lg-none"><?= e($current_group) ?></span>
+                <h1 class="page-title-mobile font-weight-bold text-dark d-lg-none">
+                    <?= e($title ?? 'Admin') ?>
+                </h1>
+                <span class="text-muted small d-none d-lg-inline">Operations Console &bull; <?= e($current_group) ?></span>
+            </div>
             
-            <div class="ml-auto d-flex align-items-center gap-1">
+            <div class="ml-auto d-flex align-items-center gap-2">
+                <a href="<?= BASE_URL ?>/admin/queries.php" class="topbar-bell-btn <?= $unread_count > 0 ? '' : 'd-none' ?>" aria-label="Customer queries, <?= $unread_count ?> unread" title="Customer queries">
+                    <svg width="20" height="20" aria-hidden="true"><use href="#nav-bell"></use></svg>
+                    <?php if ($unread_count > 0): ?>
+                        <span class="topbar-bell-badge font-weight-bold"><?= $unread_count > 9 ? '9+' : $unread_count ?></span>
+                    <?php endif; ?>
+                </a>
                 <button type="button" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle dark mode">
                     <span class="theme-toggle-icon"></span>
                 </button>
