@@ -736,37 +736,43 @@ html[data-theme="dark"] .bus-legend-type-pill strong {
    ========================================================================== */
 @media (max-width: 480px) {
   .bus-map-card {
-    --seat-w: 44px;
+    --seat-w: clamp(38px, calc((100vw - 110px) / 5), 44px);
     --seat-h: 58px;
-    --seat-gap: 5px;
-    --aisle-w: 20px;
-    padding: 12px 14px 18px;
-    border-radius: 34px 34px 16px 16px;
+    --seat-gap: 4px;
+    --aisle-w: clamp(14px, 4vw, 20px);
+    padding: 12px 10px 16px;
+    border-radius: 30px 30px 16px 16px;
+    max-width: 100%;
+    overflow-x: auto;
   }
   .bus-side-mirror {
     display: none; /* Hide protruding mirrors on compact mobile viewports */
   }
   .seat-headrest {
-    width: 26px;
+    width: 24px;
     height: 8px;
   }
   .seat-armrest {
-    width: 5px;
+    width: 4px;
   }
   .seat-num {
     font-size: 13px;
   }
   .seat-type-tag {
-    font-size: 9px;
+    font-size: 8.5px;
   }
   .bus-legend {
-    gap: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 14px;
     padding: 8px 10px;
   }
   .bus-legend-item {
     font-size: 12px;
   }
 }
+
 
 @media (prefers-reduced-motion: reduce) {
   .seat-label,

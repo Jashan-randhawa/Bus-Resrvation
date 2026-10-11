@@ -149,7 +149,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                 <h5 class="mb-0 font-weight-bold">Confirm Trip Reservation</h5>
                 <span class="badge badge-primary px-3 py-2">Bus #<?= e($bus) ?></span>
             </div>
-            <div class="card-body p-4">
+            <div class="card-body p-3 p-md-4">
                 <?php if ($alert): ?>
                     <div class="alert alert-<?= e($alert_type) ?> alert-dismissible fade show" role="alert">
                         <?= e($alert) ?>
@@ -192,7 +192,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                         </div>
                         <div class="col-md-6 form-group">
                             <label for="num" class="font-weight-bold small text-muted">Contact Phone Number</label>
-                            <input type="tel" id="num" name="num" value="<?= e($form_phone) ?>" class="form-control" placeholder="e.g. +91 98765 43210 or 9876543210" minlength="10" maxlength="20" required autocomplete="tel" />
+                            <input type="tel" id="num" name="num" value="<?= e($form_phone) ?>" class="form-control" placeholder="e.g. +91 98765 43210 or 9876543210" minlength="10" maxlength="20" required autocomplete="tel" inputmode="tel" />
                             <small class="text-muted">Enter 10 to 15 digits; spaces, + and dashes are allowed.</small>
                         </div>
                     </div>
@@ -210,37 +210,38 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                         </div>
                     </div>
 
-                    <!-- Sticky Summary Strip & Dynamic Submit Enable (U-04, Phase 1.3) -->
-                    <div class="card bg-light border p-3 mt-4">
-                        <div class="row align-items-center">
-                            <div class="col-sm-6 mb-2 mb-sm-0">
-                                <small class="text-muted text-uppercase d-block font-weight-bold">Selected Seat</small>
-                                <div class="h5 mb-0 text-dark" id="summary-seat-display">
-                                    <?php if ($form_seat > 0 && !isset($booked_seats[$form_seat])): ?>
-                                        <span class="badge badge-success px-2 py-1 mr-1">Seat #<?= $form_seat ?></span>
-                                        <small class="text-muted">(Selected)</small>
-                                    <?php else: ?>
-                                        <span class="text-muted font-italic font-weight-normal">None selected (click seat above)</span>
-                                    <?php endif; ?>
+                    <!-- Accessible inline validation error area (Phase 5.2) -->
+                    <div id="booking-validation-error" class="alert alert-danger mt-3 d-none" role="alert" aria-live="assertive"></div>
+
+                    <!-- Sticky Summary Strip & Dynamic Submit Enable (U-04, Phase 1.3, F5) -->
+                    <div class="booking-sticky-footer mt-4">
+                        <div class="card bg-light border p-3 booking-summary-strip">
+                            <div class="row align-items-center">
+                                <div class="col-sm-4 col-6 mb-1 mb-sm-0">
+                                    <small class="text-muted text-uppercase d-block font-weight-bold">Selected Seat</small>
+                                    <div class="h5 mb-0 text-dark" id="summary-seat-display">
+                                        <?php if ($form_seat > 0 && !isset($booked_seats[$form_seat])): ?>
+                                            <span class="badge badge-success px-2 py-1 mr-1">Seat #<?= $form_seat ?></span>
+                                            <small class="text-muted">(Selected)</small>
+                                        <?php else: ?>
+                                            <span class="text-muted font-italic font-weight-normal small">None selected</span>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-sm-6 text-sm-right">
-                                <small class="text-muted text-uppercase d-block font-weight-bold">Total Fare</small>
-                                <div class="h4 font-weight-bold text-success mb-0">
-                                    <?= CURRENCY ?><?= e(number_format($price, 2)) ?>
+                                <div class="col-sm-4 col-6 text-right text-sm-center mb-1 mb-sm-0">
+                                    <small class="text-muted text-uppercase d-block font-weight-bold">Total Fare</small>
+                                    <div class="h4 font-weight-bold text-success mb-0">
+                                        <?= CURRENCY ?><?= e(number_format($price, 2)) ?>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4 col-12 mt-2 mt-sm-0">
+                                    <button type="submit" class="btn btn-primary btn-block py-2 font-weight-bold shadow-sm" id="submit-booking-btn" name="check" value="1" <?= ($form_seat > 0 && !isset($booked_seats[$form_seat])) ? '' : 'disabled' ?>>
+                                        Confirm &amp; Reserve
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Accessible inline validation error area (Phase 5.2) -->
-                    <div id="booking-validation-error" class="alert alert-danger mt-3 d-none" role="alert" aria-live="assertive"></div>
-
-                    <hr class="my-4">
-
-                    <button type="submit" class="btn btn-primary btn-block btn-lg font-weight-bold shadow-sm" id="submit-booking-btn" name="check" value="1" <?= ($form_seat > 0 && !isset($booked_seats[$form_seat])) ? '' : 'disabled' ?>>
-                        Confirm & Reserve Ticket
-                    </button>
                 </form>
             </div>
         </div>

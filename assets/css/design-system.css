@@ -1151,36 +1151,6 @@ html[data-theme="dark"] .bus-legend-item {
   color: #cbd5e1;
 }
 
-/* ── Mobile Viewports (<= 480px) ──────────────────────────── */
-@media (max-width: 480px) {
-  .bus-map-card {
-    padding: 16px 12px;
-    border-radius: 28px 28px 14px 14px;
-  }
-  .seat-box {
-    width: 42px;
-    height: 54px;
-  }
-  .seat-num {
-    font-size: 14px;
-  }
-  .seat-type-tag {
-    font-size: 9.5px;
-  }
-  .bus-seat-pair {
-    gap: 6px;
-  }
-  .bus-aisle-space {
-    width: 18px;
-  }
-  .bus-legend {
-    gap: 14px;
-  }
-  .bus-legend-item {
-    font-size: 11.5px;
-  }
-}
-
 
 
 /* Mobile Booking Card Styles (U-16) */

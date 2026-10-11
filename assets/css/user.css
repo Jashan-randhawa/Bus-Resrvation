@@ -73,3 +73,36 @@
     border-radius: 14px !important;
   }
 }
+
+/* Phase 3: Booking & Sticky Seat Summary (F5) */
+.booking-sticky-footer {
+  position: static;
+}
+
+@media (max-width: 767.98px) {
+  .booking-sticky-footer {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 95;
+    margin: 1.5rem -1rem -1rem -1rem;
+    padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px)) 1rem;
+    background: var(--c-surface, #ffffff);
+    border-top: 1px solid var(--c-border, #e2e8f0);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+  }
+
+  html[data-theme="dark"] .booking-sticky-footer {
+    background: var(--c-surface, #1e293b);
+    border-top-color: var(--c-border, #334155);
+  }
+
+  .booking-summary-strip {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+}
+

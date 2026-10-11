@@ -137,6 +137,41 @@ assert_user_layout("user.css defines 44px min-touch target for circular swap but
 );
 
 // -------------------------------------------------------------
+// Suite 6: Phase 3 Booking & Seat Map Responsiveness (F2, F4, F5)
+// -------------------------------------------------------------
+echo "\n[*] Suite 6: Booking & Seat Map Responsiveness\n";
+
+$user_booking = file_get_contents(__DIR__ . '/../user/booking.php');
+$seat_map_css = file_get_contents(__DIR__ . '/../assets/css/seat-map.css');
+$design_system_css = file_get_contents(__DIR__ . '/../assets/css/design-system.css');
+
+assert_user_layout("user/booking.php contact phone input specifies inputmode='tel'",
+    str_contains($user_booking, 'id="num"') &&
+    str_contains($user_booking, 'inputmode="tel"')
+);
+
+assert_user_layout("user/booking.php contains .booking-sticky-footer with submit button (F5)",
+    str_contains($user_booking, 'booking-sticky-footer') &&
+    str_contains($user_booking, 'id="submit-booking-btn"')
+);
+
+assert_user_layout("user.css styles .booking-sticky-footer with sticky bottom positioning (F5)",
+    str_contains($user_css, '.booking-sticky-footer') &&
+    str_contains($user_css, 'position: sticky') &&
+    str_contains($user_css, 'safe-area-inset-bottom')
+);
+
+assert_user_layout("seat-map.css computes fluid seat size via clamp to fit 320px screens (F2)",
+    str_contains($seat_map_css, '--seat-w: clamp(') &&
+    str_contains($seat_map_css, '--aisle-w: clamp(')
+);
+
+assert_user_layout("design-system.css eliminates dead conflicting 480px seat rules (42x54px) (F4)",
+    !str_contains($design_system_css, 'height: 54px;') &&
+    !str_contains($design_system_css, 'width: 42px;')
+);
+
+// -------------------------------------------------------------
 // Summary
 // -------------------------------------------------------------
 echo "\n========================================================\n";

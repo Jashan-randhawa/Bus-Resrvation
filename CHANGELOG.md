@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- **User Section Mobile Modernization (Phase 3 - Booking & Seat Map Responsiveness)**:
+  - **Fluid Seat Size Clamping (`assets/css/seat-map.css`, F2)**: Computed seat dimensions using fluid CSS clamp `--seat-w: clamp(38px, calc((100vw - 110px) / 5), 44px)` and `--aisle-w: clamp(14px, 4vw, 20px)`, eliminating 320px viewport horizontal overflow across all 2+2, 1+2, 2+1, and 1+1 layouts.
+  - **Deduplication of Seat Media Rules (`assets/css/design-system.css`, F4)**: Removed dead, conflicting 480px seat rules (42x54px) from `design-system.css`, ensuring `seat-map.css` serves as the authoritative seat styling.
+  - **Mobile Sticky Seat Summary & Confirm Bar (`user/booking.php`, `assets/css/user.css`, F5)**: Styled `.booking-sticky-footer` with sticky bottom positioning and safe-area padding (`env(safe-area-inset-bottom)`), keeping the selected seat number, live fare, and confirm button visible under the thumb without scrolling back up.
+  - **Mobile Form & Keyboard Optimization**: Added `inputmode="tel"` to phone contact field in `user/booking.php` and decreased card padding (`p-3 p-md-4`) to maximize available width on narrow screens.
+  - **Two-Column Legend Wrapping**: Updated `.bus-legend` to wrap cleanly with 12px text size on mobile screens.
+  - Expanded `tests/test_user_layout.php` with 5 new assertion checks (24/24 passing).
+
 - **User Section Mobile Modernization (Phase 2 - Search Page & Result Cards)**:
   - **Single-Thumb Search Controls (`user/index.php`)**: Stacked form fields vertically on mobile with 16px font-size and min 48px touch targets, eliminating iOS Safari viewport auto-zooming (F10).
   - **Floating Circular Swap Control (F6)**: Replaced bulky separate row with a sleek circular button (`.swap-cities-btn-circle`) centered between departure and destination fields (44x44px touch target).
