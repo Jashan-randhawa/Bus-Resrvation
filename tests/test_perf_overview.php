@@ -140,6 +140,16 @@ assert_test("perf-chart.js observes data-theme changes to live-update chart them
 assert_test("perf-chart.js respects prefers-reduced-motion", 
     str_contains($js_content, 'prefers-reduced-motion: reduce'));
 
+assert_test("dashboard.css configures .corridor-list as horizontal row carousel on mobile",
+    str_contains(file_get_contents(__DIR__ . '/../assets/css/dashboard.css'), '.corridor-list') &&
+    str_contains(file_get_contents(__DIR__ . '/../assets/css/dashboard.css'), 'flex-direction: row !important;'));
+
+assert_test("perf-chart.js initializes auto-scroller on corridor lists and checks offsetParent",
+    str_contains($js_content, "initMobileAutoScroller('#corridorVolumeList')") &&
+    str_contains($js_content, "initMobileAutoScroller('#corridorRevenueList')") &&
+    str_contains($js_content, "container.offsetParent === null"));
+
+
 echo "\n========================================================\n";
 echo "   Performance Overview Results: {$passed} Passed, {$failed} Failed\n";
 echo "========================================================\n";

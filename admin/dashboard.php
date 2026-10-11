@@ -1495,7 +1495,7 @@ usort($attention_items, static function($a, $b) {
             </div>
 
             <!-- Revenue View (Hidden by default) -->
-            <div id="corridorRevenueList" class="corridor-list" style="display: none;">
+            <div id="corridorRevenueList" class="corridor-list d-none" style="display: none;">
                 <?php if (empty($top_routes_revenue)): ?>
                     <div class="p-4 text-center text-muted">
                         <div>No route revenue data available.</div>
@@ -1597,17 +1597,31 @@ function switchCorridorRank(type) {
     var caption = document.getElementById('corridorRankCaption');
 
     if (type === 'revenue') {
-        volList.style.display = 'none';
-        revList.style.display = 'block';
-        btnVol.className = 'btn btn-sm btn-outline-secondary';
-        btnRev.className = 'btn btn-sm btn-primary active';
-        caption.textContent = 'Ranked by total gross route revenue from confirmed bookings.';
+        if (volList) {
+            volList.classList.add('d-none');
+            volList.style.display = 'none';
+        }
+        if (revList) {
+            revList.classList.remove('d-none');
+            revList.style.display = '';
+            revList.scrollLeft = 0;
+        }
+        if (btnVol) btnVol.className = 'btn btn-sm btn-outline-secondary';
+        if (btnRev) btnRev.className = 'btn btn-sm btn-primary active';
+        if (caption) caption.textContent = 'Ranked by total gross route revenue from confirmed bookings.';
     } else {
-        volList.style.display = 'block';
-        revList.style.display = 'none';
-        btnVol.className = 'btn btn-sm btn-primary active';
-        btnRev.className = 'btn btn-sm btn-outline-secondary';
-        caption.textContent = 'Ranked by total confirmed ticket reservations.';
+        if (revList) {
+            revList.classList.add('d-none');
+            revList.style.display = 'none';
+        }
+        if (volList) {
+            volList.classList.remove('d-none');
+            volList.style.display = '';
+            volList.scrollLeft = 0;
+        }
+        if (btnVol) btnVol.className = 'btn btn-sm btn-primary active';
+        if (btnRev) btnRev.className = 'btn btn-sm btn-outline-secondary';
+        if (caption) caption.textContent = 'Ranked by total confirmed ticket reservations.';
     }
 }
 </script>

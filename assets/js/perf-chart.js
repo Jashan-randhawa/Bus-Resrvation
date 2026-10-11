@@ -439,7 +439,7 @@
         });
     }
 
-    // 3-second auto-scroller for mobile perf-tiles and key insights
+    // 3-second auto-scroller for mobile perf-tiles, key insights and top corridors
     function initMobileAutoScroller(selector) {
         var container = document.querySelector(selector);
         if (!container) return;
@@ -449,7 +449,7 @@
         var isPaused = false;
 
         function getCardStep() {
-            var firstCard = container.firstElementChild;
+            var firstCard = container.querySelector('.perf-tile, .perf-insight-item, .corridor-row') || container.firstElementChild;
             if (!firstCard) return container.clientWidth;
             var style = window.getComputedStyle(container);
             var gap = parseFloat(style.gap) || 12;
@@ -457,9 +457,11 @@
         }
 
         function scrollNext() {
-            // Only auto-scroll on mobile screens (< 576px) where items overflow horizontally
-            if (window.innerWidth > 575.98) return;
+            // Only auto-scroll on mobile screens (< 768px) where items overflow horizontally
+            if (window.innerWidth > 767.98) return;
             if (isPaused) return;
+            // Skip hidden elements (e.g. inactive tabs)
+            if (container.offsetParent === null) return;
 
             var maxScroll = container.scrollWidth - container.clientWidth;
             if (maxScroll <= 10) return; // No scroll needed
@@ -501,6 +503,8 @@
 
         startAutoScroll();
     }
+
+    window.initMobileAutoScroller = initMobileAutoScroller;
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {

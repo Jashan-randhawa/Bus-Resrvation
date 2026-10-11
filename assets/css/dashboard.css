@@ -1369,11 +1369,12 @@ html[data-theme="dark"] .dash-mode-toggle .btn-outline-secondary:hover {
 /* ==========================================================================
    Performance Tiles, Key Insights & Top Corridors: Mobile Horizontal Moving Scroll (3s interval)
    ========================================================================== */
-@media (max-width: 575.98px) {
+@media (max-width: 767.98px) {
   .perf-tiles,
   .perf-insights-grid,
   .corridor-list {
     display: flex !important;
+    flex-direction: row !important;
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
     scroll-snap-type: x mandatory !important;
@@ -1383,6 +1384,12 @@ html[data-theme="dark"] .dash-mode-toggle .btn-outline-secondary:hover {
     padding-bottom: 0.5rem !important;
     margin-bottom: 0.75rem !important;
     scrollbar-width: none !important; /* Firefox */
+  }
+
+  .corridor-list.d-none,
+  .corridor-list[style*="display: none"],
+  .corridor-list[style*="display:none"] {
+    display: none !important;
   }
 
   .perf-tiles::-webkit-scrollbar,
@@ -1395,10 +1402,14 @@ html[data-theme="dark"] .dash-mode-toggle .btn-outline-secondary:hover {
   .perf-insights-grid .perf-insight-item,
   .corridor-list .corridor-row {
     flex: 0 0 calc(100% - 1.5rem) !important;
+    min-width: calc(100% - 1.5rem) !important;
     max-width: calc(100% - 1.5rem) !important;
+    width: calc(100% - 1.5rem) !important;
+    flex-shrink: 0 !important;
     scroll-snap-align: center !important;
     scroll-snap-stop: always !important;
     box-sizing: border-box !important;
   }
 }
+
 
