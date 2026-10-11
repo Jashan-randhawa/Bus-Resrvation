@@ -143,22 +143,20 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
 
 <!-- Phase 4.3: Your Next Trip Banner -->
 <?php if ($next_trip): ?>
-    <div class="card border-0 shadow-sm mb-4 bg-light border-left border-primary" style="border-left-width: 5px !important;">
-        <div class="card-body p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+    <div class="card border-0 shadow-sm mb-4 bg-light border-left border-primary upcoming-journey-card" style="border-left-width: 5px !important;">
+        <div class="card-body p-3 p-md-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
             <div>
                 <span class="badge badge-success text-uppercase font-weight-bold px-2 py-1 mb-2">Upcoming Journey</span>
                 <h4 class="font-weight-bold text-dark mb-1">
                     <?= e($next_trip['city1']) ?> &rarr; <?= e($next_trip['city2']) ?>
                 </h4>
-                <p class="text-muted mb-0 small">
-                    📅 <?= e(fmt_date($next_trip['date'])) ?> at <?= e(fmt_time($next_trip['time'])) ?> &bull;
-                    🚌 Bus #<?= e($next_trip['bus']) ?> &bull;
-                    🪑 Seat #<?= e($next_trip['seat']) ?> &bull;
-                    PNR: <strong class="text-dark font-monospace"><?= e($next_trip['pnr']) ?></strong>
-                </p>
+                <div class="text-muted small">
+                    <div>📅 <?= e(fmt_date($next_trip['date'])) ?> at <?= e(fmt_time($next_trip['time'])) ?> &bull; 🚌 Bus #<?= e($next_trip['bus']) ?> &bull; 🪑 Seat #<?= e($next_trip['seat']) ?></div>
+                    <div class="mt-1">PNR: <strong class="text-dark font-monospace"><?= e($next_trip['pnr']) ?></strong></div>
+                </div>
             </div>
             <div class="mt-3 mt-md-0">
-                <a href="<?= BASE_URL ?>/user/ticket.php?pnr=<?= urlencode($next_trip['pnr']) ?>" class="btn btn-primary px-4 py-2 font-weight-bold shadow-sm">
+                <a href="<?= BASE_URL ?>/user/ticket.php?pnr=<?= urlencode($next_trip['pnr']) ?>" class="btn btn-primary px-4 py-2 font-weight-bold shadow-sm btn-block-mobile">
                     View Boarding Pass &rarr;
                 </a>
             </div>
@@ -170,11 +168,11 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
     <div class="card-header bg-white py-3">
         <h5 class="mb-0 font-weight-bold">Search Journey</h5>
     </div>
-    <div class="card-body p-4">
+    <div class="card-body p-3 p-md-4">
         <!-- U-13: GET search form for bookmarkable results -->
         <form action="" method="get" id="search-form">
             <div class="form-row align-items-center">
-                <div class="col-md-4 form-group">
+                <div class="col-12 col-md-4 form-group mb-2 mb-md-3">
                     <label for="from" class="font-weight-bold small text-muted">Departure City</label>
                     <select name="from" class="form-control" id="from" required>
                         <option value="">Select Origin</option>
@@ -186,13 +184,21 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                     </select>
                 </div>
 
-                <div class="col-md-1 form-group text-center d-none d-md-block pt-3">
+                <!-- Desktop Swap Button -->
+                <div class="col-md-1 form-group text-center d-none d-md-block pt-3 mb-3">
                     <button type="button" class="btn btn-outline-secondary btn-sm" id="swap-cities-btn" title="Swap Origin and Destination" style="margin-top: 8px;">
                         ⇄
                     </button>
                 </div>
 
-                <div class="col-md-3 form-group">
+                <!-- Mobile Circular Swap Button (F6) -->
+                <div class="col-12 text-center d-md-none my-1">
+                    <button type="button" class="btn swap-cities-btn-circle" id="swap-cities-btn-mobile" title="Swap Origin and Destination" aria-label="Swap Origin and Destination">
+                        ⇄
+                    </button>
+                </div>
+
+                <div class="col-12 col-md-3 form-group mb-2 mb-md-3">
                     <label for="to" class="font-weight-bold small text-muted">Destination City</label>
                     <select name="to" class="form-control" id="to" required>
                         <option value="">Select Destination</option>
@@ -204,16 +210,13 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                     </select>
                 </div>
 
-                <div class="col-md-4 form-group">
+                <div class="col-12 col-md-4 form-group mb-3">
                     <label for="date" class="font-weight-bold small text-muted">Travel Date</label>
                     <input type="date" min="<?= date('Y-m-d') ?>" max="<?= date('Y-m-d', strtotime('+90 days')) ?>" name="date" id="date" value="<?= e($search_date ?: date('Y-m-d')) ?>" class="form-control" required />
                 </div>
             </div>
-            <div class="d-flex justify-content-between align-items-center mt-2">
-                <button type="button" class="btn btn-outline-secondary btn-sm d-md-none" id="swap-cities-btn-mobile">
-                    ⇄ Swap Cities
-                </button>
-                <button type="submit" class="btn btn-primary px-4 py-2 font-weight-bold shadow-sm ml-auto" id="search-submit-btn">
+            <div class="d-flex justify-content-end align-items-center mt-1">
+                <button type="submit" class="btn btn-primary px-4 py-2 font-weight-bold shadow-sm" id="search-submit-btn">
                     🔍 Find Available Buses
                 </button>
             </div>
@@ -224,21 +227,21 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
 
 <?php if ($searched && empty($alert)): ?>
     <div class="data-table-wrapper mb-4" id="search-results">
-        <div class="table-header d-flex flex-column flex-sm-row justify-content-between align-items-sm-center">
-            <div class="mb-2 mb-sm-0">
+        <div class="table-header d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+            <div class="mb-2 mb-md-0">
                 <h5 class="mb-0 font-weight-bold">Available Journeys</h5>
                 <small class="text-muted">Travel Date: <?= e(fmt_date($search_date)) ?> &bull; <?= count($matched_routes) ?> bus(es) found</small>
             </div>
 
             <!-- Phase 3.2: Sorting controls & Return Trip shortcut -->
             <?php if (!empty($matched_routes)): ?>
-                <div class="d-flex align-items-center flex-wrap">
-                    <a href="<?= BASE_URL ?>/user/index.php?from=<?= urlencode($search_to) ?>&to=<?= urlencode($search_from) ?>&date=<?= urlencode($search_date) ?>" class="btn btn-outline-secondary btn-sm mr-sm-3 mb-2 mb-sm-0 font-weight-bold shadow-sm" title="Search return buses">
+                <div class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center">
+                    <a href="<?= BASE_URL ?>/user/index.php?from=<?= urlencode($search_to) ?>&to=<?= urlencode($search_from) ?>&date=<?= urlencode($search_date) ?>" class="btn btn-outline-secondary btn-sm mr-sm-3 mb-2 mb-sm-0 font-weight-bold shadow-sm text-center" title="Search return buses">
                         ⇄ Return: <?= e($search_to) ?> &rarr; <?= e($search_from) ?>
                     </a>
-                    <div class="d-flex align-items-center">
+                    <div class="d-flex align-items-center justify-content-between justify-content-sm-start">
                         <label for="sort-select" class="small text-muted font-weight-bold mb-0 mr-2">Sort:</label>
-                        <select id="sort-select" class="form-control form-control-sm" style="width: auto;">
+                        <select id="sort-select" class="form-control form-control-sm flex-grow-1 flex-sm-grow-0" style="min-width: 170px;">
                             <option value="time_asc" <?= $sort === 'time_asc' ? 'selected' : '' ?>>Departure (Earliest)</option>
                             <option value="price_asc" <?= $sort === 'price_asc' ? 'selected' : '' ?>>Fare (Lowest)</option>
                             <option value="seats_desc" <?= $sort === 'seats_desc' ? 'selected' : '' ?>>Available Seats (Most)</option>
@@ -377,42 +380,45 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                         'date'     => $search_date
                     ]);
                     ?>
-                    <div class="card border rounded shadow-sm mb-3 <?= $is_cutoff ? 'bg-light text-muted' : 'bg-white' ?>">
+                    <div class="card border rounded-lg shadow-sm mb-3 search-result-card <?= $is_cutoff ? 'bg-light text-muted' : 'bg-white' ?>">
                         <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
-                                <span class="badge badge-light border text-dark font-weight-bold">🚌 Bus #<?= e($row['busno'] ?? '') ?></span>
-                                <div class="font-weight-bold text-success h5 mb-0">
-                                    <?= CURRENCY ?><?= e(number_format((float)($row['price'] ?? 0), 2)) ?>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <div class="font-weight-bold text-dark h5 mb-0">
+                                        <?= e(fmt_time($row['time'] ?? '')) ?>
+                                        <?php if ($is_departed): ?>
+                                            <span class="badge badge-warning text-dark ml-1 font-weight-bold">Departed</span>
+                                        <?php elseif ($is_cutoff): ?>
+                                            <span class="badge badge-secondary ml-1 font-weight-bold">Closed</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="font-weight-bold text-dark mt-1">
+                                        <?= e($row['city1']) ?> &rarr; <?= e($row['city2']) ?>
+                                    </div>
+                                    <span class="badge badge-light border text-dark font-weight-bold mt-1">🚌 Bus #<?= e($row['busno'] ?? '') ?></span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-weight-bold text-primary h4 mb-0">
+                                        <?= CURRENCY ?><?= e(number_format((float)($row['price'] ?? 0), 2)) ?>
+                                    </div>
+                                    <small class="text-muted">per seat</small>
                                 </div>
                             </div>
-                            <div class="mb-2">
-                                <div class="font-weight-bold text-dark h6 mb-1">
-                                    <?= e($row['city1']) ?> &rarr; <?= e($row['city2']) ?>
-                                </div>
-                                <div class="small text-muted">
-                                    Departure: <strong class="text-dark"><?= e(fmt_time($row['time'] ?? '')) ?></strong>
-                                    <?php if ($is_departed): ?>
-                                        <span class="badge badge-warning text-dark ml-1">Departed</span>
-                                    <?php elseif ($is_cutoff): ?>
-                                        <span class="badge badge-secondary ml-1">Closed</span>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                            <div class="d-flex justify-content-between align-items-center pt-2.5 mt-2 border-top">
                                 <div>
                                     <?php if ($is_cutoff): ?>
-                                        <span class="badge badge-secondary px-2 py-1">Booking Closed</span>
+                                        <span class="badge badge-secondary px-2 py-1 font-weight-bold">Booking Closed</span>
                                     <?php elseif ($available_seats > 0): ?>
-                                        <span class="badge badge-success px-2 py-1"><?= $available_seats ?> Seats Open</span>
+                                        <span class="badge badge-success px-2 py-1 font-weight-bold"><?= $available_seats ?> Seats Open</span>
                                     <?php else: ?>
-                                        <span class="badge badge-danger px-2 py-1">Sold Out</span>
+                                        <span class="badge badge-danger px-2 py-1 font-weight-bold">Sold Out</span>
                                     <?php endif; ?>
                                 </div>
                                 <div>
                                     <?php if ($is_cutoff || $available_seats <= 0): ?>
-                                        <button class="btn btn-secondary btn-sm" disabled>Unavailable</button>
+                                        <button class="btn btn-secondary btn-sm px-3 font-weight-bold" disabled>Unavailable</button>
                                     <?php else: ?>
-                                        <a href="<?= BASE_URL ?>/user/booking.php?<?= e($book_params) ?>" class="btn btn-primary btn-sm px-3 font-weight-bold">
+                                        <a href="<?= BASE_URL ?>/user/booking.php?<?= e($book_params) ?>" class="btn btn-primary btn-sm px-3 py-2 font-weight-bold shadow-sm d-inline-block">
                                             Select Seat &rarr;
                                         </a>
                                     <?php endif; ?>

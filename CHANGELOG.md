@@ -4,6 +4,15 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- **User Section Mobile Modernization (Phase 2 - Search Page & Result Cards)**:
+  - **Single-Thumb Search Controls (`user/index.php`)**: Stacked form fields vertically on mobile with 16px font-size and min 48px touch targets, eliminating iOS Safari viewport auto-zooming (F10).
+  - **Floating Circular Swap Control (F6)**: Replaced bulky separate row with a sleek circular button (`.swap-cities-btn-circle`) centered between departure and destination fields (44x44px touch target).
+  - **Full-Width Action Buttons**: Styled search submission and boarding pass buttons to span full container width on phones for easy thumb reach.
+  - **Sticky Topbar Scroll Anchor**: Added `scroll-margin-top: calc(var(--topbar-h, 56px) + 16px)` on `#search-results` preventing topbar from obscuring search results.
+  - **Elevated Mobile Result Cards**: Refined mobile card visual hierarchy showcasing Departure Time (`h5`) and Tariff (`h4 text-primary`) as prominent lead elements, with full-width booking action row.
+  - **Responsive Sort & Return Trip Controls**: Wrapped sorting and return trip actions cleanly on small screens without horizontal clipping.
+  - Expanded `tests/test_user_layout.php` with 6 new assertion checks (19/19 passing).
+
 - **User Section Mobile Modernization (Phases 0 & 1 - Shell, Header, Drawer)**:
   - **Phase 0 (Baseline & Safety Net)**: Created automated test suite `tests/test_user_layout.php` with 13 static assertion checks covering HTML comment balance, viewport tags, controller scripts, stylesheets, touch targets, and ARIA attributes.
   - **Phase 1 (Shell, Header & Drawer)**:

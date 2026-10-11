@@ -101,6 +101,42 @@ assert_user_layout("header-user.php topbar uses .theme-toggle-btn 44px touch tar
 );
 
 // -------------------------------------------------------------
+// Suite 5: Phase 2 Mobile Search & Card Responsiveness (F6, F10)
+// -------------------------------------------------------------
+echo "\n[*] Suite 5: Mobile Search & Card Responsiveness\n";
+
+$user_index = file_get_contents(__DIR__ . '/../user/index.php');
+
+assert_user_layout("user/index.php contains circular mobile swap button (#swap-cities-btn-mobile) (F6)",
+    str_contains($user_index, 'id="swap-cities-btn-mobile"') &&
+    str_contains($user_index, 'swap-cities-btn-circle')
+);
+
+assert_user_layout("user/index.php upcoming journey card uses .upcoming-journey-card and responsive flex",
+    str_contains($user_index, 'upcoming-journey-card') &&
+    str_contains($user_index, 'flex-md-row')
+);
+
+assert_user_layout("user/index.php mobile result cards use .search-result-card with departure & tariff hierarchy",
+    str_contains($user_index, 'search-result-card') &&
+    str_contains($user_index, 'per seat')
+);
+
+assert_user_layout("user.css offsets search-results anchor for sticky topbar",
+    str_contains($user_css, 'scroll-margin-top') &&
+    str_contains($user_css, '#search-results')
+);
+
+assert_user_layout("user.css prevents iOS Safari input zoom with 16px font-size below 768px (F10)",
+    str_contains($user_css, '16px !important')
+);
+
+assert_user_layout("user.css defines 44px min-touch target for circular swap button",
+    str_contains($user_css, '.swap-cities-btn-circle') &&
+    str_contains($user_css, 'width: 44px')
+);
+
+// -------------------------------------------------------------
 // Summary
 // -------------------------------------------------------------
 echo "\n========================================================\n";
