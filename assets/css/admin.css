@@ -334,6 +334,8 @@ body.overflow-hidden {
     border: none;
     border-bottom: 1px solid var(--c-border-subtle, #f1f5f9);
     text-align: right;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
   .table-stack td:last-child {
     border-bottom: none;
