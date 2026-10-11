@@ -439,39 +439,39 @@
         });
     }
 
-    // 3-second auto-scroller for mobile perf-tiles
-    function initPerfTilesAutoScroll() {
-        var tilesContainer = document.querySelector('.perf-tiles');
-        if (!tilesContainer) return;
+    // 3-second auto-scroller for mobile perf-tiles and key insights
+    function initMobileAutoScroller(selector) {
+        var container = document.querySelector(selector);
+        if (!container) return;
 
         var scrollTimer = null;
         var intervalMs = 3000; // 3 seconds
         var isPaused = false;
 
         function getCardStep() {
-            var firstCard = tilesContainer.querySelector('.perf-tile');
-            if (!firstCard) return tilesContainer.clientWidth;
-            var style = window.getComputedStyle(tilesContainer);
+            var firstCard = container.firstElementChild;
+            if (!firstCard) return container.clientWidth;
+            var style = window.getComputedStyle(container);
             var gap = parseFloat(style.gap) || 12;
             return firstCard.offsetWidth + gap;
         }
 
-        function scrollNextTile() {
-            // Only auto-scroll on mobile screens (< 576px) where tiles overflow horizontally
+        function scrollNext() {
+            // Only auto-scroll on mobile screens (< 576px) where items overflow horizontally
             if (window.innerWidth > 575.98) return;
             if (isPaused) return;
 
-            var maxScroll = tilesContainer.scrollWidth - tilesContainer.clientWidth;
+            var maxScroll = container.scrollWidth - container.clientWidth;
             if (maxScroll <= 10) return; // No scroll needed
 
             var step = getCardStep();
-            var nextPos = tilesContainer.scrollLeft + step;
+            var nextPos = container.scrollLeft + step;
 
             if (nextPos >= maxScroll - 15) {
                 // Loop back to start smoothly
-                tilesContainer.scrollTo({ left: 0, behavior: 'smooth' });
+                container.scrollTo({ left: 0, behavior: 'smooth' });
             } else {
-                tilesContainer.scrollTo({ left: nextPos, behavior: 'smooth' });
+                container.scrollTo({ left: nextPos, behavior: 'smooth' });
             }
         }
 
@@ -481,7 +481,7 @@
             if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
                 return;
             }
-            scrollTimer = setInterval(scrollNextTile, intervalMs);
+            scrollTimer = setInterval(scrollNext, intervalMs);
         }
 
         function stopAutoScroll() {
@@ -492,10 +492,10 @@
         }
 
         // Pause on touch or mouse interaction
-        tilesContainer.addEventListener('mouseenter', function() { isPaused = true; });
-        tilesContainer.addEventListener('mouseleave', function() { isPaused = false; });
-        tilesContainer.addEventListener('touchstart', function() { isPaused = true; }, { passive: true });
-        tilesContainer.addEventListener('touchend', function() {
+        container.addEventListener('mouseenter', function() { isPaused = true; });
+        container.addEventListener('mouseleave', function() { isPaused = false; });
+        container.addEventListener('touchstart', function() { isPaused = true; }, { passive: true });
+        container.addEventListener('touchend', function() {
             setTimeout(function() { isPaused = false; }, 2000);
         }, { passive: true });
 
@@ -505,10 +505,12 @@
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
             initPerfCharts();
-            initPerfTilesAutoScroll();
+            initMobileAutoScroller('.perf-tiles');
+            initMobileAutoScroller('.perf-insights-grid');
         });
     } else {
         initPerfCharts();
-        initPerfTilesAutoScroll();
+        initMobileAutoScroller('.perf-tiles');
+        initMobileAutoScroller('.perf-insights-grid');
     }
 })();
