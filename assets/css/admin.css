@@ -327,21 +327,127 @@ html[data-theme="dark"] .admin-menu-btn:focus {
   flex: 1;
 }
 
-.topbar-eyebrow {
-  font-size: 0.6875rem; /* 11px */
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--c-text-muted, #64748b);
-  line-height: 1.2;
+@media (min-width: 992px) {
+  .topbar-title-block {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+  }
 }
 
+.topbar-eyebrow-wrap {
+  display: flex;
+  align-items: center;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+@media (min-width: 992px) {
+  .topbar-eyebrow-wrap {
+    margin-bottom: 0;
+    gap: 8px;
+  }
+}
+
+.topbar-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.65rem; /* ~10.5px */
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 7.5px 2px 6.5px;
+  border-radius: 9999px;
+  line-height: 1.25;
+  color: var(--c-primary, #2563eb);
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.topbar-eyebrow-dot {
+  width: 5.5px;
+  height: 5.5px;
+  border-radius: 50%;
+  background-color: currentColor;
+  box-shadow: 0 0 5px currentColor;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+/* Eyebrow Section Themes across all groups */
+/* 1. Overview (Dashboard) - Indigo */
+.topbar-eyebrow.group-pill-overview {
+  color: #4338ca;
+  background-color: rgba(99, 102, 241, 0.09);
+  border-color: rgba(99, 102, 241, 0.24);
+}
+html[data-theme="dark"] .topbar-eyebrow.group-pill-overview {
+  color: #a5b4fc;
+  background-color: rgba(99, 102, 241, 0.18);
+  border-color: rgba(165, 180, 252, 0.3);
+}
+
+/* 2. Operations (Bookings, Seats, Manifest) - Emerald */
+.topbar-eyebrow.group-pill-operations {
+  color: #047857;
+  background-color: rgba(16, 185, 129, 0.09);
+  border-color: rgba(16, 185, 129, 0.24);
+}
+html[data-theme="dark"] .topbar-eyebrow.group-pill-operations {
+  color: #6ee7b7;
+  background-color: rgba(16, 185, 129, 0.18);
+  border-color: rgba(110, 231, 183, 0.3);
+}
+
+/* 3. Fleet & Schedule (Buses, Routes) - Sky / Cyan */
+.topbar-eyebrow.group-pill-fleet-schedule {
+  color: #0369a1;
+  background-color: rgba(14, 165, 233, 0.09);
+  border-color: rgba(14, 165, 233, 0.24);
+}
+html[data-theme="dark"] .topbar-eyebrow.group-pill-fleet-schedule {
+  color: #7dd3fc;
+  background-color: rgba(14, 165, 233, 0.18);
+  border-color: rgba(125, 211, 252, 0.3);
+}
+
+/* 4. People (Customers, Admins, Queries) - Violet */
+.topbar-eyebrow.group-pill-people {
+  color: #6d28d9;
+  background-color: rgba(139, 92, 246, 0.09);
+  border-color: rgba(139, 92, 246, 0.24);
+}
+html[data-theme="dark"] .topbar-eyebrow.group-pill-people {
+  color: #c4b5fd;
+  background-color: rgba(139, 92, 246, 0.18);
+  border-color: rgba(196, 181, 253, 0.3);
+}
+
+/* 5. System (Diagnostics, Audit Log) - Amber */
+.topbar-eyebrow.group-pill-system {
+  color: #b45309;
+  background-color: rgba(245, 158, 11, 0.09);
+  border-color: rgba(245, 158, 11, 0.24);
+}
+html[data-theme="dark"] .topbar-eyebrow.group-pill-system {
+  color: #fcd34d;
+  background-color: rgba(245, 158, 11, 0.18);
+  border-color: rgba(252, 211, 77, 0.3);
+}
+
+/* Mobile Topbar Title */
 .admin-topbar .page-title-mobile {
-  font-size: 1rem; /* 16px */
-  font-weight: 600;
+  font-size: 1.05rem; /* ~16.8px */
+  font-weight: 700;
+  letter-spacing: -0.022em;
   color: var(--c-text, #0f172a);
-  line-height: 1.3;
-  margin: 0;
+  line-height: 1.25;
+  margin: 1px 0 0 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -349,6 +455,30 @@ html[data-theme="dark"] .admin-menu-btn:focus {
 }
 
 html[data-theme="dark"] .admin-topbar .page-title-mobile {
+  color: var(--c-text, #f8fafc);
+}
+
+/* Desktop Breadcrumb in Topbar */
+.topbar-breadcrumb-sep {
+  color: var(--c-border-strong, #cbd5e1);
+  font-size: 0.875rem;
+  font-weight: 400;
+  user-select: none;
+}
+
+html[data-theme="dark"] .topbar-breadcrumb-sep {
+  color: #475569;
+}
+
+.topbar-desktop-title {
+  color: var(--c-text, #0f172a);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+html[data-theme="dark"] .topbar-desktop-title {
   color: var(--c-text, #f8fafc);
 }
 

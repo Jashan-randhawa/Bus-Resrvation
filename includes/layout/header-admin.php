@@ -230,6 +230,7 @@ require_once __DIR__ . '/../config.php';
                     }
                 }
             }
+            $group_slug = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $current_group), '-'));
             ?>
             <?php foreach ($nav_menu as $group => $items): ?>
                 <div class="nav-group-header"><?= e($group) ?></div>
@@ -279,11 +280,17 @@ require_once __DIR__ . '/../config.php';
                 <svg width="22" height="22" aria-hidden="true"><use href="#nav-menu"></use></svg>
             </button>
             <div class="topbar-title-block">
-                <span class="topbar-eyebrow d-lg-none"><?= e($current_group) ?></span>
-                <h1 class="page-title-mobile font-weight-bold text-dark d-lg-none">
+                <div class="topbar-eyebrow-wrap">
+                    <span class="topbar-eyebrow group-pill-<?= e($group_slug) ?>">
+                        <span class="topbar-eyebrow-dot" aria-hidden="true"></span>
+                        <span class="topbar-eyebrow-text"><?= e($current_group) ?></span>
+                    </span>
+                    <span class="topbar-breadcrumb-sep d-none d-lg-inline" aria-hidden="true">/</span>
+                    <span class="topbar-desktop-title font-weight-bold d-none d-lg-inline"><?= e($title ?? 'Admin') ?></span>
+                </div>
+                <h1 class="page-title-mobile font-weight-bold d-lg-none">
                     <?= e($title ?? 'Admin') ?>
                 </h1>
-                <span class="text-muted small d-none d-lg-inline">Operations Console &bull; <?= e($current_group) ?></span>
             </div>
             
             <div class="ml-auto d-flex align-items-center gap-2">

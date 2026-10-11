@@ -185,6 +185,20 @@ assert_layout("header-admin.php topbar includes two-line title block with eyebro
     str_contains($header_admin, 'topbar-eyebrow')
 );
 
+assert_layout("header-admin.php topbar includes eyebrow pill with dot and dynamic section group slug",
+    str_contains($header_admin, 'topbar-eyebrow') &&
+    str_contains($header_admin, 'topbar-eyebrow-dot') &&
+    str_contains($header_admin, 'group-pill-')
+);
+
+assert_layout("admin.css defines distinct eyebrow pill themes for all 5 section groups",
+    str_contains($admin_css, '.topbar-eyebrow.group-pill-overview') &&
+    str_contains($admin_css, '.topbar-eyebrow.group-pill-operations') &&
+    str_contains($admin_css, '.topbar-eyebrow.group-pill-fleet-schedule') &&
+    str_contains($admin_css, '.topbar-eyebrow.group-pill-people') &&
+    str_contains($admin_css, '.topbar-eyebrow.group-pill-system')
+);
+
 assert_layout("header-admin.php topbar includes unread query bell button with badge support",
     str_contains($header_admin, 'topbar-bell-btn') &&
     str_contains($header_admin, 'topbar-bell-badge')

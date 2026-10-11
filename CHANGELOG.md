@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- **Topbar Section Header & Eyebrow Pill UI Elevation Across All Sections**:
+  - Upgraded the topbar title block (`.topbar-title-block`) across all 5 administration sections (Overview, Operations, Fleet & Schedule, People, and System).
+  - Replaced plain raw text with a SaaS-grade micro-badge pill (`.topbar-eyebrow`) featuring a luminous status dot (`.topbar-eyebrow-dot`), tight letter-tracking (`0.08em`), pill rounding (`9999px`), and soft border/tint backgrounds.
+  - Implemented 5 distinct semantic color themes for section groups:
+    - **Overview**: Indigo (`group-pill-overview`)
+    - **Operations**: Emerald (`group-pill-operations`)
+    - **Fleet & Schedule**: Cyan / Sky (`group-pill-fleet-schedule`)
+    - **People**: Violet (`group-pill-people`)
+    - **System**: Amber (`group-pill-system`)
+  - Elevated title typography (`.page-title-mobile`) with tight tracking (`-0.022em`), 700 weight, responsive max-width calculation (`calc(100vw - 165px)`), and proper dark-mode theme token adaptation (`var(--c-text)`).
+  - Added seamless desktop breadcrumb display in the topbar (`.topbar-breadcrumb-sep` and `.topbar-desktop-title`) connecting section badge with page title.
+  - Expanded `tests/test_admin_layout.php` with 2 new assertion checks (33/33 passing).
+
 - **Admin Mobile Navigation Bar & Topbar Modernization (Option A Architecture)**:
   - Overhauled the administrative shell navigation into a modern, accessible, touch-first mobile drawer and topbar experience adhering to the Option A specification.
   - **Inline SVG Sprite System**: Introduced 16 unified stroke-style SVG navigation icons (`currentColor`, 20px) in `includes/layout/header-admin.php` replacing inconsistent operating-system emojis. Icons seamlessly inherit theme and active states across desktop and mobile.
