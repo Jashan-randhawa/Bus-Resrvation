@@ -74,6 +74,12 @@
   }
 }
 
+@media (max-width: 379.98px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .stat-card {
   background: var(--c-surface, #ffffff);
   border: 1px solid var(--c-border, #e2e8f0);
