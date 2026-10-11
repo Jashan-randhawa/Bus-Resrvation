@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- **User Section Mobile Modernization (Phases 0 & 1 - Shell, Header, Drawer)**:
+  - **Phase 0 (Baseline & Safety Net)**: Created automated test suite `tests/test_user_layout.php` with 13 static assertion checks covering HTML comment balance, viewport tags, controller scripts, stylesheets, touch targets, and ARIA attributes.
+  - **Phase 1 (Shell, Header & Drawer)**:
+    - Added `viewport-fit=cover` to `includes/layout/header-user.php` for notched devices in portrait and landscape.
+    - Linked `assets/css/admin.css` directly in `<head>` and removed blocking `@import url('admin.css')` from `assets/css/user.css`.
+    - Linked `assets/css/admin-mobile-responsive.css` in the user header, providing mobile drawer styling, safe-area padding, and touch target scaling.
+    - Added `#sidebarCloseBtn` inside the user navigation drawer with SVG close icon (`#nav-close`).
+    - Integrated authoritative `assets/js/admin-mobile.js` controller into `includes/layout/footer-user.php` with focus trap, `inert` state management, Escape handling, and swipe-left gesture support. Removed duplicate inline sidebar script.
+    - Modernized user topbar with 44px `.admin-menu-btn`, two-line title block (`.topbar-title-block`, `.topbar-eyebrow`, `.page-title-mobile`), and 44px `.theme-toggle-btn`.
+    - Extracted inline session timeout detection into `assets/js/user-idle.js`, cleanly decoupling behavioral logic from PHP markup.
+
 - **Topbar Section Header & Eyebrow Pill UI Elevation Across All Sections**:
   - Upgraded the topbar title block (`.topbar-title-block`) across all 5 administration sections (Overview, Operations, Fleet & Schedule, People, and System).
   - Replaced plain raw text with a SaaS-grade micro-badge pill (`.topbar-eyebrow`) featuring a luminous status dot (`.topbar-eyebrow-dot`), tight letter-tracking (`0.08em`), pill rounding (`9999px`), and soft border/tint backgrounds.

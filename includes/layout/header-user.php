@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title><?= e($title ?? 'Customer Portal') ?> - Bus Reservation</title>
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,8 +14,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
         integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
     
-    <!-- Design System & User Styles (U-19 / U-20) -->
+    <!-- Design System, Admin Core & User Styles (F1, F12) -->
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin-mobile-responsive.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/user.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/seat-map.css">
 
@@ -24,17 +26,56 @@
 </head>
 
 <body>
+    <!-- Inline SVG Sprite for User Portal Navigation Icons (F1) -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+        <symbol id="nav-ticket" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V9z"></path>
+            <line x1="9" y1="12" x2="9.01" y2="12"></line>
+            <line x1="13" y1="12" x2="15" y2="12"></line>
+        </symbol>
+        <symbol id="nav-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+            <path d="M9 12h6"></path>
+            <path d="M9 16h6"></path>
+        </symbol>
+        <symbol id="nav-user-cog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+            <circle cx="19" cy="11" r="2"></circle>
+        </symbol>
+        <symbol id="nav-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </symbol>
+        <symbol id="nav-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+        </symbol>
+        <symbol id="nav-external-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+        </symbol>
+    </svg>
+
     <a class="skip-link sr-only sr-only-focusable" href="#main">Skip to main content</a>
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <div class="admin-shell">
         <aside class="admin-sidebar" id="adminSidebar">
             <!-- Brand Header -->
             <div class="admin-brand">
-                <a href="<?= BASE_URL ?>/homepage.php" class="brand-link">
+                <a href="<?= BASE_URL ?>/user/index.php" class="brand-link">
                     <img src="<?= BASE_URL ?>/assets/images/bus.svg" alt="Bus Logo" class="brand-logo">
                     <span class="brand-title">Bus Service</span>
                 </a>
-                <span class="badge badge-info p-1 px-2 font-weight-bold" style="font-size:0.65rem;">User</span>
+                <div class="d-flex align-items-center">
+                    <span class="badge badge-info p-1 px-2 font-weight-bold mr-1" style="font-size:0.65rem;">User</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary d-lg-none sidebar-close-btn ml-1" id="sidebarCloseBtn" aria-label="Close navigation menu" title="Close menu">
+                        <svg width="16" height="16" aria-hidden="true"><use href="#nav-close"></use></svg>
+                    </button>
+                </div>
             </div>
 
             <!-- Profile Info -->
@@ -47,25 +88,34 @@
             </div>
 
             <!-- User Navigation -->
-            <nav class="admin-nav">
+            <nav class="admin-nav" aria-label="Customer portal navigation">
                 <?php
                 $current_script = basename($_SERVER['SCRIPT_NAME'] ?? '');
                 ?>
                 <div class="nav-group-header">My Trip Center</div>
                 <ul class="nav-group-list">
                     <li class="nav-item">
-                        <a href="<?= BASE_URL ?>/user/index.php" class="nav-link <?= $current_script === 'index.php' || $current_script === 'booking.php' ? 'active' : '' ?>">
-                            <span class="mr-2">🔍</span> Search & Book
+                        <a href="<?= BASE_URL ?>/user/index.php" class="nav-link d-flex align-items-center <?= $current_script === 'index.php' || $current_script === 'booking.php' ? 'active' : '' ?>" <?= ($current_script === 'index.php' || $current_script === 'booking.php') ? 'aria-current="page"' : '' ?>>
+                            <span class="nav-icon-tile mr-2.5" aria-hidden="true">
+                                <svg class="nav-icon" width="20" height="20"><use href="#nav-ticket"></use></svg>
+                            </span>
+                            <span class="nav-label">Search & Book</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="<?= BASE_URL ?>/user/my-bookings.php" class="nav-link <?= $current_script === 'my-bookings.php' ? 'active' : '' ?>">
-                            <span class="mr-2">🎟️</span> My Reservations
+                        <a href="<?= BASE_URL ?>/user/my-bookings.php" class="nav-link d-flex align-items-center <?= $current_script === 'my-bookings.php' ? 'active' : '' ?>" <?= $current_script === 'my-bookings.php' ? 'aria-current="page"' : '' ?>>
+                            <span class="nav-icon-tile mr-2.5" aria-hidden="true">
+                                <svg class="nav-icon" width="20" height="20"><use href="#nav-clipboard"></use></svg>
+                            </span>
+                            <span class="nav-label">My Reservations</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="<?= BASE_URL ?>/user/profile.php" class="nav-link <?= $current_script === 'profile.php' ? 'active' : '' ?>">
-                            <span class="mr-2">👤</span> My Profile
+                        <a href="<?= BASE_URL ?>/user/profile.php" class="nav-link d-flex align-items-center <?= $current_script === 'profile.php' ? 'active' : '' ?>" <?= $current_script === 'profile.php' ? 'aria-current="page"' : '' ?>>
+                            <span class="nav-icon-tile mr-2.5" aria-hidden="true">
+                                <svg class="nav-icon" width="20" height="20"><use href="#nav-user-cog"></use></svg>
+                            </span>
+                            <span class="nav-label">My Profile</span>
                         </a>
                     </li>
                 </ul>
@@ -73,8 +123,9 @@
 
             <!-- User Footer -->
             <div class="admin-sidebar-footer">
-                <a href="<?= BASE_URL ?>/homepage.php" class="btn btn-sm btn-outline-light btn-block mb-2">
-                    &larr; Public Homepage
+                <a href="<?= BASE_URL ?>/homepage.php" class="btn btn-sm btn-outline-light btn-block mb-2 d-flex align-items-center justify-content-center">
+                    <span>Public Homepage</span>
+                    <svg class="ml-1.5" width="14" height="14" aria-hidden="true"><use href="#nav-external-link"></use></svg>
                 </a>
                 <form action="<?= BASE_URL ?>/user/index.php" method="post" class="m-0">
                     <?= csrf_field() ?>
@@ -86,17 +137,28 @@
         </aside>
 
         <div class="admin-main">
-            <!-- Top bar with toggle & theme switch -->
+            <!-- Top bar with toggle & theme switch (F1, F9) -->
             <div class="admin-topbar">
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="sidebarToggle" aria-controls="adminSidebar" aria-expanded="false" aria-label="Toggle navigation menu">
-                    &#9776; Menu
+                <button type="button" class="admin-menu-btn" id="sidebarToggle" aria-controls="adminSidebar" aria-expanded="false" aria-label="Open navigation menu">
+                    <svg width="22" height="22" aria-hidden="true"><use href="#nav-menu"></use></svg>
                 </button>
-                <span class="font-weight-bold text-dark ml-2"><?= e($title ?? 'Customer Area') ?></span>
+                <div class="topbar-title-block">
+                    <div class="topbar-eyebrow-wrap">
+                        <span class="topbar-eyebrow group-pill-overview">
+                            <span class="topbar-eyebrow-dot" aria-hidden="true"></span>
+                            <span class="topbar-eyebrow-text">Customer Portal</span>
+                        </span>
+                        <span class="topbar-breadcrumb-sep d-none d-lg-inline" aria-hidden="true">/</span>
+                        <span class="topbar-desktop-title font-weight-bold d-none d-lg-inline"><?= e($title ?? 'Customer Area') ?></span>
+                    </div>
+                    <h1 class="page-title-mobile font-weight-bold d-lg-none">
+                        <?= e($title ?? 'Customer Area') ?>
+                    </h1>
+                </div>
                 
                 <div class="ml-auto d-flex align-items-center">
-                    <button type="button" class="theme-toggle-btn ml-2" aria-label="Toggle dark mode" title="Toggle dark mode">
+                    <button type="button" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle dark mode">
                         <span class="theme-toggle-icon"></span>
-                        <span class="theme-toggle-text d-none d-sm-inline ml-1">Theme</span>
                     </button>
                 </div>
             </div>
@@ -111,8 +173,8 @@
                 <?php endforeach; ?>
             <?php endif; ?>
 
-            <!-- Idle Session Warning Modal (U-14) -->
-            <div class="modal fade" id="idleSessionModal" tabindex="-1" role="dialog" aria-labelledby="idleSessionModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <!-- Idle Session Warning Modal (U-14, F14) -->
+            <div class="modal fade" id="idleSessionModal" tabindex="-1" role="dialog" aria-labelledby="idleSessionModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false" data-heartbeat-url="<?= BASE_URL ?>/user/api-heartbeat.php" data-login-url="<?= BASE_URL ?>/homepage.php">
                 <div class="modal-dialog modal-dialog-centered" role="document">
                     <div class="modal-content border-0 shadow">
                         <div class="modal-header bg-warning text-dark">
@@ -131,123 +193,3 @@
                     </div>
                 </div>
             </div>
-
-            <script>
-            // U-14, Phase 5.2, Issue 8: Accurate idle session detection using Date.now() and visibilitychange
-            (function() {
-                var lastActivity = Date.now();
-                var warningShown = false;
-                var countdownVal = 120;
-                var countdownInterval = null;
-                var prevActiveElement = null;
-
-                function getLoginRedirectUrl() {
-                    return '<?= BASE_URL ?>/homepage.php?next=' + encodeURIComponent(window.location.pathname + window.location.search);
-                }
-
-                function resetIdle() {
-                    if (!warningShown) {
-                        lastActivity = Date.now();
-                    }
-                }
-                ['mousemove', 'keydown', 'scroll', 'touchstart', 'click'].forEach(function(evt) {
-                    document.addEventListener(evt, resetIdle, { passive: true });
-                });
-
-                var stayBtn = document.getElementById('stay-signed-in-btn');
-
-                // Phase 5.2: Trap focus inside modal when active
-                document.addEventListener('keydown', function(e) {
-                    if (warningShown && e.key === 'Tab') {
-                        var modal = document.getElementById('idleSessionModal');
-                        if (modal) {
-                            var focusable = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-                            if (focusable.length) {
-                                var first = focusable[0];
-                                var last = focusable[focusable.length - 1];
-                                if (e.shiftKey && document.activeElement === first) {
-                                    last.focus();
-                                    e.preventDefault();
-                                } else if (!e.shiftKey && document.activeElement === last) {
-                                    first.focus();
-                                    e.preventDefault();
-                                }
-                            }
-                        }
-                    }
-                });
-
-                function checkIdleState() {
-                    var elapsedSec = Math.floor((Date.now() - lastActivity) / 1000);
-
-                    // If idle time already exceeds 1800s (30m session limit), redirect immediately to login
-                    if (elapsedSec >= 1800) {
-                        if (countdownInterval) clearInterval(countdownInterval);
-                        window.location.href = getLoginRedirectUrl();
-                        return;
-                    }
-
-                    // 28 minutes = 1680 seconds: show warning modal if not already shown
-                    if (elapsedSec >= 1680 && !warningShown) {
-                        warningShown = true;
-                        prevActiveElement = document.activeElement;
-                        if (typeof $ !== 'undefined' && $('#idleSessionModal').length) {
-                            $('#idleSessionModal').modal('show');
-                        } else {
-                            var m = document.getElementById('idleSessionModal');
-                            if (m) m.classList.add('show', 'd-block');
-                        }
-                        if (stayBtn) {
-                            setTimeout(function() { stayBtn.focus(); }, 100);
-                        }
-                        countdownVal = Math.max(1, 1800 - elapsedSec);
-                        var cd = document.getElementById('idle-countdown');
-                        if (cd) cd.textContent = countdownVal;
-
-                        if (countdownInterval) clearInterval(countdownInterval);
-                        countdownInterval = setInterval(function() {
-                            var curElapsed = Math.floor((Date.now() - lastActivity) / 1000);
-                            countdownVal = Math.max(0, 1800 - curElapsed);
-                            if (cd) cd.textContent = countdownVal;
-                            if (countdownVal <= 0 || curElapsed >= 1800) {
-                                clearInterval(countdownInterval);
-                                window.location.href = getLoginRedirectUrl();
-                            }
-                        }, 1000);
-                    }
-                }
-
-                setInterval(checkIdleState, 1000);
-
-                // Recalculate immediately when tab regains focus or becomes visible (Issue 8)
-                document.addEventListener('visibilitychange', function() {
-                    if (!document.hidden) {
-                        checkIdleState();
-                    }
-                });
-
-                if (stayBtn) {
-                    stayBtn.addEventListener('click', function() {
-                        fetch('<?= BASE_URL ?>/user/api-heartbeat.php')
-                            .then(function(res) { return res.json(); })
-                            .then(function(data) {
-                                lastActivity = Date.now();
-                                warningShown = false;
-                                if (countdownInterval) clearInterval(countdownInterval);
-                                if (typeof $ !== 'undefined' && $('#idleSessionModal').length) {
-                                    $('#idleSessionModal').modal('hide');
-                                } else {
-                                    var m = document.getElementById('idleSessionModal');
-                                    if (m) m.classList.remove('show', 'd-block');
-                                }
-                                if (prevActiveElement && typeof prevActiveElement.focus === 'function') {
-                                    prevActiveElement.focus();
-                                }
-                            })
-                            .catch(function() {
-                                window.location.reload();
-                            });
-                    });
-                }
-            })();
-            </script>
