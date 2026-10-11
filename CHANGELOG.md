@@ -4,9 +4,30 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
-- **Admin Panel Mobile Responsiveness & Unified Navigation Drawer (Option A)**:
-  - Implemented mobile-responsive architecture across the administrative panel using a single authoritative off-canvas drawer navigation pattern (Option A).
-  - **Phase 1 (Foundation)**:
+- **Admin Mobile Navigation Bar & Topbar Modernization (Option A Architecture)**:
+  - Overhauled the administrative shell navigation into a modern, accessible, touch-first mobile drawer and topbar experience adhering to the Option A specification.
+  - **Inline SVG Sprite System**: Introduced 16 unified stroke-style SVG navigation icons (`currentColor`, 20px) in `includes/layout/header-admin.php` replacing inconsistent operating-system emojis. Icons seamlessly inherit theme and active states across desktop and mobile.
+  - **Modern Sticky Topbar (Section 3.1)**:
+    - Sticky 56px header with safe-area insets (`env(safe-area-inset-top)`), surface backdrop blur (8px), and subtle bottom border.
+    - 44x44px borderless hamburger menu button with visible focus ring.
+    - Two-line title block featuring a nav group eyebrow (e.g. *Operations*, *Fleet & Schedule*, *People*) and CSS-ellipsis page title, removing the legacy hardcoded 15-character PHP truncation.
+    - Added an unread queries notification bell button (`topbar-bell-btn`) linked to `queries.php` with a counter badge (showing `9+` when exceeding 9 unread messages).
+    - 44x44px theme toggle touch target.
+  - **Refined Off-Canvas Drawer (Section 3.2)**:
+    - Authoritative single width rule `min(86vw, 320px)` eliminating conflicting 250px and 280px media queries.
+    - Flex-column structure: fixed brand header (restoring the "Bus Service" title on mobile viewports), dedicated 44x44px close button (`#sidebarCloseBtn`), user profile card with distinct viewer role pill, scrollable navigation area (`overflow-y: auto`, `overscroll-behavior: contain`), and fixed footer with safe-area bottom padding.
+    - 48px item row touch targets (`--nav-item-h: 48px`), 12px border radius, 32x32px icon tile, 3px left active accent bar, and WCAG AA compliant `#94a3b8` group headers.
+  - **Authoritative Controller (`assets/js/admin-mobile.js`, Section 3.4)**:
+    - Single initialization guard (`window.__adminMobileNavInitialized`).
+    - Robust `inert` state machine applying `inert` to the drawer when closed and to `.admin-main` when the drawer is open.
+    - Focus trapping with keyboard loop fallback and automatic focus return to `#sidebarToggle` upon closing.
+    - Coordinated scroll locking with Bootstrap modals (`show.bs.modal`) to prevent backdrop conflicts.
+    - Touch swipe-to-close gesture detection (horizontal delta > 50px with vertical drift < 100px).
+  - **Motion & Accessibility Tokens (Section 4 & 5)**:
+    - Standardized tokens `--nav-item-h: 48px`, `--nav-radius: 12px`, `--nav-active-bg: rgba(37,99,235,0.16)`, `--nav-label: #94a3b8`, and `--topbar-h: 56px`.
+    - Gated hover animations inside `@media (hover: hover)` to eliminate stuck hover states on touch screens.
+    - Honored `prefers-reduced-motion` across drawer translate and overlay fade animations.
+  - **Automated Verification**: Extended `tests/test_admin_layout.php` to 31 static assertion checks across 7 suites covering HTML balance, script deduplication, sprite symbols, ARIA modal attributes, tokens, and responsive constraints.
     - Fixed unclosed HTML comment on obsolete AOS script block in `includes/layout/footer-admin.php` that inadvertently swallowed `admin-mobile.js` and sidebar toggle scripts.
     - Unified drawer open/close controller inside `assets/js/admin-mobile.js`, eliminating duplicate inline scripts. Added dedicated `#sidebarCloseBtn`, inert attribute management for closed drawer (< 992px), swipe-to-dismiss gesture detection, and focus restoration to `#sidebarToggle`.
     - De-duplicated `.table-stack` CSS across `admin-mobile-responsive.css` and `admin.css`. Removed hardcoded light values in favor of design system dark mode tokens (`var(--c-surface)`, `var(--c-border)`, `var(--c-text-muted)`).

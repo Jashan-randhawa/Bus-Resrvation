@@ -69,7 +69,7 @@ Comprehensive architectural, operational, and security documentation is availabl
 - 📋 **Passenger Trip Manifest:** Dedicated printable manifest sheet (`admin/manifest.php`) by bus, date, and corridor with print-ready CSS (`@media print`) and conductor/driver sign-off fields.
 - 🚌 **Fleet & Bus Management:** Configure custom seating capacities (10–60) and seating layout geometries (`2+2`, `2+1`, `1+2`, `1+1`).
 - 🛣️ **Route Management:** Configure origin/destination hubs, bus assignments, departure schedules, and fare pricing with conflict/collision detection.
-- 📱 **Mobile Responsive Navigation Drawer (Option A):** Touch-friendly off-canvas drawer navigation for mobile (<992px) with swipe-to-dismiss gestures, safe-area inset support (`env(safe-area-inset-*)`), `inert` accessibility management, responsive stacked table layouts (`.table-stack`), sticky docked action bars, and narrow screen KPI tile reflow.
+- 📱 **Mobile Responsive Navigation Drawer & Modern Topbar (Option A):** Touch-first off-canvas drawer navigation (<992px) with authoritative single width (`min(86vw, 320px)`), 16 unified stroke-style SVG navigation icons, sticky 56px topbar with backdrop blur, two-line title block with section eyebrow, unread queries notification bell (`9+` indicator), swipe-to-dismiss gesture detection, `inert` accessibility state machine, focus trapping, safe-area inset adaptation (`viewport-fit=cover`), and dark theme token synchronization.
 
 ---
 
