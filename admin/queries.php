@@ -212,7 +212,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                                     <?= !empty($row['created_at']) ? e(date('d M Y, H:i', strtotime($row['created_at']))) : 'N/A' ?>
                                 </small>
                             </td>
-                            <td data-label="Action" class="text-right">
+                            <td data-label="Actions" class="text-right">
                                 <?php if (can_write()): ?>
                                     <button type="button" class="btn btn-outline-primary btn-sm mr-1 btn-open-reply"
                                             data-toggle="modal" data-target="#singleReplyModal"
