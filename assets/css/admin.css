@@ -1344,6 +1344,26 @@ html[data-theme="dark"] .booking-filter-btn.btn-outline-secondary:hover {
   color: #f8fafc;
 }
 
+/* Sticky Bulk Action Bar for Mobile */
+@media (max-width: 767.98px) {
+  #bulkBookingsForm:not(.d-none) {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1025;
+    margin-bottom: 0 !important;
+    padding: 0.65rem 1rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
+    background: var(--c-surface, #ffffff);
+    border-top: 1px solid var(--c-border, #e2e8f0);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
+  }
+  html[data-theme="dark"] #bulkBookingsForm:not(.d-none) {
+    background: #0f172a;
+    border-top-color: var(--c-border, #334155);
+  }
+}
+
 /* Status Filter Bar Styling */
 .filter-bar {
   display: flex;

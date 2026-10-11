@@ -340,17 +340,25 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             ?>
                 <span class="badge badge-primary font-weight-bold ml-2 px-2 py-1"><?= $active_filter_cnt ?> active</span>
             <?php endif; ?>
-        </div>
-        <?php if (!empty($keep_params)): ?>
-            <a href="bookings.php" class="booking-filter-clear text-muted small font-weight-bold" title="Clear all active filters">
+        <div class="d-flex align-items-center ml-auto">
+            <?php if (!empty($keep_params)): ?>
+                <a href="bookings.php" class="booking-filter-clear text-muted small font-weight-bold mr-2 d-none d-sm-inline-flex" title="Clear all active filters">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Clear all
+                </a>
+            <?php endif; ?>
+            <button type="button" class="btn btn-sm btn-outline-secondary d-md-none" data-toggle="collapse" data-target="#bookingFilterCollapse" aria-expanded="<?= $active_filter_cnt > 0 ? 'true' : 'false' ?>" aria-controls="bookingFilterCollapse">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1" aria-hidden="true">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                 </svg>
-                Clear all filters
-            </a>
-        <?php endif; ?>
+                <?= $active_filter_cnt > 0 ? 'Filters (' . $active_filter_cnt . ')' : 'Filters' ?>
+            </button>
+        </div>
     </div>
+    <div class="collapse <?= $active_filter_cnt > 0 ? 'show' : '' ?> d-md-block" id="bookingFilterCollapse">
     <div class="booking-filter-body">
         <form action="bookings.php" method="get" class="form-row align-items-end">
             <!-- Search Keyword -->
@@ -443,6 +451,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                 </div>
             </div>
         </form>
+    </div>
     </div>
 </div>
 
