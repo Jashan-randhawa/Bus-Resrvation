@@ -1266,6 +1266,86 @@ html[data-theme="dark"] .perf-highlights {
   white-space: nowrap;
 }
 
+button.booking-filter-select {
+  border: 1px solid var(--c-border, #e2e8f0) !important;
+  background-color: var(--c-surface, #ffffff) !important;
+  color: var(--c-text, #1e293b) !important;
+  text-decoration: none !important;
+  text-align: left !important;
+}
+
+button.booking-filter-select:hover,
+button.booking-filter-select:focus {
+  border-color: var(--c-primary, #2563eb) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+  outline: none !important;
+}
+
+.booking-dropdown-menu {
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--c-border, #e2e8f0) !important;
+  background: var(--c-surface, #ffffff) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+  padding: 0.35rem 0 !important;
+  margin-top: 4px !important;
+  max-height: 220px !important;
+  overflow-y: auto !important;
+  z-index: 1050 !important;
+}
+
+.booking-dropdown-item {
+  font-size: 0.84rem !important;
+  font-weight: 500 !important;
+  color: var(--c-text, #1e293b) !important;
+  padding: 0.45rem 0.85rem !important;
+  transition: background-color 0.15s ease, color 0.15s ease !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+}
+
+.booking-dropdown-item:hover,
+.booking-dropdown-item:focus {
+  background-color: var(--c-surface-2, #f1f5f9) !important;
+  color: var(--c-primary, #2563eb) !important;
+}
+
+.booking-dropdown-item.active {
+  background-color: var(--c-primary, #2563eb) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+html[data-theme="dark"] button.booking-filter-select {
+  background-color: #0b1120 !important;
+  border-color: var(--c-border, #334155) !important;
+  color: var(--c-text, #f8fafc) !important;
+}
+
+html[data-theme="dark"] .booking-dropdown-menu {
+  background: #0f172a !important;
+  border-color: var(--c-border, #334155) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+html[data-theme="dark"] .booking-dropdown-item {
+  color: var(--c-text, #f8fafc) !important;
+}
+
+html[data-theme="dark"] .booking-dropdown-item:hover,
+html[data-theme="dark"] .booking-dropdown-item:focus {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .booking-dropdown-item.active {
+  background-color: var(--c-primary, #3b82f6) !important;
+  color: #ffffff !important;
+}
+
 .booking-filter-select option {
   font-size: 0.85rem;
   padding: 0.45rem 0.65rem;

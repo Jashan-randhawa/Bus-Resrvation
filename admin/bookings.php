@@ -386,7 +386,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 
             <!-- Fleet Bus Dropdown -->
             <div class="col-12 col-lg-2 mb-2">
-                <label for="filter_bus" class="booking-filter-label">
+                <label for="filter_bus_btn" class="booking-filter-label">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <rect x="3" y="3" width="18" height="16" rx="2"></rect>
                         <path d="M4 11h16"></path>
@@ -395,15 +395,19 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                     </svg>
                     Fleet Bus
                 </label>
-                <div class="booking-select-wrap">
-                    <select id="filter_bus" name="bus" class="form-control booking-filter-control booking-filter-select">
-                        <option value="">All Buses</option>
+                <div class="dropdown booking-select-wrap">
+                    <input type="hidden" name="bus" id="filter_bus_input" value="<?= e($filter_bus) ?>">
+                    <button type="button" class="form-control booking-filter-control booking-filter-select text-left d-flex align-items-center justify-content-between" id="filter_bus_btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="text-truncate" id="filter_bus_label"><?= !empty($filter_bus) ? e($filter_bus) : 'All Buses' ?></span>
+                    </button>
+                    <div class="dropdown-menu booking-dropdown-menu w-100 shadow-sm" aria-labelledby="filter_bus_btn">
+                        <a class="dropdown-item booking-dropdown-item <?= empty($filter_bus) ? 'active' : '' ?>" href="#" data-value="">All Buses</a>
                         <?php foreach ($buses as $b_opt): ?>
-                            <option value="<?= e($b_opt['bus_number']) ?>" <?= $filter_bus === $b_opt['bus_number'] ? 'selected' : '' ?>>
+                            <a class="dropdown-item booking-dropdown-item <?= $filter_bus === $b_opt['bus_number'] ? 'active' : '' ?>" href="#" data-value="<?= e($b_opt['bus_number']) ?>">
                                 <?= e($b_opt['bus_number']) ?>
-                            </option>
+                            </a>
                         <?php endforeach; ?>
-                    </select>
+                    </div>
                 </div>
             </div>
 
@@ -1028,6 +1032,27 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Custom Fleet Bus in-DOM dropdown selection
+    document.querySelectorAll('.booking-dropdown-item').forEach(function(item) {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            var val = this.getAttribute('data-value') || '';
+            var text = this.textContent.trim();
+            var input = document.getElementById('filter_bus_input');
+            var label = document.getElementById('filter_bus_label');
+            if (input) input.value = val;
+            if (label) label.textContent = text;
+
+            var menu = this.closest('.booking-dropdown-menu');
+            if (menu) {
+                menu.querySelectorAll('.booking-dropdown-item').forEach(function(el) {
+                    el.classList.remove('active');
+                });
+                this.classList.add('active');
+            }
+        });
+    });
 });
 </script>
 
