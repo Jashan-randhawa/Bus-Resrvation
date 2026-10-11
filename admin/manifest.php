@@ -135,13 +135,64 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     export_csv("manifest-{$selected_bus}-{$selected_date}.csv", $csv_headers, $csv_rows);
 }
 
+// PDF Export (Mobile & Desktop)
+if (isset($_GET['export']) && $_GET['export'] === 'pdf') {
+    $is_viewer = !can_write();
+    try {
+        audit($link, 'EXPORT', 'manifest', null, null, [
+            'format' => 'pdf',
+            'bus' => $selected_bus,
+            'date' => $selected_date,
+            'passenger_count' => $booked_count,
+            'masked' => $is_viewer
+        ]);
+    } catch (Throwable $e) {}
+
+    $pdf_passengers = [];
+    foreach ($passengers as $p) {
+        $contact = $is_viewer ? mask_phone((string)($p['contact'] ?? '')) : (string)($p['contact'] ?? '');
+        $pdf_passengers[] = [
+            'seat' => $p['seat'] ?? '-',
+            'name' => $p['name'] ?? '-',
+            'contact' => $contact,
+            'city1' => $p['city1'] ?? '',
+            'city2' => $p['city2'] ?? '',
+            'time' => $p['time'] ?? '-',
+            'pnr' => $p['pnr'] ?? ('#' . ($p['sno'] ?? '')),
+            'price' => (float)($p['price'] ?? 0)
+        ];
+    }
+
+    $pdf_content = generate_manifest_pdf_doc(
+        'PASSENGER TRIP MANIFEST',
+        $selected_bus ?: 'ALL',
+        $selected_date,
+        $pdf_passengers,
+        $total_revenue
+    );
+
+    $safe_bus = $selected_bus ? preg_replace('/[^a-zA-Z0-9_\-]/', '_', $selected_bus) : 'all';
+    $filename = "manifest-{$safe_bus}-{$selected_date}.pdf";
+
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Content-Length: ' . strlen($pdf_content));
+    header('Cache-Control: private, max-age=0, must-revalidate');
+    header('Pragma: public');
+    echo $pdf_content;
+    exit;
+}
+
 $title = 'Passenger Manifest';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
 ?>
 
 <style>
 @media print {
-    .admin-sidebar, .admin-topbar, .admin-sidebar-footer, .no-print, .btn, .filter-card {
+    .admin-sidebar, .admin-topbar, .admin-sidebar-footer, .no-print, .btn, .filter-card, .manifest-mobile-card {
         display: none !important;
     }
     .admin-main {
@@ -157,6 +208,9 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         box-shadow: none !important;
     }
     .print-only {
+        display: block !important;
+    }
+    .manifest-sheet-card {
         display: block !important;
     }
     body {
@@ -191,7 +245,17 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </div>
     <div class="d-flex align-items-center flex-wrap gap-2 manifest-header-actions">
         <?php if ($selected_bus !== ''): ?>
-            <a href="?<?= http_build_query(['bus' => $selected_bus, 'date' => $selected_date, 'route' => $selected_route, 'export' => 'csv']) ?>" class="btn btn-outline-success btn-sm mr-2 shadow-sm font-weight-bold d-inline-flex align-items-center">
+            <a href="?<?= http_build_query(['bus' => $selected_bus, 'date' => $selected_date, 'route' => $selected_route, 'export' => 'pdf']) ?>" class="btn btn-outline-primary btn-sm mr-2 shadow-sm font-weight-bold d-none d-md-inline-flex align-items-center">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1.5" aria-hidden="true">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                Download Manifest PDF
+            </a>
+            <a href="?<?= http_build_query(['bus' => $selected_bus, 'date' => $selected_date, 'route' => $selected_route, 'export' => 'csv']) ?>" class="btn btn-outline-success btn-sm mr-2 shadow-sm font-weight-bold d-none d-md-inline-flex align-items-center">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1.5" aria-hidden="true">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="7 10 12 15 17 10"></polyline>
@@ -199,7 +263,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                 </svg>
                 Export Manifest CSV
             </a>
-            <button onclick="window.print()" class="btn btn-primary btn-sm shadow-sm font-weight-bold mr-2 d-inline-flex align-items-center">
+            <button onclick="window.print()" class="btn btn-primary btn-sm shadow-sm font-weight-bold mr-2 d-none d-md-inline-flex align-items-center">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1.5" aria-hidden="true">
                     <polyline points="6 9 6 2 18 2 18 9"></polyline>
                     <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
@@ -207,7 +271,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                 </svg>
                 Print Manifest
             </button>
-            <button type="button" id="clearBoardingBtn" class="btn btn-outline-secondary btn-sm shadow-sm font-weight-bold d-inline-flex align-items-center" title="Reset all boarding checks for this manifest">
+            <button type="button" id="clearBoardingBtn" class="btn btn-outline-secondary btn-sm shadow-sm font-weight-bold d-none d-md-inline-flex align-items-center" title="Reset all boarding checks for this manifest">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1.5" aria-hidden="true">
                     <polyline points="23 4 23 10 17 10"></polyline>
                     <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
@@ -218,8 +282,59 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </div>
 </div>
 
-<!-- Filters Card (No Print) -->
-<div class="card manifest-filter-card no-print filter-card">
+<!-- Dedicated Mobile Manifest Card (d-md-none: Download PDF by Bus Number) -->
+<div class="card manifest-mobile-card d-md-none border-0 shadow-sm mb-4">
+    <div class="card-body p-4 text-center">
+        <div class="manifest-mobile-icon-wrap mx-auto mb-3">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="text-primary" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+        </div>
+        <h2 class="h5 font-weight-bold mb-1">Download Passenger Manifest</h2>
+        <p class="text-muted small mb-3">Select the bus number to download the passenger trip manifest in official PDF format.</p>
+        
+        <form action="manifest.php" method="get" class="manifest-mobile-form text-left">
+            <input type="hidden" name="export" value="pdf">
+            <input type="hidden" name="date" value="<?= e($selected_date) ?>">
+            
+            <div class="form-group mb-3">
+                <label for="mobile_manifest_bus" class="font-weight-bold small text-muted text-uppercase mb-1">
+                    Select Bus Number
+                </label>
+                <div class="manifest-select-wrap">
+                    <select id="mobile_manifest_bus" name="bus" class="form-control manifest-control form-control-lg" required>
+                        <option value="">-- Choose Bus Number --</option>
+                        <?php foreach ($buses as $b): ?>
+                            <option value="<?= e($b['bus_number']) ?>" <?= $selected_bus === $b['bus_number'] ? 'selected' : '' ?>>
+                                <?= e($b['bus_number']) ?> (<?= (int)($b['capacity'] ?? 36) ?> seats)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg font-weight-bold shadow-sm d-flex align-items-center justify-content-center py-2.5">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-2" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Download Manifest (PDF)
+            </button>
+        </form>
+        
+        <div class="mt-3 text-muted small">
+            <span>Travel Date: <strong><?= e(date('d M Y', strtotime($selected_date))) ?></strong></span>
+        </div>
+    </div>
+</div>
+
+<!-- Filters Card (Desktop only, No Print) -->
+<div class="card manifest-filter-card no-print filter-card d-none d-md-block">
     <div class="manifest-filter-body">
         <form action="manifest.php" method="get" class="form-row align-items-end">
             <div class="col-md-3 mb-3 mb-md-0">
@@ -291,8 +406,8 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </div>
 </div>
 
-<!-- Official Trip Sheet & Manifest -->
-<div class="card manifest-sheet-card border-0 shadow-sm mb-4">
+<!-- Official Trip Sheet & Manifest (Desktop Only: d-none d-md-block) -->
+<div class="card manifest-sheet-card border-0 shadow-sm mb-4 d-none d-md-block">
     <div class="card-body p-4">
         <!-- Print Header -->
         <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-3">

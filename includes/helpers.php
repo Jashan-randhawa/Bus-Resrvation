@@ -1407,6 +1407,195 @@ function booking_concurrency_status(mysqli $link): array {
     ];
 }
 
+/**
+ * Generates an authoritative, professional Passenger Trip Manifest in PDF format
+ * without external library dependencies (PDF 1.4 specification).
+ *
+ * @param string $title
+ * @param string $bus_number
+ * @param string $date
+ * @param array $passengers
+ * @param float $total_fare
+ * @return string Binary PDF document
+ */
+function generate_manifest_pdf_doc(string $title, string $bus_number, string $date, array $passengers, float $total_fare = 0.0): string {
+    $w = 595.28; // Standard A4 width in points
+    $h = 841.89; // Standard A4 height in points
+    $margin = 36;
+    $contentWidth = $w - ($margin * 2);
+
+    $rowsPerPage = 28;
+    $chunks = !empty($passengers) ? array_chunk($passengers, $rowsPerPage) : [[]];
+    $pageCount = count($chunks);
+
+    $pageContents = [];
+
+    foreach ($chunks as $pageIndex => $pageRows) {
+        $pageNum = $pageIndex + 1;
+        $stream = "";
+
+        // Header Banner
+        $stream .= "0.12 0.22 0.42 rg\n"; // Deep Navy
+        $stream .= "{$margin} 765 {$contentWidth} 42 re f\n";
+        
+        $stream .= "BT\n/F2 16 Tf\n1 1 1 rg\n" . ($margin + 12) . " 784 Td (" . escape_pdf_txt($title) . ") Tj\nET\n";
+        $stream .= "BT\n/F1 8 Tf\n1 1 1 rg\n" . ($margin + 12) . " 772 Td (OFFICIAL TRIP SHEET - BUS RESERVATION SYSTEM | PAGE {$pageNum} OF {$pageCount}) Tj\nET\n";
+
+        // Metadata Box
+        $stream .= "0.96 0.97 0.99 rg\n";
+        $stream .= "{$margin} 718 {$contentWidth} 38 re f\n";
+        $stream .= "0.82 0.86 0.92 RG 1 w\n";
+        $stream .= "{$margin} 718 {$contentWidth} 38 re S\n";
+
+        $stream .= "BT\n/F2 9.5 Tf\n0.15 0.15 0.15 rg\n" . ($margin + 12) . " 738 Td (BUS NUMBER: ) Tj\n/F1 9.5 Tf\n(" . escape_pdf_txt($bus_number) . ") Tj\nET\n";
+        $stream .= "BT\n/F2 9.5 Tf\n0.15 0.15 0.15 rg\n" . ($margin + 185) . " 738 Td (DATE: ) Tj\n/F1 9.5 Tf\n(" . escape_pdf_txt($date) . ") Tj\nET\n";
+        $stream .= "BT\n/F2 9.5 Tf\n0.15 0.15 0.15 rg\n" . ($margin + 340) . " 738 Td (PASSENGERS: ) Tj\n/F1 9.5 Tf\n(" . count($passengers) . " Confirmed) Tj\nET\n";
+
+        // Table Header
+        $tableTop = 690;
+        $rowHeight = 20;
+
+        $stream .= "0.22 0.28 0.38 rg\n";
+        $stream .= "{$margin} {$tableTop} {$contentWidth} {$rowHeight} re f\n";
+
+        $cols = [
+            ['title' => 'SEAT', 'x' => $margin + 8],
+            ['title' => 'PASSENGER NAME', 'x' => $margin + 50],
+            ['title' => 'CONTACT', 'x' => $margin + 185],
+            ['title' => 'ROUTE', 'x' => $margin + 275],
+            ['title' => 'TIME', 'x' => $margin + 395],
+            ['title' => 'PNR', 'x' => $margin + 445],
+        ];
+
+        $stream .= "BT\n/F2 8 Tf\n1 1 1 rg\n";
+        foreach ($cols as $col) {
+            $stream .= "{$col['x']} " . ($tableTop + 6) . " Td (" . escape_pdf_txt($col['title']) . ") Tj\n";
+            $stream .= "-" . $col['x'] . " -" . ($tableTop + 6) . " Td\n";
+        }
+        $stream .= "ET\n";
+
+        // Table Rows
+        $y = $tableTop - $rowHeight;
+        $rowIndex = 0;
+
+        if (empty($pageRows)) {
+            $stream .= "BT\n/F1 9.5 Tf\n0.5 0.5 0.5 rg\n" . ($margin + 160) . " " . ($y + 6) . " Td (No confirmed passengers on this bus.) Tj\nET\n";
+            $y -= $rowHeight;
+        } else {
+            foreach ($pageRows as $p) {
+                if ($rowIndex % 2 === 1) {
+                    $stream .= "0.96 0.97 0.99 rg\n";
+                    $stream .= "{$margin} {$y} {$contentWidth} {$rowHeight} re f\n";
+                }
+                
+                $stream .= "0.88 0.90 0.94 RG 0.5 w\n";
+                $stream .= "{$margin} {$y} m " . ($margin + $contentWidth) . " {$y} l S\n";
+
+                $seat = '#' . ($p['seat'] ?? '-');
+                $name = mb_strimwidth((string)($p['name'] ?? '-'), 0, 22, '..');
+                $contact = (string)($p['contact'] ?? '-');
+                $route = mb_strimwidth(((string)($p['city1'] ?? '')) . ' -> ' . ((string)($p['city2'] ?? '')), 0, 20, '..');
+                $time = (string)($p['time'] ?? '-');
+                $pnr = (string)($p['pnr'] ?? ('#' . ($p['sno'] ?? '')));
+
+                $rowTexts = [
+                    ['text' => $seat, 'x' => $margin + 8, 'bold' => true],
+                    ['text' => $name, 'x' => $margin + 50, 'bold' => false],
+                    ['text' => $contact, 'x' => $margin + 185, 'bold' => false],
+                    ['text' => $route, 'x' => $margin + 275, 'bold' => false],
+                    ['text' => $time, 'x' => $margin + 395, 'bold' => false],
+                    ['text' => $pnr, 'x' => $margin + 445, 'bold' => true],
+                ];
+
+                $stream .= "BT\n0.15 0.15 0.15 rg\n";
+                foreach ($rowTexts as $rt) {
+                    $font = $rt['bold'] ? '/F2' : '/F1';
+                    $stream .= "{$font} 8 Tf\n";
+                    $stream .= "{$rt['x']} " . ($y + 6) . " Td (" . escape_pdf_txt($rt['text']) . ") Tj\n";
+                    $stream .= "-" . $rt['x'] . " -" . ($y + 6) . " Td\n";
+                }
+                $stream .= "ET\n";
+
+                $y -= $rowHeight;
+                $rowIndex++;
+            }
+        }
+
+        // Table Border
+        $tableTotalH = ($tableTop + $rowHeight) - $y;
+        $stream .= "0.8 0.84 0.90 RG 1 w\n";
+        $stream .= "{$margin} {$y} {$contentWidth} {$tableTotalH} re S\n";
+
+        // Total on last page
+        if ($pageNum === $pageCount && $total_fare > 0) {
+            $currency_code = defined('CURRENCY') ? trim(CURRENCY) : 'INR ';
+            $stream .= "BT\n/F2 9 Tf\n0.15 0.15 0.15 rg\n" . ($margin + 320) . " " . ($y - 18) . " Td (Total Manifest Fare: " . escape_pdf_txt($currency_code) . number_format($total_fare, 2) . ") Tj\nET\n";
+        }
+
+        // Footer
+        $stream .= "BT\n/F1 7.5 Tf\n0.45 0.45 0.45 rg\n" . $margin . " 25 Td (Generated: " . date('Y-m-d H:i') . " | Bus Reservation System | Driver / Conductor Verification Copy) Tj\nET\n";
+
+        $pageContents[] = $stream;
+    }
+
+    // Assemble PDF Document
+    $objects = [];
+    $addObject = function($content) use (&$objects) {
+        $objects[] = $content;
+        return count($objects);
+    };
+
+    // 1: Catalog
+    $catalogId = $addObject("");
+    // 2: Pages
+    $pagesId = $addObject("");
+
+    // Fonts
+    $font1Id = $addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
+    $font2Id = $addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
+
+    $pageIds = [];
+    foreach ($pageContents as $streamData) {
+        $streamLen = strlen($streamData);
+        $streamObjId = $addObject("<< /Length {$streamLen} >>\nstream\n{$streamData}\nendstream");
+        $pageObjId = $addObject("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {$w} {$h}] /Contents {$streamObjId} 0 R /Resources << /Font << /F1 {$font1Id} 0 R /F2 {$font2Id} 0 R >> >> >>");
+        $pageIds[] = $pageObjId;
+    }
+
+    $kidsStr = implode(" 0 R ", $pageIds) . " 0 R";
+    $objects[0] = "<< /Type /Catalog /Pages 2 0 R >>";
+    $objects[1] = "<< /Type /Pages /Kids [{$kidsStr}] /Count " . count($pageIds) . " >>";
+
+    $out = "%PDF-1.4\n%\xe2\xe3\xcf\xd3\n";
+    $xref = [];
+    $xref[] = "0000000000 65535 f ";
+
+    foreach ($objects as $idx => $obj) {
+        $id = $idx + 1;
+        $offset = strlen($out);
+        $xref[] = sprintf("%010d 00000 n ", $offset);
+        $out .= "{$id} 0 obj\n{$obj}\nendobj\n";
+    }
+
+    $xrefOffset = strlen($out);
+    $out .= "xref\n0 " . count($xref) . "\n";
+    foreach ($xref as $entry) {
+        $out .= $entry . "\n";
+    }
+    $out .= "trailer\n<< /Size " . count($xref) . " /Root 1 0 R >>\n";
+    $out .= "startxref\n{$xrefOffset}\n%%EOF\n";
+
+    return $out;
+}
+
+if (!function_exists('escape_pdf_txt')) {
+    function escape_pdf_txt(string $s): string {
+        $s = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $s);
+        return iconv('UTF-8', 'windows-1252//TRANSLIT//IGNORE', $s) ?: $s;
+    }
+}
+
+
 
 
 

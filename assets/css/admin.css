@@ -1971,6 +1971,34 @@ html[data-theme="dark"] .manifest-metric-val.text-dark {
   }
 }
 
+/* Dedicated Mobile Manifest Download Card */
+.manifest-mobile-card {
+  background: var(--c-surface, #ffffff);
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid var(--c-border, #e2e8f0);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+}
+
+.manifest-mobile-icon-wrap {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html[data-theme="dark"] .manifest-mobile-card {
+  background: var(--c-surface, #131b2e);
+  border-color: var(--c-border, #334155);
+}
+
+html[data-theme="dark"] .manifest-mobile-icon-wrap {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+
 
 
 
