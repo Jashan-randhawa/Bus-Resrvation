@@ -191,59 +191,108 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </div>
     <div class="d-flex align-items-center">
         <?php if ($selected_bus !== ''): ?>
-            <a href="?<?= http_build_query(['bus' => $selected_bus, 'date' => $selected_date, 'route' => $selected_route, 'export' => 'csv']) ?>" class="btn btn-outline-success btn-sm mr-2 shadow-sm font-weight-bold">
-                📥 Export Manifest CSV
+            <a href="?<?= http_build_query(['bus' => $selected_bus, 'date' => $selected_date, 'route' => $selected_route, 'export' => 'csv']) ?>" class="btn btn-outline-success btn-sm mr-2 shadow-sm font-weight-bold d-inline-flex align-items-center">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1.5" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Export Manifest CSV
             </a>
-            <button onclick="window.print()" class="btn btn-primary btn-sm shadow-sm font-weight-bold mr-2">
-                🖨️ Print Manifest
+            <button onclick="window.print()" class="btn btn-primary btn-sm shadow-sm font-weight-bold mr-2 d-inline-flex align-items-center">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1.5" aria-hidden="true">
+                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                    <rect x="6" y="14" width="12" height="8"></rect>
+                </svg>
+                Print Manifest
             </button>
-            <button type="button" id="clearBoardingBtn" class="btn btn-outline-secondary btn-sm shadow-sm font-weight-bold" title="Reset all boarding checks for this manifest">
-                🔄 Reset Boarding
+            <button type="button" id="clearBoardingBtn" class="btn btn-outline-secondary btn-sm shadow-sm font-weight-bold d-inline-flex align-items-center" title="Reset all boarding checks for this manifest">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1.5" aria-hidden="true">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+                Reset Boarding
             </button>
         <?php endif; ?>
     </div>
 </div>
 
 <!-- Filters Card (No Print) -->
-<div class="card border-0 shadow-sm mb-4 no-print filter-card">
-    <div class="card-body p-3">
+<div class="card manifest-filter-card no-print filter-card">
+    <div class="manifest-filter-body">
         <form action="manifest.php" method="get" class="form-row align-items-end">
-            <div class="col-md-3 mb-2 mb-md-0">
-                <label class="small font-weight-bold text-muted mb-1">Select Bus</label>
-                <select name="bus" class="form-control form-control-sm" required>
-                    <option value="">-- Choose Bus --</option>
-                    <?php foreach ($buses as $b): ?>
-                        <option value="<?= e($b['bus_number']) ?>" <?= $selected_bus === $b['bus_number'] ? 'selected' : '' ?>>
-                            <?= e($b['bus_number']) ?> (<?= (int)($b['capacity'] ?? 36) ?> seats)
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+            <div class="col-md-3 mb-3 mb-md-0">
+                <label for="manifest_bus" class="manifest-field-label">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="6" width="18" height="12" rx="2"></rect>
+                        <circle cx="7" cy="18" r="2"></circle>
+                        <circle cx="17" cy="18" r="2"></circle>
+                        <line x1="3" y1="11" x2="21" y2="11"></line>
+                    </svg>
+                    Select Bus
+                </label>
+                <div class="manifest-select-wrap">
+                    <select id="manifest_bus" name="bus" class="form-control manifest-control manifest-dropdown-select" required>
+                        <option value="">-- Choose Bus --</option>
+                        <?php foreach ($buses as $b): ?>
+                            <option value="<?= e($b['bus_number']) ?>" <?= $selected_bus === $b['bus_number'] ? 'selected' : '' ?>>
+                                <?= e($b['bus_number']) ?> (<?= (int)($b['capacity'] ?? 36) ?> seats)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
             </div>
-            <div class="col-md-3 mb-2 mb-md-0">
-                <label class="small font-weight-bold text-muted mb-1">Travel Date</label>
-                <input type="date" name="date" class="form-control form-control-sm" value="<?= e($selected_date) ?>" required>
+            <div class="col-md-3 mb-3 mb-md-0">
+                <label for="manifest_date" class="manifest-field-label">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    Travel Date
+                </label>
+                <input type="date" id="manifest_date" name="date" class="form-control manifest-control" value="<?= e($selected_date) ?>" required>
             </div>
-            <div class="col-md-4 mb-2 mb-md-0">
-                <label class="small font-weight-bold text-muted mb-1">Filter Route (Optional)</label>
-                <select name="route" class="form-control form-control-sm">
-                    <option value="">All Corridors for this Bus</option>
-                    <?php foreach ($routes as $r): ?>
-                        <?php $r_label = $r['city1'] . ' -> ' . $r['city2']; ?>
-                        <option value="<?= e($r_label) ?>" <?= $selected_route === $r_label ? 'selected' : '' ?>>
-                            <?= e($r_label) ?> (Dep: <?= e($r['time']) ?>)
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+            <div class="col-md-4 mb-3 mb-md-0">
+                <label for="manifest_route" class="manifest-field-label">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                    </svg>
+                    Filter Route (Optional)
+                </label>
+                <div class="manifest-select-wrap">
+                    <select id="manifest_route" name="route" class="form-control manifest-control manifest-dropdown-select">
+                        <option value="">All Corridors for this Bus</option>
+                        <?php foreach ($routes as $r): ?>
+                            <?php $r_label = $r['city1'] . ' -> ' . $r['city2']; ?>
+                            <option value="<?= e($r_label) ?>" <?= $selected_route === $r_label ? 'selected' : '' ?>>
+                                <?= e($r_label) ?> (Dep: <?= e($r['time']) ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
             </div>
-            <div class="col-md-2 d-flex align-items-center">
-                <button type="submit" class="btn btn-primary btn-sm btn-block">Load Manifest</button>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary manifest-submit-btn">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Load Manifest
+                </button>
             </div>
         </form>
     </div>
 </div>
 
 <!-- Official Trip Sheet & Manifest -->
-<div class="card border-0 shadow-sm mb-4">
+<div class="card manifest-sheet-card border-0 shadow-sm mb-4">
     <div class="card-body p-4">
         <!-- Print Header -->
         <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-3">
@@ -261,26 +310,26 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <div class="row mb-4">
             <div class="col-6 col-md-3 mb-2">
                 <div class="manifest-metric-box">
-                    <div class="small text-muted font-weight-bold">ASSIGNED BUS</div>
-                    <div class="h5 font-weight-bold mb-0 text-primary"><?= e($selected_bus ?: 'None') ?></div>
+                    <div class="manifest-metric-label">ASSIGNED BUS</div>
+                    <div class="manifest-metric-val text-primary"><?= e($selected_bus ?: 'None') ?></div>
                 </div>
             </div>
             <div class="col-6 col-md-3 mb-2">
                 <div class="manifest-metric-box">
-                    <div class="small text-muted font-weight-bold">TOTAL CAPACITY</div>
-                    <div class="h5 font-weight-bold mb-0 text-dark"><?= $capacity ?> Seats</div>
+                    <div class="manifest-metric-label">TOTAL CAPACITY</div>
+                    <div class="manifest-metric-val text-dark"><?= $capacity ?> Seats</div>
                 </div>
             </div>
             <div class="col-6 col-md-3 mb-2">
                 <div class="manifest-metric-box">
-                    <div class="small text-muted font-weight-bold">BOOKED / VACANT</div>
-                    <div class="h5 font-weight-bold mb-0 text-success"><?= $booked_count ?> / <span class="text-muted"><?= $vacant_count ?></span></div>
+                    <div class="manifest-metric-label">BOOKED / VACANT</div>
+                    <div class="manifest-metric-val text-success"><?= $booked_count ?> / <span class="text-muted"><?= $vacant_count ?></span></div>
                 </div>
             </div>
             <div class="col-6 col-md-3 mb-2">
                 <div class="manifest-metric-box">
-                    <div class="small text-muted font-weight-bold">OCCUPANCY RATE</div>
-                    <div class="h5 font-weight-bold mb-0 stat-link-info"><?= $occupancy_rate ?>%</div>
+                    <div class="manifest-metric-label">OCCUPANCY RATE</div>
+                    <div class="manifest-metric-val stat-link-info"><?= $occupancy_rate ?>%</div>
                 </div>
             </div>
         </div>

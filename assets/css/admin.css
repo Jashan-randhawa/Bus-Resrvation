@@ -1496,6 +1496,171 @@ html[data-theme="dark"] .journey-dropdown-select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
 }
 
+/* ==========================================================================
+   Passenger Manifest - Modern Filter Bar & Metrics UI
+   ========================================================================== */
+.manifest-filter-card {
+  background: var(--c-surface, #ffffff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.manifest-filter-body {
+  padding: 1.25rem 1.35rem;
+}
+
+.manifest-field-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--c-text-muted, #475569);
+  margin-bottom: 0.45rem;
+}
+
+.manifest-control {
+  height: 40px !important;
+  font-size: 0.85rem !important;
+  font-weight: 500;
+  color: var(--c-text, #1e293b) !important;
+  background-color: var(--c-surface, #ffffff) !important;
+  border: 1px solid var(--c-border, #e2e8f0) !important;
+  border-radius: 8px !important;
+  padding: 0.45rem 0.85rem !important;
+  line-height: 1.45 !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  width: 100%;
+}
+
+.manifest-control:focus {
+  border-color: var(--c-primary, #2563eb) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+  outline: none !important;
+}
+
+/* Custom styled dropdown select preventing text clipping */
+.manifest-select-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.manifest-dropdown-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 2.25rem !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  cursor: pointer;
+}
+
+/* Load Manifest action button */
+.manifest-submit-btn {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  background-color: var(--c-primary, #2563eb);
+  border-color: var(--c-primary, #2563eb);
+  color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+  transition: all 0.18s ease-in-out;
+  width: 100%;
+}
+
+.manifest-submit-btn:hover {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+  transform: translateY(-1px);
+}
+
+.manifest-submit-btn:active {
+  transform: translateY(0);
+}
+
+/* Manifest Trip Sheet Card & Metric boxes */
+.manifest-sheet-card {
+  background: var(--c-surface, #ffffff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.manifest-metric-box {
+  border-radius: 10px;
+  padding: 14px 18px;
+  background: var(--c-surface-2, #f8fafc);
+  border: 1px solid var(--c-border, #e2e8f0);
+  transition: border-color 0.15s ease;
+}
+
+.manifest-metric-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--c-text-muted, #64748b);
+  margin-bottom: 0.25rem;
+}
+
+.manifest-metric-val {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+/* Dark mode overrides for Manifest */
+html[data-theme="dark"] .manifest-filter-card,
+html[data-theme="dark"] .manifest-sheet-card {
+  background: var(--c-surface, #131b2e);
+  border-color: var(--c-border, #334155);
+}
+
+html[data-theme="dark"] .manifest-field-label {
+  color: var(--c-text-muted, #94a3b8);
+}
+
+html[data-theme="dark"] .manifest-control {
+  background-color: #0b1120 !important;
+  border-color: var(--c-border, #334155) !important;
+  color: var(--c-text, #f8fafc) !important;
+}
+
+html[data-theme="dark"] .manifest-control:focus {
+  border-color: var(--c-primary, #3b82f6) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+}
+
+html[data-theme="dark"] .manifest-dropdown-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+html[data-theme="dark"] .manifest-metric-box {
+  background: #0f172a;
+  border-color: var(--c-border, #334155);
+}
+
+html[data-theme="dark"] .manifest-metric-label {
+  color: var(--c-text-muted, #94a3b8);
+}
+
+html[data-theme="dark"] .manifest-metric-val.text-dark {
+  color: var(--c-text, #f8fafc) !important;
+}
+
 
 
 
