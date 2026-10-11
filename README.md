@@ -69,6 +69,7 @@ Comprehensive architectural, operational, and security documentation is availabl
 - 📋 **Passenger Trip Manifest:** Dedicated printable manifest sheet (`admin/manifest.php`) by bus, date, and corridor with print-ready CSS (`@media print`) and conductor/driver sign-off fields.
 - 🚌 **Fleet & Bus Management:** Configure custom seating capacities (10–60) and seating layout geometries (`2+2`, `2+1`, `1+2`, `1+1`).
 - 🛣️ **Route Management:** Configure origin/destination hubs, bus assignments, departure schedules, and fare pricing with conflict/collision detection.
+- 📱 **Mobile Responsive Navigation Drawer (Option A):** Touch-friendly off-canvas drawer navigation for mobile (<992px) with swipe-to-dismiss gestures, safe-area inset support (`env(safe-area-inset-*)`), `inert` accessibility management, responsive stacked table layouts (`.table-stack`), sticky docked action bars, and narrow screen KPI tile reflow.
 
 ---
 
@@ -379,6 +380,7 @@ Bus-Reservation/
 │   ├── test_phase2.php       # Phase 2: Money & reporting test suite
 │   ├── test_phase3.php       # Phase 3: Data integrity test suite
 │   ├── test_phase4.php       # Phase 4: Hygiene & hardening test suite
+│   ├── test_admin_layout.php # Mobile layout & navigation drawer test suite
 │   ├── concurrency_worker.php # Concurrency test worker
 │   └── run_tests.php         # Master test harness
 │

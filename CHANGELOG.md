@@ -4,6 +4,28 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- **Admin Panel Mobile Responsiveness & Unified Navigation Drawer (Option A)**:
+  - Implemented mobile-responsive architecture across the administrative panel using a single authoritative off-canvas drawer navigation pattern (Option A).
+  - **Phase 1 (Foundation)**:
+    - Fixed unclosed HTML comment on obsolete AOS script block in `includes/layout/footer-admin.php` that inadvertently swallowed `admin-mobile.js` and sidebar toggle scripts.
+    - Unified drawer open/close controller inside `assets/js/admin-mobile.js`, eliminating duplicate inline scripts. Added dedicated `#sidebarCloseBtn`, inert attribute management for closed drawer (< 992px), swipe-to-dismiss gesture detection, and focus restoration to `#sidebarToggle`.
+    - De-duplicated `.table-stack` CSS across `admin-mobile-responsive.css` and `admin.css`. Removed hardcoded light values in favor of design system dark mode tokens (`var(--c-surface)`, `var(--c-border)`, `var(--c-text-muted)`).
+    - Removed dead Bootstrap 5 `.form-select` selector, exempted `.form-control-sm` from the 44px touch height rule, and scoped broad `.btn-group` rules.
+    - Aligned action cell in `admin/queries.php` to standard `data-label="Actions"`.
+  - **Phase 2 (Shell)**:
+    - Configured `viewport-fit=cover` across `header-admin.php`, `admin/mfa.php`, and `header-login.php`.
+    - Removed hardcoded PHP 15-character truncation on `$title` in `header-admin.php` to let CSS ellipsis manage screen width up to `55vw`.
+    - Integrated safe-area insets (`env(safe-area-inset-*)`) for notched mobile displays in `.admin-topbar` and `.admin-sidebar`.
+  - **Phase 3 (Pages)**:
+    - Added single-column fallback for `.kpi-grid` under 380px in `assets/css/dashboard.css` to prevent number clipping on narrow mobile screens.
+    - Converted `admin/bookings.php` search and filter card into an expandable mobile accordion with a dedicated toggle button.
+    - Added docked sticky styling with safe-area padding for the bulk operations action bar (`#bulkBookingsForm`) on mobile viewports.
+    - Implemented full-screen modal responsive styling for `#singleReplyModal` in `assets/css/admin.css`.
+    - Added word wrapping (`overflow-wrap: break-word`, `word-break: break-word`) to `.table-stack td` to eliminate horizontal overflow on long emails, notes, and route names.
+    - Added `inputmode="numeric"` to 2FA security code input in `admin/mfa.php` for automatic mobile numeric keypad triggering.
+  - **Phase 5 (Testing & CI)**:
+    - Added automated static layout test suite `tests/test_admin_layout.php` (17/17 passing) validating comment balance, script loading, `inert` state handling, focus return, safe-area insets, token consistency, and CI pipeline integration.
+
 - **Redesign Performance Overview — Privacy-First Analytics Dashboard**:
   - Redesigned the Performance Overview section into a modern, responsive, information-dense SaaS analytics dashboard adhering strictly to privacy-first principles.
   - Implemented 4 responsive KPI cards: **Total Bookings** (with comparison delta vs previous period), **Confirmed Bookings** (with contextual percentage of total), **Pending Bookings** (with contextual percentage), and **Cancellation Rate** (with status-coded delta and warning threshold indicators).
