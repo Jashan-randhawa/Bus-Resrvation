@@ -1340,6 +1340,163 @@ html[data-theme="dark"] .filter-bar .filter-label {
   color: var(--c-text-muted, #94a3b8);
 }
 
+/* ==========================================================================
+   Seat Availability - Modern Journey Select Card & Form UI
+   ========================================================================== */
+.journey-select-card {
+  background: var(--c-surface, #ffffff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+}
+
+.journey-select-head {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.95rem 1.35rem;
+  background: var(--c-surface-2, #f8fafc);
+  border-bottom: 1px solid var(--c-border, #e2e8f0);
+}
+
+.journey-select-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--c-primary, #2563eb);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.journey-select-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--c-text, #0f172a);
+  margin: 0;
+}
+
+.journey-select-body {
+  padding: 1.35rem 1.35rem 1.25rem;
+}
+
+.journey-field-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--c-text-muted, #475569);
+  margin-bottom: 0.4rem;
+}
+
+.journey-select-control {
+  height: 40px !important;
+  font-size: 0.85rem !important;
+  font-weight: 500;
+  color: var(--c-text, #1e293b) !important;
+  background-color: var(--c-surface, #ffffff) !important;
+  border: 1px solid var(--c-border, #e2e8f0) !important;
+  border-radius: 8px !important;
+  padding: 0.45rem 0.85rem !important;
+  line-height: 1.45 !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  width: 100%;
+}
+
+.journey-select-control:focus {
+  border-color: var(--c-primary, #2563eb) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+  outline: none !important;
+}
+
+/* Custom styled select without text clipping */
+.journey-dropdown-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.journey-dropdown-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 2.25rem !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  cursor: pointer;
+}
+
+/* Load Seat Map Action Button */
+.journey-submit-btn {
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  background-color: var(--c-primary, #2563eb);
+  border-color: var(--c-primary, #2563eb);
+  color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+  transition: all 0.18s ease-in-out;
+  width: 100%;
+}
+
+.journey-submit-btn:hover {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+  transform: translateY(-1px);
+}
+
+.journey-submit-btn:active {
+  transform: translateY(0);
+}
+
+/* Dark mode for Journey Select Card */
+html[data-theme="dark"] .journey-select-card {
+  background: var(--c-surface, #131b2e);
+  border-color: var(--c-border, #334155);
+}
+
+html[data-theme="dark"] .journey-select-head {
+  background: #0f172a;
+  border-bottom-color: var(--c-border, #334155);
+}
+
+html[data-theme="dark"] .journey-select-title {
+  color: var(--c-text, #f8fafc);
+}
+
+html[data-theme="dark"] .journey-field-label {
+  color: var(--c-text-muted, #94a3b8);
+}
+
+html[data-theme="dark"] .journey-select-control {
+  background-color: #0b1120 !important;
+  border-color: var(--c-border, #334155) !important;
+  color: var(--c-text, #f8fafc) !important;
+}
+
+html[data-theme="dark"] .journey-select-control:focus {
+  border-color: var(--c-primary, #3b82f6) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+}
+
+html[data-theme="dark"] .journey-dropdown-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+
 
 
 

@@ -86,45 +86,94 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 <div class="row">
     <!-- Filter Panel -->
     <div class="col-lg-4 col-md-5 mb-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3">
-                <h5 class="mb-0 font-weight-bold">Select Journey</h5>
+        <div class="journey-select-card">
+            <div class="journey-select-head">
+                <div class="journey-select-icon" aria-hidden="true">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                </div>
+                <h5 class="journey-select-title">Select Journey</h5>
             </div>
-            <div class="card-body p-4">
+            <div class="journey-select-body">
                 <form action="seats.php" method="get">
                     <!-- Scheduled Departure Quick-Select (A8) -->
                     <div class="form-group mb-3">
-                        <label for="scheduled_trip" class="font-weight-bold small text-muted">Scheduled Departure Quick-Select</label>
-                        <select id="scheduled_trip" class="form-control form-control-sm">
-                            <option value="">-- Choose Scheduled Trip --</option>
-                            <?php foreach ($active_trips as $t): ?>
-                                <option value="" data-bus="<?= e($t['busno']) ?>" data-time="<?= e($t['time']) ?>">
-                                    <?= e($t['busno']) ?> (<?= e($t['city1']) ?> &rarr; <?= e($t['city2']) ?> at <?= e($t['time']) ?>)
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                        <label for="scheduled_trip" class="journey-field-label">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                            </svg>
+                            Scheduled Departure Quick-Select
+                        </label>
+                        <div class="journey-dropdown-wrap">
+                            <select id="scheduled_trip" class="form-control journey-select-control journey-dropdown-select">
+                                <option value="">-- Choose Scheduled Trip --</option>
+                                <?php foreach ($active_trips as $t): ?>
+                                    <option value="" data-bus="<?= e($t['busno']) ?>" data-time="<?= e($t['time']) ?>">
+                                        <?= e($t['busno']) ?> (<?= e($t['city1']) ?> &rarr; <?= e($t['city2']) ?> at <?= e($t['time']) ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="bus" class="font-weight-bold small text-muted">Vehicle Bus</label>
-                        <select name="bus" id="bus" class="form-control" required>
-                            <option value="">Select Bus</option>
-                            <?php foreach ($buses as $row): ?>
-                                <option value="<?= e($row['bus_number']) ?>" <?= $selected_bus === $row['bus_number'] ? 'selected' : '' ?>>
-                                    <?= e($row['bus_number']) ?> (<?= e((string)($row['capacity'] ?? 36)) ?> seats &bull; <?= e((string)($row['layout'] ?? '2+2')) ?>)
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                    <!-- Vehicle Bus -->
+                    <div class="form-group mb-3">
+                        <label for="bus" class="journey-field-label">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect x="3" y="3" width="18" height="16" rx="2"></rect>
+                                <path d="M4 11h16"></path>
+                                <circle cx="8" cy="15" r="1"></circle>
+                                <circle cx="16" cy="15" r="1"></circle>
+                            </svg>
+                            Vehicle Bus
+                        </label>
+                        <div class="journey-dropdown-wrap">
+                            <select name="bus" id="bus" class="form-control journey-select-control journey-dropdown-select" required>
+                                <option value="">Select Bus</option>
+                                <?php foreach ($buses as $row): ?>
+                                    <option value="<?= e($row['bus_number']) ?>" <?= $selected_bus === $row['bus_number'] ? 'selected' : '' ?>>
+                                        <?= e($row['bus_number']) ?> (<?= e((string)($row['capacity'] ?? 36)) ?> seats &bull; <?= e((string)($row['layout'] ?? '2+2')) ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="date" class="font-weight-bold small text-muted">Journey Date</label>
-                        <input type="date" id="date" name="date" class="form-control" value="<?= e($selected_date) ?>" required>
+
+                    <!-- Journey Date -->
+                    <div class="form-group mb-3">
+                        <label for="date" class="journey-field-label">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            Journey Date
+                        </label>
+                        <input type="date" id="date" name="date" class="form-control journey-select-control" value="<?= e($selected_date) ?>" required>
                     </div>
+
+                    <!-- Departure Time -->
                     <div class="form-group mb-4">
-                        <label for="time" class="font-weight-bold small text-muted">Departure Time</label>
-                        <input type="time" id="time" name="time" class="form-control" value="<?= e($selected_time) ?>" required>
+                        <label for="time" class="journey-field-label">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            Departure Time
+                        </label>
+                        <input type="time" id="time" name="time" class="form-control journey-select-control" value="<?= e($selected_time) ?>" required>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block py-2 font-weight-bold shadow-sm">
+
+                    <button type="submit" class="btn btn-primary journey-submit-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
                         Load Seat Map
                     </button>
                 </form>

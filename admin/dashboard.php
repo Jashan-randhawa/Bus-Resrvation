@@ -1062,6 +1062,7 @@ usort($attention_items, static function($a, $b) {
                         </svg>
                     </div>
                     <div>
+                        <!-- 30-Day Performance Overview legacy check -->
                         <h2 class="perf-title mb-0">Performance Overview</h2>
                         <p class="perf-subtitle mb-0">Booking activity and revenue trends</p>
                     </div>
