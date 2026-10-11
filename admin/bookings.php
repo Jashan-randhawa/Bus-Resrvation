@@ -325,37 +325,122 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 </div>
 
 <!-- Search & Filter Card (Item 8) -->
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body p-3">
+<div class="booking-filter-card">
+    <div class="booking-filter-head">
+        <div class="d-flex align-items-center">
+            <div class="booking-filter-icon mr-2" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+            </div>
+            <span class="booking-filter-title">Search &amp; Filter Reservations</span>
+            <?php 
+            $active_filter_cnt = ($search !== '' ? 1 : 0) + ($filter_bus !== '' ? 1 : 0) + ($filter_date_from !== '' ? 1 : 0) + ($filter_date_to !== '' ? 1 : 0);
+            if ($active_filter_cnt > 0): 
+            ?>
+                <span class="badge badge-primary font-weight-bold ml-2 px-2 py-1"><?= $active_filter_cnt ?> active</span>
+            <?php endif; ?>
+        </div>
+        <?php if (!empty($keep_params)): ?>
+            <a href="bookings.php" class="booking-filter-clear text-muted small font-weight-bold" title="Clear all active filters">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                Clear all filters
+            </a>
+        <?php endif; ?>
+    </div>
+    <div class="booking-filter-body">
         <form action="bookings.php" method="get" class="form-row align-items-end">
-            <div class="col-12 col-sm-6 col-md-3 mb-2">
-                <label for="filter_q" class="small font-weight-bold text-muted mb-1">Search Keyword</label>
-                <input type="text" id="filter_q" name="q" class="form-control form-control-sm" placeholder="PNR, name, phone, city..." value="<?= e($search) ?>">
+            <!-- Search Keyword -->
+            <div class="col-12 col-sm-6 col-lg-3 mb-2">
+                <label for="filter_q" class="booking-filter-label">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    Search Keyword
+                </label>
+                <div class="booking-search-wrap">
+                    <svg class="booking-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="filter_q" name="q" class="form-control booking-filter-control booking-search-input" placeholder="PNR, name, phone, city..." value="<?= e($search) ?>" autocomplete="off">
+                </div>
             </div>
-            <div class="col-12 col-sm-6 col-md-2 mb-2">
-                <label for="filter_bus" class="small font-weight-bold text-muted mb-1">Fleet Bus</label>
-                <select id="filter_bus" name="bus" class="form-control form-control-sm">
-                    <option value="">All Buses</option>
-                    <?php foreach ($buses as $b_opt): ?>
-                        <option value="<?= e($b_opt['bus_number']) ?>" <?= $filter_bus === $b_opt['bus_number'] ? 'selected' : '' ?>>
-                            <?= e($b_opt['bus_number']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+
+            <!-- Fleet Bus Dropdown -->
+            <div class="col-12 col-sm-6 col-lg-2 mb-2">
+                <label for="filter_bus" class="booking-filter-label">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="3" width="18" height="16" rx="2"></rect>
+                        <path d="M4 11h16"></path>
+                        <circle cx="8" cy="15" r="1"></circle>
+                        <circle cx="16" cy="15" r="1"></circle>
+                    </svg>
+                    Fleet Bus
+                </label>
+                <div class="booking-select-wrap">
+                    <select id="filter_bus" name="bus" class="form-control booking-filter-control booking-filter-select">
+                        <option value="">All Buses</option>
+                        <?php foreach ($buses as $b_opt): ?>
+                            <option value="<?= e($b_opt['bus_number']) ?>" <?= $filter_bus === $b_opt['bus_number'] ? 'selected' : '' ?>>
+                                <?= e($b_opt['bus_number']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
             </div>
-            <div class="col-12 col-sm-6 col-md-2 mb-2">
-                <label for="filter_from_date" class="small font-weight-bold text-muted mb-1">From Date</label>
-                <input type="date" id="filter_from_date" name="from_date" class="form-control form-control-sm" value="<?= e($filter_date_from) ?>">
+
+            <!-- From Date -->
+            <div class="col-12 col-sm-6 col-lg-2 mb-2">
+                <label for="filter_from_date" class="booking-filter-label">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    From Date
+                </label>
+                <input type="date" id="filter_from_date" name="from_date" class="form-control booking-filter-control" value="<?= e($filter_date_from) ?>">
             </div>
-            <div class="col-12 col-sm-6 col-md-2 mb-2">
-                <label for="filter_to_date" class="small font-weight-bold text-muted mb-1">To Date</label>
-                <input type="date" id="filter_to_date" name="to_date" class="form-control form-control-sm" value="<?= e($filter_date_to) ?>">
+
+            <!-- To Date -->
+            <div class="col-12 col-sm-6 col-lg-2 mb-2">
+                <label for="filter_to_date" class="booking-filter-label">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    To Date
+                </label>
+                <input type="date" id="filter_to_date" name="to_date" class="form-control booking-filter-control" value="<?= e($filter_date_to) ?>">
             </div>
-            <div class="col-12 col-md-3 mb-2 d-flex align-items-center">
-                <button type="submit" class="btn btn-primary btn-sm px-3 mr-2">Filter</button>
-                <?php if (!empty($keep_params)): ?>
-                    <a href="bookings.php" class="btn btn-outline-secondary btn-sm">Reset</a>
-                <?php endif; ?>
+
+            <!-- Action Buttons -->
+            <div class="col-12 col-lg-3 mb-2">
+                <div class="booking-filter-actions">
+                    <button type="submit" class="btn btn-primary booking-filter-btn flex-grow-1 flex-lg-grow-0">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="mr-1" aria-hidden="true">
+                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                        </svg>
+                        Filter
+                    </button>
+                    <?php if (!empty($keep_params)): ?>
+                        <a href="bookings.php" class="btn btn-outline-secondary booking-filter-btn" title="Reset all filters">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1" aria-hidden="true">
+                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                <path d="M3 3v5h5"></path>
+                            </svg>
+                            Reset
+                        </a>
+                    <?php endif; ?>
+                </div>
             </div>
         </form>
     </div>

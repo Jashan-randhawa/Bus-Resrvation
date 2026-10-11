@@ -1079,4 +1079,267 @@ html[data-theme="dark"] .perf-highlights {
   color: var(--c-text-muted, #94a3b8);
 }
 
+/* ==========================================================================
+   Admin Booking Management - Modern Filter & Search Bar
+   ========================================================================== */
+.booking-filter-card {
+  background: var(--c-surface, #ffffff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.booking-filter-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--c-surface-2, #f8fafc);
+  border-bottom: 1px solid var(--c-border, #e2e8f0);
+}
+
+.booking-filter-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--c-primary, #2563eb);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.booking-filter-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--c-text, #0f172a);
+}
+
+.booking-filter-clear {
+  color: var(--c-text-muted, #64748b);
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none !important;
+  transition: color 0.15s ease;
+}
+
+.booking-filter-clear:hover {
+  color: var(--c-primary, #2563eb);
+}
+
+.booking-filter-body {
+  padding: 1.15rem 1.25rem 0.95rem;
+}
+
+.booking-filter-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--c-text-muted, #475569);
+  margin-bottom: 0.35rem;
+}
+
+.booking-filter-control {
+  height: 38px !important;
+  font-size: 0.84rem !important;
+  font-weight: 500;
+  color: var(--c-text, #1e293b) !important;
+  background-color: var(--c-surface, #ffffff) !important;
+  border: 1px solid var(--c-border, #e2e8f0) !important;
+  border-radius: 8px !important;
+  padding: 0.42rem 0.75rem !important;
+  line-height: 1.45 !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  width: 100%;
+}
+
+.booking-filter-control:focus {
+  border-color: var(--c-primary, #2563eb) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+  outline: none !important;
+}
+
+/* Search input with inner icon */
+.booking-search-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.booking-search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--c-text-muted, #94a3b8);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.booking-search-input {
+  padding-left: 2.25rem !important;
+}
+
+/* Custom dropdown arrow for Fleet Bus */
+.booking-select-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.booking-filter-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 2rem !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  cursor: pointer;
+}
+
+/* Action buttons */
+.booking-filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0;
+}
+
+.booking-filter-btn {
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0 1.15rem;
+  transition: all 0.15s ease-in-out;
+  white-space: nowrap;
+}
+
+.booking-filter-btn.btn-primary {
+  background-color: var(--c-primary, #2563eb);
+  border-color: var(--c-primary, #2563eb);
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+}
+
+.booking-filter-btn.btn-primary:hover {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.booking-filter-btn.btn-outline-secondary {
+  border-color: var(--c-border, #cbd5e1);
+  color: var(--c-text-muted, #475569);
+  background: var(--c-surface, #ffffff);
+}
+
+.booking-filter-btn.btn-outline-secondary:hover {
+  background-color: var(--c-surface-2, #f1f5f9);
+  color: var(--c-text, #0f172a);
+}
+
+/* Dark mode overrides for booking filter */
+html[data-theme="dark"] .booking-filter-card {
+  background: var(--c-surface, #131b2e);
+  border-color: var(--c-border, #334155);
+}
+
+html[data-theme="dark"] .booking-filter-head {
+  background: #0f172a;
+  border-bottom-color: var(--c-border, #334155);
+}
+
+html[data-theme="dark"] .booking-filter-title {
+  color: var(--c-text, #f8fafc);
+}
+
+html[data-theme="dark"] .booking-filter-label {
+  color: var(--c-text-muted, #94a3b8);
+}
+
+html[data-theme="dark"] .booking-filter-control {
+  background-color: #0b1120 !important;
+  border-color: var(--c-border, #334155) !important;
+  color: var(--c-text, #f8fafc) !important;
+}
+
+html[data-theme="dark"] .booking-filter-control:focus {
+  border-color: var(--c-primary, #3b82f6) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+}
+
+html[data-theme="dark"] .booking-filter-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+html[data-theme="dark"] .booking-filter-btn.btn-outline-secondary {
+  border-color: var(--c-border, #334155);
+  color: var(--c-text-muted, #94a3b8);
+  background: #0f172a;
+}
+
+html[data-theme="dark"] .booking-filter-btn.btn-outline-secondary:hover {
+  background-color: #1e293b;
+  color: #f8fafc;
+}
+
+/* Status Filter Bar Styling */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--c-surface, #ffffff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--radius-lg, 12px);
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  flex-wrap: wrap;
+}
+
+.filter-bar .filter-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--c-text-muted, #64748b);
+  white-space: nowrap;
+}
+
+.filter-bar .btn-group {
+  gap: 0.35rem;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.filter-bar .btn-group .btn {
+  border-radius: 8px !important;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.35rem 0.95rem;
+  transition: all 0.15s ease-in-out;
+  border-width: 1px;
+}
+
+html[data-theme="dark"] .filter-bar {
+  background: var(--c-surface, #131b2e);
+  border-color: var(--c-border, #334155);
+}
+
+html[data-theme="dark"] .filter-bar .filter-label {
+  color: var(--c-text-muted, #94a3b8);
+}
+
+
+
 
