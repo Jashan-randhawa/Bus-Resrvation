@@ -367,7 +367,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     <div class="booking-filter-body">
         <form action="bookings.php" method="get" class="form-row align-items-end">
             <!-- Search Keyword -->
-            <div class="col-12 col-sm-6 col-lg-3 mb-2">
+            <div class="col-12 col-lg-3 mb-2">
                 <label for="filter_q" class="booking-filter-label">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="11" cy="11" r="8"></circle>
@@ -385,7 +385,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             </div>
 
             <!-- Fleet Bus Dropdown -->
-            <div class="col-12 col-sm-6 col-lg-2 mb-2">
+            <div class="col-12 col-lg-2 mb-2">
                 <label for="filter_bus" class="booking-filter-label">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <rect x="3" y="3" width="18" height="16" rx="2"></rect>

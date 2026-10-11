@@ -1262,6 +1262,20 @@ html[data-theme="dark"] .perf-highlights {
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   cursor: pointer;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.booking-filter-select option {
+  font-size: 0.85rem;
+  padding: 0.45rem 0.65rem;
+  background-color: var(--c-surface, #ffffff);
+  color: var(--c-text, #1e293b);
+}
+
+html[data-theme="dark"] .booking-filter-select option {
+  background-color: #0f172a;
+  color: #f8fafc;
 }
 
 /* Action buttons */
