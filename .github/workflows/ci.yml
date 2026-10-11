@@ -45,3 +45,6 @@ jobs:
           diff -u packages/seat-picker/dist/seat-picker.js assets/js/vendor/seat-picker.js
           diff -u packages/ui/src/theme-toggle.js assets/js/theme-toggle.js
 
+      - name: Run static admin layout tests
+        run: php tests/test_admin_layout.php
+

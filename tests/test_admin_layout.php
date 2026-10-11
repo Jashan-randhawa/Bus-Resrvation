@@ -1,0 +1,138 @@
+<?php
+/**
+ * tests/test_admin_layout.php
+ * Automated Static Layout & Mobile Responsiveness Test Suite (Option A Drawer)
+ */
+
+$total_assertions = 0;
+$failed_assertions = 0;
+
+function assert_layout(string $description, bool $condition): void {
+    global $total_assertions, $failed_assertions;
+    $total_assertions++;
+    if ($condition) {
+        echo " [PASS] {$description}\n";
+    } else {
+        echo " [FAIL] {$description}\n";
+        $failed_assertions++;
+    }
+}
+
+echo "========================================================\n";
+echo "   Admin Layout & Mobile Responsiveness Test Suite     \n";
+echo "========================================================\n\n";
+
+// -------------------------------------------------------------
+// Suite 1: Layout HTML Balance & Critical Shell Integrity (F1, F2)
+// -------------------------------------------------------------
+echo "[*] Suite 1: Layout HTML Balance & Shell Integrity\n";
+
+$header_admin = file_get_contents(__DIR__ . '/../includes/layout/header-admin.php');
+$footer_admin = file_get_contents(__DIR__ . '/../includes/layout/footer-admin.php');
+
+assert_layout("header-admin.php contains balanced HTML comment delimiters",
+    substr_count($header_admin, '<!--') === substr_count($header_admin, '-->')
+);
+
+assert_layout("footer-admin.php contains balanced HTML comment delimiters (no swallowed scripts)",
+    substr_count($footer_admin, '<!--') === substr_count($footer_admin, '-->')
+);
+
+assert_layout("footer-admin.php loads admin-mobile.js exactly once",
+    substr_count($footer_admin, '<script src="<?= BASE_URL ?>/assets/js/admin-mobile.js') === 1
+);
+
+assert_layout("header-admin.php specifies viewport-fit=cover for safe-area insets",
+    str_contains($header_admin, 'viewport-fit=cover')
+);
+
+assert_layout("header-admin.php includes mobile drawer close button (#sidebarCloseBtn)",
+    str_contains($header_admin, 'id="sidebarCloseBtn"')
+);
+
+assert_layout("header-admin.php does not hardcode PHP 15-char substring on mobile title",
+    !str_contains($header_admin, "substr(\$title, 0, 15)")
+);
+
+// -------------------------------------------------------------
+// Suite 2: Mobile Navigation Controller Verification (F3, F4)
+// -------------------------------------------------------------
+echo "\n[*] Suite 2: Authoritative admin-mobile.js Controller\n";
+
+$admin_mobile_js = file_get_contents(__DIR__ . '/../assets/js/admin-mobile.js');
+
+assert_layout("admin-mobile.js handles sidebar close button (#sidebarCloseBtn)",
+    str_contains($admin_mobile_js, 'sidebarCloseBtn')
+);
+
+assert_layout("admin-mobile.js applies inert attribute to closed mobile drawer",
+    str_contains($admin_mobile_js, "sidebar.setAttribute('inert', '')") &&
+    str_contains($admin_mobile_js, "sidebar.removeAttribute('inert')")
+);
+
+assert_layout("admin-mobile.js restores focus to toggle button on closing",
+    str_contains($admin_mobile_js, 'toggle.focus()')
+);
+
+assert_layout("admin-mobile.js matches footer links using .admin-sidebar-footer selector",
+    str_contains($admin_mobile_js, '.admin-sidebar-footer')
+);
+
+assert_layout("admin-mobile.js implements swipe-left gesture detection",
+    str_contains($admin_mobile_js, 'touchstart') &&
+    str_contains($admin_mobile_js, 'touchend') &&
+    str_contains($admin_mobile_js, 'deltaX > 50')
+);
+
+// -------------------------------------------------------------
+// Suite 3: Mobile Stylesheet Rules & Token Hygiene (F5, F6, F7, F8)
+// -------------------------------------------------------------
+echo "\n[*] Suite 3: Mobile Stylesheet Scoping & De-duplication\n";
+
+$mobile_css = file_get_contents(__DIR__ . '/../assets/css/admin-mobile-responsive.css');
+$admin_css = file_get_contents(__DIR__ . '/../assets/css/admin.css');
+
+assert_layout("admin-mobile-responsive.css does NOT contain dead Bootstrap 5 .form-select selector",
+    !str_contains($mobile_css, '.form-select')
+);
+
+assert_layout("admin-mobile-responsive.css exempts .form-control-sm from 44px height forcing",
+    str_contains($mobile_css, ':not(.form-control-sm)')
+);
+
+assert_layout("admin-mobile-responsive.css does NOT contain duplicate hardcoded .table-stack card styles",
+    !str_contains($mobile_css, '.table-stack tbody,') &&
+    !str_contains($mobile_css, 'background: #ffffff;')
+);
+
+assert_layout("admin.css defines .table-stack with theme tokens and dark mode overrides",
+    str_contains($admin_css, 'var(--c-surface') &&
+    str_contains($admin_css, 'html[data-theme="dark"] .table-stack tr')
+);
+
+assert_layout("admin.css styles mobile sticky bulk action bar with safe-area padding",
+    str_contains($admin_css, '#bulkBookingsForm:not(.d-none)') &&
+    str_contains($admin_css, 'safe-area-inset-bottom')
+);
+
+// -------------------------------------------------------------
+// Suite 4: Table Cell Data-Label Consistency (F9)
+// -------------------------------------------------------------
+echo "\n[*] Suite 4: Table Data-Label Consistency\n";
+
+$queries_content = file_get_contents(__DIR__ . '/../admin/queries.php');
+
+assert_layout("admin/queries.php action column uses data-label='Actions' matching design system",
+    str_contains($queries_content, 'data-label="Actions"')
+);
+
+// -------------------------------------------------------------
+// Summary
+// -------------------------------------------------------------
+echo "\n========================================================\n";
+echo "   Layout Test Results: " . ($total_assertions - $failed_assertions) . " Passed, {$failed_assertions} Failed\n";
+echo "========================================================\n";
+
+if ($failed_assertions > 0) {
+    exit(1);
+}
