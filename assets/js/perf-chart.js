@@ -507,10 +507,14 @@
             initPerfCharts();
             initMobileAutoScroller('.perf-tiles');
             initMobileAutoScroller('.perf-insights-grid');
+            initMobileAutoScroller('#corridorVolumeList');
+            initMobileAutoScroller('#corridorRevenueList');
         });
     } else {
         initPerfCharts();
         initMobileAutoScroller('.perf-tiles');
         initMobileAutoScroller('.perf-insights-grid');
+        initMobileAutoScroller('#corridorVolumeList');
+        initMobileAutoScroller('#corridorRevenueList');
     }
 })();

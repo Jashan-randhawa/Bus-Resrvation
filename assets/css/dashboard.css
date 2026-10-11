@@ -1367,11 +1367,12 @@ html[data-theme="dark"] .dash-mode-toggle .btn-outline-secondary:hover {
 }
 
 /* ==========================================================================
-   Performance Tiles & Key Insights: Mobile Horizontal Moving Scroll (3s interval)
+   Performance Tiles, Key Insights & Top Corridors: Mobile Horizontal Moving Scroll (3s interval)
    ========================================================================== */
 @media (max-width: 575.98px) {
   .perf-tiles,
-  .perf-insights-grid {
+  .perf-insights-grid,
+  .corridor-list {
     display: flex !important;
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
@@ -1385,12 +1386,14 @@ html[data-theme="dark"] .dash-mode-toggle .btn-outline-secondary:hover {
   }
 
   .perf-tiles::-webkit-scrollbar,
-  .perf-insights-grid::-webkit-scrollbar {
+  .perf-insights-grid::-webkit-scrollbar,
+  .corridor-list::-webkit-scrollbar {
     display: none !important; /* Chrome, Safari */
   }
 
   .perf-tiles .perf-tile,
-  .perf-insights-grid .perf-insight-item {
+  .perf-insights-grid .perf-insight-item,
+  .corridor-list .corridor-row {
     flex: 0 0 calc(100% - 1.5rem) !important;
     max-width: calc(100% - 1.5rem) !important;
     scroll-snap-align: center !important;
