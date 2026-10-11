@@ -75,21 +75,23 @@
 
     /* Badges */
     .badge {
-        font-size: 0.65rem;
-        padding: 0.3rem 0.5rem !important;
+        font-size: 0.68rem;
+        padding: 0.25rem 0.45rem;
     }
 
     .badge-sm {
-        font-size: 0.6rem;
-        padding: 0.25rem 0.4rem !important;
+        font-size: 0.62rem;
+        padding: 0.2rem 0.35rem;
     }
 
-    /* Form controls - touch target minimum 44px */
-    .form-control,
-    .form-control-lg,
-    .form-select {
+    /* Form controls - touch target minimum 44px (excluding compact controls) */
+    .form-control:not(.form-control-sm):not(textarea),
+    .form-control-lg {
         height: 44px;
         font-size: 16px; /* Prevents iOS zoom */
+    }
+    textarea.form-control {
+        height: auto;
     }
 
     .form-group {
@@ -106,12 +108,16 @@
         font-size: 0.8rem;
     }
 
-    /* Button groups */
-    .btn-group {
+    /* Button groups - full width in toolbar and action containers */
+    .page-header .btn-group,
+    .filter-card .btn-group,
+    .card-actions .btn-group {
         width: 100%;
     }
 
-    .btn-group .btn {
+    .page-header .btn-group .btn,
+    .filter-card .btn-group .btn,
+    .card-actions .btn-group .btn {
         flex: 1;
         font-size: 0.75rem;
         padding: 0.4rem 0.2rem;
@@ -157,12 +163,6 @@
     .alert {
         padding: 0.75rem;
         font-size: 0.875rem;
-    }
-
-    /* Spacing utilities */
-    .ml-2, .mr-2 {
-        margin-left: 0.25rem !important;
-        margin-right: 0.25rem !important;
     }
 
     /* Gap utility for flexbox */
@@ -213,14 +213,17 @@
 
 /* --- TOUCH DEVICE OPTIMIZATION --- */
 @media (hover: none) and (pointer: coarse) {
-    /* Minimum 44x44px touch targets */
-    .btn, button, a.nav-link, .nav-link {
+    /* Touch target minimum 44px for navigation and primary action buttons */
+    .admin-nav .nav-link,
+    .admin-topbar .btn,
+    .admin-sidebar-footer .btn,
+    .btn-block,
+    .page-header .btn:not(.btn-sm) {
         min-height: 44px;
-        min-width: 44px;
     }
 
     .btn-sm, button.btn-sm {
-        min-height: 40px;
+        min-height: 38px;
     }
 
     /* Remove tap highlight delay */
