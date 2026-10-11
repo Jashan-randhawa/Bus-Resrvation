@@ -5,7 +5,7 @@ require_once __DIR__ . '/../config.php';
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/assets/images/bus.svg">
@@ -176,8 +176,8 @@ require_once __DIR__ . '/../config.php';
                 <span class="d-none d-sm-inline mr-1">☰</span>
                 <span class="d-sm-none">MENU</span>
             </button>
-            <span class="page-title-mobile font-weight-bold text-dark ml-2 d-lg-none" style="font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40vw;">
-                <?= e(strlen($title ?? '') > 15 ? substr($title, 0, 15) . '…' : ($title ?? 'Admin')) ?>
+            <span class="page-title-mobile font-weight-bold text-dark ml-2 d-lg-none" style="font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw;">
+                <?= e($title ?? 'Admin') ?>
             </span>
             <span class="text-muted small ml-2 d-none d-lg-inline">Operations Console</span>
             
