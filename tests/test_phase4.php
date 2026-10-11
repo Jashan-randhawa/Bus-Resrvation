@@ -97,6 +97,9 @@ assert_check("footer-admin.php contains SRI hash on AOS script",
     str_contains($footer_admin, 'integrity="sha384-') &&
     str_contains($footer_admin, 'crossorigin="anonymous"')
 );
+assert_check("footer-admin.php contains no unclosed HTML comments",
+    substr_count($footer_admin, '<!--') === substr_count($footer_admin, '-->')
+);
 
 // -------------------------------------------------------------
 // Suite 4.5: Read-Only GET Cleanliness & CLI Hold Expiration (Issue 31)

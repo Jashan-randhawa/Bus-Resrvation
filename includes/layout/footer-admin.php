@@ -11,7 +11,8 @@
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"
     integrity="sha384-wziAfh6b/qT+3LrqebF9WeK4+J5sehS6FA10J1t3a866kJ/fvU5UwofWnQyzLtwu"
     crossorigin="anonymous"></script>
-<script src="<?= BASE_URL ?>/assets/js/admin-mobile.js"></script>
+-->
+<script src="<?= BASE_URL ?>/assets/js/admin-mobile.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/admin-mobile.js') ?: '1' ?>"></script>
 <script>
     // Responsive Mobile Sidebar Toggle (A5)
     document.addEventListener('DOMContentLoaded', function() {
