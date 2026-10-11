@@ -547,9 +547,17 @@ if (isset($_POST['subbtn'])) {
               var swapBtn = document.getElementById(swapBtnId);
               if (!fromSelect || !toSelect) return;
 
-              function filterDests() {
+              var allDestOptions = [];
+              for (var i = 1; i < toSelect.options.length; i++) {
+                allDestOptions.push({
+                  value: toSelect.options[i].value,
+                  text: toSelect.options[i].textContent
+                });
+              }
+
+              function filterDests(targetValue) {
                 var fromVal = fromSelect.value;
-                var curTo = toSelect.value;
+                var curTo = targetValue !== undefined ? targetValue : toSelect.value;
                 var allowed = [];
                 if (window.ROUTES && Array.isArray(window.ROUTES)) {
                   for (var i = 0; i < window.ROUTES.length; i++) {
@@ -559,21 +567,68 @@ if (isset($_POST['subbtn'])) {
                   }
                 }
 
-                for (var j = 1; j < toSelect.options.length; j++) {
-                  var opt = toSelect.options[j];
-                  if (!fromVal) {
-                    opt.disabled = false;
-                  } else {
-                    opt.disabled = (opt.value === fromVal || allowed.indexOf(opt.value) === -1);
-                  }
+                toSelect.innerHTML = '';
+                var defaultOpt = document.createElement('option');
+                defaultOpt.value = '';
+                defaultOpt.textContent = 'Select Destination City';
+                toSelect.appendChild(defaultOpt);
+
+                var isSelected = false;
+
+                if (!fromVal) {
+                  allDestOptions.forEach(function(item) {
+                    var opt = document.createElement('option');
+                    opt.value = item.value;
+                    opt.textContent = item.text;
+                    if (item.value === curTo) {
+                      opt.selected = true;
+                      isSelected = true;
+                    }
+                    toSelect.appendChild(opt);
+                  });
+                } else if (allowed.length > 0) {
+                  var rendered = {};
+                  allDestOptions.forEach(function(item) {
+                    if (allowed.indexOf(item.value) !== -1) {
+                      var opt = document.createElement('option');
+                      opt.value = item.value;
+                      opt.textContent = item.text;
+                      if (item.value === curTo) {
+                        opt.selected = true;
+                        isSelected = true;
+                      }
+                      toSelect.appendChild(opt);
+                      rendered[item.value] = true;
+                    }
+                  });
+                  allowed.forEach(function(dest) {
+                    if (!rendered[dest]) {
+                      var opt = document.createElement('option');
+                      opt.value = dest;
+                      opt.textContent = dest;
+                      if (dest === curTo) {
+                        opt.selected = true;
+                        isSelected = true;
+                      }
+                      toSelect.appendChild(opt);
+                    }
+                  });
+                } else {
+                  var noneOpt = document.createElement('option');
+                  noneOpt.value = '';
+                  noneOpt.disabled = true;
+                  noneOpt.textContent = 'No routes available';
+                  toSelect.appendChild(noneOpt);
                 }
 
-                if (fromVal && curTo && (curTo === fromVal || allowed.indexOf(curTo) === -1)) {
+                if (!isSelected) {
                   toSelect.value = '';
                 }
               }
 
-              fromSelect.addEventListener('change', filterDests);
+              fromSelect.addEventListener('change', function() {
+                filterDests();
+              });
               if (fromSelect.value) {
                 filterDests();
               }
@@ -596,8 +651,7 @@ if (isset($_POST['subbtn'])) {
                   }
 
                   fromSelect.value = origTo;
-                  filterDests();
-                  toSelect.value = origFrom;
+                  filterDests(origFrom);
                 });
               }
             }

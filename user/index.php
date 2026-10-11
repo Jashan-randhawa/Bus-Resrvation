@@ -430,27 +430,92 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
 // Phase 3.2: Connected Routes mapping and dynamic destination filtering
 var routesMap = <?= json_encode($routes_map) ?>;
 
-function filterDestinations() {
-    var fromVal = document.getElementById('from').value;
-    var toSelect = document.getElementById('to');
-    var currentTo = toSelect.value;
-    var allowedDests = routesMap[fromVal] || null;
+var allDestOptions = [];
+var initToSelect = document.getElementById('to');
+if (initToSelect) {
+    for (var i = 1; i < initToSelect.options.length; i++) {
+        allDestOptions.push({
+            value: initToSelect.options[i].value,
+            text: initToSelect.options[i].textContent
+        });
+    }
+}
 
-    for (var i = 1; i < toSelect.options.length; i++) {
-        var opt = toSelect.options[i];
-        if (!allowedDests) {
-            opt.disabled = false;
-        } else {
-            opt.disabled = (allowedDests.indexOf(opt.value) === -1);
-        }
+function filterDestinations(targetValue) {
+    var fromSelect = document.getElementById('from');
+    var toSelect = document.getElementById('to');
+    if (!fromSelect || !toSelect) return;
+
+    var fromVal = fromSelect.value;
+    var currentTo = targetValue !== undefined ? targetValue : toSelect.value;
+    var allowedDests = (fromVal && routesMap[fromVal]) ? routesMap[fromVal] : null;
+
+    // Reset toSelect options keeping only the placeholder
+    toSelect.innerHTML = '';
+    var placeholderOpt = document.createElement('option');
+    placeholderOpt.value = '';
+    placeholderOpt.textContent = 'Select Destination';
+    toSelect.appendChild(placeholderOpt);
+
+    var isSelected = false;
+
+    if (!fromVal) {
+        // No departure city selected yet: show all destination cities
+        allDestOptions.forEach(function(item) {
+            var opt = document.createElement('option');
+            opt.value = item.value;
+            opt.textContent = item.text;
+            if (item.value === currentTo) {
+                opt.selected = true;
+                isSelected = true;
+            }
+            toSelect.appendChild(opt);
+        });
+    } else if (allowedDests && allowedDests.length > 0) {
+        // Show ONLY the destinations available from this departure city
+        var rendered = {};
+        allDestOptions.forEach(function(item) {
+            if (allowedDests.indexOf(item.value) !== -1) {
+                var opt = document.createElement('option');
+                opt.value = item.value;
+                opt.textContent = item.text;
+                if (item.value === currentTo) {
+                    opt.selected = true;
+                    isSelected = true;
+                }
+                toSelect.appendChild(opt);
+                rendered[item.value] = true;
+            }
+        });
+        // In case any destination in allowedDests was not in allDestOptions
+        allowedDests.forEach(function(dest) {
+            if (!rendered[dest]) {
+                var opt = document.createElement('option');
+                opt.value = dest;
+                opt.textContent = dest;
+                if (dest === currentTo) {
+                    opt.selected = true;
+                    isSelected = true;
+                }
+                toSelect.appendChild(opt);
+            }
+        });
+    } else {
+        var noneOpt = document.createElement('option');
+        noneOpt.value = '';
+        noneOpt.disabled = true;
+        noneOpt.textContent = 'No routes available';
+        toSelect.appendChild(noneOpt);
     }
 
-    if (allowedDests && allowedDests.indexOf(currentTo) === -1 && currentTo !== '') {
+    if (!isSelected) {
         toSelect.value = '';
     }
 }
 
-document.getElementById('from')?.addEventListener('change', filterDestinations);
+document.getElementById('from')?.addEventListener('change', function() {
+    filterDestinations();
+});
 if (document.getElementById('from')?.value) {
     filterDestinations();
 }
@@ -488,8 +553,8 @@ function swapCities() {
         return;
     }
 
-    if (!hasOpt(fromSelect, t) || !hasOpt(toSelect, f)) {
-        showSwapHint('Cannot swap: Reverse direction is not available in the city selection options.');
+    if (!hasOpt(fromSelect, t)) {
+        showSwapHint('Cannot swap: Reverse origin ' + t + ' is not available.');
         return;
     }
 
@@ -502,8 +567,7 @@ function swapCities() {
     if (hint) hint.style.display = 'none';
 
     fromSelect.value = t;
-    toSelect.value = f;
-    filterDestinations();
+    filterDestinations(f);
 }
 document.getElementById('swap-cities-btn')?.addEventListener('click', swapCities);
 document.getElementById('swap-cities-btn-mobile')?.addEventListener('click', swapCities);
