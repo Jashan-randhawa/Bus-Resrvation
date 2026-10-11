@@ -439,9 +439,76 @@
         });
     }
 
+    // 3-second auto-scroller for mobile perf-tiles
+    function initPerfTilesAutoScroll() {
+        var tilesContainer = document.querySelector('.perf-tiles');
+        if (!tilesContainer) return;
+
+        var scrollTimer = null;
+        var intervalMs = 3000; // 3 seconds
+        var isPaused = false;
+
+        function getCardStep() {
+            var firstCard = tilesContainer.querySelector('.perf-tile');
+            if (!firstCard) return tilesContainer.clientWidth;
+            var style = window.getComputedStyle(tilesContainer);
+            var gap = parseFloat(style.gap) || 12;
+            return firstCard.offsetWidth + gap;
+        }
+
+        function scrollNextTile() {
+            // Only auto-scroll on mobile screens (< 576px) where tiles overflow horizontally
+            if (window.innerWidth > 575.98) return;
+            if (isPaused) return;
+
+            var maxScroll = tilesContainer.scrollWidth - tilesContainer.clientWidth;
+            if (maxScroll <= 10) return; // No scroll needed
+
+            var step = getCardStep();
+            var nextPos = tilesContainer.scrollLeft + step;
+
+            if (nextPos >= maxScroll - 15) {
+                // Loop back to start smoothly
+                tilesContainer.scrollTo({ left: 0, behavior: 'smooth' });
+            } else {
+                tilesContainer.scrollTo({ left: nextPos, behavior: 'smooth' });
+            }
+        }
+
+        function startAutoScroll() {
+            stopAutoScroll();
+            // Don't auto-scroll if user prefers reduced motion
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                return;
+            }
+            scrollTimer = setInterval(scrollNextTile, intervalMs);
+        }
+
+        function stopAutoScroll() {
+            if (scrollTimer) {
+                clearInterval(scrollTimer);
+                scrollTimer = null;
+            }
+        }
+
+        // Pause on touch or mouse interaction
+        tilesContainer.addEventListener('mouseenter', function() { isPaused = true; });
+        tilesContainer.addEventListener('mouseleave', function() { isPaused = false; });
+        tilesContainer.addEventListener('touchstart', function() { isPaused = true; }, { passive: true });
+        tilesContainer.addEventListener('touchend', function() {
+            setTimeout(function() { isPaused = false; }, 2000);
+        }, { passive: true });
+
+        startAutoScroll();
+    }
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initPerfCharts);
+        document.addEventListener('DOMContentLoaded', function() {
+            initPerfCharts();
+            initPerfTilesAutoScroll();
+        });
     } else {
         initPerfCharts();
+        initPerfTilesAutoScroll();
     }
 })();

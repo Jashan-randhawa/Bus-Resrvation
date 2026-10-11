@@ -1366,3 +1366,33 @@ html[data-theme="dark"] .dash-mode-toggle .btn-outline-secondary:hover {
   background: var(--c-surface, #131b2e);
 }
 
+/* ==========================================================================
+   Performance Tiles: Mobile Horizontal Moving Scroll (3s interval)
+   ========================================================================== */
+@media (max-width: 575.98px) {
+  .perf-tiles {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 0.75rem !important;
+    padding-bottom: 0.5rem !important;
+    margin-bottom: 0.75rem !important;
+    scrollbar-width: none !important; /* Firefox */
+  }
+
+  .perf-tiles::-webkit-scrollbar {
+    display: none !important; /* Chrome, Safari */
+  }
+
+  .perf-tiles .perf-tile {
+    flex: 0 0 calc(100% - 1.5rem) !important;
+    max-width: calc(100% - 1.5rem) !important;
+    scroll-snap-align: center !important;
+    scroll-snap-stop: always !important;
+    box-sizing: border-box !important;
+  }
+}
+
