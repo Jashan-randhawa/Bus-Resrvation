@@ -70,6 +70,11 @@ assert_layout("admin-mobile.js applies inert attribute to closed mobile drawer",
     str_contains($admin_mobile_js, "sidebar.removeAttribute('inert')")
 );
 
+assert_layout("admin-mobile.js sets inert on admin-main when mobile drawer is open",
+    str_contains($admin_mobile_js, "adminMain.setAttribute('inert', '')") &&
+    str_contains($admin_mobile_js, "adminMain.removeAttribute('inert')")
+);
+
 assert_layout("admin-mobile.js restores focus to toggle button on closing",
     str_contains($admin_mobile_js, 'toggle.focus()')
 );
@@ -82,6 +87,14 @@ assert_layout("admin-mobile.js implements swipe-left gesture detection",
     str_contains($admin_mobile_js, 'touchstart') &&
     str_contains($admin_mobile_js, 'touchend') &&
     str_contains($admin_mobile_js, 'deltaX > 50')
+);
+
+assert_layout("admin-mobile.js closes drawer when Bootstrap modal opens",
+    str_contains($admin_mobile_js, 'show.bs.modal')
+);
+
+assert_layout("admin-mobile.js guards against duplicate initialization",
+    str_contains($admin_mobile_js, '__adminMobileNavInitialized')
 );
 
 // -------------------------------------------------------------
@@ -124,6 +137,91 @@ $queries_content = file_get_contents(__DIR__ . '/../admin/queries.php');
 
 assert_layout("admin/queries.php action column uses data-label='Actions' matching design system",
     str_contains($queries_content, 'data-label="Actions"')
+);
+
+// -------------------------------------------------------------
+// Suite 5: SVG Sprite Icons & Navigation Semantics (Section 3.3)
+// -------------------------------------------------------------
+echo "\n[*] Suite 5: SVG Sprite Icons & Navigation Semantics\n";
+
+$required_symbols = [
+    'nav-dashboard', 'nav-ticket', 'nav-seat', 'nav-clipboard',
+    'nav-bus', 'nav-route', 'nav-user-cog', 'nav-users',
+    'nav-shield', 'nav-message', 'nav-activity', 'nav-list',
+    'nav-menu', 'nav-close', 'nav-bell', 'nav-external-link'
+];
+
+$all_symbols_present = true;
+foreach ($required_symbols as $sym) {
+    if (!str_contains($header_admin, 'id="' . $sym . '"')) {
+        $all_symbols_present = false;
+        break;
+    }
+}
+assert_layout("header-admin.php contains inline SVG sprite with all 16 required nav symbols",
+    $all_symbols_present
+);
+
+assert_layout("header-admin.php replaces emoji with nav-* SVG symbol references",
+    str_contains($header_admin, "'nav-dashboard'") &&
+    str_contains($header_admin, "'nav-ticket'") &&
+    str_contains($header_admin, "'nav-seat'") &&
+    str_contains($header_admin, "'nav-clipboard'") &&
+    str_contains($header_admin, "'nav-message'")
+);
+
+// -------------------------------------------------------------
+// Suite 6: Modern Topbar Structure & Drawer Semantics (Section 3.1 & 3.2)
+// -------------------------------------------------------------
+echo "\n[*] Suite 6: Modern Topbar Structure & Drawer Semantics\n";
+
+assert_layout("header-admin.php topbar includes hamburger menu button (.admin-menu-btn)",
+    str_contains($header_admin, 'class="admin-menu-btn"') &&
+    str_contains($header_admin, 'id="sidebarToggle"')
+);
+
+assert_layout("header-admin.php topbar includes two-line title block with eyebrow header",
+    str_contains($header_admin, 'topbar-title-block') &&
+    str_contains($header_admin, 'topbar-eyebrow')
+);
+
+assert_layout("header-admin.php topbar includes unread query bell button with badge support",
+    str_contains($header_admin, 'topbar-bell-btn') &&
+    str_contains($header_admin, 'topbar-bell-badge')
+);
+
+assert_layout("header-admin.php displays Bus Service brand title in mobile drawer",
+    str_contains($header_admin, 'class="brand-title"')
+);
+
+assert_layout("header-admin.php applies viewer role distinct styling",
+    str_contains($header_admin, "\$admin_role === 'viewer'")
+);
+
+// -------------------------------------------------------------
+// Suite 7: Navigation Design Tokens & Motion (Section 4 & 3.3)
+// -------------------------------------------------------------
+echo "\n[*] Suite 7: Navigation Design Tokens & Motion\n";
+
+assert_layout("admin.css defines authoritative navigation tokens in :root",
+    str_contains($admin_css, '--nav-item-h: 48px;') &&
+    str_contains($admin_css, '--nav-radius: 12px;') &&
+    str_contains($admin_css, '--nav-active-bg:') &&
+    str_contains($admin_css, '--topbar-h: 56px;')
+);
+
+assert_layout("admin.css applies single width rule min(86vw, 320px) to mobile drawer",
+    str_contains($admin_css, 'width: min(86vw, 320px)')
+);
+
+assert_layout("admin.css gates hover effects inside @media (hover: hover)",
+    str_contains($admin_css, '@media (hover: hover)') &&
+    str_contains($admin_css, '.admin-nav .nav-link:hover')
+);
+
+assert_layout("admin.css honors prefers-reduced-motion for drawer and overlay transitions",
+    str_contains($admin_css, '@media (prefers-reduced-motion: reduce)') &&
+    str_contains($admin_css, 'transition: none !important;')
 );
 
 // -------------------------------------------------------------
