@@ -327,34 +327,39 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 <!-- Search & Filter Card (Item 8) -->
 <div class="booking-filter-card">
     <div class="booking-filter-head">
-        <div class="d-flex align-items-center">
-            <div class="booking-filter-icon mr-2" aria-hidden="true">
+        <div class="d-flex align-items-center flex-grow-1 mr-2 min-w-0">
+            <div class="booking-filter-icon mr-2 flex-shrink-0" aria-hidden="true">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                 </svg>
             </div>
-            <span class="booking-filter-title">Search &amp; Filter Reservations</span>
+            <span class="booking-filter-title text-truncate">Search &amp; Filter <span class="d-none d-sm-inline">Reservations</span></span>
             <?php 
             $active_filter_cnt = ($search !== '' ? 1 : 0) + ($filter_bus !== '' ? 1 : 0) + ($filter_date_from !== '' ? 1 : 0) + ($filter_date_to !== '' ? 1 : 0);
             if ($active_filter_cnt > 0): 
             ?>
-                <span class="badge badge-primary font-weight-bold ml-2 px-2 py-1"><?= $active_filter_cnt ?> active</span>
+                <!-- Desktop-only badge: mobile filter count is cleanly surfaced on the toggle button -->
+                <span class="badge badge-primary font-weight-bold ml-2 px-2 py-1 d-none d-md-inline-block"><?= $active_filter_cnt ?> active</span>
             <?php endif; ?>
-        <div class="d-flex align-items-center ml-auto">
+        </div>
+        <div class="d-flex align-items-center ml-auto flex-shrink-0">
             <?php if (!empty($keep_params)): ?>
-                <a href="bookings.php" class="booking-filter-clear text-muted small font-weight-bold mr-2 d-none d-sm-inline-flex" title="Clear all active filters">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1" aria-hidden="true">
+                <a href="bookings.php" class="booking-filter-clear text-danger small font-weight-bold mr-2" title="Clear all active filters">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1" aria-hidden="true">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
-                    Clear all
+                    <span>Clear</span>
                 </a>
             <?php endif; ?>
-            <button type="button" class="btn btn-sm btn-outline-secondary d-md-none" data-toggle="collapse" data-target="#bookingFilterCollapse" aria-expanded="<?= $active_filter_cnt > 0 ? 'true' : 'false' ?>" aria-controls="bookingFilterCollapse">
+            <button type="button" class="btn btn-sm <?= $active_filter_cnt > 0 ? 'btn-primary' : 'btn-outline-secondary' ?> booking-filter-toggle d-md-none" data-toggle="collapse" data-target="#bookingFilterCollapse" aria-expanded="<?= $active_filter_cnt > 0 ? 'true' : 'false' ?>" aria-controls="bookingFilterCollapse">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1" aria-hidden="true">
                     <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                 </svg>
-                <?= $active_filter_cnt > 0 ? 'Filters (' . $active_filter_cnt . ')' : 'Filters' ?>
+                <span>Filters</span>
+                <?php if ($active_filter_cnt > 0): ?>
+                    <span class="badge badge-light text-primary font-weight-bold ml-1 px-1"><?= $active_filter_cnt ?></span>
+                <?php endif; ?>
             </button>
         </div>
     </div>
@@ -403,7 +408,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             </div>
 
             <!-- From Date -->
-            <div class="col-12 col-sm-6 col-lg-2 mb-2">
+            <div class="col-6 col-lg-2 mb-2">
                 <label for="filter_from_date" class="booking-filter-label">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -417,7 +422,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             </div>
 
             <!-- To Date -->
-            <div class="col-12 col-sm-6 col-lg-2 mb-2">
+            <div class="col-6 col-lg-2 mb-2">
                 <label for="filter_to_date" class="booking-filter-label">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -440,7 +445,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         Filter
                     </button>
                     <?php if (!empty($keep_params)): ?>
-                        <a href="bookings.php" class="btn btn-outline-secondary booking-filter-btn" title="Reset all filters">
+                        <a href="bookings.php" class="btn btn-outline-secondary booking-filter-btn flex-grow-1 flex-lg-grow-0" title="Reset all filters">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1" aria-hidden="true">
                                 <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
                                 <path d="M3 3v5h5"></path>

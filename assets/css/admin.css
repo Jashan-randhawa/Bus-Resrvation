@@ -1352,6 +1352,77 @@ html[data-theme="dark"] .booking-filter-btn.btn-outline-secondary:hover {
   color: #f8fafc;
 }
 
+/* Mobile Toggle Button for Booking Filters */
+.booking-filter-toggle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 0.32rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.15s ease-in-out;
+  white-space: nowrap;
+}
+
+.booking-filter-toggle.btn-primary {
+  background-color: var(--c-primary, #2563eb);
+  border-color: var(--c-primary, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+}
+
+.booking-filter-toggle.btn-outline-secondary {
+  border-color: var(--c-border, #cbd5e1);
+  color: var(--c-text-muted, #475569);
+  background: var(--c-surface, #ffffff);
+}
+
+html[data-theme="dark"] .booking-filter-toggle.btn-outline-secondary {
+  background: #0f172a;
+  border-color: var(--c-border, #334155);
+  color: var(--c-text-muted, #94a3b8);
+}
+
+html[data-theme="dark"] .booking-filter-toggle.btn-outline-secondary:hover {
+  background-color: #1e293b;
+  color: #f8fafc;
+}
+
+@media (max-width: 767.98px) {
+  .booking-filter-head {
+    padding: 0.65rem 0.95rem;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+  }
+
+  .booking-filter-title {
+    font-size: 0.84rem;
+    white-space: nowrap;
+  }
+
+  .booking-filter-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .booking-filter-body {
+    padding: 0.95rem 0.95rem 0.75rem;
+  }
+
+  .booking-filter-actions {
+    width: 100%;
+    margin-top: 0.25rem;
+  }
+
+  .booking-filter-actions .booking-filter-btn {
+    flex: 1;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+
 /* Mobile Full-Screen Modal for Inquiries Reply */
 @media (max-width: 575.98px) {
   #singleReplyModal .modal-dialog {
@@ -1430,6 +1501,41 @@ html[data-theme="dark"] .filter-bar {
 html[data-theme="dark"] .filter-bar .filter-label {
   color: var(--c-text-muted, #94a3b8);
 }
+
+@media (max-width: 575.98px) {
+  .filter-bar {
+    padding: 0.5rem 0.75rem;
+    gap: 0.4rem;
+  }
+
+  .filter-bar .filter-label {
+    display: none;
+  }
+
+  .filter-bar .btn-group {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    width: 100%;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    gap: 0.35rem;
+    padding-bottom: 2px;
+  }
+
+  .filter-bar .btn-group::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-bar .btn-group .btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: 0.78rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px !important;
+  }
+}
+
 
 /* ==========================================================================
    Seat Availability - Modern Journey Select Card & Form UI
