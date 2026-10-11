@@ -5,10 +5,6 @@
 
 /* --- SMALL SCREENS (< 576px) --- */
 @media (max-width: 575.98px) {
-    :root {
-        --sidebar-width: 250px;
-    }
-
     /* Topbar */
     .admin-topbar {
         padding: 0.5rem 0.75rem;
@@ -259,18 +255,9 @@
 /* --- SIDEBAR OPTIMIZATION --- */
 @media (max-width: 991px) {
     .admin-sidebar {
-        max-width: 85vw;
-        width: 280px;
+        width: min(86vw, 320px);
+        max-width: min(86vw, 320px);
         will-change: transform;
-    }
-
-    /* Sidebar brand - hide text, show icon only on mobile */
-    .admin-sidebar .brand-title {
-        display: none;
-    }
-
-    .admin-brand {
-        justify-content: center;
     }
 
     /* Profile section - text truncation */
