@@ -202,11 +202,11 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
             <div class="form-row align-items-center">
                 <div class="col-12 col-md-4 form-group mb-2 mb-md-3">
                     <label for="from" class="font-weight-bold small text-muted">Departure City</label>
-                    <select name="from" class="form-control" id="from" required>
-                        <option value="">Select Origin</option>
+                    <select name="from" class="form-control custom-select" id="from" required>
+                        <option value="" disabled <?= empty($search_from) ? 'selected' : '' ?>>Select Origin</option>
                         <?php foreach ($from_cities as $row): ?>
                             <option value="<?= e($row['city1']) ?>" <?= $search_from === $row['city1'] ? 'selected' : '' ?>>
-                                <?= e($row['city1']) ?>
+                                <?= e(ucwords(strtolower((string)$row['city1']))) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -226,19 +226,19 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                     </button>
                 </div>
 
-                <div class="col-12 col-md-3 form-group mb-2 mb-md-3">
+                <div class="col-12 col-md-4 form-group mb-2 mb-md-3">
                     <label for="to" class="font-weight-bold small text-muted">Destination City</label>
-                    <select name="to" class="form-control" id="to" required>
-                        <option value="">Select Destination</option>
+                    <select name="to" class="form-control custom-select" id="to" required>
+                        <option value="" disabled <?= empty($search_to) ? 'selected' : '' ?>>Select Destination</option>
                         <?php foreach ($to_cities as $row): ?>
                             <option value="<?= e($row['city2']) ?>" <?= $search_to === $row['city2'] ? 'selected' : '' ?>>
-                                <?= e($row['city2']) ?>
+                                <?= e(ucwords(strtolower((string)$row['city2']))) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
 
-                <div class="col-12 col-md-4 form-group mb-3">
+                <div class="col-12 col-md-3 form-group mb-3">
                     <label for="date" class="font-weight-bold small text-muted">Travel Date</label>
                     <input type="date" min="<?= date('Y-m-d') ?>" max="<?= date('Y-m-d', strtotime('+90 days')) ?>" name="date" id="date" value="<?= e($search_date ?: date('Y-m-d')) ?>" class="form-control" required />
                 </div>
@@ -464,13 +464,20 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
 // Phase 3.2: Connected Routes mapping and dynamic destination filtering
 var routesMap = <?= json_encode($routes_map) ?>;
 
+function formatCity(c) {
+    if (!c) return '';
+    return c.split(' ').map(function(w) {
+        return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    }).join(' ');
+}
+
 var allDestOptions = [];
 var initToSelect = document.getElementById('to');
 if (initToSelect) {
     for (var i = 1; i < initToSelect.options.length; i++) {
         allDestOptions.push({
             value: initToSelect.options[i].value,
-            text: initToSelect.options[i].textContent
+            text: formatCity(initToSelect.options[i].textContent)
         });
     }
 }
@@ -488,7 +495,11 @@ function filterDestinations(targetValue) {
     toSelect.innerHTML = '';
     var placeholderOpt = document.createElement('option');
     placeholderOpt.value = '';
+    placeholderOpt.disabled = true;
     placeholderOpt.textContent = 'Select Destination';
+    if (!currentTo) {
+        placeholderOpt.selected = true;
+    }
     toSelect.appendChild(placeholderOpt);
 
     var isSelected = false;
@@ -498,7 +509,7 @@ function filterDestinations(targetValue) {
         allDestOptions.forEach(function(item) {
             var opt = document.createElement('option');
             opt.value = item.value;
-            opt.textContent = item.text;
+            opt.textContent = formatCity(item.text);
             if (item.value === currentTo) {
                 opt.selected = true;
                 isSelected = true;
@@ -512,7 +523,7 @@ function filterDestinations(targetValue) {
             if (allowedDests.indexOf(item.value) !== -1) {
                 var opt = document.createElement('option');
                 opt.value = item.value;
-                opt.textContent = item.text;
+                opt.textContent = formatCity(item.text);
                 if (item.value === currentTo) {
                     opt.selected = true;
                     isSelected = true;
@@ -526,7 +537,7 @@ function filterDestinations(targetValue) {
             if (!rendered[dest]) {
                 var opt = document.createElement('option');
                 opt.value = dest;
-                opt.textContent = dest;
+                opt.textContent = formatCity(dest);
                 if (dest === currentTo) {
                     opt.selected = true;
                     isSelected = true;

@@ -136,6 +136,26 @@ assert_user_layout("user.css defines 44px min-touch target for circular swap but
     str_contains($user_css, 'width: 44px')
 );
 
+$homepage_php = file_get_contents(__DIR__ . '/../homepage.php');
+
+assert_user_layout("user/index.php formats city options in title case and uses custom-select with disabled placeholders",
+    str_contains($user_index, "ucwords(strtolower((string)\$row['city1']))") &&
+    str_contains($user_index, "ucwords(strtolower((string)\$row['city2']))") &&
+    str_contains($user_index, 'custom-select') &&
+    str_contains($user_index, '<option value="" disabled')
+);
+
+assert_user_layout("homepage.php formats city options in title case and uses disabled placeholders",
+    str_contains($homepage_php, "ucwords(strtolower((string)\$c))") &&
+    str_contains($homepage_php, '<option value="" disabled')
+);
+
+assert_user_layout("user.css styles #search-form select.custom-select with chevron SVG and full width",
+    str_contains($user_css, '#search-form select.custom-select') &&
+    str_contains($user_css, 'background-image:') &&
+    str_contains($user_css, 'width: 100% !important;')
+);
+
 // -------------------------------------------------------------
 // Suite 6: Phase 3 Booking & Seat Map Responsiveness (F2, F4, F5)
 // -------------------------------------------------------------

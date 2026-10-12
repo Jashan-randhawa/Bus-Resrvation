@@ -390,9 +390,9 @@ if (isset($_POST['subbtn'])) {
                   <span aria-hidden="true">📍</span> Departure City
                 </label>
                 <select name="from" id="home_from" class="form-control" required>
-                  <option value="">Select Origin City</option>
+                  <option value="" disabled <?= empty($_GET['from']) ? 'selected' : '' ?>>Select Origin City</option>
                   <?php foreach ($from_cities as $c): ?>
-                    <option value="<?= e($c) ?>"><?= e($c) ?></option>
+                    <option value="<?= e($c) ?>"><?= e(ucwords(strtolower((string)$c))) ?></option>
                   <?php endforeach; ?>
                 </select>
               </div>
@@ -407,9 +407,9 @@ if (isset($_POST['subbtn'])) {
                   </button>
                 </div>
                 <select name="to" id="home_to" class="form-control mt-1" required>
-                  <option value="">Select Destination City</option>
+                  <option value="" disabled <?= empty($_GET['to']) ? 'selected' : '' ?>>Select Destination City</option>
                   <?php foreach ($to_cities as $c): ?>
-                    <option value="<?= e($c) ?>"><?= e($c) ?></option>
+                    <option value="<?= e($c) ?>"><?= e(ucwords(strtolower((string)$c))) ?></option>
                   <?php endforeach; ?>
                 </select>
               </div>
