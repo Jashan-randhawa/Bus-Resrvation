@@ -240,6 +240,40 @@ assert_user_layout("user/verify.php return link provides 44px min-height touch t
 );
 
 // -------------------------------------------------------------
+// Suite 9: Phase 6 Profile Responsiveness (F9, F10)
+// -------------------------------------------------------------
+echo "\n[*] Suite 9: Profile Forms & Security Controls Responsiveness\n";
+
+$profile_php = file_get_contents(__DIR__ . '/../user/profile.php');
+
+assert_user_layout("user/profile.php phone input specifies inputmode='tel'",
+    str_contains($profile_php, 'id="phone"') &&
+    str_contains($profile_php, 'inputmode="tel"')
+);
+
+assert_user_layout("user/profile.php cards use responsive padding p-3 p-md-4",
+    str_contains($profile_php, 'card-body p-3 p-md-4')
+);
+
+assert_user_layout("user/profile.php password toggle buttons specify aria-label and 44px touch targets",
+    str_contains($profile_php, 'aria-label="Toggle password visibility"') &&
+    str_contains($profile_php, 'min-width: 44px; min-height: 44px;')
+);
+
+assert_user_layout("user/profile.php form buttons use .btn-block-mobile with 44px min-height",
+    str_contains($profile_php, 'btn-block-mobile') &&
+    str_contains($profile_php, 'name="update_profile"') &&
+    str_contains($profile_php, 'name="change_password"') &&
+    str_contains($profile_php, 'name="change_email"') &&
+    str_contains($profile_php, 'name="delete_account"')
+);
+
+assert_user_layout("user.css defines .btn-block-mobile with width 100% and min-height on mobile",
+    str_contains($user_css, '.btn-block-mobile') &&
+    str_contains($user_css, 'width: 100% !important;')
+);
+
+// -------------------------------------------------------------
 // Summary
 // -------------------------------------------------------------
 echo "\n========================================================\n";
@@ -249,5 +283,6 @@ echo "========================================================\n";
 if ($failed_assertions > 0) {
     exit(1);
 }
+
 
 

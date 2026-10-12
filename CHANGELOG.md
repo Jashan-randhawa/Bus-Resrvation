@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- **User Section Mobile Modernization (Phase 6 - Profile & Security Settings Responsiveness, F9, F10)**:
+  - **Responsive Form Container Padding (`user/profile.php`)**: Reduced card body padding on mobile devices (`p-3 p-md-4`) to provide comfortable input field width and breathing room on 320px–375px screens.
+  - **Accessible Password Toggle Controls (`user/profile.php`)**: Added accessible `aria-label="Toggle password visibility"` and scaled toggle buttons to 44x44px touch targets with dynamic `Show password`/`Hide password` label updates.
+  - **Full-Width Mobile Form Actions (`user/profile.php`)**: Applied `.btn-block-mobile` and 44px minimum height to all 4 profile form submission buttons (profile update, password change, email update, account deactivation) for effortless thumb reach on phones.
+  - **Mobile Keyboard Hinting**: Specified `inputmode="tel"` on contact phone input to summon the numerical keypad on touch devices.
+  - Expanded `tests/test_user_layout.php` with Suite 9 assertions (40/40 passing).
+
 - **User Section Mobile Modernization (Phase 5 - Ticket & Verify View Responsiveness, F8)**:
   - **Fluid Boarding Pass Container (`user/ticket.php`)**: Reduced card container padding on phones (`p-3 p-md-5`) and added responsive scaling to the `.ticket-void-overlay` watermark on narrow screens (<576px) to eliminate text overflow.
   - **Responsive Digital Pass & QR Code (`user/ticket.php`)**: Replaced fixed 160px min-width with fluid centered layout (`max-width: 220px`) and raised helper/meta text sizes to 12px for WCAG AAA readability.

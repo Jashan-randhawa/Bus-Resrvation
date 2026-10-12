@@ -168,7 +168,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
             <div class="card-header bg-white py-3">
                 <h5 class="mb-0 font-weight-bold">Personal Information</h5>
             </div>
-            <div class="card-body p-4">
+            <div class="card-body p-3 p-md-4">
                 <form action="" method="post">
                     <?= csrf_field() ?>
                     <div class="form-group">
@@ -184,7 +184,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
 
                     <div class="form-group">
                         <label for="phone" class="font-weight-bold small text-muted">Contact Phone Number</label>
-                        <input type="tel" id="phone" name="phone" class="form-control" value="<?= e($user['phone'] ?? '') ?>" minlength="10" maxlength="20" required autocomplete="tel">
+                        <input type="tel" id="phone" name="phone" class="form-control" value="<?= e($user['phone'] ?? '') ?>" minlength="10" maxlength="20" required autocomplete="tel" inputmode="tel">
                         <!-- Phase 1.5: Accurate PNR lookup explanation -->
                         <small class="text-muted d-block mt-1">Note: Public ticket lookups match the phone number entered at the time of each booking. Updating your phone here updates your account profile for future bookings.</small>
                     </div>
@@ -195,7 +195,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                     </div>
 
                     <div class="d-flex justify-content-end mt-4">
-                        <button type="submit" name="update_profile" class="btn btn-primary px-4 font-weight-bold shadow-sm">
+                        <button type="submit" name="update_profile" class="btn btn-primary px-4 font-weight-bold shadow-sm btn-block-mobile" style="min-height: 44px;">
                             Save Profile Changes
                         </button>
                     </div>
@@ -210,7 +210,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
             <div class="card-header bg-white py-3">
                 <h5 class="mb-0 font-weight-bold">Change Password</h5>
             </div>
-            <div class="card-body p-4">
+            <div class="card-body p-3 p-md-4">
                 <form action="" method="post">
                     <?= csrf_field() ?>
                     <div class="form-group">
@@ -218,7 +218,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                         <div class="input-group">
                             <input type="password" id="current_pwd" name="current_pwd" class="form-control pwd-input" placeholder="••••••••" required autocomplete="current-password">
                             <div class="input-group-append">
-                                <button type="button" class="btn btn-outline-secondary toggle-pwd-btn" data-target="current_pwd" title="Show/Hide Password">👁️</button>
+                                <button type="button" class="btn btn-outline-secondary toggle-pwd-btn" data-target="current_pwd" title="Show/Hide Password" aria-label="Toggle password visibility" style="min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;">👁️</button>
                             </div>
                         </div>
                     </div>
@@ -228,7 +228,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                         <div class="input-group">
                             <input type="password" id="new_pwd" name="new_pwd" class="form-control pwd-input" placeholder="••••••••" minlength="8" required autocomplete="new-password">
                             <div class="input-group-append">
-                                <button type="button" class="btn btn-outline-secondary toggle-pwd-btn" data-target="new_pwd" title="Show/Hide Password">👁️</button>
+                                <button type="button" class="btn btn-outline-secondary toggle-pwd-btn" data-target="new_pwd" title="Show/Hide Password" aria-label="Toggle password visibility" style="min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;">👁️</button>
                             </div>
                         </div>
                         <small class="text-muted">Must contain at least 8 characters with letters and digits.</small>
@@ -239,13 +239,13 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                         <div class="input-group">
                             <input type="password" id="confirm_pwd" name="confirm_pwd" class="form-control pwd-input" placeholder="••••••••" minlength="8" required autocomplete="new-password">
                             <div class="input-group-append">
-                                <button type="button" class="btn btn-outline-secondary toggle-pwd-btn" data-target="confirm_pwd" title="Show/Hide Password">👁️</button>
+                                <button type="button" class="btn btn-outline-secondary toggle-pwd-btn" data-target="confirm_pwd" title="Show/Hide Password" aria-label="Toggle password visibility" style="min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;">👁️</button>
                             </div>
                         </div>
                     </div>
 
                     <div class="d-flex justify-content-end mt-4">
-                        <button type="submit" name="change_password" class="btn btn-warning px-4 font-weight-bold shadow-sm text-dark">
+                        <button type="submit" name="change_password" class="btn btn-warning px-4 font-weight-bold shadow-sm text-dark btn-block-mobile" style="min-height: 44px;">
                             Update Password
                         </button>
                     </div>
@@ -263,7 +263,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
             <div class="card-header bg-white py-3">
                 <h5 class="mb-0 font-weight-bold">Change Email Address</h5>
             </div>
-            <div class="card-body p-4">
+            <div class="card-body p-3 p-md-4">
                 <form action="" method="post">
                     <?= csrf_field() ?>
                     <div class="form-group">
@@ -276,12 +276,12 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                         <div class="input-group">
                             <input type="password" id="email_current_pwd" name="email_current_pwd" class="form-control" placeholder="••••••••" required autocomplete="current-password">
                             <div class="input-group-append">
-                                <button type="button" class="btn btn-outline-secondary toggle-pwd-btn" data-target="email_current_pwd" title="Show/Hide Password">👁️</button>
+                                <button type="button" class="btn btn-outline-secondary toggle-pwd-btn" data-target="email_current_pwd" title="Show/Hide Password" aria-label="Toggle password visibility" style="min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;">👁️</button>
                             </div>
                         </div>
                     </div>
                     <div class="d-flex justify-content-end mt-4">
-                        <button type="submit" name="change_email" class="btn btn-primary px-4 font-weight-bold shadow-sm">
+                        <button type="submit" name="change_email" class="btn btn-primary px-4 font-weight-bold shadow-sm btn-block-mobile" style="min-height: 44px;">
                             Update Email
                         </button>
                     </div>
@@ -296,7 +296,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
             <div class="card-header bg-white py-3">
                 <h5 class="mb-0 font-weight-bold text-danger">Deactivate Account</h5>
             </div>
-            <div class="card-body p-4 d-flex flex-column justify-content-between">
+            <div class="card-body p-3 p-md-4 d-flex flex-column justify-content-between">
                 <div>
                     <p class="text-muted small">
                         Deactivating your account will disable your login and anonymize your personal profile data. Past booking history and receipts will be safely preserved in line with operator retention requirements.
@@ -309,12 +309,12 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                         <div class="input-group">
                             <input type="password" id="delete_account_pwd" name="delete_account_pwd" class="form-control" placeholder="••••••••" required autocomplete="current-password">
                             <div class="input-group-append">
-                                <button type="button" class="btn btn-outline-secondary toggle-pwd-btn" data-target="delete_account_pwd" title="Show/Hide Password">👁️</button>
+                                <button type="button" class="btn btn-outline-secondary toggle-pwd-btn" data-target="delete_account_pwd" title="Show/Hide Password" aria-label="Toggle password visibility" style="min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;">👁️</button>
                             </div>
                         </div>
                     </div>
                     <div class="d-flex justify-content-end mt-3">
-                        <button type="submit" name="delete_account" class="btn btn-outline-danger px-4 font-weight-bold">
+                        <button type="submit" name="delete_account" class="btn btn-outline-danger px-4 font-weight-bold btn-block-mobile" style="min-height: 44px;">
                             Deactivate My Account
                         </button>
                     </div>
@@ -335,9 +335,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (input.type === 'password') {
                 input.type = 'text';
                 this.textContent = '🔒';
+                this.setAttribute('aria-label', 'Hide password');
             } else {
                 input.type = 'password';
                 this.textContent = '👁️';
+                this.setAttribute('aria-label', 'Show password');
             }
         });
     });
