@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- **Global White & Dark Theme Navigation Sidebar Elevation (`assets/css/design-system.css`, `assets/css/admin.css`, `includes/layout/header-admin.php`, `tests/test_admin_layout.php`)**:
+  - **Light Mode Pure White Surface (`--sidebar-bg: #ffffff`)**: Overhauled the dark navy hardcoded drawer to a crisp white background in Light Theme with slate text (`#475569`), subtle dividers (`#e2e8f0`), light profile card block (`#f8fafc`), clean interactive hover states (`#f1f5f9`), and primary active pills (`rgba(37, 99, 235, 0.1)`).
+  - **Dark Mode Seamless Midnight Surface (`--sidebar-bg: #0f172a`)**: Configured midnight dark styling with crisp white headers (`#ffffff`), glowing accent pills, and high-contrast accessible typography when dark mode is toggled.
+  - **Accessible Footer Actions & Touch Targets**: Styled the Public Homepage shortcut button with clean border and contrast in light mode and glowing outline in dark mode.
+  - **Dynamic Cache-Busting Across All Shell Headers**: Added `?v=filemtime` cache-busting to `design-system.css`, `admin.css`, and `user.css` in both admin and user layout shells.
+  - **Automated Verification**: Expanded `test_admin_layout.php` and `test_user_layout.php` with theme token verification suites (all suites passing 100%).
+
 - **Search Journey City Dropdowns & Custom Select Modernization (`user/index.php`, `homepage.php`, `assets/css/user.css`, `includes/layout/header-user.php`, `tests/test_user_layout.php`)**:
   - **In-DOM Custom Dropdown Widget (`user/index.php`, `assets/css/user.css`)**: Implemented an accessible, custom styled dropdown component (`.custom-dropdown-widget`, `.custom-dropdown-btn`, `.custom-dropdown-menu`) replacing the unstylable Windows Chromium native combobox popup. Features floating elevation shadow, rounded corners (12px), city pin icons (📍), active checkmarks (✓), smooth hover states, outside click to dismiss, and full dark theme support (`html[data-theme="dark"]`).
   - **Underlying Select Synchronization**: Automatically synchronizes value selection, dynamic destination filtering (`filterDestinations()`), and bidirectional city swapping (`swapCities()`) with underlying form elements, preserving native validation and GET search parameters.

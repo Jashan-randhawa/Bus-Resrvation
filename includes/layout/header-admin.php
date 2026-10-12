@@ -23,7 +23,7 @@ require_once __DIR__ . '/../config.php';
     -->
     
     <!-- Design System & Admin Styles -->
-    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/design-system.css') ?: 1 ?>">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/admin.css') ?: '2026-10-10' ?>">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin-mobile-responsive.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/admin-mobile-responsive.css') ?: '2026-10-10' ?>">
     <?php if (!empty($page_css)): ?>

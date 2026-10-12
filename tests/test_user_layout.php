@@ -81,6 +81,11 @@ assert_user_layout("header-user.php links admin-mobile-responsive.css (F1)",
     str_contains($header_user, 'assets/css/admin-mobile-responsive.css')
 );
 
+assert_user_layout("header-user.php links design-system.css and user.css with cache-busting tokens",
+    str_contains($header_user, 'assets/css/design-system.css?v=') &&
+    str_contains($header_user, 'assets/css/user.css?v=')
+);
+
 // -------------------------------------------------------------
 // Suite 4: Topbar Semantics & 44px Touch Targets (F9)
 // -------------------------------------------------------------

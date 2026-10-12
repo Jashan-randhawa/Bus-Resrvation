@@ -238,6 +238,14 @@ assert_layout("admin.css honors prefers-reduced-motion for drawer and overlay tr
     str_contains($admin_css, 'transition: none !important;')
 );
 
+$design_system_css = file_get_contents(__DIR__ . '/../assets/css/design-system.css');
+assert_layout("admin.css and design-system.css define global white light theme and dark theme for sidebar drawer",
+    str_contains($admin_css, '--sidebar-bg: #ffffff;') &&
+    str_contains($admin_css, '--sidebar-bg: #0f172a;') &&
+    str_contains($design_system_css, '--sidebar-bg: #ffffff;') &&
+    str_contains($design_system_css, '--sidebar-bg:            #0f172a;')
+);
+
 // -------------------------------------------------------------
 // Summary
 // -------------------------------------------------------------
