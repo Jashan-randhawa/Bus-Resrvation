@@ -4,12 +4,13 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
-- **Search Journey City Dropdowns & Custom Select Modernization (`user/index.php`, `homepage.php`, `assets/css/user.css`, `tests/test_user_layout.php`)**:
+- **Search Journey City Dropdowns & Custom Select Modernization (`user/index.php`, `homepage.php`, `assets/css/user.css`, `includes/layout/header-user.php`, `tests/test_user_layout.php`)**:
+  - **In-DOM Custom Dropdown Widget (`user/index.php`, `assets/css/user.css`)**: Implemented an accessible, custom styled dropdown component (`.custom-dropdown-widget`, `.custom-dropdown-btn`, `.custom-dropdown-menu`) replacing the unstylable Windows Chromium native combobox popup. Features floating elevation shadow, rounded corners (12px), city pin icons (📍), active checkmarks (✓), smooth hover states, outside click to dismiss, and full dark theme support (`html[data-theme="dark"]`).
+  - **Underlying Select Synchronization**: Automatically synchronizes value selection, dynamic destination filtering (`filterDestinations()`), and bidirectional city swapping (`swapCities()`) with underlying form elements, preserving native validation and GET search parameters.
+  - **Automatic Asset Cache-Busting (`includes/layout/header-user.php`)**: Appended dynamic `?v=filemtime` query tokens to all CSS links to prevent stale browser disk caching and ensure UI updates render immediately upon browser reload.
   - **Title Case City Formatting**: Replaced unformatted raw lowercase database option values (`delhi`, `jaipur`, `sirsa`, etc.) with clean Title Case display strings (`Delhi`, `Jaipur`, `Sirsa`) in both server-side PHP (`ucwords(strtolower(...))`) and client-side JavaScript (`formatCity(...)`).
-  - **Chromium Native Popup Fix**: Set disabled placeholder options (`<option value="" disabled ...>Select Origin</option>`) so Chromium on Windows/mobile emulation no longer highlights the prompt item with an unstyled grey box upon clicking.
   - **Symmetric Grid Alignment**: Equalized Departure City (`col-md-4`) and Destination City (`col-md-4`) columns, preventing dropdown squeeze and popup overflow on tablet and desktop viewports.
-  - **Modern Custom Select Styling (`assets/css/user.css`)**: Styled `.custom-select` and `select.form-control` with custom SVG chevron arrows, full-width responsiveness (`width: 100% !important`), smooth focus glow rings, 48px touch targets, and full dark-theme compatibility.
-  - **Automated Regression Suite**: Expanded [`tests/test_user_layout.php`](file:///C:/Users/jasha/.gemini/antigravity/scratch/Bus-Resrvation/tests/test_user_layout.php) with new validation checks (43/43 passing).
+  - **Automated Regression Suite**: Expanded [`tests/test_user_layout.php`](file:///C:/Users/jasha/.gemini/antigravity/scratch/Bus-Resrvation/tests/test_user_layout.php) with validation checks (43/43 passing).
 
 
   - **High-Definition Vector Bus Icon (`assets/images/bus.svg`)**: Replaced flat monochrome black silhouette with a custom multi-stop gradient transit coach vector featuring windshield glare reflections, destination LED matrix sign, glowing LED headlights, bumper detailing, and grounding drop shadow. Scalable from 16px favicon up to 128px high-res displays.

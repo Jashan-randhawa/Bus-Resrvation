@@ -556,10 +556,163 @@ function filterDestinations(targetValue) {
     if (!isSelected) {
         toSelect.value = '';
     }
+    if (typeof toDropdownWidget !== 'undefined' && toDropdownWidget) {
+        toDropdownWidget.refresh();
+    }
+}
+
+// Custom Dropdown Widget Builder (Accessible In-DOM Dropdown)
+function initCustomDropdown(selectId) {
+    var select = document.getElementById(selectId);
+    if (!select) return null;
+
+    var existingWidget = select.parentElement.querySelector('.custom-dropdown-widget[data-for="' + selectId + '"]');
+    if (existingWidget) {
+        existingWidget.remove();
+    }
+
+    var widget = document.createElement('div');
+    widget.className = 'custom-dropdown-widget';
+    widget.setAttribute('data-for', selectId);
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'custom-dropdown-btn';
+    btn.setAttribute('aria-haspopup', 'listbox');
+    btn.setAttribute('aria-expanded', 'false');
+
+    var valSpan = document.createElement('span');
+    valSpan.className = 'custom-dropdown-val';
+
+    var arrow = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    arrow.setAttribute('class', 'custom-dropdown-arrow');
+    arrow.setAttribute('viewBox', '0 0 24 24');
+    arrow.setAttribute('fill', 'none');
+    arrow.setAttribute('stroke', 'currentColor');
+    arrow.setAttribute('stroke-width', '2');
+    arrow.setAttribute('stroke-linecap', 'round');
+    arrow.setAttribute('stroke-linejoin', 'round');
+    var polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    polyline.setAttribute('points', '6 9 12 15 18 9');
+    arrow.appendChild(polyline);
+
+    btn.appendChild(valSpan);
+    btn.appendChild(arrow);
+    widget.appendChild(btn);
+
+    var menu = document.createElement('div');
+    menu.className = 'custom-dropdown-menu';
+    menu.setAttribute('role', 'listbox');
+    widget.appendChild(menu);
+
+    function updateWidgetOptions() {
+        menu.innerHTML = '';
+        var selectedOpt = null;
+        var placeholderText = 'Select ' + (selectId === 'from' ? 'Origin' : 'Destination');
+
+        for (var i = 0; i < select.options.length; i++) {
+            var opt = select.options[i];
+            if (opt.disabled && !opt.value) {
+                placeholderText = opt.textContent;
+                continue;
+            }
+            var item = document.createElement('div');
+            item.className = 'custom-dropdown-option' + (opt.selected ? ' selected' : '');
+            item.setAttribute('role', 'option');
+            item.setAttribute('data-value', opt.value);
+
+            var labelSpan = document.createElement('span');
+            labelSpan.innerHTML = '<span class="custom-dropdown-option-icon">📍</span>' + opt.textContent;
+            item.appendChild(labelSpan);
+
+            if (opt.selected) {
+                selectedOpt = opt;
+                var checkSpan = document.createElement('span');
+                checkSpan.className = 'custom-dropdown-option-check';
+                checkSpan.textContent = '✓';
+                item.appendChild(checkSpan);
+            }
+
+            (function(val) {
+                item.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    select.value = val;
+                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                    widget.classList.remove('open');
+                    btn.setAttribute('aria-expanded', 'false');
+                    updateWidgetOptions();
+                    btn.focus();
+                });
+            })(opt.value);
+
+            menu.appendChild(item);
+        }
+
+        if (selectedOpt && selectedOpt.value) {
+            btn.classList.remove('has-placeholder');
+            valSpan.innerHTML = '<span class="text-primary font-weight-bold">📍</span> ' + selectedOpt.textContent;
+        } else {
+            btn.classList.add('has-placeholder');
+            valSpan.textContent = placeholderText;
+        }
+    }
+
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var isOpen = widget.classList.contains('open');
+        document.querySelectorAll('.custom-dropdown-widget.open').forEach(function(w) {
+            w.classList.remove('open');
+            w.querySelector('.custom-dropdown-btn')?.setAttribute('aria-expanded', 'false');
+        });
+        if (!isOpen) {
+            widget.classList.add('open');
+            btn.setAttribute('aria-expanded', 'true');
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!widget.contains(e.target)) {
+            widget.classList.remove('open');
+            btn.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    widget.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            widget.classList.remove('open');
+            btn.setAttribute('aria-expanded', 'false');
+            btn.focus();
+        }
+    });
+
+    updateWidgetOptions();
+
+    select.classList.add('custom-dropdown-native-hidden');
+    select.parentNode.insertBefore(widget, select.nextSibling);
+
+    return {
+        refresh: updateWidgetOptions
+    };
+}
+
+var fromDropdownWidget = null;
+var toDropdownWidget = null;
+
+function setupWidgets() {
+    if (!fromDropdownWidget) fromDropdownWidget = initCustomDropdown('from');
+    if (!toDropdownWidget) toDropdownWidget = initCustomDropdown('to');
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupWidgets);
+} else {
+    setupWidgets();
 }
 
 document.getElementById('from')?.addEventListener('change', function() {
     filterDestinations();
+    if (fromDropdownWidget) fromDropdownWidget.refresh();
+    if (toDropdownWidget) toDropdownWidget.refresh();
 });
 if (document.getElementById('from')?.value) {
     filterDestinations();
@@ -613,6 +766,8 @@ function swapCities() {
 
     fromSelect.value = t;
     filterDestinations(f);
+    if (fromDropdownWidget) fromDropdownWidget.refresh();
+    if (toDropdownWidget) toDropdownWidget.refresh();
 }
 document.getElementById('swap-cities-btn')?.addEventListener('click', swapCities);
 document.getElementById('swap-cities-btn-mobile')?.addEventListener('click', swapCities);

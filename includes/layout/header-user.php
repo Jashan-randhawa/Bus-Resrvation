@@ -15,11 +15,11 @@
         integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
     
     <!-- Design System, Admin Core & User Styles (F1, F12) -->
-    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css">
-    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin.css">
-    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin-mobile-responsive.css">
-    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/user.css">
-    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/seat-map.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/design-system.css') ?: 1 ?>">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/admin.css') ?: 1 ?>">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin-mobile-responsive.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/admin-mobile-responsive.css') ?: 1 ?>">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/user.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/user.css') ?: 1 ?>">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/seat-map.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/seat-map.css') ?: 1 ?>">
 
     <!-- Global Theme Toggle (Head load to avoid FOUC) -->
     <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>
