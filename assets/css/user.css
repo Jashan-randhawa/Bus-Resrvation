@@ -178,4 +178,184 @@
   }
 }
 
+/* ==========================================================================
+   Upcoming Journey Hero Boarding Pass Card
+   ========================================================================== */
+.upcoming-journey-card {
+  position: relative;
+  background: var(--c-surface, #ffffff);
+  border: 1px solid rgba(37, 99, 235, 0.16) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.03) !important;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.upcoming-journey-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 5px;
+  background: linear-gradient(180deg, #2563eb 0%, #10b981 100%);
+  border-radius: 16px 0 0 16px;
+}
+
+.journey-badge-upcoming {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.journey-badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  70% { transform: scale(1); box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.journey-pnr-pill {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 3px 8px;
+  font-size: 0.78rem;
+}
+
+.journey-pnr-pill .pnr-label {
+  color: #64748b;
+  font-weight: 600;
+  margin-right: 5px;
+}
+
+.journey-pnr-pill .pnr-code {
+  color: #0f172a;
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.journey-corridor {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.journey-city {
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+
+.journey-arrow {
+  color: #2563eb;
+  font-size: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.journey-meta-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  padding: 0.65rem 1rem;
+}
+
+.journey-meta-item {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.journey-meta-item strong {
+  color: #0f172a;
+}
+
+.journey-action-btn {
+  border-radius: 10px !important;
+  font-size: 0.92rem;
+  padding: 0.65rem 1.25rem !important;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.journey-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
+}
+
+/* Dark Theme Overrides */
+html[data-theme="dark"] .upcoming-journey-card {
+  background: var(--c-surface, #131b2e) !important;
+  border-color: rgba(59, 130, 246, 0.25) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3) !important;
+}
+
+html[data-theme="dark"] .journey-badge-upcoming {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+html[data-theme="dark"] .journey-pnr-pill {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: #334155;
+}
+
+html[data-theme="dark"] .journey-pnr-pill .pnr-label {
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .journey-pnr-pill .pnr-code {
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] .journey-meta-grid {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: #334155;
+}
+
+html[data-theme="dark"] .journey-meta-item {
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .journey-meta-item strong {
+  color: #f1f5f9;
+}
+
+@media (max-width: 575.98px) {
+  .journey-corridor .journey-city {
+    font-size: 1.15rem;
+  }
+  .journey-meta-grid {
+    padding: 0.5rem 0.75rem;
+    gap: 0.5rem 0.75rem;
+  }
+}
+
+
 

@@ -4,6 +4,15 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- **Upcoming Journey Hero Boarding Pass UI Elevation (`user/index.php`, `assets/css/user.css`)**:
+  - **Modern Boarding Pass Aesthetic**: Upgraded the drab plain-text upcoming trip box to an airline-grade hero boarding pass card with smooth gradient accent borders, rounded corners (16px), and soft ambient elevation.
+  - **Pulsing Active Status Chip**: Replaced flat uppercase badge with a SaaS-grade live indicator pill (`.journey-badge-upcoming`) featuring a pulsating emerald status dot (`.journey-badge-dot`).
+  - **Elevated PNR Code Pill**: Separated booking reference into a crisp mono pill (`.journey-pnr-pill`) positioned opposite the status pill.
+  - **Title-Cased Route Corridor (`.journey-corridor`)**: Formatted raw city names with clean title-casing (e.g. `Delhi → Sirsa`) and crisp directional arrow typography.
+  - **Structured Metadata Chips (`.journey-meta-grid`)**: Replaced jumbled text and bullet points with structured chips displaying departure date/time, fleet bus number, and assigned seat pill badge.
+  - **Elevated Boarding Pass Action Button (`.journey-action-btn`)**: Styled action button with smooth hover lift, shadow, and full touch target responsiveness.
+  - Added full dark mode support (`html[data-theme="dark"] .upcoming-journey-card`).
+
 - **Transit Route Schedule Management & UI Modernization (`admin/routes.php`, `admin/edit/edit-route.php`, `assets/css/admin.css`)**:
   - **Executive Operational KPI Metrics**: Added 4 top stat cards (`.stat-card`) displaying Active Schedules (`stat-routes`), Fleet Allocated in Service (`stat-fleet`), Connected Cities Served (`stat-bookings`), and Average Route Tariff (`stat-revenue`) with dynamic range hints.
   - **Smart Search & Filter Toolbar (`.filter-bar`)**: Introduced responsive multi-criteria filtering: instant keyword search across origin/destination/bus (`q`), origin city dropdown, fleet bus dropdown, and 6-option sorting (departure time, price, corridor A-Z, ID). All filters safely preserved across pagination and archive tab toggling.

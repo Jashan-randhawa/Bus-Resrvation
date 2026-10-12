@@ -143,21 +143,49 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
 
 <!-- Phase 4.3: Your Next Trip Banner -->
 <?php if ($next_trip): ?>
-    <div class="card border-0 shadow-sm mb-4 bg-light border-left border-primary upcoming-journey-card" style="border-left-width: 5px !important;">
+    <div class="card upcoming-journey-card mb-4">
         <div class="card-body p-3 p-md-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
-            <div>
-                <span class="badge badge-success text-uppercase font-weight-bold px-2 py-1 mb-2">Upcoming Journey</span>
-                <h4 class="font-weight-bold text-dark mb-1">
-                    <?= e($next_trip['city1']) ?> &rarr; <?= e($next_trip['city2']) ?>
-                </h4>
-                <div class="text-muted small">
-                    <div>📅 <?= e(fmt_date($next_trip['date'])) ?> at <?= e(fmt_time($next_trip['time'])) ?> &bull; 🚌 Bus #<?= e($next_trip['bus']) ?> &bull; 🪑 Seat #<?= e($next_trip['seat']) ?></div>
-                    <div class="mt-1">PNR: <strong class="text-dark font-monospace"><?= e($next_trip['pnr']) ?></strong></div>
+            <div class="flex-grow-1 pr-md-4">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                    <span class="journey-badge-upcoming">
+                        <span class="journey-badge-dot"></span>
+                        Upcoming Journey
+                    </span>
+                    <div class="journey-pnr-pill">
+                        <span class="pnr-label">PNR:</span>
+                        <span class="pnr-code"><?= e($next_trip['pnr']) ?></span>
+                    </div>
+                </div>
+
+                <div class="journey-corridor mb-2">
+                    <h4 class="journey-city font-weight-bold text-dark mb-0 d-flex align-items-center flex-wrap">
+                        <span><?= e(ucwords(strtolower((string)$next_trip['city1']))) ?></span>
+                        <span class="journey-arrow mx-2">&rarr;</span>
+                        <span><?= e(ucwords(strtolower((string)$next_trip['city2']))) ?></span>
+                    </h4>
+                </div>
+
+                <div class="journey-meta-grid">
+                    <div class="journey-meta-item">
+                        <span class="mr-1">📅</span>
+                        <span><?= e(fmt_date($next_trip['date'])) ?> at <strong><?= e(fmt_time($next_trip['time'])) ?></strong></span>
+                    </div>
+                    <div class="journey-meta-item">
+                        <span class="mr-1">🚌</span>
+                        <span>Bus <strong>#<?= e($next_trip['bus']) ?></strong></span>
+                    </div>
+                    <div class="journey-meta-item">
+                        <span class="badge badge-primary px-2 py-1 font-weight-bold">
+                            Seat #<?= e($next_trip['seat']) ?>
+                        </span>
+                    </div>
                 </div>
             </div>
-            <div class="mt-3 mt-md-0">
-                <a href="<?= BASE_URL ?>/user/ticket.php?pnr=<?= urlencode($next_trip['pnr']) ?>" class="btn btn-primary px-4 py-2 font-weight-bold shadow-sm btn-block-mobile">
-                    View Boarding Pass &rarr;
+
+            <div class="mt-3 mt-md-0 d-flex flex-column align-items-stretch align-items-md-end justify-content-center">
+                <a href="<?= BASE_URL ?>/user/ticket.php?pnr=<?= urlencode($next_trip['pnr']) ?>" class="btn btn-primary journey-action-btn font-weight-bold shadow-sm btn-block-mobile" style="min-height: 44px; display: inline-flex; align-items: center; justify-content: center;">
+                    <span>View Boarding Pass</span>
+                    <span class="ml-2 font-weight-bold">&rarr;</span>
                 </a>
             </div>
         </div>
