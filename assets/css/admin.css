@@ -98,10 +98,15 @@
 }
 
 .admin-brand .brand-logo {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   margin-right: 10px;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  filter: drop-shadow(0 2px 5px rgba(37, 99, 235, 0.28));
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-brand .brand-link:hover .brand-logo {
+  transform: scale(1.08) rotate(-2deg);
 }
 
 .admin-brand .brand-title {
@@ -266,9 +271,10 @@
   padding-right: calc(1.25rem + env(safe-area-inset-right, 0px));
   background-color: var(--c-surface, #ffffff);
   background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--c-border, #e2e8f0);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
   align-items: center;
   justify-content: space-between;
   position: sticky;
@@ -280,7 +286,10 @@
 html[data-theme="dark"] .admin-topbar {
   background-color: var(--c-surface, #131b2e);
   background: rgba(19, 27, 46, 0.92);
-  border-color: var(--c-border, #334155);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: rgba(51, 65, 85, 0.7);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
 }
 
 /* Topbar Menu Hamburger Button (44x44px) */

@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- **Brand Logo Icon & Global Page Headers Modernization (`assets/images/bus.svg`, `assets/css/design-system.css`, `assets/css/admin.css`, `assets/css/home.css`)**:
+  - **High-Definition Vector Bus Icon (`assets/images/bus.svg`)**: Replaced flat monochrome black silhouette with a custom multi-stop gradient transit coach vector featuring windshield glare reflections, destination LED matrix sign, glowing LED headlights, bumper detailing, and grounding drop shadow. Scalable from 16px favicon up to 128px high-res displays.
+  - **Cohesive In-Page Header Elevation (`assets/css/design-system.css`)**: Overhauled `.page-header` across all admin and customer pages with 1.7rem bold typography, linear gradient accent underline bar (`.page-header::after`), and comfortable subtitle line-height.
+  - **Sticky Topbar Header Polish (`assets/css/admin.css`)**: Upgraded `.admin-topbar` with 12px backdrop blur glassmorphism, soft ambient shadow, 32px brand logo with hover tilt animation, and responsive eyebrow indicator with live pulsing dot.
+  - **Public Navigation Header (`assets/css/home.css`)**: Polished `.navbar-public` and `.navbar-brand-custom` with refined logo drop-shadows, 14px backdrop blur, and modern dark-mode contrast tokens.
+
 - **Upcoming Journey Hero Boarding Pass UI Elevation (`user/index.php`, `assets/css/user.css`)**:
   - **Modern Boarding Pass Aesthetic**: Upgraded the drab plain-text upcoming trip box to an airline-grade hero boarding pass card with smooth gradient accent borders, rounded corners (16px), and soft ambient elevation.
   - **Pulsing Active Status Chip**: Replaced flat uppercase badge with a SaaS-grade live indicator pill (`.journey-badge-upcoming`) featuring a pulsating emerald status dot (`.journey-badge-dot`).
