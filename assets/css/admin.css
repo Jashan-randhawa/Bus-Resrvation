@@ -2338,8 +2338,65 @@ html[data-theme="dark"] .manifest-mobile-icon-wrap {
   background: rgba(59, 130, 246, 0.15);
 }
 
+/* ==========================================================================
+   Transit Route Schedules & Fleet UI Elevation
+   ========================================================================== */
+.route-corridor {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
 
+.route-city {
+  font-weight: 600;
+  color: var(--c-text, #1e293b);
+  letter-spacing: -0.01em;
+}
 
+.route-arrow {
+  display: inline-flex;
+  align-items: center;
+  color: var(--c-primary, #2563eb);
+  font-weight: 700;
+  user-select: none;
+}
 
+.route-card-mobile {
+  background: var(--c-surface, #ffffff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--radius-lg, 14px);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
 
+.route-meta-strip {
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+html[data-theme="dark"] .route-card-mobile {
+  background: var(--c-surface, #131b2e);
+  border-color: var(--c-border, #334155);
+}
+
+html[data-theme="dark"] .route-meta-strip {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: #334155;
+}
+
+html[data-theme="dark"] .route-city {
+  color: #f1f5f9;
+}
+
+#swapModalCitiesBtn {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-width: 1.5px;
+}
+
+#swapModalCitiesBtn:hover,
+#swapModalCitiesBtn:active {
+  transform: rotate(180deg);
+}
 

@@ -4,6 +4,16 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- **Transit Route Schedule Management & UI Modernization (`admin/routes.php`, `admin/edit/edit-route.php`, `assets/css/admin.css`)**:
+  - **Executive Operational KPI Metrics**: Added 4 top stat cards (`.stat-card`) displaying Active Schedules (`stat-routes`), Fleet Allocated in Service (`stat-fleet`), Connected Cities Served (`stat-bookings`), and Average Route Tariff (`stat-revenue`) with dynamic range hints.
+  - **Smart Search & Filter Toolbar (`.filter-bar`)**: Introduced responsive multi-criteria filtering: instant keyword search across origin/destination/bus (`q`), origin city dropdown, fleet bus dropdown, and 6-option sorting (departure time, price, corridor A-Z, ID). All filters safely preserved across pagination and archive tab toggling.
+  - **Elevated Route Corridor Presentation**: Replaced plain table cells with visual Route Corridors (`.route-corridor`) featuring bold city typography, primary directional indicators (`&rarr;`), and fleet capacity metadata (`capacity` and `layout`).
+  - **Direct Conductor Manifest Shortcuts**: Integrated a 1-click shortcut button (`📋 Manifest`) on every route schedule row directly jumping to `admin/manifest.php?bus=...&time=...` for instant passenger verification.
+  - **Touch-Friendly Mobile Stacked Cards (`.route-card-mobile`)**: Replaced cramped tables on `<768px` devices with elevated card items featuring `.route-meta-strip` chips, prominent corridor titles, and 44px minimum height touch action buttons with 0 horizontal overflow.
+  - **Interactive City Swap Controls (`#swapModalCitiesBtn`, `#swapEditCitiesBtn`)**: Added rotating circular swap buttons between Origin and Destination fields in both route creation and editing views, allowing instant reverse route configuration with client-side conflict prevention.
+  - **Fleet Bus Selector Enhancements**: Enriched `<select name="bus">` options to display seating capacity and seat layout (e.g., `Bus #101 (36 seats, 2+2)`) for immediate operator visibility.
+  - Added test suite [`tests/test_route_ui.php`](file:///C:/Users/jasha/.gemini/antigravity/scratch/Bus-Resrvation/tests/test_route_ui.php) with 19 assertion checks (19/19 passing).
+
 - **User Section Mobile Modernization (Phase 6 - Profile & Security Settings Responsiveness, F9, F10)**:
   - **Responsive Form Container Padding (`user/profile.php`)**: Reduced card body padding on mobile devices (`p-3 p-md-4`) to provide comfortable input field width and breathing room on 320px–375px screens.
   - **Accessible Password Toggle Controls (`user/profile.php`)**: Added accessible `aria-label="Toggle password visibility"` and scaled toggle buttons to 44x44px touch targets with dynamic `Show password`/`Hide password` label updates.

@@ -124,16 +124,136 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore_route'])) {
 
 // Tab Filter: active vs archived
 $view_tab = admin_get_archive_tab();
-$where_archive = ($has_archived_col && $view_tab === 'archived') ? 'WHERE archived_at IS NOT NULL' : ($has_archived_col ? 'WHERE archived_at IS NULL' : '');
 
-$buses = db_all($link, "SELECT bus_number FROM buses " . (table_has_column($link, 'buses', 'archived_at') ? "WHERE archived_at IS NULL" : "") . " ORDER BY bus_number ASC");
-// 25-item Pagination (P-10)
-$total_routes = (int)(db_one($link, "SELECT COUNT(*) AS c FROM route {$where_archive}")['c'] ?? 0);
-$pagination = paginate($total_routes, 25);
-$routes = db_all($link, "SELECT * FROM route {$where_archive} ORDER BY `{$route_pk}` ASC LIMIT ? OFFSET ?", 'ii', [$pagination['per_page'], $pagination['offset']]);
-
-// Distinct known cities for datalist auto-suggest (A16)
+// Distinct known cities for datalist auto-suggest (A16) & origin dropdown
 $known_cities = db_all($link, "SELECT DISTINCT city1 AS city FROM route UNION SELECT DISTINCT city2 AS city FROM route ORDER BY city ASC");
+$known_origins = db_all($link, "SELECT DISTINCT city1 AS city FROM route ORDER BY city1 ASC");
+
+// Buses with fleet metadata
+$has_buses_arch = table_has_column($link, 'buses', 'archived_at');
+$bus_arch_where = $has_buses_arch ? "WHERE archived_at IS NULL" : "";
+$has_cap = table_has_column($link, 'buses', 'capacity');
+$has_layout = table_has_column($link, 'buses', 'layout');
+$bus_select_fields = "bus_number" . ($has_cap ? ", capacity" : "") . ($has_layout ? ", layout" : "");
+$buses = db_all($link, "SELECT {$bus_select_fields} FROM buses {$bus_arch_where} ORDER BY bus_number ASC");
+
+// Route operational metrics (based on active schedules)
+$active_stat_where = $has_archived_col ? "WHERE archived_at IS NULL" : "";
+$route_stats = db_one($link, "
+    SELECT 
+        COUNT(*) AS total_active_routes,
+        COUNT(DISTINCT busno) AS allocated_buses,
+        COALESCE(AVG(price), 0) AS avg_tariff,
+        COALESCE(MIN(price), 0) AS min_tariff,
+        COALESCE(MAX(price), 0) AS max_tariff
+    FROM route {$active_stat_where}
+") ?? [];
+
+$total_active_routes = (int)($route_stats['total_active_routes'] ?? 0);
+$allocated_buses = (int)($route_stats['allocated_buses'] ?? 0);
+$avg_tariff = (float)($route_stats['avg_tariff'] ?? 0);
+$unique_cities_count = count($known_cities);
+
+// Filter & Search parameters
+$search_q = trim((string)($_GET['q'] ?? ''));
+$filter_origin = trim((string)($_GET['origin'] ?? ''));
+$filter_bus = trim((string)($_GET['bus'] ?? ''));
+$sort = (string)($_GET['sort'] ?? 'id_asc');
+
+$where_clauses = [];
+$params = [];
+$types = '';
+
+if ($has_archived_col && $view_tab === 'archived') {
+    $where_clauses[] = 'r.archived_at IS NOT NULL';
+} elseif ($has_archived_col) {
+    $where_clauses[] = 'r.archived_at IS NULL';
+}
+
+if ($search_q !== '') {
+    $where_clauses[] = '(r.city1 LIKE ? OR r.city2 LIKE ? OR r.busno LIKE ?)';
+    $like = '%' . $search_q . '%';
+    $params[] = $like;
+    $params[] = $like;
+    $params[] = $like;
+    $types .= 'sss';
+}
+
+if ($filter_origin !== '') {
+    $where_clauses[] = 'r.city1 = ?';
+    $params[] = $filter_origin;
+    $types .= 's';
+}
+
+if ($filter_bus !== '') {
+    $where_clauses[] = 'r.busno = ?';
+    $params[] = $filter_bus;
+    $types .= 's';
+}
+
+$where_sql = !empty($where_clauses) ? 'WHERE ' . implode(' AND ', $where_clauses) : '';
+
+switch ($sort) {
+    case 'time_asc':
+        $order_by = 'r.`time` ASC, r.city1 ASC';
+        break;
+    case 'time_desc':
+        $order_by = 'r.`time` DESC, r.city1 ASC';
+        break;
+    case 'price_asc':
+        $order_by = 'r.price ASC, r.city1 ASC';
+        break;
+    case 'price_desc':
+        $order_by = 'r.price DESC, r.city1 ASC';
+        break;
+    case 'route_asc':
+        $order_by = 'r.city1 ASC, r.city2 ASC';
+        break;
+    case 'id_desc':
+        $order_by = "r.`{$route_pk}` DESC";
+        break;
+    default:
+        $order_by = "r.`{$route_pk}` ASC";
+        break;
+}
+
+// 25-item Pagination (P-10) with filter awareness
+if (!empty($params)) {
+    $count_row = db_one($link, "SELECT COUNT(*) AS c FROM route r {$where_sql}", $types, $params);
+    $total_routes = (int)($count_row['c'] ?? 0);
+} else {
+    $total_routes = (int)(db_one($link, "SELECT COUNT(*) AS c FROM route r {$where_sql}")['c'] ?? 0);
+}
+$pagination = paginate($total_routes, 25);
+
+// Fetch routes joined with bus fleet specs
+$has_bus_id_col = table_has_column($link, 'route', 'bus_id');
+$join_cond = $has_bus_id_col 
+    ? "(r.bus_id = b.id OR (r.bus_id IS NULL AND r.busno = b.bus_number))" 
+    : "(r.busno = b.bus_number)";
+
+$cap_select = $has_cap ? ", b.capacity AS bus_capacity" : ", 36 AS bus_capacity";
+$layout_select = $has_layout ? ", b.layout AS bus_layout" : ", '2+2' AS bus_layout";
+
+$query_sql = "
+    SELECT r.* {$cap_select} {$layout_select}
+    FROM route r
+    LEFT JOIN buses b ON {$join_cond}
+    {$where_sql}
+    ORDER BY {$order_by}
+    LIMIT ? OFFSET ?
+";
+
+$fetch_params = array_merge($params, [$pagination['per_page'], $pagination['offset']]);
+$fetch_types = $types . 'ii';
+$routes = db_all($link, $query_sql, $fetch_types, $fetch_params);
+
+$keep_params = [];
+if ($view_tab === 'archived') $keep_params['tab'] = 'archived';
+if ($search_q !== '') $keep_params['q'] = $search_q;
+if ($filter_origin !== '') $keep_params['origin'] = $filter_origin;
+if ($filter_bus !== '') $keep_params['bus'] = $filter_bus;
+if ($sort !== 'id_asc') $keep_params['sort'] = $sort;
 
 $form_old = $_SESSION['form_old'] ?? [];
 unset($_SESSION['form_old']);
@@ -141,48 +261,141 @@ unset($_SESSION['form_old']);
 $title = 'Routes';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
 ?>
-<div class="page-header">
-    <div>
+<div class="page-header d-flex flex-wrap align-items-center justify-content-between">
+    <div class="mb-2 mb-md-0">
         <h1 class="page-title">Transit Route Schedules</h1>
         <p class="page-subtitle">Configure origins, destinations, bus allocations, departures, and ticket tariffs.</p>
     </div>
     <?php if (can_write()): ?>
-    <button class="btn btn-primary shadow-sm" data-toggle="modal" data-target="#addRouteModal">
-        + Create Route Schedule
+    <button class="btn btn-primary shadow-sm font-weight-bold d-inline-flex align-items-center" data-toggle="modal" data-target="#addRouteModal" style="min-height: 44px;">
+        <span class="mr-1">➕</span> Create Route Schedule
     </button>
     <?php endif; ?>
 </div>
 
-<?= $has_archived_col ? admin_archive_tabs_html($view_tab, 'Active Routes', 'Archived Schedules') : '' ?>
+<!-- Route Operational KPI Metric Cards -->
+<div class="row mb-4">
+    <div class="col-6 col-lg-3 mb-3 mb-lg-0">
+        <div class="stat-card stat-routes h-100">
+            <div class="stat-label">Active Schedules</div>
+            <div class="stat-value"><?= number_format($total_active_routes) ?></div>
+            <div class="stat-link text-primary small">Operational trips &rarr;</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3 mb-3 mb-lg-0">
+        <div class="stat-card stat-fleet h-100">
+            <div class="stat-label">Fleet Allocated</div>
+            <div class="stat-value"><?= number_format($allocated_buses) ?></div>
+            <div class="stat-link text-success small">Buses in service &rarr;</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3 mb-3 mb-lg-0">
+        <div class="stat-card stat-bookings h-100">
+            <div class="stat-label">Connected Cities</div>
+            <div class="stat-value"><?= number_format($unique_cities_count) ?></div>
+            <div class="stat-link text-info small">Network hubs &rarr;</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3 mb-3 mb-lg-0">
+        <div class="stat-card stat-revenue h-100">
+            <div class="stat-label">Average Tariff</div>
+            <div class="stat-value"><?= CURRENCY ?><?= number_format($avg_tariff, 2) ?></div>
+            <div class="stat-link text-muted small">Range: <?= CURRENCY ?><?= number_format((float)($route_stats['min_tariff'] ?? 0), 0) ?> &ndash; <?= CURRENCY ?><?= number_format((float)($route_stats['max_tariff'] ?? 0), 0) ?></div>
+        </div>
+    </div>
+</div>
 
+<?= $has_archived_col ? admin_archive_tabs_html($view_tab, 'Active Routes', 'Archived Schedules', array_filter(['q' => $search_q, 'origin' => $filter_origin, 'bus' => $filter_bus, 'sort' => $sort !== 'id_asc' ? $sort : null])) : '' ?>
 
-<div class="data-table-wrapper">
+<!-- Smart Search & Filter Toolbar -->
+<div class="filter-bar mb-4">
+    <form action="" method="get" class="w-100 d-flex flex-wrap align-items-center">
+        <?php if ($view_tab === 'archived'): ?>
+            <input type="hidden" name="tab" value="archived">
+        <?php endif; ?>
+        
+        <div class="d-none d-md-flex align-items-center mr-2 mb-2 mb-md-0">
+            <span class="filter-label">Filter:</span>
+        </div>
+
+        <div class="flex-grow-1 mr-2 mb-2 mb-md-0" style="min-width: 180px;">
+            <div class="input-group input-group-sm">
+                <div class="input-group-prepend">
+                    <span class="input-group-text bg-white border-right-0">🔍</span>
+                </div>
+                <input type="text" name="q" class="form-control form-control-sm border-left-0" placeholder="Search cities or bus..." value="<?= e($search_q) ?>" aria-label="Search routes">
+            </div>
+        </div>
+
+        <div class="mr-2 mb-2 mb-md-0" style="min-width: 130px;">
+            <select name="origin" class="form-control form-control-sm" aria-label="Filter by origin city">
+                <option value="">All Origins</option>
+                <?php foreach ($known_origins as $orig): ?>
+                    <?php if (!empty($orig['city'])): ?>
+                        <option value="<?= e($orig['city']) ?>" <?= $filter_origin === $orig['city'] ? 'selected' : '' ?>><?= e($orig['city']) ?></option>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <div class="mr-2 mb-2 mb-md-0" style="min-width: 120px;">
+            <select name="bus" class="form-control form-control-sm" aria-label="Filter by assigned bus">
+                <option value="">All Buses</option>
+                <?php foreach ($buses as $b): ?>
+                    <option value="<?= e($b['bus_number']) ?>" <?= $filter_bus === $b['bus_number'] ? 'selected' : '' ?>><?= e($b['bus_number']) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <div class="mr-2 mb-2 mb-md-0" style="min-width: 140px;">
+            <select name="sort" class="form-control form-control-sm" aria-label="Sort order">
+                <option value="id_asc" <?= $sort === 'id_asc' ? 'selected' : '' ?>>Sort: ID (Default)</option>
+                <option value="time_asc" <?= $sort === 'time_asc' ? 'selected' : '' ?>>Departure (Earliest)</option>
+                <option value="time_desc" <?= $sort === 'time_desc' ? 'selected' : '' ?>>Departure (Latest)</option>
+                <option value="price_asc" <?= $sort === 'price_asc' ? 'selected' : '' ?>>Tariff (Low &rarr; High)</option>
+                <option value="price_desc" <?= $sort === 'price_desc' ? 'selected' : '' ?>>Tariff (High &rarr; Low)</option>
+                <option value="route_asc" <?= $sort === 'route_asc' ? 'selected' : '' ?>>Route (Origin A-Z)</option>
+            </select>
+        </div>
+
+        <div class="d-flex align-items-center mb-2 mb-md-0">
+            <button type="submit" class="btn btn-sm btn-primary mr-1" style="min-height: 31px;">Apply</button>
+            <?php if ($search_q !== '' || $filter_origin !== '' || $filter_bus !== '' || $sort !== 'id_asc'): ?>
+                <a href="<?= BASE_URL ?>/admin/routes.php<?= $view_tab === 'archived' ? '?tab=archived' : '' ?>" class="btn btn-sm btn-outline-secondary" title="Reset all filters" style="min-height: 31px;">Reset</a>
+            <?php endif; ?>
+        </div>
+    </form>
+</div>
+
+<!-- Desktop & Tablet Route Table View -->
+<div class="data-table-wrapper mb-4">
     <div class="table-header">
         <h5 class="mb-0"><?= $view_tab === 'archived' ? 'Archived Schedules' : 'Active Schedules' ?></h5>
-        <span class="record-count"><?= $pagination['total_records'] ?> route(s)</span>
+        <span class="record-count"><?= $pagination['total_records'] ?> route schedule(s)</span>
     </div>
-    <div class="table-responsive">
+
+    <!-- Desktop Table View (Hidden on mobile <768px for zero horizontal scroll) -->
+    <div class="table-responsive d-none d-md-block">
         <table class="table table-hover table-stack mb-0">
             <caption class="sr-only">List of transit route schedules, origin, destination, assigned buses, and fares</caption>
             <thead class="thead-light">
                 <tr>
                     <th scope="col" class="th-id-md">#</th>
-                    <th scope="col">Origin City</th>
-                    <th scope="col">Destination City</th>
-                    <th scope="col">Bus Assigned</th>
-                    <th scope="col">Departure Time</th>
-                    <th scope="col">Ticket Tariff</th>
+                    <th scope="col">Route Corridor</th>
+                    <th scope="col">Assigned Fleet Bus</th>
+                    <th scope="col">Departure</th>
+                    <th scope="col">Tariff</th>
                     <th scope="col" class="text-right">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($routes)): ?>
                     <tr>
-                        <td colspan="7">
+                        <td colspan="6">
                             <div class="empty-state py-5">
                                 <div class="empty-icon">🗺️</div>
-                                <div class="empty-title"><?= $view_tab === 'archived' ? 'No archived schedules' : 'No routes configured' ?></div>
-                                <div class="empty-text"><?= $view_tab === 'archived' ? 'Schedules you archive will appear here.' : "Click '+ Create Route Schedule' above to connect travel cities." ?></div>
+                                <div class="empty-title"><?= $view_tab === 'archived' ? 'No archived schedules' : 'No routes matched' ?></div>
+                                <div class="empty-text"><?= $view_tab === 'archived' ? 'Schedules you archive will appear here.' : ($search_q !== '' || $filter_origin !== '' ? 'Try adjusting your search criteria.' : "Click '+ Create Route Schedule' above to connect travel cities.") ?></div>
                             </div>
                         </td>
                     </tr>
@@ -191,21 +404,47 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         <?php 
                         $rid = (int)($row[$route_pk] ?? $row['sno'] ?? $row['id'] ?? 0);
                         $is_archived = !empty($row['archived_at']);
+                        $bus_num = (string)($row['busno'] ?? '');
+                        $dep_time = (string)($row['time'] ?? '');
                         ?>
                         <tr class="<?= $is_archived ? 'text-muted bg-light' : '' ?>">
-                            <td data-label="ID"><span class="text-muted small">#<?= e($rid) ?></span></td>
-                            <td data-label="Origin City" class="font-weight-medium text-dark">
-                                <?= e($row['city1'] ?? '') ?>
-                                <?php if ($is_archived): ?>
-                                    <span class="badge badge-secondary ml-1">Archived</span>
-                                <?php endif; ?>
+                            <td data-label="ID"><span class="text-muted small font-weight-bold">#<?= e($rid) ?></span></td>
+                            <td data-label="Route Corridor">
+                                <div class="route-corridor">
+                                    <span class="route-city font-weight-bold text-dark"><?= e($row['city1'] ?? '') ?></span>
+                                    <span class="route-arrow text-primary">&rarr;</span>
+                                    <span class="route-city font-weight-bold text-dark"><?= e($row['city2'] ?? '') ?></span>
+                                    <?php if ($is_archived): ?>
+                                        <span class="badge badge-secondary ml-1">Archived</span>
+                                    <?php endif; ?>
+                                </div>
                             </td>
-                            <td data-label="Destination City" class="font-weight-medium text-dark"><?= e($row['city2'] ?? '') ?></td>
-                            <td data-label="Bus Assigned"><span class="badge badge-light border text-dark font-weight-bold">🚌 <?= e($row['busno'] ?? '') ?></span></td>
-                            <td data-label="Departure Time"><?= e($row['time'] ?? '') ?></td>
-                            <td data-label="Ticket Tariff" class="font-weight-bold text-success h6 mb-0"><?= CURRENCY ?><?= e(number_format((float)($row['price'] ?? 0), 2)) ?></td>
+                            <td data-label="Assigned Fleet Bus">
+                                <div class="d-inline-flex align-items-center">
+                                    <span class="badge badge-light border text-dark font-weight-bold py-1 px-2">
+                                        🚌 <?= e($bus_num) ?>
+                                    </span>
+                                    <?php if (!empty($row['bus_capacity'])): ?>
+                                        <small class="text-muted ml-1 font-weight-medium">(<?= e($row['bus_capacity']) ?>s, <?= e($row['bus_layout'] ?? '2+2') ?>)</small>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                            <td data-label="Departure">
+                                <div class="d-inline-flex align-items-center">
+                                    <span class="font-weight-bold text-dark"><?= e(fmt_time($dep_time)) ?></span>
+                                    <span class="text-muted small ml-1 font-monospace">(<?= e($dep_time) ?>)</span>
+                                </div>
+                            </td>
+                            <td data-label="Tariff">
+                                <span class="font-weight-bold text-success h6 mb-0"><?= CURRENCY ?><?= e(number_format((float)($row['price'] ?? 0), 2)) ?></span>
+                            </td>
                             <td data-label="Actions" class="text-right">
-                                <?= render_crud_action_buttons($rid, BASE_URL . "/admin/edit/edit-route.php?id=" . $rid, $is_archived, 'delete_route', 'restore_route', 'route schedule') ?>
+                                <div class="d-inline-flex align-items-center justify-content-end">
+                                    <a href="<?= BASE_URL ?>/admin/manifest.php?bus=<?= urlencode($bus_num) ?>&time=<?= urlencode($dep_time) ?>" class="btn btn-outline-info btn-sm mr-1" title="View Passenger Manifest">
+                                        📋 Manifest
+                                    </a>
+                                    <?= render_crud_action_buttons($rid, BASE_URL . "/admin/edit/edit-route.php?id=" . $rid, $is_archived, 'delete_route', 'restore_route', 'route schedule') ?>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -213,16 +452,86 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             </tbody>
         </table>
     </div>
-    <?= render_pagination($pagination) ?>
+
+    <!-- Mobile Stacked Route Cards (<768px for touch friendliness and 0 horizontal overflow) -->
+    <div class="d-md-none p-3">
+        <?php if (empty($routes)): ?>
+            <div class="empty-state py-5">
+                <div class="empty-icon">🗺️</div>
+                <div class="empty-title"><?= $view_tab === 'archived' ? 'No archived schedules' : 'No routes matched' ?></div>
+                <div class="empty-text"><?= $view_tab === 'archived' ? 'Schedules you archive will appear here.' : "Click '+ Create Route Schedule' above to connect travel cities." ?></div>
+            </div>
+        <?php else: ?>
+            <?php foreach ($routes as $row): ?>
+                <?php 
+                $rid = (int)($row[$route_pk] ?? $row['sno'] ?? $row['id'] ?? 0);
+                $is_archived = !empty($row['archived_at']);
+                $bus_num = (string)($row['busno'] ?? '');
+                $dep_time = (string)($row['time'] ?? '');
+                ?>
+                <div class="route-card-mobile p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                        <span class="small font-weight-bold text-muted">Schedule #<?= e($rid) ?></span>
+                        <?php if ($is_archived): ?>
+                            <span class="badge badge-secondary px-2 py-1">Archived</span>
+                        <?php else: ?>
+                            <span class="badge badge-success px-2 py-1">Active</span>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="h6 font-weight-bold text-dark mb-0 d-flex align-items-center flex-wrap">
+                            <span><?= e($row['city1'] ?? '') ?></span>
+                            <span class="text-primary mx-2 font-weight-bold">&rarr;</span>
+                            <span><?= e($row['city2'] ?? '') ?></span>
+                        </div>
+                    </div>
+
+                    <div class="row no-gutters route-meta-strip text-center py-2 mb-3">
+                        <div class="col-4 border-right px-1">
+                            <small class="text-muted d-block font-weight-bold" style="font-size: 11px;">FLEET BUS</small>
+                            <span class="font-weight-bold text-dark small">🚌 <?= e($bus_num) ?></span>
+                        </div>
+                        <div class="col-4 border-right px-1">
+                            <small class="text-muted d-block font-weight-bold" style="font-size: 11px;">DEPARTS</small>
+                            <span class="font-weight-bold text-dark small">🕒 <?= e(fmt_time($dep_time)) ?></span>
+                        </div>
+                        <div class="col-4 px-1">
+                            <small class="text-muted d-block font-weight-bold" style="font-size: 11px;">TARIFF</small>
+                            <strong class="text-success small font-weight-bold"><?= CURRENCY ?><?= e(number_format((float)($row['price'] ?? 0), 2)) ?></strong>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 pt-2 border-top">
+                        <?php if (!$is_archived && can_write()): ?>
+                            <a href="<?= BASE_URL ?>/admin/edit/edit-route.php?id=<?= $rid ?>" class="btn btn-outline-primary btn-sm flex-fill font-weight-bold d-inline-flex align-items-center justify-content-center mr-1" style="min-height: 44px;">
+                                ✏️ Edit
+                            </a>
+                        <?php endif; ?>
+                        <a href="<?= BASE_URL ?>/admin/manifest.php?bus=<?= urlencode($bus_num) ?>&time=<?= urlencode($dep_time) ?>" class="btn btn-outline-info btn-sm flex-fill font-weight-bold d-inline-flex align-items-center justify-content-center mr-1" style="min-height: 44px;">
+                            📋 Manifest
+                        </a>
+                        <?php if (can_write()): ?>
+                            <div class="flex-fill">
+                                <?= render_crud_action_buttons($rid, BASE_URL . "/admin/edit/edit-route.php?id=" . $rid, $is_archived, 'delete_route', 'restore_route', 'route schedule') ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+
+    <?= render_pagination($pagination, $keep_params) ?>
 </div>
 
 <!-- Add Route Modal -->
 <div class="modal fade" id="addRouteModal" tabindex="-1" role="dialog" aria-labelledby="addRouteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header bg-dark text-white px-3 py-2">
-                <h5 class="modal-title font-weight-bold" id="addRouteModalLabel">Configure New Route</h5>
-                <button type="button" class="close text-white p-0" data-dismiss="modal" aria-label="Close">
+            <div class="modal-header bg-dark text-white px-3 py-3">
+                <h5 class="modal-title font-weight-bold" id="addRouteModalLabel">🗺️ Configure New Route Schedule</h5>
+                <button type="button" class="close text-white p-0" data-dismiss="modal" aria-label="Close" style="min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -236,38 +545,59 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                             <?php endif; ?>
                         <?php endforeach; ?>
                     </datalist>
-                    <div class="form-row">
-                        <div class="col-12 col-sm-6 form-group">
-                            <label for="From" class="font-weight-bold small text-muted">From City</label>
-                            <input type="text" id="From" name="From" list="citySuggestions" class="form-control form-control-lg" value="<?= e($form_old['From'] ?? '') ?>" placeholder="Origin city" required autocomplete="off" />
+
+                    <!-- Origin, Destination & Interactive Swap Button -->
+                    <div class="form-row align-items-center">
+                        <div class="col-12 col-sm-5 form-group">
+                            <label for="From" class="font-weight-bold small text-muted">From City (Origin)</label>
+                            <input type="text" id="From" name="From" list="citySuggestions" class="form-control" value="<?= e($form_old['From'] ?? '') ?>" placeholder="e.g. New York" required autocomplete="off" />
                         </div>
-                        <div class="col-12 col-sm-6 form-group">
-                            <label for="To" class="font-weight-bold small text-muted">To City</label>
-                            <input type="text" id="To" name="To" list="citySuggestions" class="form-control form-control-lg" value="<?= e($form_old['To'] ?? '') ?>" placeholder="Destination city" required autocomplete="off" />
+                        <div class="col-12 col-sm-2 text-center form-group d-flex align-items-center justify-content-center pt-sm-4 mb-2 mb-sm-3">
+                            <button type="button" id="swapModalCitiesBtn" class="btn btn-outline-primary btn-sm rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px; min-height: 40px;" title="Swap Origin and Destination" aria-label="Swap Origin and Destination">
+                                ⇄
+                            </button>
+                        </div>
+                        <div class="col-12 col-sm-5 form-group">
+                            <label for="To" class="font-weight-bold small text-muted">To City (Destination)</label>
+                            <input type="text" id="To" name="To" list="citySuggestions" class="form-control" value="<?= e($form_old['To'] ?? '') ?>" placeholder="e.g. Boston" required autocomplete="off" />
                         </div>
                     </div>
+
+                    <!-- Fleet Bus Assignment with Capacity and Layout Preview -->
                     <div class="form-group">
                         <label for="bus" class="font-weight-bold small text-muted">Assigned Fleet Bus</label>
-                        <select name="bus" id="bus" class="form-control form-control-lg" required>
+                        <select name="bus" id="bus" class="form-control" required>
                             <option value="">Select Fleet Bus</option>
                             <?php foreach ($buses as $b): ?>
-                                <option value="<?= e($b['bus_number']) ?>" <?= ($form_old['bus'] ?? '') === $b['bus_number'] ? 'selected' : '' ?>><?= e($b['bus_number']) ?></option>
+                                <?php 
+                                $b_num = $b['bus_number'];
+                                $b_cap = $b['capacity'] ?? 36;
+                                $b_lyt = $b['layout'] ?? '2+2';
+                                $b_label = $b_num . ' (' . $b_cap . ' seats, ' . $b_lyt . ')';
+                                ?>
+                                <option value="<?= e($b_num) ?>" <?= ($form_old['bus'] ?? '') === $b_num ? 'selected' : '' ?>>
+                                    🚌 <?= e($b_label) ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
+
+                    <!-- Departure Time & Tariff -->
                     <div class="form-row">
                         <div class="col-12 col-sm-6 form-group">
                             <label for="time" class="font-weight-bold small text-muted">Departure Time</label>
-                            <input type="time" id="time" name="time" class="form-control form-control-lg" value="<?= e($form_old['time'] ?? '') ?>" required />
+                            <input type="time" id="time" name="time" class="form-control" value="<?= e($form_old['time'] ?? '') ?>" required />
                         </div>
                         <div class="col-12 col-sm-6 form-group">
                             <label for="price" class="font-weight-bold small text-muted">Ticket Tariff (<?= CURRENCY ?>)</label>
-                            <input type="number" step="0.01" min="1" id="price" name="price" class="form-control form-control-lg" value="<?= e((string)($form_old['price'] ?? '')) ?>" placeholder="0.00" required />
+                            <input type="number" step="0.01" min="1" id="price" name="price" class="form-control" value="<?= e((string)($form_old['price'] ?? '')) ?>" placeholder="0.00" required />
                         </div>
                     </div>
-                    <div class="d-flex justify-content-end mt-3">
-                        <button type="button" class="btn btn-sm btn-outline-secondary mr-2" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-sm btn-primary" name="add">Save Route</button>
+
+                    <!-- Modal Actions with Mobile Stacking -->
+                    <div class="d-flex flex-column-reverse flex-sm-row justify-content-end mt-4">
+                        <button type="button" class="btn btn-secondary mr-sm-2 btn-block-mobile" data-dismiss="modal" style="min-height: 44px;">Cancel</button>
+                        <button type="submit" class="btn btn-primary font-weight-bold shadow-sm mb-2 mb-sm-0 btn-block-mobile" name="add" style="min-height: 44px;">Save Route Schedule</button>
                     </div>
                 </form>
             </div>
@@ -279,7 +609,18 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 document.addEventListener('DOMContentLoaded', function() {
     var fromInput = document.getElementById('From');
     var toInput = document.getElementById('To');
+    var swapBtn = document.getElementById('swapModalCitiesBtn');
     var form = fromInput ? fromInput.closest('form') : null;
+
+    if (swapBtn && fromInput && toInput) {
+        swapBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var tmp = fromInput.value;
+            fromInput.value = toInput.value;
+            toInput.value = tmp;
+            this.style.transform = (this.style.transform === 'rotate(180deg)') ? 'rotate(0deg)' : 'rotate(180deg)';
+        });
+    }
 
     if (form && fromInput && toInput) {
         form.addEventListener('submit', function(e) {
@@ -295,4 +636,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>
+<?php require_once __DIR__ . '/../includes/layout/footer-admin.php'; ?>

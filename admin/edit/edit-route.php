@@ -100,7 +100,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit'])) {
     }
 }
 
-$buses = db_all($link, "SELECT bus_number FROM buses " . ($has_bus_arch ? "WHERE archived_at IS NULL" : "") . " ORDER BY bus_number ASC");
+$has_cap = table_has_column($link, 'buses', 'capacity');
+$has_layout = table_has_column($link, 'buses', 'layout');
+$bus_select_fields = "bus_number" . ($has_cap ? ", capacity" : "") . ($has_layout ? ", layout" : "");
+$buses = db_all($link, "SELECT {$bus_select_fields} FROM buses " . ($has_bus_arch ? "WHERE archived_at IS NULL" : "") . " ORDER BY bus_number ASC");
 
 $title = 'Edit Route';
 require_once __DIR__ . '/../../includes/layout/header-admin.php';
@@ -114,30 +117,41 @@ require_once __DIR__ . '/../../includes/layout/header-admin.php';
 </nav>
 
 <div class="row justify-content-center">
-    <div class="col-lg-6 col-md-8">
+    <div class="col-lg-7 col-md-9">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3">
+            <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
                 <h5 class="mb-0 font-weight-bold">Configure Route Schedule</h5>
+                <span class="badge badge-light border text-dark font-monospace">Schedule #<?= e($id) ?></span>
             </div>
-            <div class="card-body p-4">
+            <div class="card-body p-3 p-md-4">
                 <?php if ($error): ?>
                     <div class="alert alert-danger"><?= e($error) ?></div>
                 <?php endif; ?>
 
                 <?php if ($future_count > 0): ?>
-                    <div class="alert alert-warning mb-4">
-                        <strong>⚠️ Schedule Locked:</strong> There are <?= $future_count ?> active upcoming booking(s) scheduled on this route. Origin, destination, bus, and departure time are locked to protect existing passenger tickets. Only ticket tariff may be updated.
+                    <div class="alert alert-warning mb-4 shadow-sm">
+                        <div class="font-weight-bold mb-1">⚠️ Schedule Locked:</div>
+                        <p class="small mb-0">
+                            There are <?= $future_count ?> active upcoming booking(s) scheduled on this route. Origin, destination, bus, and departure time are locked to protect existing passenger tickets. Only ticket tariff may be updated.
+                        </p>
                     </div>
                 <?php endif; ?>
 
                 <form action="" method="post">
                     <?= csrf_field() ?>
-                    <div class="form-row">
-                        <div class="col-6 form-group">
+                    <div class="form-row align-items-center">
+                        <div class="col-12 <?= $future_count > 0 ? 'col-sm-6' : 'col-sm-5' ?> form-group">
                             <label for="From" class="font-weight-bold small text-muted">Origin City</label>
                             <input type="text" id="From" name="From" class="form-control" value="<?= e($row['city1'] ?? '') ?>" <?= $future_count > 0 ? 'readonly' : '' ?> required />
                         </div>
-                        <div class="col-6 form-group">
+                        <?php if ($future_count === 0): ?>
+                            <div class="col-12 col-sm-2 text-center form-group d-flex align-items-center justify-content-center pt-sm-4 mb-2 mb-sm-3">
+                                <button type="button" id="swapEditCitiesBtn" class="btn btn-outline-primary btn-sm rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px; min-height: 40px;" title="Swap Origin and Destination" aria-label="Swap Origin and Destination">
+                                    ⇄
+                                </button>
+                            </div>
+                        <?php endif; ?>
+                        <div class="col-12 <?= $future_count > 0 ? 'col-sm-6' : 'col-sm-5' ?> form-group">
                             <label for="To" class="font-weight-bold small text-muted">Destination City</label>
                             <input type="text" id="To" name="To" class="form-control" value="<?= e($row['city2'] ?? '') ?>" <?= $future_count > 0 ? 'readonly' : '' ?> required />
                         </div>
@@ -151,26 +165,32 @@ require_once __DIR__ . '/../../includes/layout/header-admin.php';
                             <select name="bus" id="bus" class="form-control" required>
                                 <option value="">Select Bus Number</option>
                                 <?php foreach ($buses as $b): ?>
-                                    <option value="<?= e($b['bus_number']) ?>" <?= ($row['busno'] ?? '') === $b['bus_number'] ? 'selected' : '' ?>>
-                                        <?= e($b['bus_number']) ?>
+                                    <?php 
+                                    $b_num = $b['bus_number'];
+                                    $b_cap = $b['capacity'] ?? 36;
+                                    $b_lyt = $b['layout'] ?? '2+2';
+                                    $b_label = $b_num . ' (' . $b_cap . ' seats, ' . $b_lyt . ')';
+                                    ?>
+                                    <option value="<?= e($b_num) ?>" <?= ($row['busno'] ?? '') === $b_num ? 'selected' : '' ?>>
+                                        🚌 <?= e($b_label) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         <?php endif; ?>
                     </div>
                     <div class="form-row">
-                        <div class="col-6 form-group">
+                        <div class="col-12 col-sm-6 form-group">
                             <label for="time" class="font-weight-bold small text-muted">Departure Time</label>
                             <input type="time" id="time" name="time" value="<?= e($row['time'] ?? '') ?>" class="form-control" <?= $future_count > 0 ? 'readonly' : '' ?> required />
                         </div>
-                        <div class="col-6 form-group">
+                        <div class="col-12 col-sm-6 form-group">
                             <label for="price" class="font-weight-bold small text-muted">Ticket Tariff (<?= CURRENCY ?>)</label>
                             <input type="number" step="0.01" min="1" id="price" name="price" value="<?= e($row['price'] ?? '') ?>" class="form-control" required />
                         </div>
                     </div>
-                    <div class="d-flex justify-content-between mt-3">
-                        <a href="<?= BASE_URL ?>/admin/routes.php" class="btn btn-outline-secondary">Cancel</a>
-                        <button type="submit" name="edit" class="btn btn-primary px-4">Update Route</button>
+                    <div class="d-flex flex-column-reverse flex-sm-row justify-content-between mt-4">
+                        <a href="<?= BASE_URL ?>/admin/routes.php" class="btn btn-outline-secondary btn-block-mobile" style="min-height: 44px; display: inline-flex; align-items: center; justify-content: center;">Cancel</a>
+                        <button type="submit" name="edit" class="btn btn-primary px-4 font-weight-bold shadow-sm btn-block-mobile mb-2 mb-sm-0" style="min-height: 44px;">Update Route Schedule</button>
                     </div>
                 </form>
             </div>
@@ -178,4 +198,22 @@ require_once __DIR__ . '/../../includes/layout/header-admin.php';
     </div>
 </div>
 
-<?php require_once __DIR__ . '/../../includes/layout/footer-admin.php'; ?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var fromInput = document.getElementById('From');
+    var toInput = document.getElementById('To');
+    var swapBtn = document.getElementById('swapEditCitiesBtn');
+
+    if (swapBtn && fromInput && toInput) {
+        swapBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var tmp = fromInput.value;
+            fromInput.value = toInput.value;
+            toInput.value = tmp;
+            this.style.transform = (this.style.transform === 'rotate(180deg)') ? 'rotate(0deg)' : 'rotate(180deg)';
+        });
+    }
+});
+</script>
+
+<?php require_once __DIR__ . '/../../includes/layout/footer-admin.php'; ?>
