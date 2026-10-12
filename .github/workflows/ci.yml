@@ -31,9 +31,19 @@ jobs:
 
       - name: Block raw request data inside SQL
         run: |
-          if grep -rnE '\$_(GET|POST|REQUEST|COOKIE)\[' --include='*.php' . \
-             | grep -iE 'select |insert |update |delete '; then
-            echo "Raw request data inside a SQL string found!"; exit 1
+          matches=$(
+            grep -RInE '\$_(GET|POST|REQUEST|COOKIE)\[' \
+              --include='*.php' \
+              --exclude-dir=vendor \
+              --exclude-dir=node_modules \
+              . \
+              | grep -iE 'select |insert |update |delete ' || true
+          )
+          if [ -n "$matches" ]; then
+            echo "$matches"
+            echo "Raw request data appears inside a SQL statement."
+            echo "Use prepared statements and pass request values as bound parameters."
+            exit 1
           fi
 
       - name: Verify package and vendored assets sync (no drift)

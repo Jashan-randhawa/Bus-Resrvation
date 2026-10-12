@@ -4,6 +4,11 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- **CI Pipeline Heuristic & Request Sanitization Fix (`homepage.php`, `.github/workflows/ci.yml`)**:
+  - **Eliminated CI False Positives**: Resolved false positive in GitHub Actions CI step "Block raw request data inside SQL" caused by direct `empty($_GET['...'])` references inside `<option>` tags on lines containing `select`.
+  - **Sanitized Local Variables (`homepage.php`)**: Read query parameters once into local sanitized `$search_from` and `$search_to` variables before HTML rendering and used `$search_from === ''` / `$search_to === ''` in `<option>` selected attributes.
+  - **Hardened Workflow Grep Check (`.github/workflows/ci.yml`)**: Updated the workflow check to exclude vendor and node_modules directories, gracefully handle grep exit codes with `|| true`, and provide explicit actionable failure output if genuine raw request data is embedded inside SQL strings.
+
 - **Global White & Dark Theme Navigation Sidebar Elevation (`assets/css/design-system.css`, `assets/css/admin.css`, `includes/layout/header-admin.php`, `tests/test_admin_layout.php`)**:
   - **Light Mode Pure White Surface (`--sidebar-bg: #ffffff`)**: Overhauled the dark navy hardcoded drawer to a crisp white background in Light Theme with slate text (`#475569`), subtle dividers (`#e2e8f0`), light profile card block (`#f8fafc`), clean interactive hover states (`#f1f5f9`), and primary active pills (`rgba(37, 99, 235, 0.1)`).
   - **Dark Mode Seamless Midnight Surface (`--sidebar-bg: #0f172a`)**: Configured midnight dark styling with crisp white headers (`#ffffff`), glowing accent pills, and high-contrast accessible typography when dark mode is toggled.

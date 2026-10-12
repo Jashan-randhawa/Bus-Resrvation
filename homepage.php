@@ -27,6 +27,8 @@ $route_archived_sql = table_has_column($link, 'route', 'archived_at') ? ' WHERE 
 $route_pairs = db_all($link, "SELECT DISTINCT city1, city2 FROM route{$route_archived_sql} ORDER BY city1 ASC, city2 ASC");
 $from_cities = array_values(array_unique(array_column($route_pairs, 'city1')));
 $to_cities = array_values(array_unique(array_column($route_pairs, 'city2')));
+$search_from = trim((string)($_GET['from'] ?? ''));
+$search_to = trim((string)($_GET['to'] ?? ''));
 $user_role = $_SESSION['role'] ?? null;
 
 $popular_routes = db_all($link, "
@@ -390,7 +392,7 @@ if (isset($_POST['subbtn'])) {
                   <span aria-hidden="true">📍</span> Departure City
                 </label>
                 <select name="from" id="home_from" class="form-control" required>
-                  <option value="" disabled <?= empty($_GET['from']) ? 'selected' : '' ?>>Select Origin City</option>
+                  <option value="" disabled <?= $search_from === '' ? 'selected' : '' ?>>Select Origin City</option>
                   <?php foreach ($from_cities as $c): ?>
                     <option value="<?= e($c) ?>"><?= e(ucwords(strtolower((string)$c))) ?></option>
                   <?php endforeach; ?>
@@ -407,7 +409,7 @@ if (isset($_POST['subbtn'])) {
                   </button>
                 </div>
                 <select name="to" id="home_to" class="form-control mt-1" required>
-                  <option value="" disabled <?= empty($_GET['to']) ? 'selected' : '' ?>>Select Destination City</option>
+                  <option value="" disabled <?= $search_to === '' ? 'selected' : '' ?>>Select Destination City</option>
                   <?php foreach ($to_cities as $c): ?>
                     <option value="<?= e($c) ?>"><?= e(ucwords(strtolower((string)$c))) ?></option>
                   <?php endforeach; ?>
