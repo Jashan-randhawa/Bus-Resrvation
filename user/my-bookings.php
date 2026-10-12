@@ -124,24 +124,26 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
     </div>
 <?php endif; ?>
 
-<!-- U-16: Category Tabs -->
-<ul class="nav nav-pills mb-4 border-bottom pb-3">
-    <li class="nav-item">
-        <a class="nav-link font-weight-bold <?= $current_tab === 'upcoming' ? 'active' : '' ?>" href="?tab=upcoming">
-            🕒 Upcoming Trips <span class="badge badge-light ml-1"><?= $counts['upcoming'] ?></span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link font-weight-bold <?= $current_tab === 'past' ? 'active' : '' ?>" href="?tab=past">
-            📜 Past Journeys <span class="badge badge-light ml-1"><?= $counts['past'] ?></span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link font-weight-bold <?= $current_tab === 'cancelled' ? 'active' : '' ?>" href="?tab=cancelled">
-            ✕ Cancelled / Expired <span class="badge badge-light ml-1"><?= $counts['cancelled'] ?></span>
-        </a>
-    </li>
-</ul>
+<!-- Category Tabs (F7) -->
+<div class="booking-tabs-wrap mb-4">
+    <ul class="nav nav-pills booking-tabs-nav">
+        <li class="nav-item">
+            <a class="nav-link font-weight-bold <?= $current_tab === 'upcoming' ? 'active' : '' ?>" href="?tab=upcoming">
+                Upcoming <span class="badge badge-light ml-1"><?= $counts['upcoming'] ?></span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link font-weight-bold <?= $current_tab === 'past' ? 'active' : '' ?>" href="?tab=past">
+                Past <span class="badge badge-light ml-1"><?= $counts['past'] ?></span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link font-weight-bold <?= $current_tab === 'cancelled' ? 'active' : '' ?>" href="?tab=cancelled">
+                Cancelled <span class="badge badge-light ml-1"><?= $counts['cancelled'] ?></span>
+            </a>
+        </li>
+    </ul>
+</div>
 
 <!-- Desktop Table View (Hidden on mobile <768px for zero horizontal scroll) -->
 <div class="data-table-wrapper d-none d-md-block mb-4">
@@ -279,48 +281,61 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
             }
             ?>
             <div class="booking-card mb-3">
-                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
-                    <span class="badge <?= $badge_class ?> text-uppercase"><?= e($badge_label) ?></span>
-                    <code class="font-weight-bold text-dark">PNR: <?= e($display_pnr) ?></code>
-                </div>
-                <div class="h6 font-weight-bold text-dark mb-1">
-                    <?= e($row['city1'] ?? '') ?> &rarr; <?= e($row['city2'] ?? '') ?>
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <code class="font-weight-bold text-dark booking-card-pnr">PNR: <?= e($display_pnr) ?></code>
+                        <div class="h6 font-weight-bold text-dark mt-1 mb-0 booking-card-route">
+                            <?= e($row['city1'] ?? '') ?> &rarr; <?= e($row['city2'] ?? '') ?>
+                        </div>
+                    </div>
+                    <span class="badge <?= $badge_class ?> text-uppercase font-weight-bold px-2 py-1"><?= e($badge_label) ?></span>
                 </div>
                 <div class="small text-muted mb-2">
-                    📅 <?= e(fmt_date($row['date'] ?? '')) ?> at <?= e(fmt_time($row['time'] ?? '')) ?> &bull; 🚌 Bus #<?= e($row['bus'] ?? '') ?>
+                    📅 <?= e(fmt_date($row['date'] ?? '')) ?> at <?= e(fmt_time($row['time'] ?? '')) ?> &bull; 🚌 Bus #<?= e($row['bus'] ?? '') ?> &bull; <span class="badge badge-info font-weight-bold">Seat #<?= e($row['seat'] ?? '') ?></span>
                 </div>
-                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                    <div>
-                        <span class="badge badge-info mr-1">Seat #<?= e($row['seat'] ?? '') ?></span>
-                        <strong class="text-success"><?= CURRENCY ?><?= e(number_format((float)($row['price'] ?? 0), 2)) ?></strong>
-                    </div>
-                    <div>
-                        <a href="<?= BASE_URL ?>/user/ticket.php?pnr=<?= urlencode($display_pnr) ?>" class="btn btn-outline-primary btn-sm">
-                            🎟️ Ticket
-                        </a>
-                        <?php if ($can_cancel): ?>
-                            <button type="button"
-                                class="btn btn-outline-danger btn-sm open-cancel-modal ml-1"
-                                data-id="<?= e($sno) ?>"
-                                data-pnr="<?= e($display_pnr) ?>"
-                                data-route="<?= e(($row['city1'] ?? '') . ' → ' . ($row['city2'] ?? '')) ?>"
-                                data-schedule="<?= e(fmt_date($row['date'] ?? '') . ' at ' . fmt_time($row['time'] ?? '')) ?>"
-                                data-toggle="modal"
-                                data-target="#cancelModal">
-                                Cancel
-                            </button>
-                        <?php endif; ?>
-                    </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small text-muted font-weight-bold">Fare Paid:</span>
+                    <strong class="text-success h6 mb-0"><?= CURRENCY ?><?= e(number_format((float)($row['price'] ?? 0), 2)) ?></strong>
+                </div>
+                <div class="d-flex gap-2 pt-2 border-top booking-card-actions">
+                    <a href="<?= BASE_URL ?>/user/ticket.php?pnr=<?= urlencode($display_pnr) ?>" class="btn btn-outline-primary btn-sm flex-fill font-weight-bold d-flex align-items-center justify-content-center mr-1" style="min-height: 44px;">
+                        🎟️ View Ticket
+                    </a>
+                    <?php if ($can_cancel): ?>
+                        <button type="button"
+                            class="btn btn-outline-danger btn-sm flex-fill font-weight-bold open-cancel-modal d-flex align-items-center justify-content-center ml-1"
+                            style="min-height: 44px;"
+                            data-id="<?= e($sno) ?>"
+                            data-pnr="<?= e($display_pnr) ?>"
+                            data-route="<?= e(($row['city1'] ?? '') . ' → ' . ($row['city2'] ?? '')) ?>"
+                            data-schedule="<?= e(fmt_date($row['date'] ?? '') . ' at ' . fmt_time($row['time'] ?? '')) ?>"
+                            data-toggle="modal"
+                            data-target="#cancelModal">
+                            Cancel Booking
+                        </button>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endforeach; ?>
     <?php endif; ?>
 </div>
 
-<!-- Pagination (U-16: 10 per page) -->
+<!-- Pagination (U-16: 10 per page, responsive mobile compact) -->
 <?php if ($total_pages > 1): ?>
-    <nav aria-label="Bookings pagination" class="d-flex justify-content-center">
-        <ul class="pagination pagination-sm shadow-sm">
+    <nav aria-label="Bookings pagination" class="my-4">
+        <!-- Mobile Compact Pagination (<768px) -->
+        <div class="d-flex d-md-none justify-content-between align-items-center">
+            <a class="btn btn-outline-secondary btn-sm font-weight-bold px-3 <?= $page <= 1 ? 'disabled' : '' ?>" href="?tab=<?= urlencode($current_tab) ?>&page=<?= $page - 1 ?>" style="min-height: 44px; display: inline-flex; align-items: center;">
+                &laquo; Prev
+            </a>
+            <span class="small font-weight-bold text-muted">Page <?= $page ?> of <?= $total_pages ?></span>
+            <a class="btn btn-outline-secondary btn-sm font-weight-bold px-3 <?= $page >= $total_pages ? 'disabled' : '' ?>" href="?tab=<?= urlencode($current_tab) ?>&page=<?= $page + 1 ?>" style="min-height: 44px; display: inline-flex; align-items: center;">
+                Next &raquo;
+            </a>
+        </div>
+
+        <!-- Desktop Numbered Pagination (>=768px) -->
+        <ul class="pagination pagination-sm shadow-sm justify-content-center d-none d-md-flex mb-0">
             <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
                 <a class="page-link" href="?tab=<?= urlencode($current_tab) ?>&page=<?= $page - 1 ?>">&laquo; Prev</a>
             </li>
@@ -364,9 +379,9 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                         </ul>
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Keep Booking</button>
-                    <button type="submit" name="cancel_booking" class="btn btn-danger font-weight-bold">Confirm Cancellation</button>
+                <div class="modal-footer bg-light flex-column-reverse flex-sm-row">
+                    <button type="button" class="btn btn-secondary btn-block-mobile" data-dismiss="modal" style="min-height: 44px;">Keep Booking</button>
+                    <button type="submit" name="cancel_booking" class="btn btn-danger font-weight-bold btn-block-mobile mb-2 mb-sm-0" style="min-height: 44px;">Confirm Cancellation</button>
                 </div>
             </form>
         </div>

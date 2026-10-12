@@ -172,6 +172,40 @@ assert_user_layout("design-system.css eliminates dead conflicting 480px seat rul
 );
 
 // -------------------------------------------------------------
+// Suite 7: Phase 4 My Reservations Responsiveness (F7)
+// -------------------------------------------------------------
+echo "\n[*] Suite 7: My Reservations Tabs, Cards & Pagination\n";
+
+$my_bookings = file_get_contents(__DIR__ . '/../user/my-bookings.php');
+
+assert_user_layout("user/my-bookings.php wraps category tabs in .booking-tabs-wrap and .booking-tabs-nav (F7)",
+    str_contains($my_bookings, 'booking-tabs-wrap') &&
+    str_contains($my_bookings, 'booking-tabs-nav')
+);
+
+assert_user_layout("user/my-bookings.php category tabs use clean text without emojis (F7)",
+    !str_contains($my_bookings, '⏳ Upcoming') &&
+    !str_contains($my_bookings, '✅ Past') &&
+    !str_contains($my_bookings, '❌ Cancelled') &&
+    str_contains($my_bookings, 'Upcoming <span class="badge')
+);
+
+assert_user_layout("user/my-bookings.php provides compact mobile pagination for <768px",
+    str_contains($my_bookings, 'd-flex d-md-none justify-content-between align-items-center') &&
+    str_contains($my_bookings, 'Page <?= $page ?> of <?= $total_pages ?>')
+);
+
+assert_user_layout("user/my-bookings.php card action buttons provide 44px min-height touch targets",
+    str_contains($my_bookings, 'booking-card-actions') &&
+    str_contains($my_bookings, 'style="min-height: 44px;"')
+);
+
+assert_user_layout("user.css formats .booking-tabs-nav with 3-column equal grid under 576px (F7)",
+    str_contains($user_css, '.booking-tabs-nav') &&
+    str_contains($user_css, 'grid-template-columns: repeat(3, 1fr)')
+);
+
+// -------------------------------------------------------------
 // Summary
 // -------------------------------------------------------------
 echo "\n========================================================\n";
@@ -181,3 +215,4 @@ echo "========================================================\n";
 if ($failed_assertions > 0) {
     exit(1);
 }
+

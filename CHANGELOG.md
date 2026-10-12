@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- **User Section Mobile Modernization (Phase 4 - My Reservations Responsiveness, F7)**:
+  - **Category Tabs Layout (`user/my-bookings.php`, `assets/css/user.css`, F7)**: Wrapped booking filter tabs in `.booking-tabs-wrap` and `.booking-tabs-nav` with equal 3-column grid (`grid-template-columns: repeat(3, 1fr)`) under 576px. Removed decorative emojis from tab labels to eliminate wrapping and prevent horizontal overflow on 320px screens.
+  - **Elevated Mobile Reservation Cards (`user/my-bookings.php`)**: Redesigned mobile cards with prominent PNR badge, route arrow header, status tag, clear fare display, and full 44px min-height touch action buttons (View Ticket & Cancel Booking).
+  - **Compact Mobile Pagination (`user/my-bookings.php`)**: Introduced compact mobile pagination control (`Prev`, `Page X of Y`, `Next`) with 44px touch targets on `<768px`, while reserving full numbered pagination for desktop screens.
+  - **Mobile-Responsive Cancel Modal (`user/my-bookings.php`)**: Formatted cancellation modal action buttons with stacked vertical layout (`flex-column-reverse flex-sm-row`) and full width (`.btn-block-mobile`) on phones.
+  - Expanded `tests/test_user_layout.php` with Suite 7 assertions (29/29 passing).
+
 - **User Section Mobile Modernization (Phase 3 - Booking & Seat Map Responsiveness)**:
   - **Fluid Seat Size Clamping (`assets/css/seat-map.css`, F2)**: Computed seat dimensions using fluid CSS clamp `--seat-w: clamp(38px, calc((100vw - 110px) / 5), 44px)` and `--aisle-w: clamp(14px, 4vw, 20px)`, eliminating 320px viewport horizontal overflow across all 2+2, 1+2, 2+1, and 1+1 layouts.
   - **Deduplication of Seat Media Rules (`assets/css/design-system.css`, F4)**: Removed dead, conflicting 480px seat rules (42x54px) from `design-system.css`, ensuring `seat-map.css` serves as the authoritative seat styling.

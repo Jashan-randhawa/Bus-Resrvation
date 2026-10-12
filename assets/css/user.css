@@ -106,3 +106,76 @@
   }
 }
 
+/* Phase 4: My Reservations Tabs & Cards (F7) */
+.booking-tabs-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.booking-tabs-nav {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  border-bottom: 1px solid var(--c-border, #e2e8f0);
+  padding-bottom: 8px;
+}
+
+.booking-tabs-nav .nav-link {
+  border-radius: var(--radius-md, 8px);
+  font-weight: 600;
+  color: var(--c-text-muted, #64748b);
+  padding: 8px 14px;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.booking-tabs-nav .nav-link.active {
+  background-color: var(--c-primary, #2563eb);
+  color: #ffffff;
+}
+
+.booking-tabs-nav .nav-link .badge {
+  font-size: 0.75rem;
+  vertical-align: middle;
+}
+
+.booking-tabs-nav .nav-link.active .badge {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+@media (max-width: 575.98px) {
+  .booking-tabs-nav {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    padding-bottom: 6px;
+  }
+
+  .booking-tabs-nav .nav-link {
+    padding: 7px 4px;
+    font-size: 0.8rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  .booking-tabs-nav .nav-link .badge {
+    margin-left: 0 !important;
+    font-size: 0.7rem;
+  }
+
+  .booking-card-pnr {
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+  }
+
+  .booking-card-route {
+    font-size: 1rem;
+  }
+}
+
+
