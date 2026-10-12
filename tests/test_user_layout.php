@@ -206,6 +206,40 @@ assert_user_layout("user.css formats .booking-tabs-nav with 3-column equal grid 
 );
 
 // -------------------------------------------------------------
+// Suite 8: Phase 5 Ticket & Verify Responsiveness (F8, Issue 5)
+// -------------------------------------------------------------
+echo "\n[*] Suite 8: Ticket & Verify View Mobile Responsiveness\n";
+
+$ticket_php = file_get_contents(__DIR__ . '/../user/ticket.php');
+$verify_php = file_get_contents(__DIR__ . '/../user/verify.php');
+
+assert_user_layout("user/ticket.php ticket container uses fluid padding p-3 p-md-5",
+    str_contains($ticket_php, 'card border ticket-container shadow-sm p-3 p-md-5')
+);
+
+assert_user_layout("user/ticket.php provides Web Share API integration (#shareTicketBtn)",
+    str_contains($ticket_php, 'id="shareTicketBtn"') &&
+    str_contains($ticket_php, 'navigator.share')
+);
+
+assert_user_layout("user/ticket.php QR code wrapper uses responsive max-width without fixed 160px min-width",
+    str_contains($ticket_php, 'max-width: 220px') &&
+    !str_contains($ticket_php, 'style="min-width: 160px;"')
+);
+
+assert_user_layout("user/ticket.php actions provide 44px min-height touch targets",
+    str_contains($ticket_php, 'style="min-height: 44px;"')
+);
+
+assert_user_layout("user/verify.php includes viewport-fit=cover in viewport meta tag",
+    str_contains($verify_php, 'viewport-fit=cover')
+);
+
+assert_user_layout("user/verify.php return link provides 44px min-height touch target",
+    str_contains($verify_php, 'min-height: 44px')
+);
+
+// -------------------------------------------------------------
 // Summary
 // -------------------------------------------------------------
 echo "\n========================================================\n";
@@ -215,4 +249,5 @@ echo "========================================================\n";
 if ($failed_assertions > 0) {
     exit(1);
 }
+
 

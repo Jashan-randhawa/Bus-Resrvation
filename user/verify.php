@@ -40,25 +40,25 @@ $is_valid_for_travel = ($is_verified && !$is_cancelled && !$is_expired && !$is_p
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title><?= e($title) ?> | Bus Service</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css">
     <style>
-        body { background: #f8fafc; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        body { background: #f8fafc; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
         .verify-card { max-width: 540px; width: 100%; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; background: #fff; overflow: hidden; }
         .status-badge-lg { font-size: 1.1rem; padding: 8px 16px; border-radius: 8px; font-weight: 700; display: inline-block; }
     </style>
 </head>
 <body>
     <div class="verify-card">
-        <div class="p-4 text-center border-bottom bg-light">
+        <div class="p-3 p-sm-4 text-center border-bottom bg-light">
             <img src="<?= BASE_URL ?>/assets/images/bus.svg" alt="Logo" style="width: 40px; height: 40px;" class="mb-2">
             <h5 class="font-weight-bold mb-0 text-dark">Digital Pass Verification</h5>
             <small class="text-muted">Bus Reservation Conductor &amp; Passenger Verification</small>
         </div>
 
-        <div class="p-4">
+        <div class="p-3 p-sm-4">
             <?php if (!$is_verified): ?>
                 <div class="alert alert-danger text-center mb-4">
                     <div class="h3 mb-2">⚠️</div>
@@ -98,43 +98,43 @@ $is_valid_for_travel = ($is_verified && !$is_cancelled && !$is_expired && !$is_p
                 <div class="bg-light p-3 rounded mb-3 border">
                     <div class="row">
                         <div class="col-6 mb-2">
-                            <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 11px;">PNR</small>
+                            <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 12px;">PNR</small>
                             <code class="font-weight-bold h6 text-dark mb-0"><?= e($booking['pnr']) ?></code>
                         </div>
                         <div class="col-6 mb-2 text-right">
-                            <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 11px;">Bus</small>
+                            <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 12px;">Bus</small>
                             <span class="font-weight-bold text-dark">Bus #<?= e($booking['bus']) ?></span>
                         </div>
                         <div class="col-12 mb-2">
-                            <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 11px;">Route</small>
+                            <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 12px;">Route</small>
                             <strong class="text-dark"><?= e($booking['city1']) ?> &rarr; <?= e($booking['city2']) ?></strong>
                         </div>
                         <div class="col-6 mb-2">
-                            <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 11px;">Passenger</small>
+                            <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 12px;">Passenger</small>
                             <span class="text-dark font-weight-medium"><?= e($booking['name']) ?></span>
                         </div>
                         <div class="col-6 mb-2 text-right">
-                            <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 11px;">Seat</small>
+                            <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 12px;">Seat</small>
                             <span class="badge badge-primary px-2 py-1">Seat #<?= e($booking['seat']) ?></span>
                         </div>
                         <div class="col-6">
-                            <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 11px;">Date</small>
+                            <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 12px;">Date</small>
                             <span class="text-dark small"><?= e(fmt_date($booking['date'])) ?></span>
                         </div>
                         <div class="col-6 text-right">
-                            <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 11px;">Time</small>
+                            <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 12px;">Time</small>
                             <span class="text-dark small"><?= e(fmt_time($booking['time'])) ?></span>
                         </div>
                     </div>
                 </div>
 
-                <div class="text-center small text-muted font-monospace">
+                <div class="text-center small text-muted font-monospace" style="font-size: 12px;">
                     HMAC-SHA256 SEAL: <?= e(strtoupper($sig)) ?>
                 </div>
             <?php endif; ?>
 
             <div class="mt-4 text-center">
-                <a href="<?= BASE_URL ?>/homepage.php" class="btn btn-outline-secondary btn-sm">
+                <a href="<?= BASE_URL ?>/homepage.php" class="btn btn-outline-secondary btn-sm" style="min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0.5rem 1.25rem;">
                     &larr; Return to Homepage
                 </a>
             </div>

@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- **User Section Mobile Modernization (Phase 5 - Ticket & Verify View Responsiveness, F8)**:
+  - **Fluid Boarding Pass Container (`user/ticket.php`)**: Reduced card container padding on phones (`p-3 p-md-5`) and added responsive scaling to the `.ticket-void-overlay` watermark on narrow screens (<576px) to eliminate text overflow.
+  - **Responsive Digital Pass & QR Code (`user/ticket.php`)**: Replaced fixed 160px min-width with fluid centered layout (`max-width: 220px`) and raised helper/meta text sizes to 12px for WCAG AAA readability.
+  - **Native Web Share API Integration (`user/ticket.php`)**: Added `#shareTicketBtn` utilizing modern `navigator.share` on supported mobile devices to effortlessly share ticket PNR and itinerary details.
+  - **Safe-Area Insets & Public Verification (`user/verify.php`)**: Added `viewport-fit=cover` to public verification page, set 12px label typography, and upgraded return button to 44px min-height touch target.
+  - Expanded `tests/test_user_layout.php` with Suite 8 assertions (35/35 passing).
+
 - **User Section Mobile Modernization (Phase 4 - My Reservations Responsiveness, F7)**:
   - **Category Tabs Layout (`user/my-bookings.php`, `assets/css/user.css`, F7)**: Wrapped booking filter tabs in `.booking-tabs-wrap` and `.booking-tabs-nav` with equal 3-column grid (`grid-template-columns: repeat(3, 1fr)`) under 576px. Removed decorative emojis from tab labels to eliminate wrapping and prevent horizontal overflow on 320px screens.
   - **Elevated Mobile Reservation Cards (`user/my-bookings.php`)**: Redesigned mobile cards with prominent PNR badge, route arrow header, status tag, clear fare display, and full 44px min-height touch action buttons (View Ticket & Cancel Booking).

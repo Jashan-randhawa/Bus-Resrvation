@@ -82,6 +82,14 @@ $full_verify_url = $proto . $host . $verify_path;
     letter-spacing: 0.12em;
     user-select: none;
 }
+@media (max-width: 575.98px) {
+    .ticket-void-overlay {
+        font-size: 1.6rem;
+        border-width: 3px;
+        padding: 8px 4px;
+        letter-spacing: 0.05em;
+    }
+}
 @media print {
     .ticket-void-overlay {
         color: #dc2626 !important;
@@ -93,20 +101,20 @@ $full_verify_url = $proto . $host . $verify_path;
 
 <!-- Phase 3.1: Celebratory Confirmation Banner for new bookings -->
 <?php if ($is_new_booking): ?>
-    <div class="alert alert-success shadow-sm p-4 mb-4 border-0 no-print" role="alert">
+    <div class="alert alert-success shadow-sm p-3 p-md-4 mb-4 border-0 no-print" role="alert">
         <div class="d-flex align-items-center justify-content-between flex-wrap">
-            <div class="mb-2 mb-md-0">
+            <div class="mb-3 mb-md-0">
                 <h4 class="alert-heading font-weight-bold mb-1">🎉 Reservation Confirmed!</h4>
                 <p class="mb-0 text-dark">
                     Your seat has been reserved. Your Booking Reference (PNR) is 
                     <strong class="font-monospace text-success h5 mb-0"><?= e($booking['pnr']) ?></strong>.
                 </p>
             </div>
-            <div>
-                <button type="button" onclick="window.print()" class="btn btn-success font-weight-bold shadow-sm mr-2">
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" onclick="window.print()" class="btn btn-success font-weight-bold shadow-sm mr-2 mb-2 mb-sm-0" style="min-height: 44px;">
                     🖨️ Print / Save PDF
                 </button>
-                <a href="<?= BASE_URL ?>/user/my-bookings.php" class="btn btn-outline-success font-weight-bold">
+                <a href="<?= BASE_URL ?>/user/my-bookings.php" class="btn btn-outline-success font-weight-bold" style="min-height: 44px; display: inline-flex; align-items: center;">
                     View My Bookings &rarr;
                 </a>
             </div>
@@ -114,25 +122,27 @@ $full_verify_url = $proto . $host . $verify_path;
     </div>
 <?php endif; ?>
 
-<div class="no-print mb-4 d-flex justify-content-between align-items-center">
-    <a href="<?= BASE_URL ?>/user/my-bookings.php" class="btn btn-outline-secondary">
+<div class="no-print mb-4 d-flex flex-wrap justify-content-between align-items-center">
+    <a href="<?= BASE_URL ?>/user/my-bookings.php" class="btn btn-outline-secondary mb-2 mb-sm-0" style="min-height: 44px; display: inline-flex; align-items: center;">
         &larr; Back to My Bookings
     </a>
-    <div>
-        <!-- Phase 2.2: Only show Print button if ticket is active/valid or completed receipt -->
+    <div class="d-flex flex-wrap gap-2">
         <?php if (!$is_cancelled && !$is_expired): ?>
-            <button type="button" onclick="window.print()" class="btn btn-primary shadow-sm font-weight-bold">
+            <button type="button" id="shareTicketBtn" class="btn btn-outline-primary shadow-sm font-weight-bold mr-2 mb-2 mb-sm-0" style="min-height: 44px; display: none;">
+                📤 Share Pass
+            </button>
+            <button type="button" onclick="window.print()" class="btn btn-primary shadow-sm font-weight-bold mb-2 mb-sm-0" style="min-height: 44px; display: inline-flex; align-items: center;">
                 🖨️ <?= $is_past ? 'Print Receipt' : 'Print Ticket' ?>
             </button>
         <?php else: ?>
-            <span class="badge badge-secondary px-3 py-2 text-uppercase">Ticket Inactive</span>
+            <span class="badge badge-secondary px-3 py-2 text-uppercase d-inline-flex align-items-center" style="min-height: 44px;">Ticket Inactive</span>
         <?php endif; ?>
     </div>
 </div>
 
 <div class="row justify-content-center">
     <div class="col-lg-8 col-xl-7">
-        <div class="card border ticket-container shadow-sm p-4 p-md-5 bg-white">
+        <div class="card border ticket-container shadow-sm p-3 p-md-5 bg-white">
             <!-- Phase 2.2: Watermark overlay for cancelled, expired, or completed tickets -->
             <?php if (!$is_valid): ?>
                 <div class="ticket-void-overlay font-weight-bold text-uppercase" aria-hidden="true">
@@ -141,12 +151,12 @@ $full_verify_url = $proto . $host . $verify_path;
             <?php endif; ?>
 
             <!-- Ticket Header -->
-            <div class="d-flex justify-content-between align-items-center border-bottom pb-4 mb-4">
-                <div>
+            <div class="d-flex justify-content-between align-items-start border-bottom pb-3 pb-md-4 mb-4 flex-wrap">
+                <div class="mb-2 mb-sm-0">
                     <h3 class="font-weight-bold mb-1 text-primary">🚍 Bus Travel Pass</h3>
                     <p class="text-muted small mb-0">Official Boarding Pass &amp; Receipt</p>
                 </div>
-                <div class="text-right">
+                <div class="text-sm-right">
                     <span class="badge <?= $status_badge ?> px-3 py-2 text-uppercase font-weight-bold">
                         <?= e($status_label) ?>
                     </span>
@@ -158,88 +168,88 @@ $full_verify_url = $proto . $host . $verify_path;
             <div class="p-3 bg-light rounded border mb-4">
                 <div class="row text-center align-items-center">
                     <div class="col-5">
-                        <small class="text-muted text-uppercase d-block font-weight-bold">Origin</small>
+                        <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 12px;">Origin</small>
                         <h4 class="font-weight-bold mb-0 text-dark"><?= e($booking['city1']) ?></h4>
                     </div>
                     <div class="col-2 text-primary font-weight-bold h4 mb-0">
                         &rarr;
                     </div>
                     <div class="col-5">
-                        <small class="text-muted text-uppercase d-block font-weight-bold">Destination</small>
+                        <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 12px;">Destination</small>
                         <h4 class="font-weight-bold mb-0 text-dark"><?= e($booking['city2']) ?></h4>
                     </div>
                 </div>
             </div>
 
             <!-- Trip Meta Grid -->
-            <div class="row mb-4">
-                <div class="col-sm-6 mb-3">
-                    <small class="text-muted text-uppercase font-weight-bold d-block">Passenger Name</small>
-                    <div class="font-weight-bold text-dark h5 mb-0"><?= e($booking['name']) ?></div>
-                    <small class="text-muted">Contact: <?= e($booking['contact']) ?></small>
+            <div class="row mb-3 mb-md-4">
+                <div class="col-6 col-sm-6 mb-3">
+                    <small class="text-muted text-uppercase font-weight-bold d-block" style="font-size: 12px;">Passenger</small>
+                    <div class="font-weight-bold text-dark h6 mb-0"><?= e($booking['name']) ?></div>
+                    <small class="text-muted" style="font-size: 12px;">Contact: <?= e($booking['contact']) ?></small>
                 </div>
-                <div class="col-sm-6 mb-3 text-sm-right">
-                    <small class="text-muted text-uppercase font-weight-bold d-block">Bus Number</small>
-                    <div class="font-weight-bold text-dark h5 mb-0">Bus #<?= e($booking['bus']) ?></div>
+                <div class="col-6 col-sm-6 mb-3 text-right">
+                    <small class="text-muted text-uppercase font-weight-bold d-block" style="font-size: 12px;">Bus</small>
+                    <div class="font-weight-bold text-dark h6 mb-0">Bus #<?= e($booking['bus']) ?></div>
                 </div>
-                <div class="col-sm-6 mb-3">
-                    <small class="text-muted text-uppercase font-weight-bold d-block">Travel Date</small>
+                <div class="col-6 col-sm-6 mb-3">
+                    <small class="text-muted text-uppercase font-weight-bold d-block" style="font-size: 12px;">Travel Date</small>
                     <div class="font-weight-bold text-dark"><?= e(fmt_date($booking['date'])) ?></div>
                 </div>
-                <div class="col-sm-6 mb-3 text-sm-right">
-                    <small class="text-muted text-uppercase font-weight-bold d-block">Departure Time</small>
+                <div class="col-6 col-sm-6 mb-3 text-right">
+                    <small class="text-muted text-uppercase font-weight-bold d-block" style="font-size: 12px;">Departure</small>
                     <div class="font-weight-bold text-dark"><?= e(fmt_time($booking['time'])) ?></div>
                 </div>
-                <div class="col-sm-6 mb-3">
-                    <small class="text-muted text-uppercase font-weight-bold d-block">Assigned Seat</small>
-                    <div class="h3 font-weight-bold text-primary mb-0">Seat #<?= e($booking['seat']) ?></div>
+                <div class="col-6 col-sm-6 mb-3">
+                    <small class="text-muted text-uppercase font-weight-bold d-block" style="font-size: 12px;">Assigned Seat</small>
+                    <div class="h4 font-weight-bold text-primary mb-0">Seat #<?= e($booking['seat']) ?></div>
                 </div>
-                <div class="col-sm-6 mb-3 text-sm-right">
+                <div class="col-6 col-sm-6 mb-3 text-right">
                     <!-- Phase 2.3: Honest fare description -->
-                    <small class="text-muted text-uppercase font-weight-bold d-block">
-                        <?= $is_valid ? 'Ticket Fare' : ($is_past ? 'Paid Fare (Receipt)' : 'Fare (' . e($stamp) . ')') ?>
+                    <small class="text-muted text-uppercase font-weight-bold d-block" style="font-size: 12px;">
+                        <?= $is_valid ? 'Ticket Fare' : ($is_past ? 'Paid Fare' : 'Fare (' . e($stamp) . ')') ?>
                     </small>
-                    <div class="h3 font-weight-bold text-success mb-0"><?= CURRENCY ?><?= e(number_format((float)$booking['price'], 2)) ?></div>
+                    <div class="h4 font-weight-bold text-success mb-0"><?= CURRENCY ?><?= e(number_format((float)$booking['price'], 2)) ?></div>
                 </div>
             </div>
 
             <!-- Instructions & Digital Verification Seal (Phase 2.1, 2.2) -->
-            <div class="border-top pt-4 d-flex flex-column flex-sm-row justify-content-between align-items-center">
-                <div class="mb-3 mb-sm-0 text-center text-sm-left flex-grow-1 pr-sm-3">
+            <div class="border-top pt-4 d-flex flex-column-reverse flex-md-row justify-content-between align-items-center">
+                <div class="mb-3 mb-md-0 text-center text-md-left flex-grow-1 pr-md-3 w-100">
                     <?php if ($is_valid): ?>
                         <div class="font-weight-bold small text-dark mb-1">Boarding Instructions:</div>
-                        <ul class="text-muted small pl-3 mb-0 text-left">
+                        <ul class="text-muted small pl-3 mb-0 text-left" style="font-size: 12px;">
                             <li>Please arrive at the terminal at least 15 minutes before departure.</li>
                             <li>Carry a valid government photo ID matching the passenger name.</li>
                             <li>Present this digital ticket or printed pass with PNR at boarding.</li>
                         </ul>
                     <?php elseif ($is_past): ?>
-                        <div class="alert alert-secondary mb-0 small text-left">
+                        <div class="alert alert-secondary mb-0 small text-left" style="font-size: 12px;">
                             <strong>Trip Completed:</strong> This journey has departed and completed. This document serves as your travel receipt.
                         </div>
                     <?php elseif ($raw_status === 'Pending'): ?>
-                        <div class="alert alert-warning mb-0 small text-left">
+                        <div class="alert alert-warning mb-0 small text-left" style="font-size: 12px;">
                             <strong>Pending Payment:</strong> This booking is on temporary hold and is not yet confirmed for boarding until payment completes.
                         </div>
                     <?php else: ?>
                         <!-- Phase 2.2: Replaced boarding instructions for void tickets -->
-                        <div class="alert alert-danger mb-0 small text-left">
+                        <div class="alert alert-danger mb-0 small text-left" style="font-size: 12px;">
                             <strong>Notice:</strong> This reservation was <?= strtolower($status_label) ?> and is not valid for boarding or travel.
                         </div>
                     <?php endif; ?>
                 </div>
-                <div class="text-center ml-sm-4 mt-3 mt-sm-0">
+                <div class="text-center mb-4 mb-md-0 ml-md-4 w-100 w-md-auto d-flex justify-content-center">
                     <!-- Phase 2.1: Digital Security Seal & QR Code (Issue 5) -->
-                    <div class="p-3 bg-light border rounded text-center shadow-sm" style="min-width: 160px;">
+                    <div class="p-3 bg-light border rounded text-center shadow-sm" style="max-width: 220px; width: 100%;">
                         <div id="ticket-qrcode" class="d-inline-block bg-white p-2 border rounded mb-2"></div>
-                        <div class="text-muted font-weight-bold text-uppercase" style="font-size: 10px; letter-spacing: 0.05em;">Digital Pass</div>
-                        <div class="font-weight-bold text-primary font-monospace my-1" style="font-size: 1.25rem;">
+                        <div class="text-muted font-weight-bold text-uppercase" style="font-size: 12px; letter-spacing: 0.05em;">Digital Pass</div>
+                        <div class="font-weight-bold text-primary font-monospace my-1" style="font-size: 1.15rem;">
                             <?= e($booking['pnr']) ?>
                         </div>
-                        <a href="<?= e($verify_path) ?>" target="_blank" class="badge badge-light border text-muted px-2 py-1 font-monospace text-decoration-none d-inline-block mb-1" style="font-size: 11px;" title="Verify Ticket Authenticity">
+                        <a href="<?= e($verify_path) ?>" target="_blank" class="badge badge-light border text-muted px-2 py-1 font-monospace text-decoration-none d-inline-block mb-1" style="font-size: 12px;" title="Verify Ticket Authenticity">
                             SEAL: <?= e($verify_hash) ?>
                         </a>
-                        <div class="text-muted small font-weight-medium" style="font-size: 10px;">
+                        <div class="text-muted font-weight-medium" style="font-size: 12px;">
                             <?= e($stamp) ?>
                         </div>
                     </div>
@@ -265,7 +275,23 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+
+    if (navigator.share) {
+        var shareBtn = document.getElementById('shareTicketBtn');
+        if (shareBtn) {
+            shareBtn.style.display = 'inline-flex';
+            shareBtn.style.alignItems = 'center';
+            shareBtn.addEventListener('click', function() {
+                navigator.share({
+                    title: <?= json_encode('Bus Travel Pass - ' . $booking['pnr']) ?>,
+                    text: <?= json_encode('Bus Travel Pass for ' . $booking['name'] . ': ' . $booking['city1'] . ' to ' . $booking['city2'] . ' on ' . fmt_date($booking['date']) . ' (Seat #' . $booking['seat'] . ')') ?>,
+                    url: window.location.href
+                }).catch(function() {});
+            });
+        }
+    }
 });
 </script>
 
 <?php require_once __DIR__ . '/../includes/layout/footer-user.php'; ?>
+
