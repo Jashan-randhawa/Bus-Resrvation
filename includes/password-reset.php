@@ -12,6 +12,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/helpers.php';
+require_once __DIR__ . '/smtp.php';
 
 const PR_REQUEST_LIMIT   = 3;     // reset e-mails per address ...
 const PR_REQUEST_WINDOW  = 900;   // ... per 15 minutes
@@ -56,9 +57,17 @@ function pr_app_url(): string {
     if ($v !== '') {
         return $v . (defined('BASE_URL') ? BASE_URL : '');
     }
-    if (strtolower((string)getenv('APP_ENV')) === 'development') {
+    // Render also sets RENDER_EXTERNAL_HOSTNAME on Web Services.
+    $renderHost = trim((string)getenv('RENDER_EXTERNAL_HOSTNAME'));
+    if ($renderHost !== '') {
+        return 'https://' . $renderHost . (defined('BASE_URL') ? BASE_URL : '');
+    }
+    $host = (string)($_SERVER['HTTP_HOST'] ?? '');
+    $hostOnly = strtolower((string)preg_replace('/:\d+$/', '', $host));
+    $isLocalLoopback = in_array($hostOnly, ['localhost', '127.0.0.1', '[::1]'], true);
+    if (strtolower((string)getenv('APP_ENV')) === 'development' || $isLocalLoopback) {
         $https  = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
-        $host   = (string)($_SERVER['HTTP_HOST'] ?? 'localhost');
+        $host   = $host !== '' ? $host : 'localhost';
         $scheme = $https ? 'https' : 'http';
         $base   = defined('BASE_URL') ? BASE_URL : '';
         return $scheme . '://' . $host . $base;
@@ -77,7 +86,13 @@ function pr_build_reset_url(string $plainToken): string {
 
 function pr_mail_configured(): bool {
     $on = getenv('MAIL_ENABLED');
-    return $on === '1' || strtolower((string)$on) === 'true';
+    if ($on === '1' || strtolower((string)$on) === 'true') {
+        return true;
+    }
+    if (function_exists('brevo_resolve_api_key') && brevo_resolve_api_key() !== '') {
+        return true;
+    }
+    return trim((string)getenv('BREVO_API_KEY')) !== '';
 }
 
 /* ------------------------------------------------------------------ */

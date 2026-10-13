@@ -2,6 +2,44 @@
 /**
  * Central configuration (loaded first by db_con.php, the auth guards and every layout file).
  *
+ * Automatically loads a local .env file from the repository root if present,
+ * without overwriting variables already injected by the container/host environment.
+ */
+(static function (): void {
+    $envFile = dirname(__DIR__) . '/.env';
+    if (!is_file($envFile) || !is_readable($envFile)) {
+        return;
+    }
+    $lines = @file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if (!is_array($lines)) {
+        return;
+    }
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if ($line === '' || $line[0] === '#') {
+            continue;
+        }
+        $eqPos = strpos($line, '=');
+        if ($eqPos === false) {
+            continue;
+        }
+        $key = trim(substr($line, 0, $eqPos));
+        $val = trim(substr($line, $eqPos + 1));
+        if ($key === '') {
+            continue;
+        }
+        if ((str_starts_with($val, '"') && str_ends_with($val, '"')) ||
+            (str_starts_with($val, "'") && str_ends_with($val, "'"))) {
+            $val = substr($val, 1, -1);
+        }
+        if (getenv($key) === false) {
+            putenv("{$key}={$val}");
+            $_ENV[$key] = $val;
+        }
+    }
+})();
+
+/**
  * BASE_URL is the URL path where the app is served from, without a trailing slash:
  *   ''                  when the app is at the web root (Render / Docker)
  *   '/bus-reservation'  when it lives in a sub-folder (XAMPP / WAMP)
