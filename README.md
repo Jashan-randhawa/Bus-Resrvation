@@ -182,6 +182,8 @@ All application configuration is driven by environment variables. Configure them
 | `MAIL_PASS` | *(empty)* | SMTP Password / Secret Key | `your_smtp_secret` |
 | `MAIL_FROM` | *(empty)* | Outbound From Address | `reservations@example.com` |
 | `MAIL_FROM_NAME` | `"Bus Reservation System"` | Outbound Sender Name | `"Bus Reservation System"` |
+| `APP_URL` | *(auto via Render)* | Trusted public base URL for password reset email links | `https://bus-resrvation.onrender.com` |
+| `PASSWORD_RESET_TTL_MIN` | `10` | Password reset link lifetime in minutes (`5` to `60`) | `10` |
 
 ---
 
@@ -310,6 +312,9 @@ php tests/test_departure_carousel.php
 # Privacy-first Performance Overview analytics & dashboard audit verification
 php tests/test_perf_overview.php
 php tests/test_dashboard_audit.php
+
+# Email password reset link flow, SHA-256 token hashing & anti-enumeration suite
+php tests/test_password_reset.php
 ```
 
 ---
@@ -321,6 +326,8 @@ Bus-Reservation/
 ├── index.php                 # Canonical entry point (redirects to homepage.php)
 ├── homepage.php              # Public landing page, login modal & PNR status check
 ├── login.php                 # Standalone login endpoint
+├── forgot-password.php       # Customer password reset link request endpoint
+├── reset-password.php        # Single-use SHA-256 hashed token password reset completion
 ├── admin.php                 # Backward-compatibility shim (redirects to admin/index.php)
 │
 ├── admin/                    # 👑 Administrator Management Subsystem
@@ -356,6 +363,7 @@ Bus-Reservation/
 │   ├── config.php            # Dynamic BASE_URL detector, global error handling & env defaults
 │   ├── db_con.php            # Environment-driven database connector with TLS/SSL support
 │   ├── helpers.php           # Prepared statements, create_booking(), PDF generator, CSRF, CSV streaming
+│   ├── password-reset.php    # Email reset-link flow, SHA-256 token hashing & anti-enumeration engine
 │   ├── admin-crud.php        # Shared admin CRUD helpers, soft-delete & UI components
 │   ├── auth/
 │   │   ├── session-bootstrap.php # Hardened session manager & secure cookie policy
@@ -396,7 +404,7 @@ Bus-Reservation/
 │   ├── reset-mfa.php         # CLI emergency break-glass 2FA reset script
 │   ├── expire-holds.php      # CLI expired seat hold release utility
 │   ├── purge-audit-log.php   # CLI audit log retention cleanup utility
-│   └── migrations/           # 🔄 Sequential Schema Migrations (001 to 010)
+│   └── migrations/           # 🔄 Sequential Schema Migrations (001 to 011)
 │       ├── 001_hardening.sql                         # Base hardening & indexes
 │       ├── 002_hash_passwords.php                    # Password migration & rehashing
 │       ├── 003_bus_capacity.sql                      # Fleet bus capacity bounds
@@ -406,7 +414,8 @@ Bus-Reservation/
 │       ├── 007_admin_accounts_and_soft_delete.sql    # Soft delete archived_at columns
 │       ├── 008_query_inbox_enhancements.sql          # Inquiry status & reply tracking
 │       ├── 009_admin_accounts_and_soft_delete.sql    # Admin security columns & recovery codes
-│       └── 010_query_inbox_enhancements.sql          # Inbox timestamps & enhancements
+│       ├── 010_query_inbox_enhancements.sql          # Inbox timestamps & enhancements
+│       └── 011_password_reset_hashed_tokens.sql      # SHA-256 hashed password reset tokens
 │
 ├── packages/                 # 📦 npm UI Packages
 │   ├── bus-seat-picker/      # @jashan-randhawa/bus-seat-picker package
@@ -430,6 +439,7 @@ Bus-Reservation/
 │   ├── test_departure_carousel.php # Today's Departures schedule list test suite
 │   ├── test_perf_overview.php # Performance Overview analytics test suite
 │   ├── test_dashboard_audit.php # Dashboard operational audit test suite
+│   ├── test_password_reset.php # Email reset-link flow & SHA-256 token hashing test suite
 │   ├── concurrency_worker.php # Concurrency test worker
 │   └── run_tests.php         # Master test harness
 │
