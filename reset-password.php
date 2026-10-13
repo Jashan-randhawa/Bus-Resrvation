@@ -1,58 +1,50 @@
 <?php
-// reset-password.php -- Self-Service Password Reset Completion (U-17)
+// reset-password.php -- Set a new password using the link that was e-mailed to the customer.
 require_once __DIR__ . '/includes/auth/session-bootstrap.php';
 require_once __DIR__ . '/includes/db_con.php';
+require_once __DIR__ . '/includes/password-reset.php';
 
-$token = trim((string)($_GET['token'] ?? $_POST['token'] ?? ''));
+// The URL carries a secret: never cache the page and never leak it through the Referer header.
+header('Cache-Control: no-store, no-cache, must-revalidate');
+header('Pragma: no-cache');
+header('Referrer-Policy: no-referrer');
+ob_start();
+
+// ?code= is what the e-mail contains; ?token= is accepted for links issued by older versions.
+$token = trim((string)($_GET['code'] ?? $_POST['code'] ?? $_GET['token'] ?? $_POST['token'] ?? ''));
+$ip = client_ip();
 $alert = null;
 $alert_type = 'info';
 $token_valid = false;
-$reset_record = null;
 
-ensure_password_resets_table($link);
-
-if ($token !== '') {
-    $reset_record = db_one($link,
-        'SELECT * FROM password_resets WHERE token = ? AND expires_at > NOW()',
-        's',
-        [$token]
-    );
-    if ($reset_record) {
-        $token_valid = true;
-    } else {
-        $alert = 'This password reset link is invalid or has expired. Please request a new one.';
-        $alert_type = 'danger';
-    }
-} else {
-    $alert = 'No reset token provided.';
-    $alert_type = 'danger';
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['complete_reset']) && $token_valid && $reset_record) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['complete_reset'])) {
     csrf_verify();
-    $new_pwd = (string)($_POST['new_pwd'] ?? '');
-    $confirm_pwd = (string)($_POST['confirm_pwd'] ?? '');
-
-    $pwd_errors = [];
-    if (strlen($new_pwd) < 8 || !preg_match('/[A-Za-z]/', $new_pwd) || !preg_match('/\d/', $new_pwd)) {
-        $pwd_errors[] = 'Password must be at least 8 characters long and contain both letters and digits.';
-    }
-    if ($new_pwd !== $confirm_pwd) {
-        $pwd_errors[] = 'Password and confirmation password do not match.';
-    }
-
-    if (!empty($pwd_errors)) {
-        $alert = implode(' ', $pwd_errors);
-        $alert_type = 'danger';
-    } else {
-        $new_hash = password_hash($new_pwd, PASSWORD_DEFAULT);
-        db_exec($link, 'UPDATE costumer SET pwd = ? WHERE email = ?', 'ss', [$new_hash, $reset_record['email']]);
-        // Invalidate used token
-        db_exec($link, 'DELETE FROM password_resets WHERE email = ?', 's', [$reset_record['email']]);
-
-        flash_set('success', 'Your password has been successfully reset. Please sign in with your new password.');
+    $res = pr_complete_reset(
+        $link,
+        $token,
+        (string)($_POST['new_pwd'] ?? ''),
+        (string)($_POST['confirm_pwd'] ?? ''),
+        $ip
+    );
+    if ($res['ok']) {
+        flash_set('success', $res['message']);
         header('Location: ' . BASE_URL . '/login.php');
         exit;
+    }
+    $alert = $res['message'];
+    $alert_type = 'danger';
+    // Wrong password format keeps the form open; a dead link falls through to re-validation below.
+    $check = pr_find_by_token($link, $token);
+    $token_valid = $check !== null;
+} elseif ($token === '') {
+    $alert = 'No reset link was provided. Please use the link from your email.';
+    $alert_type = 'danger';
+} else {
+    $check = pr_validate_token($link, $token, $ip);
+    $token_valid = $check['valid'];
+    if (!$token_valid) {
+        $alert = $check['message'];
+        $alert_type = 'danger';
     }
 }
 
@@ -79,17 +71,19 @@ require_once __DIR__ . '/includes/layout/header-login.php';
             <?php endif; ?>
 
             <?php if ($token_valid): ?>
-                <form action="" method="post">
+                <form action="" method="post" autocomplete="off">
                     <?= csrf_field() ?>
-                    <input type="hidden" name="token" value="<?= e($token) ?>">
+                    <input type="hidden" name="code" value="<?= e($token) ?>">
                     <div class="form-group mb-3">
                         <label for="new_pwd" class="font-weight-bold small text-muted">New Password</label>
-                        <input type="password" id="new_pwd" name="new_pwd" class="form-control" placeholder="••••••••" minlength="8" required autocomplete="new-password">
-                        <small class="text-muted">Minimum 8 characters with letters &amp; numbers.</small>
+                        <input type="password" id="new_pwd" name="new_pwd" class="form-control" placeholder="••••••••"
+                               minlength="8" maxlength="72" required autocomplete="new-password" autofocus>
+                        <small class="text-muted">At least 8 characters with letters &amp; numbers.</small>
                     </div>
                     <div class="form-group mb-4">
                         <label for="confirm_pwd" class="font-weight-bold small text-muted">Confirm New Password</label>
-                        <input type="password" id="confirm_pwd" name="confirm_pwd" class="form-control" placeholder="••••••••" minlength="8" required autocomplete="new-password">
+                        <input type="password" id="confirm_pwd" name="confirm_pwd" class="form-control" placeholder="••••••••"
+                               minlength="8" maxlength="72" required autocomplete="new-password">
                     </div>
                     <button type="submit" name="complete_reset" class="btn btn-primary btn-block py-2 font-weight-bold shadow-sm">
                         Save New Password
