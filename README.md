@@ -48,28 +48,31 @@ Comprehensive architectural, operational, and security documentation is availabl
 ## ✨ Key Features
 
 ### 👤 Customer Experience
-- 🔍 **Interactive Seat Picker:** Dynamic bus seating map adapting to fleet capacity (10–60 seats) with live available/booked status indicators.
+- 🔍 **Interactive Seat Picker:** Dynamic bus seating map adapting to fleet capacity (10–60 seats) with live available/booked status indicators, fluid CSS `clamp()` seat sizing down to 320px viewports, and a sticky mobile seat summary & confirmation footer.
+- 🛫 **Airline-Grade Digital Boarding Pass & QR Verification:** Interactive Upcoming Journey Hero card (`user/index.php`), printable/shareable digital boarding pass (`user/ticket.php`) with QR code generation, Native Web Share API (`navigator.share`) support, and public QR verification endpoint (`user/verify.php`).
+- 🧭 **Custom Search Dropdowns & Interactive City Swap:** Accessible in-DOM custom dropdown menus (`.custom-dropdown-widget`) with Title Case city formatting, dynamic connected-route destination filtering, and 1-click circular origin/destination swap controls (`⇄`) across the homepage and user portal.
 - 🔒 **Atomic Concurrency:** Concurrency-safe seat reservation engine with database transactions and row-level locks preventing double-booking race conditions.
 - 🎫 **Instant Cryptographic PNR:** Auto-generated unique random 10-character token with departure details, seat assignment, and pricing.
 - 🔎 **Two-Factor Public PNR Lookup:** Check reservation status directly from the homepage without logging in, protected by rate limiting and phone number verification.
-- 📱 **Customer Portal:** Profile management, reservation history, and self-service cancellation with cutoff window safeguards.
+- 📱 **Mobile-First Customer Portal:** Profile & account security settings (`user/profile.php` with password rotation, email change, and account deactivation), 3-column reservation status filter tabs (`user/my-bookings.php`), and self-service cancellation with cutoff window safeguards.
 - 💬 **Inquiry Support:** Direct feedback and query submission form for passenger support.
 
 ### 🛡️ Administrator Operations
 - 👥 **Multi-Role RBAC & Live Session Validation:** Granular tiers (`super_admin`, `operator`, `viewer`) with live per-request role and active status validation against the database. Viewer role is restricted to read-only views with PII masking.
 - 🔐 **RFC 6238 TOTP Two-Factor Authentication:** Multi-factor authentication for administrative accounts with client-side HTML5 canvas QR code generation, AES-256-GCM encrypted secrets, 10 single-use recovery codes, and configurable policy enforcement (`ADMIN_MFA_ENFORCE`).
 - 🛠️ **CLI Break-Glass Recovery:** Dedicated emergency command-line utilities for administrator creation (`create-admin.php`) and 2FA recovery resets (`reset-mfa.php`).
+- 🚨 **Attention-Needed Action Center & Today's Departures:** Real-time priority-ranked operational alert strip (`Critical`, `High Priority`, `Attention`) and Today's Departures compact schedule cards with live seat occupancy progress bars and departure countdown chips (`admin/dashboard.php`).
+- 📈 **Privacy-First Performance Overview & Analytics Workspace:** 4 KPI metric cards with period-over-period delta badges, interactive Chart.js dual-axis Booking & Revenue Trends combo chart (`Daily` / `Weekly` toggle), Booking Status donut breakdown, Key Insights strip, and strict PII-free server-side aggregation (`admin/dashboard.php`, `assets/js/perf-chart.js`).
+- 📋 **Passenger Trip Manifest & Native PDF Generator:** Dedicated manifest workspace (`admin/manifest.php`) featuring a zero-dependency pure-PHP PDF 1.4 generator (`generate_manifest_pdf_doc()` via `?export=pdf`), a streamlined mobile PDF download card (`.manifest-mobile-card`), desktop CSV export, and print-ready (`@media print`) layout with conductor/driver sign-off blocks.
+- 🛣️ **Modernized Transit Route Schedule Management:** 4 operational KPI cards, smart multi-criteria filter toolbar (search, status pills, sort order), visual route corridor cards, 1-click manifest links, bidirectional city swap controls, and schedule collision detection (`admin/routes.php`).
+- 🚌 **Fleet & Bus Management:** Configure custom seating capacities (10–60) and seating layout geometries (`2+2`, `2+1`, `1+2`, `1+1`).
 - 🗑️ **Soft-Delete Archiving & Restoration:** Safe `archived_at` lifecycle with Active vs Archived tab views and one-click restoration across fleet buses, routes, and customer accounts.
 - 📥 **Streaming CSV Exports:** Memory-efficient CSV downloads with spreadsheet formula injection protection (`=`, `+`, `-`, `@`) for bookings, customers, trip manifests, and audit trails.
 - 🔍 **Multi-Field Search & Date Filters:** Parameterized multi-criteria filtering across bookings, customer accounts, and audit events.
 - 📜 **Immutable Audit Trail:** Append-only event logging with visual before/after state diffing, database trigger protection, and automated retention cleanup.
 - 💬 **Customer Query Inbox & Email Replies:** Support inquiry lifecycle (`new`, `replied`, `closed`), modal email replies with RFC 5321 SMTP transport, and a live sidebar unread query counter.
-- 📈 **30-Day Trends & Corridor Analytics:** 30-day booking and revenue breakdowns, cancellation rate KPIs, and top 5 transit corridor utilization metrics.
 - 🎟️ **Bulk Booking Operations:** Multi-select checkboxes for batch reservation cancellations and selected-row CSV exports.
-- 📋 **Passenger Trip Manifest:** Dedicated printable manifest sheet (`admin/manifest.php`) by bus, date, and corridor with print-ready CSS (`@media print`) and conductor/driver sign-off fields.
-- 🚌 **Fleet & Bus Management:** Configure custom seating capacities (10–60) and seating layout geometries (`2+2`, `2+1`, `1+2`, `1+1`).
-- 🛣️ **Route Management:** Configure origin/destination hubs, bus assignments, departure schedules, and fare pricing with conflict/collision detection.
-- 📱 **Mobile Responsive Navigation Drawer & Modern Topbar (Option A):** Touch-first off-canvas drawer navigation (<992px) with authoritative single width (`min(86vw, 320px)`), 16 unified stroke-style SVG navigation icons, sticky 56px topbar with backdrop blur, two-line title block with section eyebrow, unread queries notification bell (`9+` indicator), swipe-to-dismiss gesture detection, `inert` accessibility state machine, focus trapping, safe-area inset adaptation (`viewport-fit=cover`), and dark theme token synchronization.
+- 🎨 **Global Light (White) & Dark Theme System & Responsive Navigation:** Unified design token architecture (`assets/css/design-system.css`) delivering a crisp pure-white Light Mode surface (`#ffffff`) and slate-navy Dark Mode (`#0f172a`) across both Customer and Admin portals, complete with a custom SVG vector icon sprite system, high-definition bus brand emblem (`assets/images/bus.svg`), glassmorphic sticky topbar with semantic section eyebrow pills, automatic CSS cache-busting, and an accessible touch-first mobile navigation drawer (`<992px`).
 
 ---
 
@@ -101,8 +104,8 @@ flowchart TD
 
 | Layer | Technologies |
 |---|---|
-| **Frontend** | HTML5, CSS3, JavaScript (ES6), Bootstrap 4.6, AOS.js Animations, Font Awesome, QRCode.js |
-| **Backend** | PHP 8.3 / 8.4 (Apache 2.4 runtime), Session Auth, MySQLi with TLS/SSL |
+| **Frontend** | HTML5, CSS3 (Custom Design Tokens & Light/Dark Theme System), JavaScript (ES6), Bootstrap 4.6, Chart.js, AOS.js, Font Awesome, QRCode.js, Inline SVG Sprite System |
+| **Backend** | PHP 8.3 / 8.4 (Apache 2.4 runtime), Session Auth, Pure-PHP Native PDF 1.4 Engine, MySQLi with TLS/SSL |
 | **Database** | TiDB Cloud Serverless (MySQL Compatible) / MySQL 8.0+ |
 | **Security & Auth** | RFC 6238 TOTP 2FA, AES-256-GCM, Bcrypt Hashing, Anti-CSRF, Enforced CSP, Rate Limiting |
 | **DevOps & Cloud** | Docker, Render Web Services, GitHub Actions CI/CD, GHCR Container Registry |
@@ -271,7 +274,7 @@ php database/create-admin.php "Super Administrator" "admin@example.com" "9876543
 
 ## 🧪 Automated Testing & Verification
 
-The codebase includes comprehensive test harnesses covering authentication, concurrency, RBAC, input sanitization, and regression checks:
+The codebase includes comprehensive test harnesses covering authentication, concurrency, RBAC, input sanitization, UI responsiveness, and regression checks:
 
 ```bash
 # Admin login entry points, parameter whitelist, and modal UI tests
@@ -288,6 +291,25 @@ php tests/test_phase3.php
 
 # Phase 4: Enforced CSP headers, SRI hashes, SQL LIKE escaping & CLI guards
 php tests/test_phase4.php
+
+# Admin mobile drawer, topbar eyebrow pills, SVG sprites & global theme tokens
+php tests/test_admin_layout.php
+
+# Customer portal mobile responsiveness, custom dropdowns & sticky booking bar
+php tests/test_user_layout.php
+
+# Modernized route schedule UI, KPI cards, smart filters & swap controls
+php tests/test_route_ui.php
+
+# Pure-PHP native PDF manifest generator & mobile manifest card verification
+php tests/test_pdf_manifest.php
+
+# Today's Departures compact schedule cards, occupancy bars & status chips
+php tests/test_departure_carousel.php
+
+# Privacy-first Performance Overview analytics & dashboard audit verification
+php tests/test_perf_overview.php
+php tests/test_dashboard_audit.php
 ```
 
 ---
@@ -303,13 +325,13 @@ Bus-Reservation/
 │
 ├── admin/                    # 👑 Administrator Management Subsystem
 │   ├── index.php             # Dashboard entry point
-│   ├── dashboard.php         # Real-time metrics, earnings KPIs & 30-day trends
+│   ├── dashboard.php         # Real-time KPIs, Attention Center, Today's Departures & Analytics
 │   ├── buses.php             # Fleet management (capacity 10–60, layouts & soft-delete)
-│   ├── routes.php            # Route schedules & tariffs (collision checks & soft-delete)
+│   ├── routes.php            # Route schedules, KPI cards, smart filters & collision checks
 │   ├── customers.php         # Customer directory, search, CSV export & archiving
 │   ├── bookings.php          # Booking management, multi-criteria filters & bulk actions
 │   ├── seats.php             # Live seat occupancy monitor with departure filters
-│   ├── manifest.php          # Passenger trip manifest (printable view & CSV export)
+│   ├── manifest.php          # Passenger trip manifest (PDF generator, mobile card, CSV & print)
 │   ├── queries.php           # Customer inquiry inbox & modal email reply workflow
 │   ├── audit-log.php         # Immutable audit trail, visual diffs & compliance logs
 │   ├── add-admin.php         # Administrator provisioning & account governance
@@ -323,14 +345,17 @@ Bus-Reservation/
 │       └── edit-customer.php
 │
 ├── user/                     # 🧑‍💼 Customer Passenger Portal
-│   ├── index.php             # Customer dashboard & live seat search
-│   ├── booking.php           # Reservation engine & dynamic seat layout picker
-│   └── my-bookings.php       # Personal booking history & cancellation
+│   ├── index.php             # Customer dashboard, upcoming journey card & custom city dropdowns
+│   ├── booking.php           # Reservation engine, fluid seat map & sticky mobile summary bar
+│   ├── my-bookings.php       # Personal booking history, status tabs & cancellation
+│   ├── profile.php           # Account security, password rotation, email change & deactivation
+│   ├── ticket.php            # Digital boarding pass, QR code & Native Web Share integration
+│   └── verify.php            # Public QR boarding pass verification endpoint
 │
 ├── includes/                 # 🔧 Core Framework & Security Libraries
 │   ├── config.php            # Dynamic BASE_URL detector, global error handling & env defaults
 │   ├── db_con.php            # Environment-driven database connector with TLS/SSL support
-│   ├── helpers.php           # Prepared statements, create_booking(), CSRF, rate limits, CSV streaming
+│   ├── helpers.php           # Prepared statements, create_booking(), PDF generator, CSRF, CSV streaming
 │   ├── admin-crud.php        # Shared admin CRUD helpers, soft-delete & UI components
 │   ├── auth/
 │   │   ├── session-bootstrap.php # Hardened session manager & secure cookie policy
@@ -340,11 +365,29 @@ Bus-Reservation/
 │   └── layout/
 │       ├── header-public.php # Homepage header
 │       ├── header-login.php  # Login page header
-│       ├── header-admin.php  # Admin sidebar navigation & unread query counter
-│       ├── header-user.php   # Customer navigation
+│       ├── header-admin.php  # Admin sidebar, SVG sprite system, topbar & cache-busting
+│       ├── header-user.php   # Customer sidebar, SVG sprite system, topbar & cache-busting
 │       ├── header-edit.php   # Edit pages header
 │       ├── footer.php        # Public & edit footer scripts
-│       └── footer-admin.php  # Admin & customer footer scripts
+│       ├── footer-admin.php  # Admin footer scripts & drawer controller
+│       └── footer-user.php   # Customer footer scripts & idle timeout integration
+│
+├── assets/                   # 🎨 Stylesheets, Scripts & Vector Brand Assets
+│   ├── css/
+│   │   ├── design-system.css # Global Light (White) & Dark (Slate) design tokens
+│   │   ├── admin.css         # Admin workspace, topbar, sidebar & table styles
+│   │   ├── admin-mobile-responsive.css # Responsive mobile drawer & card adaptations
+│   │   ├── dashboard.css     # Attention Center, Today's Departures & Analytics styles
+│   │   ├── user.css          # Customer portal, boarding pass & custom dropdown styles
+│   │   ├── seat-map.css      # Fluid seat map grid & sticky mobile booking bar
+│   │   └── home.css          # Public landing page styles
+│   ├── js/
+│   │   ├── admin-mobile.js   # Accessible off-canvas drawer & swipe gesture controller
+│   │   ├── perf-chart.js     # Chart.js dual-axis booking/revenue & status donut charts
+│   │   ├── theme-toggle.js   # Persistent Light/Dark theme switcher
+│   │   └── user-idle.js      # Customer session idle warning & auto-logout monitor
+│   └── images/
+│       └── bus.svg           # High-definition vector bus brand icon
 │
 ├── database/                 # 🗄️ Relational Schema & Migration Engine
 │   ├── init.sql              # Idempotent hardened schema DDL
@@ -380,7 +423,13 @@ Bus-Reservation/
 │   ├── test_phase2.php       # Phase 2: Money & reporting test suite
 │   ├── test_phase3.php       # Phase 3: Data integrity test suite
 │   ├── test_phase4.php       # Phase 4: Hygiene & hardening test suite
-│   ├── test_admin_layout.php # Mobile layout & navigation drawer test suite
+│   ├── test_admin_layout.php # Admin mobile drawer, topbar & global theme test suite
+│   ├── test_user_layout.php  # Customer portal mobile & custom dropdown test suite
+│   ├── test_route_ui.php     # Route schedule KPI, filter & corridor UI test suite
+│   ├── test_pdf_manifest.php # Native PDF manifest generator & mobile view test suite
+│   ├── test_departure_carousel.php # Today's Departures schedule list test suite
+│   ├── test_perf_overview.php # Performance Overview analytics test suite
+│   ├── test_dashboard_audit.php # Dashboard operational audit test suite
 │   ├── concurrency_worker.php # Concurrency test worker
 │   └── run_tests.php         # Master test harness
 │
