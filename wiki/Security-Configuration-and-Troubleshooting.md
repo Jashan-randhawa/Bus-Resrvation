@@ -102,6 +102,9 @@ php tests/test_departure_carousel.php
 # Privacy-First Performance Overview Analytics & Dashboard Audit Verification
 php tests/test_perf_overview.php
 php tests/test_dashboard_audit.php
+
+# Email Password Reset Link Flow, SHA-256 Token Hashing & Anti-Enumeration Suite
+php tests/test_password_reset.php
 ```
 
 ---

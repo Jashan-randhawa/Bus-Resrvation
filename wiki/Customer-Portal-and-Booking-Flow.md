@@ -116,3 +116,14 @@ Travelers can verify ticket status from the homepage without logging in:
    - Max 10 attempts per 10 minutes per IP.
    - Max 5 attempts per 15 minutes per target PNR token.
 3. Displays live status badge (`Confirmed`, `Pending`, `Expired`, `Cancelled`), passenger initials, route, seat number, and departure time.
+
+---
+
+## 9. Self-Service Email Password Reset Flow (`forgot-password.php`, `reset-password.php`, `includes/password-reset.php`)
+
+Passengers who forget their password can request a single-use reset link by email:
+1. **Zero Enumeration & Background SMTP Dispatch:** Submitting an email address on `forgot-password.php` immediately renders the identical *"Check Your Inbox"* view whether or not the account exists, flushing the HTTP response via `pr_after_response()` before running database lookup and SMTP delivery (`pr_issue_and_send()`).
+2. **SHA-256 Hashed Tokens (`password_resets`):** A 256-bit random hex token (`pr_new_token()`) is emailed in the link (`?code=<token>`), while only its SHA-256 hash (`pr_hash_token()`) is stored in `password_resets.token`. Plain tokens are never stored in the database or rendered on any web page.
+3. **Single-Use & Short TTL:** Links expire after `PASSWORD_RESET_TTL_MIN` (default `10` minutes, clamped `5..60`) and are deleted immediately upon use or if email delivery fails.
+4. **Rate Limiting & Debounce:** Enforces a 60-second resend cooldown (`PR_DEBOUNCE_SECS`), per-email request limit (`3 / 15m`), per-IP request limit (`12 / 15m`), and per-IP bad-token lockout (`5 / 15m`).
+5. **Password Reuse Prevention & Security Notice:** `reset-password.php` sends `Cache-Control: no-store` and `Referrer-Policy: no-referrer`, blocks reusing the current password, updates the bcrypt hash, logs `PASSWORD_RESET_REQUESTED` / `PASSWORD_RESET_SUCCESS` to `audit_log`, and dispatches a *"Your password was changed"* confirmation email.

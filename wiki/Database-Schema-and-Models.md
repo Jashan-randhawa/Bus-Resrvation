@@ -287,3 +287,4 @@ The schema runner (`database/db_migrate.php`) tracks and executes 10 sequential 
 | `008` | `008_audit_logging` | Creates `audit_log` table with database triggers |
 | `009` | `009_admin_accounts_and_soft_delete` | Adds `is_active`, `totp_*`, `admin_recovery_codes`, and `archived_at` |
 | `010` | `010_query_inbox_enhancements` | Adds `status`, `reply_text`, and timestamps to customer support inbox |
+| `011` | `011_password_reset_hashed_tokens` | Creates `password_resets` table with SHA-256 hashed `token` (`CHAR(64)`) and `idx_pr_email` |
