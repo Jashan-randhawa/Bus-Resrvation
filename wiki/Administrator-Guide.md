@@ -75,14 +75,16 @@ The dashboard provides a dedicated mode toggle allowing administrators to view d
 - **By Journey Date (`mode=journey`, default):** Analyzes reservations by physical travel departure date (`booking.date`). This view is essential for fleet dispatchers, depot managers, and capacity planners monitoring on-the-road volume.
 - **By Booking Date (`mode=created`):** Analyzes reservations by transaction timestamp (`DATE(booking.created_at)`). This view is essential for finance officers and revenue managers tracking daily cash inflow and marketing conversion.
 
-### 2.3 Operational Alerting & Attention-Needed Panel
+### 2.3 Operational Alerting, Today's Departures & Performance Overview (`admin/dashboard.php`)
 
-The Attention-Needed panel surfaces real-time dispatch and governance items requiring immediate action:
-- **Actionable Inquiries:** Direct link and count of open customer queries requiring response.
-- **Full Capacity Departures:** Today's trips at 100% capacity where walk-ins must be diverted to alternative departures.
-- **Low Occupancy Departures:** Upcoming departures with <30% seat occupancy departing within the operational window.
-- **Boarding Soon:** Trips scheduled to depart within 60 minutes.
-- **System Integrity:** Automated verification of `seat_lock` table constraints and generated `active_seat` uniqueness to guarantee double-booking prevention.
+The dashboard surfaces real-time dispatch alerts, live departures, and privacy-first interactive analytics:
+- **Attention-Needed Action Center:** Priority-ranked operational alert strip (`Critical`, `High Priority`, `Attention`) highlighting unanswered customer inquiries, full-capacity departures (`100%`), low-occupancy departures (`<30%`), and trips boarding within 60 minutes.
+- **Today's Departures Compact Schedule List:** Scannable operational list showing route corridor (`Origin → Destination`), bus badge, departure time, relative countdown chip (`Departed`, `In Xm`, `In Xh Ym`), progress bar occupancy (`booked/capacity`), and 1-click manifest shortcut.
+- **Privacy-First Performance Overview (`assets/js/perf-chart.js`):**
+  - **4 KPI Metric Cards:** Confirmed Revenue, Confirmed Bookings, Cancellation Rate, and Average Booking Value with period-over-period delta badges (`▲` / `▼`).
+  - **Interactive Chart.js Visuals:** Dual-axis **Booking & Revenue Trends** combo chart (bar + line with `Daily` / `Weekly` toggle) and **Booking Status** donut chart (`Confirmed`, `Pending`, `Cancelled`, `Expired`).
+  - **Key Insights Strip:** Automatically computes the Peak Revenue Day, Top Performing Route, and Average Lead Time.
+  - **Strict PII Zero-Leakage Guarantee:** All chart datasets and insights are aggregated server-side from numerical/date metrics only; zero passenger names, emails, phones, or PNRs are ever serialized to client scripts.
 
 ### 2.4 Data Export & Breakdown Table
 
@@ -102,10 +104,11 @@ The Attention-Needed panel surfaces real-time dispatch and governance items requ
 
 ## 4. Route Scheduling (`admin/routes.php`)
 
-- **Create Route Schedule:** Specify origin (`city1`), destination (`city2`), assigned bus (`busno`), departure time (`time`), and ticket fare (`price`).
-- **Referential Integrity:** The route links directly to `bus_id` in the `buses` table.
-- **Conflict Prevention:** Assigning the same vehicle to overlapping departures is blocked.
-- **Active Booking Lockdown:** If a route has active upcoming bookings, journey parameters (cities, vehicle, time) are locked from destructive modifications.
+- **Operational KPI Summary Cards:** Displays Active Schedules, Connected Cities, Assigned Fleet Vehicles, and Average Ticket Fare at the top of the workspace.
+- **Smart Multi-Criteria Filter Toolbar:** Instant client-side filtering by city or bus number, status filter pills (`All Routes`, `With Upcoming Bookings`, `No Bookings`), and multi-field sorting (`Route ID`, `Fare: Low → High`, `Fare: High → Low`, `Departure Time`).
+- **Create Route Schedule & Swap Controls:** Specify origin (`city1`), destination (`city2`) with a 1-click bidirectional swap button (`⇄`), assigned bus (`busno`), departure time (`time`), and ticket fare (`price`).
+- **Corridor Cards & Quick Manifest Access:** Route rows render visual corridor badges (`Origin → Destination`), bus layout tags, booking status pills, and a direct 1-click **Manifest** shortcut button (`admin/manifest.php`).
+- **Conflict Prevention & Active Booking Lockdown:** Assigning the same vehicle to overlapping departures is blocked, and routes with active upcoming bookings are locked from destructive schedule edits.
 - **Soft-Delete Archiving:** Routes can be archived and restored without losing historical trip linkages.
 
 ---
@@ -121,13 +124,17 @@ The Attention-Needed panel surfaces real-time dispatch and governance items requ
 
 ---
 
-## 6. Passenger Trip Manifest (`admin/manifest.php`)
+## 6. Passenger Trip Manifest & Native PDF Generator (`admin/manifest.php`)
 
-A dedicated operational tool for bus conductors and dispatchers:
+A dedicated operational workspace for bus conductors and dispatchers:
 - **Corridor & Departure Filter:** Filter passenger manifests by vehicle, departure date, and route.
+- **Pure-PHP Native PDF 1.4 Generator (`?export=pdf`):** Powered by `generate_manifest_pdf_doc()` in `includes/helpers.php` with zero external libraries required. Generates a structured A4 portrait PDF featuring:
+  - Branded navy header bar with trip date, bus number, and route corridor.
+  - 4-column summary KPI strip (Vehicle, Capacity, Confirmed Passengers, Collected Revenue).
+  - Complete seat-by-seat manifest table (Seat #, Status Badge, Passenger Name, Contact Phone, PNR, Fare, Conductor Checkoff Box) with automatic multi-page pagination and driver/conductor signature blocks.
+- **Mobile-First PDF Experience (`.manifest-mobile-card`):** On mobile viewports (`<768px`), displays a focused trip summary card with a prominent 1-tap **Download Manifest PDF** button instead of cramped horizontal tables.
 - **Hold Segregation:** Passenger manifest displays confirmed travelers; pending holds are segregated into an alert banner.
-- **Print-Ready Layout:** Full `@media print` styling with clean typography and conductor/driver signature sign-off lines.
-- **Manifest Export:** Download filtered passenger rosters as CSV for offline dispatch operations.
+- **Print-Ready Layout & CSV Export:** Full `@media print` styling and streaming CSV export (`?export=csv`) for desktop dispatchers.
 
 ---
 

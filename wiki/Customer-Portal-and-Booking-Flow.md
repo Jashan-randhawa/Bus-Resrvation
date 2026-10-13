@@ -33,24 +33,30 @@ sequenceDiagram
 
 ---
 
-## 2. Real-Time Route Search & Availability (`user/index.php`)
+## 2. Dashboard, Upcoming Journey Hero Card & Custom Search (`user/index.php`)
 
-When passengers search for trips between two cities:
-1. The server resolves all active routes matching origin and destination.
-2. For each route and date, the system dynamically calculates available seats:
+The Customer Dashboard combines an airline-grade boarding pass preview with an accessible search engine:
+1. **Upcoming Journey Hero Card:** Automatically highlights the passenger's next confirmed departure with a live pulsing status badge, origin/destination route visualization, departure countdown, assigned seat & PNR pills, and 1-tap **Boarding Pass** and **Share** actions.
+2. **Accessible In-DOM Custom City Dropdowns (`.custom-dropdown-widget`):**
+   - Replaces inconsistent OS-native combobox popups with a theme-aware in-DOM dropdown menu (`role="listbox"`) supporting full keyboard navigation (`ArrowDown`, `ArrowUp`, `Enter`, `Escape`).
+   - Formats city names in clean Title Case and dynamically filters available destination cities based on the selected origin city (`routePairs`).
+   - Includes a circular **Swap Cities (`⇄`)** button that validates reverse route connectivity before swapping.
+3. **Real-Time Seat Availability Calculation:**
    $$\text{Available Seats} = \text{Bus Capacity} - \text{Booked Seats}(\text{bus}, \text{date}, \text{time})$$
-3. Active seats include `Confirmed` and `Pending` reservations. Soft-cancelled and expired hold seats are automatically liberated.
-4. If $\text{Available Seats} = 0$, the action button is disabled with a "Sold Out" badge.
+   Active seats include `Confirmed` and `Pending` reservations; soft-cancelled and expired hold seats are automatically liberated.
 
 ---
 
 ## 3. Dynamic Interactive Bus Seat Map Engine (`user/booking.php`)
 
-The seat picker dynamically renders the exact capacity of the assigned vehicle (`get_bus_capacity()`, from 10 to 60 seats):
+The seat picker dynamically renders the exact capacity and layout (`2+2`, `2+1`, `1+2`, `1+1`) of the assigned vehicle (`get_bus_capacity()`, from 10 to 60 seats):
 
-- Available seats render as **Blue** clickable buttons (`btn-info`).
-- Already booked or held seats render as **Red** disabled buttons (`btn-danger`).
-- Clicking an available seat turns it **Green** (`btn-success`) and populates the validated hidden input field.
+- **Fluid Mobile Seat Grid (`assets/css/seat-map.css`):** Uses CSS `clamp(38px, 11vw, 48px)` seat sizing so a 4-seat + aisle row fits cleanly down to `320px` mobile screens without horizontal scrolling.
+- **Visual Seat States:**
+  - Available seats render as **Blue** clickable buttons.
+  - Already booked or held seats render as **Red** disabled buttons (`aria-disabled="true"`).
+  - Selected seat turns **Green** (`aria-pressed="true"`) and updates the live summary.
+- **Sticky Mobile Booking Bar (`.booking-sticky-footer`):** On mobile viewports (`<768px`), a fixed bottom confirmation bar displays the selected seat number, total fare, and a 1-tap **Confirm Booking** button (`min-height: 44px`).
 
 ---
 
@@ -58,7 +64,7 @@ The seat picker dynamically renders the exact capacity of the assigned vehicle (
 
 1. **Server-Side Price & Departure Time Resolution (F1, F2):** Fare and departure times are read strictly from the database, preventing client-side price tampering.
 2. **Date Boundaries (F5):** Travel dates cannot be in the past or more than 90 days in advance. Buses scheduled earlier than the current server time for today cannot be booked.
-3. **Atomic Concurrency Defense (F4):** Booking insertions rely on MySQL's unique constraint `uq_booking_seat (bus, date, time, seat)`. Any race condition is caught immediately as duplicate key `1062`, rolling back cleanly and instructing the customer to pick another seat.
+3. **Atomic Concurrency Defense (F4):** Booking insertions claim a lock in the `seat_lock` table (`PRIMARY KEY (bus_id, travel_date, seat_no)`) and rely on `uq_booking_active_seat`. Any race condition is caught immediately as duplicate key `1062`, rolling back cleanly and instructing the customer to pick another seat.
 4. **Cryptographic PNR Generation:** Uses `random_bytes(5)` to generate a 10-character hex token (e.g. `B4C90A81DE`).
 5. **Seat Hold & Payment Lifecycle (O13):**
    - Bookings can enter `Pending` state with a 10-minute hold window (`hold_expires_at`).
@@ -66,37 +72,39 @@ The seat picker dynamically renders the exact capacity of the assigned vehicle (
 
 ---
 
-## 5. Personal Bookings & Soft Cancellation (`user/my-bookings.php`)
+## 5. Personal Bookings, Status Filter Tabs & Soft Cancellation (`user/my-bookings.php`)
 
-Passengers can inspect their travel history strictly bound to their authenticated session ID (`WHERE id = ?`):
-- Displays PNR token, bus number, route, departure timestamp, seat badge, status badge, and fare.
+Passengers can inspect their travel history strictly bound to their authenticated session ID:
+- **Responsive 3-Column Filter Tabs:** Switch between `All`, `Upcoming`, and `Past / Cancelled` reservations with live badge counts.
+- Displays PNR token, bus number, route corridor, departure timestamp, seat badge, status badge, and fare.
 - **Cancellation Policy (O4, F7):**
-  - Only un-departed future trips can be cancelled (`date >= today`).
-  - Cancellation marks `status = 'Cancelled'`, keeping the audit record while instantly releasing the seat for new reservations.
+  - Only un-departed future trips within the allowed cutoff window (`APP_CANCEL_CUTOFF_MIN`) can be cancelled.
+  - Cancellation marks `status = 'Cancelled'` and deletes the corresponding `seat_lock` row inside a transaction, keeping the audit record while instantly releasing the seat for new reservations.
 
 ---
 
-## 6. Digital Ticket Verification & HMAC-SHA256 Seal (`user/ticket.php`, `user/verify.php`)
+## 6. Digital Boarding Pass, Native Share & HMAC-SHA256 Seal (`user/ticket.php`, `user/verify.php`)
 
-Tickets carry a cryptographically signed verification seal and QR code:
-1. **HMAC-SHA256 Signature:** Computed over `PNR|Date|Time|Seat` using `TICKET_HMAC_SECRET` (configured via environment or fallback salt).
+Tickets carry a cryptographically signed verification seal, QR code, and native sharing capabilities:
+1. **HMAC-SHA256 Signature:** Computed over `PNR|Date|Time|Seat` using `TICKET_HMAC_SECRET`.
 2. **Dedicated Validity States:**
    - **`VALID PASS`:** Future departure, confirmed booking status.
    - **`COMPLETED`:** Departed past journey (receipt remains viewable/printable for expense accounting).
    - **`PENDING PAYMENT`:** Seat hold active, awaiting payment confirmation.
    - **`VOID`:** Cancelled or expired reservations (watermarked overlay displayed).
-3. **Public QR Code & Verification Endpoint (`user/verify.php`):**
-   - Conductors and travelers can scan the QR code to verify the ticket against the live database.
-   - Evaluates `hash_equals($expected_sig, $sig)` to detect altered tickets or forge attempts.
+3. **Native Web Share API Integration:** Clicking **Share Boarding Pass** invokes `navigator.share` on mobile devices (with automatic clipboard fallback on desktop) to share trip details and the verification link.
+4. **Public QR Code & Verification Endpoint (`user/verify.php`):**
+   - Conductors and travelers can scan the QR code to verify the ticket against the live database using constant-time `hash_equals($expected_sig, $sig)`.
 
 ---
 
-## 7. Search Usability & Resilience (`user/index.php`)
+## 7. Customer Account Security & Profile Management (`user/profile.php`)
 
-- **Anchor Auto-Scroll:** When search results load, the view automatically scrolls to `#search-results`.
-- **Loading State:** The search button shows a progress spinner on submission while preventing duplicate requests.
-- **Departed Journey Sorting:** On same-day searches, departed trips are cleanly sorted below upcoming bookable journeys, accompanied by a same-day schedule note.
-- **Swap Cities Validation:** Swapping origins and destinations validates whether the reverse route exists before updating selections, avoiding accidental blank fields.
+Passengers can manage their personal details and security settings from a dedicated profile workspace:
+- **Contact Details:** Update full name, phone number, and residential address.
+- **Email Change Verification:** Updating the account email requires current password verification and uniqueness checks.
+- **Password Rotation:** Enforces minimum 8-character password complexity and verifies the current password before hashing with bcrypt (`PASSWORD_DEFAULT`).
+- **Self-Service Account Deactivation:** Passengers can archive their account (`archived_at = NOW()`) after password confirmation, provided they have no active upcoming reservations.
 
 ---
 

@@ -32,11 +32,11 @@ flowchart LR
 
 ## 🛠️ Technology Stack Reference
 
-- **Backend Runtime:** PHP 8.3 / 8.4 with MySQLi extension
+- **Backend Runtime:** PHP 8.3 / 8.4 with MySQLi extension & Pure-PHP Native PDF 1.4 Engine (`generate_manifest_pdf_doc()`)
 - **Web Server:** Apache 2.4 HTTP Server with `mod_rewrite` and `mod_headers`
 - **Database Engine:** TiDB Cloud Serverless (MySQL 8.0 compatible wire protocol)
-- **Frontend UI:** HTML5, CSS3, JavaScript (ES6), Bootstrap 4.6, AOS.js
+- **Frontend UI:** HTML5, CSS3 (Custom Design Tokens with Global Light/White & Dark/Slate Theme System), JavaScript (ES6), Bootstrap 4.6, Chart.js, AOS.js, QRCode.js, Inline SVG Sprite System
 - **Containerization:** Docker (Multi-stage build context, non-root web directory, dynamic PORT support)
 - **Cloud Hosting:** Render Web Services
-- **CI/CD & Registry:** GitHub Actions & GitHub Container Registry (`ghcr.io`)
+- **CI/CD & Registry:** GitHub Actions & GitHub Container Registry (`ghcr.io`), GitHub Packages (npm)
 - **Open Source License:** MIT License

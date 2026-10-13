@@ -54,18 +54,19 @@ All production credentials and API keys are injected dynamically via environment
 - All administrative mutations (bus create/delete, route schedule create/delete, booking create/cancel, customer modifications) write immutable log entries to `audit_log`.
 - Database triggers block `UPDATE` and `DELETE` on `audit_log`.
 
-### 1.9 Enforced HTTP Security Headers
+### 1.9 Enforced HTTP Security Headers & PII Zero-Leakage Analytics
 Apache security headers in `docker/apache-security.conf` enforce:
 - `Content-Security-Policy`: Strict directives with SRI hashes and script/image whitelisting.
 - `Strict-Transport-Security`: `max-age=15552000` (HSTS).
 - `X-Frame-Options`: `SAMEORIGIN`.
 - `X-Content-Type-Options`: `nosniff`.
+- **Privacy-First Dashboard Analytics (`admin/dashboard.php`):** All Chart.js datasets (`Booking & Revenue Trends`, `Booking Status`) are aggregated strictly on the server over numeric/date columns so zero passenger PII (names, phone numbers, emails, or PNRs) is ever exposed in browser DOM payloads.
 
 ---
 
 ## 2. Automated Test Harnesses
 
-The system contains five automated test suites verifying security, concurrency, data integrity, and UI resilience:
+The system contains 12 automated test suites verifying security, concurrency, data integrity, PDF generation, and UI responsiveness:
 
 ```bash
 # Admin Login Entry Points, Query Whitelist & Modal UI
@@ -82,6 +83,25 @@ php tests/test_phase3.php
 
 # Phase 4: Enforced CSP Headers, SRI Hashes, SQL LIKE Escaping & CLI Guards
 php tests/test_phase4.php
+
+# Admin Mobile Drawer, Topbar Eyebrow Pills, SVG Sprites & Global Theme Tokens
+php tests/test_admin_layout.php
+
+# Customer Portal Mobile Responsiveness, Custom Dropdowns & Sticky Booking Bar
+php tests/test_user_layout.php
+
+# Modernized Route Schedule UI, KPI Cards, Smart Filters & Swap Controls
+php tests/test_route_ui.php
+
+# Pure-PHP Native PDF Manifest Generator & Mobile Manifest Card Verification
+php tests/test_pdf_manifest.php
+
+# Today's Departures Compact Schedule Cards, Occupancy Bars & Status Chips
+php tests/test_departure_carousel.php
+
+# Privacy-First Performance Overview Analytics & Dashboard Audit Verification
+php tests/test_perf_overview.php
+php tests/test_dashboard_audit.php
 ```
 
 ---
