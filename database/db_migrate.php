@@ -701,6 +701,41 @@ function run_migrations(mysqli $link): array {
     } else {
         $log[] = "[i] Migration {$m10} already applied.";
     }
+
+    // 13. Migration 011: 011_password_reset_hashed_tokens
+    $m11 = '011_password_reset_hashed_tokens';
+    if (!migration_applied($link, $m11)) {
+        $log[] = "[*] Running migration: {$m11}...";
+        $m11_ok = true;
+
+        $m11_ok = $m11_ok && try_sql($link, "
+            CREATE TABLE IF NOT EXISTS `password_resets` (
+              `id` INT AUTO_INCREMENT PRIMARY KEY,
+              `email` VARCHAR(100) NOT NULL,
+              `token` CHAR(64) NOT NULL COMMENT 'SHA-256 hash of the emailed token, never the token itself',
+              `expires_at` TIMESTAMP NOT NULL,
+              `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              INDEX `idx_token` (`token`),
+              INDEX `idx_pr_email` (`email`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ", $log);
+
+        if (!has_index($link, 'password_resets', 'idx_pr_email')) {
+            $m11_ok = $m11_ok && try_sql($link, "ALTER TABLE `password_resets` ADD INDEX `idx_pr_email` (`email`)", $log);
+        }
+
+        $m11_ok = $m11_ok && try_sql($link, "DELETE FROM `password_resets`", $log);
+
+        if ($m11_ok) {
+            record_migration($link, $m11);
+            $log[] = "  -> Completed {$m11}.";
+        } else {
+            $log[] = "  [!] Migration {$m11} had errors; not marked as applied.";
+            $all_ok = false;
+        }
+    } else {
+        $log[] = "[i] Migration {$m11} already applied.";
+    }
     } finally {
         if ($lock_acquired) {
             try {

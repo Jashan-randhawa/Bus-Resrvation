@@ -165,6 +165,17 @@ CREATE TABLE IF NOT EXISTS `admin_recovery_codes` (
   CONSTRAINT `fk_admin_recovery_admin` FOREIGN KEY (`admin_id`) REFERENCES `admin` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Customer Password Reset Hashed Tokens (Migration 011)
+CREATE TABLE IF NOT EXISTS `password_resets` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `email` VARCHAR(100) NOT NULL,
+  `token` CHAR(64) NOT NULL COMMENT 'SHA-256 hash of the emailed token, never the token itself',
+  `expires_at` TIMESTAMP NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_token` (`token`),
+  INDEX `idx_pr_email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Append-only enforcement triggers for audit trail (Issue 16)
 DELIMITER $$
 CREATE TRIGGER IF NOT EXISTS `audit_log_no_update` BEFORE UPDATE ON `audit_log` FOR EACH ROW

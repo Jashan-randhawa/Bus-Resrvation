@@ -165,10 +165,11 @@ function ensure_password_resets_table(mysqli $link): void {
             CREATE TABLE IF NOT EXISTS `password_resets` (
                 `id` INT AUTO_INCREMENT PRIMARY KEY,
                 `email` VARCHAR(100) NOT NULL,
-                `token` CHAR(64) NOT NULL,
+                `token` CHAR(64) NOT NULL COMMENT 'SHA-256 hash of the emailed token, never the token itself',
                 `expires_at` TIMESTAMP NOT NULL,
                 `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                INDEX `idx_token` (`token`)
+                INDEX `idx_token` (`token`),
+                INDEX `idx_pr_email` (`email`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ");
         $checked = true;
