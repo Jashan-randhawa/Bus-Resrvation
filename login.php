@@ -40,6 +40,7 @@ require_once __DIR__ . '/includes/layout/header-login.php';
                 <button type="submit" value="Login" name="user" class="btn btn-primary btn-block py-2 font-weight-bold shadow-sm">
                     Sign In
                 </button>
+                <?php require __DIR__ . '/includes/layout/google-button.php'; ?>
             </form>
             <div class="text-center mt-4">
                 <a href="<?= BASE_URL ?>/homepage.php?login=admin" class="small text-muted font-weight-bold">

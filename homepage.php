@@ -1205,6 +1205,7 @@ if (isset($_POST['subbtn'])) {
             <button type="submit" class="btn btn-primary btn-block py-2 font-weight-bold" name="user" style="min-height: 44px;">
               Sign In to Account
             </button>
+            <?php require __DIR__ . '/includes/layout/google-button.php'; ?>
             <div class="text-center mt-3 pt-2 border-top">
               <small class="text-muted">Staff or Administrator? <a href="#" data-dismiss="modal" data-toggle="modal" data-target="#loginModal" class="font-weight-bold text-dark">Admin Portal &rarr;</a></small>
             </div>
@@ -1264,6 +1265,7 @@ if (isset($_POST['subbtn'])) {
             <button type="submit" class="btn btn-success btn-block py-2 font-weight-bold" name="userbtn" style="min-height: 44px;">
               Create New Account
             </button>
+            <?php require __DIR__ . '/includes/layout/google-button.php'; ?>
           </form>
         </div>
       </div>

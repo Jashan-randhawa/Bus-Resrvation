@@ -28,8 +28,22 @@ sequenceDiagram
         Home->>Home: Verify password_verify(pwd, hash)
         Home->>Session: Store $_SESSION['uid'], $_SESSION['name'], $_SESSION['phone']
         Home->>Portal: Redirect to /user/index.php
+    else Continue with Google (Customer Only)
+        User->>Home: Click "Continue with Google" (google-login.php)
+        Home->>Home: Generate cryptographically secure state, nonce & S256 PKCE
+        Home->>User: Redirect to Google OAuth 2.0 Consent Screen
+        User->>Home: Google redirects back to google-callback.php?code=...&state=...
+        Home->>Home: Validate session state & consume (single use)
+        Home->>Home: Exchange code for ID token via TLS
+        Home->>Home: Validate ID token (issuer, audience, exp, nonce, email_verified)
+        Home->>DB: Match by google_id or email (Migration 012)
+        Home->>Session: login_user('user', customer)
+        Home->>Portal: Redirect to /user/index.php
     end
 ```
+
+> [!NOTE]
+> **Google Sign-In is strictly customer-facing.** The Administrator Portal (`admin/`) does not accept Google OAuth and strictly requires username, strong password, and optional Multi-Factor Authentication (MFA/TOTP).
 
 ---
 

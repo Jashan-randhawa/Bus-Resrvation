@@ -26,10 +26,12 @@ CREATE TABLE IF NOT EXISTS `costumer` (
   `name` VARCHAR(100) NOT NULL,
   `email` VARCHAR(100) NOT NULL,
   `pwd` VARCHAR(255) NOT NULL,
+  `google_id` VARCHAR(255) NULL,
   `phone` VARCHAR(20) NOT NULL,
   `address` TEXT DEFAULT NULL,
   `archived_at` DATETIME NULL,
   UNIQUE KEY `uq_customer_email` (`email`),
+  UNIQUE KEY `uq_customer_google_id` (`google_id`),
   KEY `idx_cust_archived` (`archived_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

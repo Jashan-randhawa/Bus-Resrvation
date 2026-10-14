@@ -4,6 +4,22 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- **"Continue with Google" sign-in for customers (`google-login.php`, `google-callback.php`, `includes/google-auth.php`, `includes/layout/google-button.php`, migration `012`)**:
+  - **Secure OAuth 2.0 / OpenID Connect flow**: authorization-code exchange runs server-side over TLS with per-attempt `state`, `nonce` and PKCE (S256); the ID token's issuer, audience, expiry, nonce and `email_verified` are all checked. The client secret never reaches the browser.
+  - **Strictly customer-only (not admin)**: Google authentication is scoped solely to customers (`costumer` table and `login_user('user', ...)`); the administrator portal remains password-protected and MFA-enforced.
+  - **Account matching & linking rules**: matched by Google account id first, then by e-mail; unknown e-mails create a customer; a different Google account on the same e-mail is refused; archived customers are refused.
+  - **Pre-hijack protection**: connecting Google to an existing password account removes that old password (the bus app does not verify e-mails at registration) and sends a notice e-mail; the customer can use *Forgot password* to set a new one.
+  - **Schema**: `costumer.google_id` (unique, nullable) is added by the migration runner (`012_customer_google_signin`) and by `database/init.sql` for new installs. Google-created customers have no usable password and an empty phone number, which they enter on the booking form.
+  - **UI**: a "Continue with Google" button on the homepage customer sign-in and register panes and on `login.php`, shown only when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
+  - **Setup**: create an OAuth client (Web application) in Google Cloud Console, add `<APP_URL>/google-callback.php` as an authorized redirect URI, set the two variables, then run `php database/db_migrate.php`. Tests: `php tests/test_google_auth.php` (88/88 passing).
+
+- **Forgot password now works by e-mailed reset link (`forgot-password.php`, `reset-password.php`, `includes/password-reset.php`, migration `011`)**:
+  - **Hashed, single-use tokens**: only the SHA-256 hash is stored in `password_resets.token`; links expire after `PASSWORD_RESET_TTL_MIN` minutes (default 10) and are deleted once used.
+  - **No account enumeration**: identical response for known and unknown addresses; look-up and email delivery run after the response is sent.
+  - **Abuse limits**: 3 reset e-mails per address per 15 min, 60 s debounce, per-IP lockout after 5 bad tokens; stored token is removed if the e-mail cannot be delivered.
+  - **Brevo HTTPS REST API (Port 443) Transport**: delivers transactional emails over HTTPS port 443 bypassing cloud SMTP port 587 blocks, with fallback to standard SMTP.
+  - **Setup**: set `BREVO_API_KEY` (or `MAIL_ENABLED=true` with SMTP variables) and `APP_URL`; run migration 011. Tests: `php tests/test_password_reset.php` (39/39 passing).
+
 - **CI Pipeline Heuristic & Request Sanitization Fix (`homepage.php`, `.github/workflows/ci.yml`)**:
   - **Eliminated CI False Positives**: Resolved false positive in GitHub Actions CI step "Block raw request data inside SQL" caused by direct `empty($_GET['...'])` references inside `<option>` tags on lines containing `select`.
   - **Sanitized Local Variables (`homepage.php`)**: Read query parameters once into local sanitized `$search_from` and `$search_to` variables before HTML rendering and used `$search_from === ''` / `$search_to === ''` in `<option>` selected attributes.

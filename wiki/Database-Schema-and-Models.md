@@ -269,11 +269,25 @@ Customer inquiries and support feedback.
 | `replied_at` | `DATETIME` | Yes | Timestamp of email reply dispatch |
 | `reply_text` | `TEXT` | Yes | Sent email reply body |
 
+### 2.9 Table: `costumer`
+Customer accounts, profile credentials, and Google OAuth bindings.
+
+| Column | Type | Nullable | Description |
+|---|---|:---:|---|
+| `id` | `INT AUTO_INCREMENT` | No | Primary Key |
+| `name` | `VARCHAR(100)` | No | Customer full name |
+| `email` | `VARCHAR(100)` | No | Contact email (**Unique Key: `uq_customer_email`**) |
+| `pwd` | `VARCHAR(255)` | No | Bcrypt hashed password (`$2y$`) or unusable random hash |
+| `google_id` | `VARCHAR(255)` | Yes | Google account subject ID (`sub`) (**Unique Key: `uq_customer_google_id`**) |
+| `phone` | `VARCHAR(20)` | No | Passenger contact phone number |
+| `address` | `TEXT` | Yes | Passenger residential address |
+| `archived_at` | `DATETIME` | Yes | Soft-delete timestamp (NULL = active) |
+
 ---
 
 ## 3. Database Migration Sequence
 
-The schema runner (`database/db_migrate.php`) tracks and executes 10 sequential migrations idempotently:
+The schema runner (`database/db_migrate.php`) tracks and executes 12 sequential migrations idempotently:
 
 | Step | Migration File / Key | Scope |
 |---|---|---|
@@ -288,3 +302,4 @@ The schema runner (`database/db_migrate.php`) tracks and executes 10 sequential 
 | `009` | `009_admin_accounts_and_soft_delete` | Adds `is_active`, `totp_*`, `admin_recovery_codes`, and `archived_at` |
 | `010` | `010_query_inbox_enhancements` | Adds `status`, `reply_text`, and timestamps to customer support inbox |
 | `011` | `011_password_reset_hashed_tokens` | Creates `password_resets` table with SHA-256 hashed `token` (`CHAR(64)`) and `idx_pr_email` |
+| `012` | `012_customer_google_signin` | Adds `google_id` column and `uq_customer_google_id` unique key to `costumer` table |

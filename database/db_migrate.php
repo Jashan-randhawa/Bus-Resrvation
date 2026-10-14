@@ -736,6 +736,30 @@ function run_migrations(mysqli $link): array {
     } else {
         $log[] = "[i] Migration {$m11} already applied.";
     }
+
+    // 14. Migration 012: 012_customer_google_signin ("Continue with Google")
+    $m12 = '012_customer_google_signin';
+    if (!migration_applied($link, $m12)) {
+        $log[] = "[*] Running migration: {$m12}...";
+        $m12_ok = true;
+
+        if (!has_column($link, 'costumer', 'google_id')) {
+            $m12_ok = $m12_ok && try_sql($link, "ALTER TABLE `costumer` ADD COLUMN `google_id` VARCHAR(255) NULL AFTER `pwd`", $log);
+        }
+        if ($m12_ok && !has_index($link, 'costumer', 'uq_customer_google_id')) {
+            $m12_ok = $m12_ok && try_sql($link, "ALTER TABLE `costumer` ADD UNIQUE KEY `uq_customer_google_id` (`google_id`)", $log);
+        }
+
+        if ($m12_ok) {
+            record_migration($link, $m12);
+            $log[] = "  -> Completed {$m12}.";
+        } else {
+            $log[] = "  [!] Migration {$m12} had errors; not marked as applied.";
+            $all_ok = false;
+        }
+    } else {
+        $log[] = "[i] Migration {$m12} already applied.";
+    }
     } finally {
         if ($lock_acquired) {
             try {

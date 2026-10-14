@@ -105,7 +105,17 @@ php tests/test_dashboard_audit.php
 
 # Email Password Reset Link Flow, SHA-256 Token Hashing & Anti-Enumeration Suite
 php tests/test_password_reset.php
+
+# Customer Google OAuth 2.0 / OpenID Connect PKCE & Token Validation Suite
+php tests/test_google_auth.php
 ```
+
+### 1.10 Customer Google OAuth 2.0 / OpenID Connect Security
+- **Strict Customer Isolation:** Google sign-in is restricted exclusively to the customer portal (`login_user('user', ...)`). The administrator section (`admin/`) does not accept Google credentials.
+- **PKCE (S256) & Nonce Replay Defense:** Generates high-entropy cryptographic `state`, `nonce`, and S256 PKCE `code_verifier` on each initiation, stored in session and consumed on single use.
+- **Server-to-Server Code Exchange:** Google authorization code is exchanged directly over TLS with Google's token endpoint (`https://oauth2.googleapis.com/token`); client secrets never touch the browser.
+- **Token Verification:** Strict verification of JWT claims (`iss`, `aud`, `exp`, `nonce`, `sub`, and `email_verified`).
+- **Pre-Hijack Account Protection:** Linking Google to an existing email clears previous unverified passwords, preventing pre-hijacking attacks.
 
 ---
 
