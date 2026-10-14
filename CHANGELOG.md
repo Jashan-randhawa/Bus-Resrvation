@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- **Google Sign-In Account Data Access & Sensitive Action Re-Authentication (`google-reauth.php`, `user/profile.php`, `includes/google-auth.php`, migration `013`)**:
+  - **Sensitive Action Parity for Google-Only Accounts**: Closes the credential gap where Google accounts had no usable password for sensitive actions (change email, change password, delete account).
+  - **Google Re-Authentication Flow (`google_begin_reauth()`, `google_reauth_ok()`)**: Requires a fresh Google confirmation within 300 seconds (`max_age=300`, `login_hint=$email`, `prompt=login`, `auth_time` claim verification) before allowing email changes or account deactivation.
+  - **Explicit Credential State (`costumer.pwd_set`, Migration `013`)**: Added `pwd_set` flag (`TINYINT(1)`, default 1). Initialized to 0 for Google-created or linked accounts, and updated to 1 whenever a customer sets or resets their password.
+  - **Profile Security UI (`user/profile.php`)**: Displays "Signed in with Google" and "Google-Only Credentials" badges, hides raw password fields for Google-only users in favor of a "Confirm with Google" button, and enables Google users to optionally set a permanent account password.
+  - **Testing**: Added test Suite 10 to `tests/test_google_auth.php` covering `google_reauth_ok()`, `customer_proof_ok()`, session timeouts, clock skew, and static file wiring (111/111 passing).
+
 - **"Continue with Google" sign-in for customers (`google-login.php`, `google-callback.php`, `includes/google-auth.php`, `includes/layout/google-button.php`, migration `012`)**:
   - **Secure OAuth 2.0 / OpenID Connect flow**: authorization-code exchange runs server-side over TLS with per-attempt `state`, `nonce` and PKCE (S256); the ID token's issuer, audience, expiry, nonce and `email_verified` are all checked. The client secret never reaches the browser.
   - **Strictly customer-only (not admin)**: Google authentication is scoped solely to customers (`costumer` table and `login_user('user', ...)`); the administrator portal remains password-protected and MFA-enforced.

@@ -45,6 +45,34 @@ sequenceDiagram
 > [!NOTE]
 > **Google Sign-In is strictly customer-facing.** The Administrator Portal (`admin/`) does not accept Google OAuth and strictly requires username, strong password, and optional Multi-Factor Authentication (MFA/TOTP).
 
+### 1.1 Google Re-Authentication Flow for Sensitive Account Actions (`google-reauth.php`)
+
+For customers who authenticated exclusively via Google (`pwd_set = 0`), sensitive account modifications (changing email address, setting a new password, or deactivating the account) require a fresh Google confirmation:
+
+```mermaid
+sequenceDiagram
+    actor User as Google Passenger
+    participant Profile as user/profile.php
+    participant ReAuth as google-reauth.php
+    participant Google as Google Identity (OAuth)
+    participant Callback as google-callback.php
+    participant DB as TiDB / MySQL
+
+    User->>Profile: Clicks "Confirm with Google"
+    Profile->>ReAuth: GET google-reauth.php?next=/user/profile.php
+    ReAuth->>ReAuth: google_begin_reauth(uid, email, next)<br/>Sets mode=reauth, max_age=300, prompt=login, login_hint
+    ReAuth->>Google: Redirects to Google authentication
+    User->>Google: Confirms identity with Google
+    Google->>Callback: Redirects to google-callback.php?code=...&state=...
+    Callback->>Callback: Validates state & exchanges code for ID token
+    Callback->>Callback: Checks auth_time claim & verifies matching sub (google_id)
+    Callback->>DB: Audit log REAUTH_OK
+    Callback->>Profile: Sets $_SESSION['reauth_at'] = time() & redirects to Profile
+    User->>Profile: Submits sensitive change within 300s
+    Profile->>Profile: customer_proof_ok() evaluates to true
+    Profile->>DB: Executes mutation (updates email / password / deactivates)
+```
+
 ---
 
 ## 2. Dashboard, Upcoming Journey Hero Card & Custom Search (`user/index.php`)

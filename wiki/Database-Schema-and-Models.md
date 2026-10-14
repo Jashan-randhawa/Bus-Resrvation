@@ -279,6 +279,7 @@ Customer accounts, profile credentials, and Google OAuth bindings.
 | `email` | `VARCHAR(100)` | No | Contact email (**Unique Key: `uq_customer_email`**) |
 | `pwd` | `VARCHAR(255)` | No | Bcrypt hashed password (`$2y$`) or unusable random hash |
 | `google_id` | `VARCHAR(255)` | Yes | Google account subject ID (`sub`) (**Unique Key: `uq_customer_google_id`**) |
+| `pwd_set` | `TINYINT(1)` | No | Credential flag: `1` = has password, `0` = Google-only authentication |
 | `phone` | `VARCHAR(20)` | No | Passenger contact phone number |
 | `address` | `TEXT` | Yes | Passenger residential address |
 | `archived_at` | `DATETIME` | Yes | Soft-delete timestamp (NULL = active) |
@@ -287,7 +288,7 @@ Customer accounts, profile credentials, and Google OAuth bindings.
 
 ## 3. Database Migration Sequence
 
-The schema runner (`database/db_migrate.php`) tracks and executes 12 sequential migrations idempotently:
+The schema runner (`database/db_migrate.php`) tracks and executes 13 sequential migrations idempotently:
 
 | Step | Migration File / Key | Scope |
 |---|---|---|
@@ -303,3 +304,4 @@ The schema runner (`database/db_migrate.php`) tracks and executes 12 sequential 
 | `010` | `010_query_inbox_enhancements` | Adds `status`, `reply_text`, and timestamps to customer support inbox |
 | `011` | `011_password_reset_hashed_tokens` | Creates `password_resets` table with SHA-256 hashed `token` (`CHAR(64)`) and `idx_pr_email` |
 | `012` | `012_customer_google_signin` | Adds `google_id` column and `uq_customer_google_id` unique key to `costumer` table |
+| `013` | `013_google_pwd_set` | Adds `pwd_set` (`TINYINT(1)`) credential state flag to `costumer` table |

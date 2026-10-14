@@ -116,6 +116,8 @@ php tests/test_google_auth.php
 - **Server-to-Server Code Exchange:** Google authorization code is exchanged directly over TLS with Google's token endpoint (`https://oauth2.googleapis.com/token`); client secrets never touch the browser.
 - **Token Verification:** Strict verification of JWT claims (`iss`, `aud`, `exp`, `nonce`, `sub`, and `email_verified`).
 - **Pre-Hijack Account Protection:** Linking Google to an existing email clears previous unverified passwords, preventing pre-hijacking attacks.
+- **Sensitive Action Re-Authentication Window (`max_age=300`):** Customers with Google-only accounts (`pwd_set = 0`) must complete Google re-authentication (`google-reauth.php`) to unlock sensitive actions (change email, change/set password, deactivate account). Google mandates `prompt=login`, `max_age=300`, and verifies the `auth_time` claim within 300 seconds to ensure the user is actively present.
+- **Session Replay & Hijacking Defense:** Re-authentication state is single use, stored securely in `$_SESSION['reauth_at']`, and automatically invalidates after `GOOGLE_REAUTH_TTL` (300 s).
 
 ---
 
