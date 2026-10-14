@@ -241,6 +241,7 @@ function google_message(string $code): string {
         'google_denied'            => 'Google sign-in was cancelled.',
         'google_unavailable'       => 'Google sign-in is not available right now. Please sign in with your email and password.',
         'rate_limited'             => 'Too many sign-in attempts. Please wait a few minutes and try again.',
+        'google_reauth_failed'     => 'We could not confirm your identity with Google. Please try again.',
         default                    => 'We could not sign you in with Google. Please try again.',
     };
 }
@@ -266,7 +267,7 @@ function google_unusable_password_hash(): string {
 function google_find_customer(mysqli $link, string $col, string $val): ?array {
     $col = $col === 'google_id' ? 'google_id' : 'email'; // fixed whitelist, never user input
     return db_one($link,
-        'SELECT id, name, email, phone, google_id, archived_at FROM costumer WHERE ' . $col . ' = ? LIMIT 1',
+        'SELECT id, name, email, phone, google_id, pwd_set, archived_at FROM costumer WHERE ' . $col . ' = ? LIMIT 1',
         's', [$val]);
 }
 
@@ -318,7 +319,7 @@ function google_complete_login(mysqli $link, array $claims, ?string $next, int $
     if ($decision['action'] === 'link') {
         // Clear the old password: the address was never verified when that password was set.
         db_exec($link,
-            'UPDATE costumer SET google_id = ?, pwd = ? WHERE id = ? AND google_id IS NULL',
+            'UPDATE costumer SET google_id = ?, pwd = ?, pwd_set = 0 WHERE id = ? AND google_id IS NULL',
             'ssi', [$sub, google_unusable_password_hash(), (int)$user['id']]);
         $notice = ['Google sign-in connected - Bus Reservation', google_link_notice_html((string)$user['name'])];
         $flash  = 'Google account connected. Welcome back, ' . $user['name'] . '.';
@@ -326,7 +327,7 @@ function google_complete_login(mysqli $link, array $claims, ?string $next, int $
         $name = google_clean_name((string)($claims['name'] ?? ''), $email);
         try {
             db_exec($link,
-                'INSERT INTO costumer (name, email, pwd, phone, google_id) VALUES (?,?,?,?,?)',
+                'INSERT INTO costumer (name, email, pwd, phone, google_id, pwd_set) VALUES (?,?,?,?,?,0)',
                 'sssss', [$name, $email, google_unusable_password_hash(), '', $sub]);
         } catch (Throwable $e) {
             // Two tabs finishing at once: the unique key rejects the second insert; re-read and decide again.
@@ -336,7 +337,7 @@ function google_complete_login(mysqli $link, array $claims, ?string $next, int $
             error_log('[busres] Google sign-in create failed: ' . $e->getMessage());
             return $fail('google_failed');
         }
-        $user = ['id' => (int)mysqli_insert_id($link), 'name' => $name, 'email' => $email, 'phone' => ''];
+        $user = ['id' => (int)mysqli_insert_id($link), 'name' => $name, 'email' => $email, 'phone' => '', 'pwd_set' => 0];
         $notice = ['Welcome to Bus Reservation!', google_welcome_email_html($name)];
         $flash  = 'Account created with Google. Welcome, ' . $name . '.';
     }
@@ -366,4 +367,43 @@ function google_complete_login(mysqli $link, array $claims, ?string $next, int $
 
     $dest = ($next !== null && $next !== '') ? $next : (BASE_URL . '/user/index.php');
     return ['ok' => true, 'code' => '', 'dest' => $dest, 'flash' => $flash];
+}
+
+/* ------------------------------------------------------------------ */
+/* Step 4: Re-authentication for sensitive actions                    */
+/* ------------------------------------------------------------------ */
+
+const GOOGLE_REAUTH_TTL = 300; // seconds a Google re-verification stays valid
+
+/** Adds max_age and login_hint for a re-auth round trip, and remembers the intent in the session. */
+function google_begin_reauth(int $uid, string $email, string $next): string {
+    $url = google_begin($next); // reuses state, nonce, PKCE
+    $_SESSION['google_oauth']['mode'] = 'reauth';
+    $_SESSION['google_oauth']['uid']  = $uid;
+    // Rebuild the URL with the extra parameters.
+    $parts = parse_url($url, PHP_URL_QUERY);
+    parse_str((string)$parts, $q);
+    $q['max_age']    = (string)GOOGLE_REAUTH_TTL;
+    $q['login_hint'] = $email;
+    $q['prompt']     = 'login';
+    return GOOGLE_AUTH_URL . '?' . http_build_query($q, '', '&', PHP_QUERY_RFC3986);
+}
+
+/** Pure check: did the ID token prove this customer is present just now? */
+function google_reauth_ok(array $claims, string $expectedSub, int $now): bool {
+    $authTime = $claims['auth_time'] ?? null;
+    return is_string($claims['sub'] ?? null)
+        && hash_equals($expectedSub, (string)$claims['sub'])
+        && is_numeric($authTime)
+        && ($now - (int)$authTime) <= GOOGLE_REAUTH_TTL
+        && ($now - (int)$authTime) >= -60; // allow 60 s of clock skew
+}
+
+/** True when a sensitive action may proceed for this customer. */
+function customer_proof_ok(array $user, string $password): bool {
+    if ((int)($user['pwd_set'] ?? 1) === 1) {
+        return $password !== '' && password_verify($password, (string)($user['pwd'] ?? ''));
+    }
+    $at = (int)($_SESSION['reauth_at'] ?? 0);
+    return $at > 0 && (time() - $at) <= GOOGLE_REAUTH_TTL;
 }

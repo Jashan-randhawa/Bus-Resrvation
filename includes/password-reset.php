@@ -342,7 +342,7 @@ function pr_complete_reset(mysqli $link, string $token, string $newPwd, string $
         return ['ok' => false, 'message' => 'You cannot reuse your current password. Please choose a new one.'];
     }
 
-    db_exec($link, 'UPDATE costumer SET pwd = ? WHERE id = ?', 'si', [password_hash($newPwd, PASSWORD_DEFAULT), (int)$user['id']]);
+    db_exec($link, 'UPDATE costumer SET pwd = ?, pwd_set = 1 WHERE id = ?', 'si', [password_hash($newPwd, PASSWORD_DEFAULT), (int)$user['id']]);
     db_exec($link, 'DELETE FROM password_resets WHERE email = ?', 's', [$row['email']]); // single use
     throttle_clear($link, 'pwreset:fail:' . $ip);
     pr_audit($link, 'PASSWORD_RESET_SUCCESS', (int)$user['id']);
