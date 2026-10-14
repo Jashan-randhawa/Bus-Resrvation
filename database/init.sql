@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS `costumer` (
   `email` VARCHAR(100) NOT NULL,
   `pwd` VARCHAR(255) NOT NULL,
   `google_id` VARCHAR(255) NULL,
+  `pwd_set` TINYINT(1) NOT NULL DEFAULT 1,
   `phone` VARCHAR(20) NOT NULL,
   `address` TEXT DEFAULT NULL,
   `archived_at` DATETIME NULL,

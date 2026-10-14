@@ -760,6 +760,30 @@ function run_migrations(mysqli $link): array {
     } else {
         $log[] = "[i] Migration {$m12} already applied.";
     }
+
+    // 15. Migration 013: 013_google_pwd_set (Customer Google account credential state)
+    $m13 = '013_google_pwd_set';
+    if (!migration_applied($link, $m13)) {
+        $log[] = "[*] Running migration: {$m13}...";
+        $m13_ok = true;
+
+        if (!has_column($link, 'costumer', 'pwd_set')) {
+            $m13_ok = $m13_ok && try_sql($link, "ALTER TABLE `costumer` ADD COLUMN `pwd_set` TINYINT(1) NOT NULL DEFAULT 1 AFTER `google_id`", $log);
+        }
+        if ($m13_ok) {
+            $m13_ok = $m13_ok && try_sql($link, "UPDATE `costumer` SET `pwd_set` = 0 WHERE `google_id` IS NOT NULL", $log);
+        }
+
+        if ($m13_ok) {
+            record_migration($link, $m13);
+            $log[] = "  -> Completed {$m13}.";
+        } else {
+            $log[] = "  [!] Migration {$m13} had errors; not marked as applied.";
+            $all_ok = false;
+        }
+    } else {
+        $log[] = "[i] Migration {$m13} already applied.";
+    }
     } finally {
         if ($lock_acquired) {
             try {
