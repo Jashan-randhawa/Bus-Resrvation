@@ -179,6 +179,52 @@ check('fresh-install schema has google_id', str_contains((string)file_get_conten
 $env = (string)file_get_contents($root . '/.env.example');
 check('.env.example documents the Google variables', str_contains($env, 'GOOGLE_CLIENT_ID=') && str_contains($env, 'GOOGLE_CLIENT_SECRET=') && str_contains($env, 'google-callback.php'));
 
+echo "\n[*] Suite 10: re-authentication & credential state (Plan)\n";
+$now = time();
+$reauthClaims = ['sub' => 'sub_12345', 'auth_time' => $now - 30];
+check('google_reauth_ok accepts matching sub and fresh auth_time', google_reauth_ok($reauthClaims, 'sub_12345', $now));
+check('google_reauth_ok rejects mismatched sub', !google_reauth_ok($reauthClaims, 'sub_different', $now));
+check('google_reauth_ok rejects non-numeric or missing auth_time', !google_reauth_ok(['sub' => 'sub_12345'], 'sub_12345', $now));
+check('google_reauth_ok rejects auth_time older than 300 s', !google_reauth_ok(['sub' => 'sub_12345', 'auth_time' => $now - 301], 'sub_12345', $now));
+check('google_reauth_ok rejects auth_time in future by > 60 s', !google_reauth_ok(['sub' => 'sub_12345', 'auth_time' => $now + 65], 'sub_12345', $now));
+check('google_reauth_ok allows up to 60 s clock skew into the future', google_reauth_ok(['sub' => 'sub_12345', 'auth_time' => $now + 30], 'sub_12345', $now));
+
+// customer_proof_ok checks
+$pwdHash = password_hash('SecretPass123', PASSWORD_DEFAULT);
+$pwdUser = ['pwd_set' => 1, 'pwd' => $pwdHash];
+$googUser = ['pwd_set' => 0, 'pwd' => 'random_hash'];
+check('customer_proof_ok accepts password user with correct password', customer_proof_ok($pwdUser, 'SecretPass123'));
+check('customer_proof_ok rejects password user with incorrect password', !customer_proof_ok($pwdUser, 'WrongPass'));
+check('customer_proof_ok rejects password user with empty password', !customer_proof_ok($pwdUser, ''));
+
+$_SESSION['reauth_at'] = $now - 20;
+check('customer_proof_ok accepts google user with recent reauth', customer_proof_ok($googUser, ''));
+$_SESSION['reauth_at'] = $now - 305;
+check('customer_proof_ok rejects google user with expired reauth', !customer_proof_ok($googUser, ''));
+unset($_SESSION['reauth_at']);
+check('customer_proof_ok rejects google user without reauth', !customer_proof_ok($googUser, ''));
+
+// google_begin_reauth checks
+$_SESSION = [];
+$reauthUrl = google_begin_reauth(42, 'customer@example.com', '/user/profile.php');
+$reauthQuery = [];
+parse_str((string)parse_url($reauthUrl, PHP_URL_QUERY), $reauthQuery);
+check('google_begin_reauth sets session mode to reauth', ($_SESSION['google_oauth']['mode'] ?? '') === 'reauth');
+check('google_begin_reauth stores target uid in session', ($_SESSION['google_oauth']['uid'] ?? 0) === 42);
+check('google_begin_reauth sets max_age=300 in URL', ($reauthQuery['max_age'] ?? '') === '300');
+check('google_begin_reauth sets login_hint in URL', ($reauthQuery['login_hint'] ?? '') === 'customer@example.com');
+check('google_begin_reauth sets prompt=login in URL', ($reauthQuery['prompt'] ?? '') === 'login');
+
+// Static file wiring for re-auth
+$profileSrc = (string)file_get_contents($root . '/user/profile.php');
+$reauthSrc  = (string)file_get_contents($root . '/google-reauth.php');
+check('profile page gates sensitive actions with customer_proof_ok', str_contains($profileSrc, 'customer_proof_ok('));
+check('google-reauth.php enforces logged-in customer session', str_contains($reauthSrc, 'user-session.php'));
+check('google-reauth.php starts reauth with safe_next_url', str_contains($reauthSrc, 'google_begin_reauth('));
+check('migration runner adds costumer.pwd_set', str_contains($mig, '013_google_pwd_set') && str_contains($mig, 'pwd_set'));
+check('fresh-install schema has pwd_set', str_contains((string)file_get_contents($root . '/database/init.sql'), '`pwd_set` TINYINT(1)'));
+check('admin section has zero references to google auth', !str_contains((string)file_get_contents($root . '/admin/login.php'), 'google-') && !str_contains((string)file_get_contents($root . '/includes/layout/header-admin.php'), 'google-'));
+
 echo "\n--------------------------------------------------------\n";
 echo "Assertions: $total, failed: $failed\n";
 exit($failed === 0 ? 0 : 1);
