@@ -73,8 +73,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['user']) || isset($_P
       $open_modal = ($role === 'admin') ? 'admin' : 'user';
     } else {
       $sql = $role === 'admin'
-        ? 'SELECT id, name, phone, Password AS pwd, role, is_active, last_login_at, password_changed_at, totp_secret, totp_enabled FROM admin WHERE Email_id = ? LIMIT 1'
-        : 'SELECT id, name, phone, pwd FROM costumer WHERE email = ? LIMIT 1';
+        ? 'SELECT id, name, phone, Password AS pwd, role, is_active, last_login_at, password_changed_at, totp_secret, totp_enabled, Email_id FROM admin WHERE Email_id = ? LIMIT 1'
+        : 'SELECT id, name, phone, email, pwd, google_id, pwd_set FROM costumer WHERE email = ? LIMIT 1';
       $row = db_one($link, $sql, 's', [$email]);
 
       // Timing equalization against user enumeration (Issue 28)

@@ -79,6 +79,9 @@ if (($attempt['mode'] ?? '') === 'reauth') {
         error_log('[busres] Google re-auth audit failed: ' . $e->getMessage());
     }
     flash_set('success', 'Google identity confirmed.');
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_write_close();
+    }
     header('Location: ' . (safe_next_url($attempt['next'] ?? null) ?? (BASE_URL . '/user/profile.php')));
     exit;
 }
@@ -91,6 +94,9 @@ if (!$result['ok']) {
 throttle_clear($link, 'google:ip:' . $ip);
 if ($result['flash'] !== '') {
     flash_set('success', $result['flash']);
+}
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
 }
 header('Location: ' . $result['dest']);
 exit;

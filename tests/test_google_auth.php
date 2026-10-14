@@ -22,6 +22,7 @@ putenv('APP_URL=https://bus.example.com');
 putenv('GOOGLE_REDIRECT_URI');
 $_SESSION = [];
 
+require_once __DIR__ . '/../includes/auth/session-bootstrap.php';
 require_once __DIR__ . '/../includes/google-auth.php';
 
 $root = dirname(__DIR__);
@@ -224,6 +225,31 @@ check('google-reauth.php starts reauth with safe_next_url', str_contains($reauth
 check('migration runner adds costumer.pwd_set', str_contains($mig, '013_google_pwd_set') && str_contains($mig, 'pwd_set'));
 check('fresh-install schema has pwd_set', str_contains((string)file_get_contents($root . '/database/init.sql'), '`pwd_set` TINYINT(1)'));
 check('admin section has zero references to google auth', !str_contains((string)file_get_contents($root . '/admin/login.php'), 'google-') && !str_contains((string)file_get_contents($root . '/includes/layout/header-admin.php'), 'google-'));
+
+echo "\n[*] Suite 11: session data completeness & performance\n";
+$_SESSION = [];
+$sampleCust = [
+    'id'        => 88,
+    'name'      => 'Alice Passenger',
+    'email'     => 'alice@example.com',
+    'phone'     => '9876543210',
+    'google_id' => 'google_sub_999',
+    'pwd_set'   => 0,
+];
+login_user('user', $sampleCust);
+check('login_user sets $_SESSION[uid]', ($_SESSION['uid'] ?? 0) === 88);
+check('login_user sets $_SESSION[name]', ($_SESSION['name'] ?? '') === 'Alice Passenger');
+check('login_user sets $_SESSION[email]', ($_SESSION['email'] ?? '') === 'alice@example.com');
+check('login_user sets $_SESSION[phone]', ($_SESSION['phone'] ?? '') === '9876543210');
+check('login_user sets $_SESSION[google_id]', ($_SESSION['google_id'] ?? '') === 'google_sub_999');
+check('login_user sets $_SESSION[pwd_set]', ($_SESSION['pwd_set'] ?? -1) === 0);
+
+$libAuth = (string)file_get_contents($root . '/includes/google-auth.php');
+$cbSrc   = (string)file_get_contents($root . '/google-callback.php');
+$homeSrc = (string)file_get_contents($root . '/homepage.php');
+check('google_exchange_code forces IPv4 resolution to prevent DNS latency', str_contains($libAuth, 'CURLOPT_IPRESOLVE'));
+check('google-callback releases session locks before redirecting', str_contains($cbSrc, 'session_write_close()'));
+check('homepage.php selects email, google_id, pwd_set for costumer login', str_contains($homeSrc, 'email, pwd, google_id, pwd_set FROM costumer'));
 
 echo "\n--------------------------------------------------------\n";
 echo "Assertions: $total, failed: $failed\n";

@@ -4,17 +4,21 @@ require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/helpers.php';
 
 if (session_status() === PHP_SESSION_NONE) {
-    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https'); // Render terminates TLS
-    session_set_cookie_params([
-        'lifetime' => 0,
-        'path'     => '/',
-        'secure'   => $https,
-        'httponly' => true,
-        'samesite' => 'Lax',
-    ]);
-    session_name('busres_sid');
-    session_start();
+    if (!headers_sent()) {
+        $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https'); // Render terminates TLS
+        session_set_cookie_params([
+            'lifetime' => 0,
+            'path'     => '/',
+            'secure'   => $https,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+        session_name('busres_sid');
+        session_start();
+    } else {
+        @session_start();
+    }
 }
 
 const SESSION_IDLE_SECONDS = 1800; // 30 minutes
@@ -50,7 +54,10 @@ function login_user(string $portalRole, array $row): bool {
         $_SESSION['pwd_ref'] = (string)($row['password_changed_at'] ?? '');
     }
     $_SESSION['name'] = (string)($row['name'] ?? 'User');
+    $_SESSION['email'] = (string)($row['email'] ?? $row['Email_id'] ?? '');
     $_SESSION['phone'] = (string)($row['phone'] ?? '');
+    $_SESSION['google_id'] = (string)($row['google_id'] ?? '');
+    $_SESSION['pwd_set'] = (int)($row['pwd_set'] ?? 1);
     $_SESSION['started_at'] = time();
     $_SESSION['last_seen'] = time();
     $_SESSION['last'] = time();

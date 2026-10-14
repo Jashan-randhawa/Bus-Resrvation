@@ -144,6 +144,9 @@ function pr_notice_email_html(string $name = ''): string {
 function pr_after_response(callable $work): void {
     register_shutdown_function(static function () use ($work): void {
         try {
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                session_write_close();
+            }
             if (function_exists('fastcgi_finish_request')) {
                 fastcgi_finish_request();
             } elseif (!headers_sent()) {

@@ -130,8 +130,9 @@ function google_exchange_code(string $code, string $verifier): array {
             'code_verifier' => $verifier,
         ]),
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_CONNECTTIMEOUT => 5,
-        CURLOPT_TIMEOUT        => 10,
+        CURLOPT_CONNECTTIMEOUT => 4,
+        CURLOPT_TIMEOUT        => 8,
+        CURLOPT_IPRESOLVE      => defined('CURL_IPRESOLVE_V4') ? CURL_IPRESOLVE_V4 : 1,
         CURLOPT_HTTPHEADER     => ['Accept: application/json'],
     ]);
     $body   = curl_exec($ch);
@@ -302,6 +303,7 @@ function google_complete_login(mysqli $link, array $claims, ?string $next, int $
 
     $sub   = (string)$claims['sub'];
     $email = strtolower((string)$claims['email']);
+    $googleName = google_clean_name((string)($claims['name'] ?? ''), $email);
 
     $decision = google_decide(
         ['sub' => $sub, 'email' => $email],
@@ -321,10 +323,16 @@ function google_complete_login(mysqli $link, array $claims, ?string $next, int $
         db_exec($link,
             'UPDATE costumer SET google_id = ?, pwd = ?, pwd_set = 0 WHERE id = ? AND google_id IS NULL',
             'ssi', [$sub, google_unusable_password_hash(), (int)$user['id']]);
+        $user['google_id'] = $sub;
+        $user['pwd_set'] = 0;
+        if ((empty($user['name']) || $user['name'] === 'User' || $user['name'] === 'Passenger') && $googleName !== '') {
+            db_exec($link, 'UPDATE costumer SET name = ? WHERE id = ?', 'si', [$googleName, (int)$user['id']]);
+            $user['name'] = $googleName;
+        }
         $notice = ['Google sign-in connected - Bus Reservation', google_link_notice_html((string)$user['name'])];
         $flash  = 'Google account connected. Welcome back, ' . $user['name'] . '.';
     } elseif ($decision['action'] === 'create') {
-        $name = google_clean_name((string)($claims['name'] ?? ''), $email);
+        $name = $googleName;
         try {
             db_exec($link,
                 'INSERT INTO costumer (name, email, pwd, phone, google_id, pwd_set) VALUES (?,?,?,?,?,0)',
@@ -337,17 +345,32 @@ function google_complete_login(mysqli $link, array $claims, ?string $next, int $
             error_log('[busres] Google sign-in create failed: ' . $e->getMessage());
             return $fail('google_failed');
         }
-        $user = ['id' => (int)mysqli_insert_id($link), 'name' => $name, 'email' => $email, 'phone' => '', 'pwd_set' => 0];
+        $user = ['id' => (int)mysqli_insert_id($link), 'name' => $name, 'email' => $email, 'phone' => '', 'google_id' => $sub, 'pwd_set' => 0];
         $notice = ['Welcome to Bus Reservation!', google_welcome_email_html($name)];
         $flash  = 'Account created with Google. Welcome, ' . $name . '.';
+    } elseif ($decision['action'] === 'signin') {
+        if ((empty($user['name']) || $user['name'] === 'User' || $user['name'] === 'Passenger') && $googleName !== '') {
+            db_exec($link, 'UPDATE costumer SET name = ? WHERE id = ?', 'si', [$googleName, (int)$user['id']]);
+            $user['name'] = $googleName;
+        }
+        $flash = 'Welcome back, ' . $user['name'] . '.';
     }
 
-    $row = ['id' => (int)$user['id'], 'name' => (string)$user['name'], 'phone' => (string)($user['phone'] ?? '')];
+    $row = [
+        'id'        => (int)$user['id'],
+        'name'      => (string)$user['name'],
+        'email'     => (string)($user['email'] ?? $email),
+        'phone'     => (string)($user['phone'] ?? ''),
+        'google_id' => (string)($user['google_id'] ?? $sub),
+        'pwd_set'   => (int)($user['pwd_set'] ?? 0),
+    ];
     unset($_SESSION['google_oauth']);
     if (!login_user('user', $row)) {
         return $fail('google_failed');
     }
-    $_SESSION['email'] = $email;
+    $_SESSION['email']     = (string)($user['email'] ?? $email);
+    $_SESSION['google_id'] = (string)($user['google_id'] ?? $sub);
+    $_SESSION['pwd_set']   = (int)($user['pwd_set'] ?? 0);
 
     try {
         audit($link, 'LOGIN', 'customer', (int)$user['id'], null, ['method' => 'google', 'action' => $decision['action']]);

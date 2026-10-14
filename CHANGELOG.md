@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- **Google Sign-In Performance & Session Data Synchronization (`includes/auth/session-bootstrap.php`, `includes/google-auth.php`, `google-callback.php`, `includes/password-reset.php`, `homepage.php`)**:
+  - **Zero Callback Latency**: Configured `CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4` on Google OAuth token exchange (`oauth2.googleapis.com`) to eliminate 3–5 second dual-stack IPv6 DNS resolution stalls.
+  - **Non-Blocking Session Close**: Added explicit `session_write_close()` before issuing 302 redirect headers in `google-callback.php` and within `pr_after_response()`, immediately releasing the PHP session lock so the user dashboard (`user/index.php`) loads instantaneously without lock contention.
+  - **Full Account Data Synchronization**: Updated `login_user()` to populate `$_SESSION['email']`, `$_SESSION['google_id']`, and `$_SESSION['pwd_set']` in addition to `uid`, `name`, and `phone`. Synchronized Google profile display names to the database for accounts with blank or placeholder names.
+  - **Customer Password Query Parity**: Updated `homepage.php` costumer authentication query to select `email, google_id, pwd_set` ensuring data parity between password and Google logins.
+  - **Test Suite**: Added test Suite 11 to `tests/test_google_auth.php` covering session data completeness, IPv4 resolution enforcement, and session lock release (120/120 passing).
+
 - **Google Sign-In Account Data Access & Sensitive Action Re-Authentication (`google-reauth.php`, `user/profile.php`, `includes/google-auth.php`, migration `013`)**:
   - **Sensitive Action Parity for Google-Only Accounts**: Closes the credential gap where Google accounts had no usable password for sensitive actions (change email, change password, delete account).
   - **Google Re-Authentication Flow (`google_begin_reauth()`, `google_reauth_ok()`)**: Requires a fresh Google confirmation within 300 seconds (`max_age=300`, `login_hint=$email`, `prompt=login`, `auth_time` claim verification) before allowing email changes or account deactivation.
