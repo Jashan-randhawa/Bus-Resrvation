@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 # tests/live_audit.sh
 # Phase 5: Automated Live HTTPS Verification Script
+export PATH="/usr/bin:$PATH"
 
 APP_URL="${1:-https://your-live-bus-domain.com}"
 APP_URL="${APP_URL%/}"
