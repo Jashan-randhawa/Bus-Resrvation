@@ -1,46 +1,47 @@
 {
-  "name": "Bus Reservation System",
-  "short_name": "Bus Service",
-  "description": "Full-stack digital bus ticketing, real-time seat availability, and fleet operations management platform.",
-  "start_url": "./homepage.php",
+  "id": "sbtbs-bus-reservation-app",
+  "name": "Simple Bus Ticket Booking System",
+  "short_name": "BusBooking",
+  "description": "Book bus tickets, check live PNR status, and manage routes, seats, and reservations.",
+  "start_url": "./index.php",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#0f172a",
-  "theme_color": "#2563eb",
-  "categories": ["travel", "navigation", "transportation"],
+  "background_color": "#212529",
+  "theme_color": "#212529",
+  "categories": ["travel", "transportation", "productivity"],
   "icons": [
     {
       "src": "assets/img/app-icon.svg",
-      "sizes": "any",
+      "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
-    },
-    {
-      "src": "assets/images/bus.svg",
-      "sizes": "64x64 128x128 192x192 512x512",
-      "type": "image/svg+xml",
-      "purpose": "any"
     }
   ],
   "shortcuts": [
     {
-      "name": "Book Ticket",
+      "name": "Book Tickets",
       "short_name": "Book",
-      "url": "./homepage.php",
-      "icons": [{ "src": "assets/img/app-icon.svg", "sizes": "any" }]
+      "description": "Search routes and reserve bus seats",
+      "url": "./index.php",
+      "icons": [
+        {
+          "src": "assets/img/app-icon.svg",
+          "sizes": "512x512"
+        }
+      ]
     },
     {
-      "name": "Check PNR Status",
-      "short_name": "PNR",
-      "url": "./homepage.php#pnr-enquiry",
-      "icons": [{ "src": "assets/img/app-icon.svg", "sizes": "any" }]
-    },
-    {
-      "name": "Customer Login",
-      "short_name": "Sign In",
-      "url": "./login.php",
-      "icons": [{ "src": "assets/img/app-icon.svg", "sizes": "any" }]
+      "name": "Admin Dashboard",
+      "short_name": "Admin",
+      "description": "Manage buses, routes, and bookings",
+      "url": "./admin/dashboard.php",
+      "icons": [
+        {
+          "src": "assets/img/app-icon.svg",
+          "sizes": "512x512"
+        }
+      ]
     }
   ]
 }
