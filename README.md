@@ -49,6 +49,9 @@ Comprehensive architectural, operational, and security documentation is availabl
 
 ### 👤 Customer Experience
 - 🔍 **Interactive Seat Picker:** Dynamic bus seating map adapting to fleet capacity (10–60 seats) with live available/booked status indicators, fluid CSS `clamp()` seat sizing down to 320px viewports, and a sticky mobile seat summary & confirmation footer.
+- 🌐 **"Continue with Google" OAuth 2.0 / OpenID Connect:** Frictionless 1-click Google sign-in and registration (`google-login.php`, `google-callback.php`) featuring PKCE (`S256`), cryptographic state/nonce verification, low-latency IPv4 DNS pre-resolution, non-blocking session release, and automatic display name synchronization.
+- 🔐 **Sensitive Action Re-Authentication & Profile Credential Controls:** Fresh Google re-authentication challenge (`google-reauth.php` with `max_age=300`) securing high-risk operations (email modifications, account deactivation) for Google-authenticated users, complemented by explicit credential state tracking (`costumer.pwd_set`), credential status badges, and optional permanent password provisioning (`user/profile.php`).
+- 🔑 **Secure Password Reset by Email Link:** Zero-enumeration password recovery (`forgot-password.php`, `reset-password.php`) generating cryptographically secure 64-character tokens stored exclusively as SHA-256 hashes (`password_resets`), featuring 10-minute configurable TTL, IP/address rate limiting, single-use invalidation, and transactional email delivery via Brevo HTTPS REST API (Port 443) or RFC 5321 SMTP.
 - 🛫 **Airline-Grade Digital Boarding Pass & QR Verification:** Interactive Upcoming Journey Hero card (`user/index.php`), printable/shareable digital boarding pass (`user/ticket.php`) with QR code generation, Native Web Share API (`navigator.share`) support, and public QR verification endpoint (`user/verify.php`).
 - 🧭 **Custom Search Dropdowns & Interactive City Swap:** Accessible in-DOM custom dropdown menus (`.custom-dropdown-widget`) with Title Case city formatting, dynamic connected-route destination filtering, and 1-click circular origin/destination swap controls (`⇄`) across the homepage and user portal.
 - 🔒 **Atomic Concurrency:** Concurrency-safe seat reservation engine with database transactions and row-level locks preventing double-booking race conditions.
@@ -59,7 +62,7 @@ Comprehensive architectural, operational, and security documentation is availabl
 
 ### 🛡️ Administrator Operations
 - 👥 **Multi-Role RBAC & Live Session Validation:** Granular tiers (`super_admin`, `operator`, `viewer`) with live per-request role and active status validation against the database. Viewer role is restricted to read-only views with PII masking.
-- 🔐 **RFC 6238 TOTP Two-Factor Authentication:** Multi-factor authentication for administrative accounts with client-side HTML5 canvas QR code generation, AES-256-GCM encrypted secrets, 10 single-use recovery codes, and configurable policy enforcement (`ADMIN_MFA_ENFORCE`).
+- 🔐 **RFC 6238 TOTP Two-Factor Authentication:** Multi-factor authentication for administrative accounts with client-side HTML5 canvas QR code generation, AES-256-GCM encrypted secrets, 10 single-use recovery codes, and configurable policy enforcement (`ADMIN_MFA_ENFORCE`). Note: Google SSO is strictly customer-scoped; admin access remains password- and TOTP-isolated.
 - 🛠️ **CLI Break-Glass Recovery:** Dedicated emergency command-line utilities for administrator creation (`create-admin.php`) and 2FA recovery resets (`reset-mfa.php`).
 - 🚨 **Attention-Needed Action Center & Today's Departures:** Real-time priority-ranked operational alert strip (`Critical`, `High Priority`, `Attention`) and Today's Departures compact schedule cards with live seat occupancy progress bars and departure countdown chips (`admin/dashboard.php`).
 - 📈 **Privacy-First Performance Overview & Analytics Workspace:** 4 KPI metric cards with period-over-period delta badges, interactive Chart.js dual-axis Booking & Revenue Trends combo chart (`Daily` / `Weekly` toggle), Booking Status donut breakdown, Key Insights strip, and strict PII-free server-side aggregation (`admin/dashboard.php`, `assets/js/perf-chart.js`).
@@ -81,6 +84,8 @@ Comprehensive architectural, operational, and security documentation is availabl
 ```mermaid
 flowchart TD
     Client["🌐 Web Browser (Responsive UI)"]
+    GoogleAuth["🔑 Google Identity Provider<br/>(OAuth 2.0 & OpenID Connect)"]
+    EmailGateway["✉️ Brevo REST API / SMTP Relay<br/>(Password Resets & Notifications)"]
     
     subgraph Render["☁️ Render Cloud Platform"]
         Docker["🐳 Docker Container (PHP 8.4 + Apache 2.4)"]
@@ -91,10 +96,12 @@ flowchart TD
     end
     
     subgraph Database["🗄️ TiDB Cloud Serverless / MySQL 8.0+"]
-        Tables[("Database Layer<br/>- admin (RBAC & TOTP MFA)<br/>- costumer (Accounts & Passwords)<br/>- buses (Capacity & Layouts)<br/>- route (Schedules & Tariffs)<br/>- booking (PNR & Concurrency Keys)<br/>- seat_lock (Atomic Holds & Claims)<br/>- audit_log (Immutable Compliance)<br/>- admin_recovery_codes (Backup TOTP)<br/>- schema_migrations & migration_steps<br/>- query (Support Inbox)")]
+        Tables[("Database Layer<br/>- admin (RBAC & TOTP MFA)<br/>- costumer (Accounts, google_id & pwd_set)<br/>- buses (Capacity & Layouts)<br/>- route (Schedules & Tariffs)<br/>- booking (PNR & Concurrency Keys)<br/>- seat_lock (Atomic Holds & Claims)<br/>- password_resets (Hashed Tokens)<br/>- audit_log (Immutable Compliance)<br/>- admin_recovery_codes (Backup TOTP)<br/>- schema_migrations & migration_steps<br/>- query (Support Inbox)")]
     end
 
     Client -->|HTTPS / TLS 1.3 (Port 443)| Docker
+    Docker <-->|OAuth 2.0 / PKCE (Port 443)| GoogleAuth
+    Docker -->|Transactional Emails (Port 443 / 587)| EmailGateway
     App -->|Secure TLS/SSL Connection (Port 4000/3306)| Tables
 ```
 
@@ -105,9 +112,9 @@ flowchart TD
 | Layer | Technologies |
 |---|---|
 | **Frontend** | HTML5, CSS3 (Custom Design Tokens & Light/Dark Theme System), JavaScript (ES6), Bootstrap 4.6, Chart.js, AOS.js, Font Awesome, QRCode.js, Inline SVG Sprite System |
-| **Backend** | PHP 8.3 / 8.4 (Apache 2.4 runtime), Session Auth, Pure-PHP Native PDF 1.4 Engine, MySQLi with TLS/SSL |
+| **Backend** | PHP 8.3 / 8.4 (Apache 2.4 runtime), Session Auth, Pure-PHP Native PDF 1.4 Engine, Brevo REST API / SMTP Mailer, MySQLi with TLS/SSL |
 | **Database** | TiDB Cloud Serverless (MySQL Compatible) / MySQL 8.0+ |
-| **Security & Auth** | RFC 6238 TOTP 2FA, AES-256-GCM, Bcrypt Hashing, Anti-CSRF, Enforced CSP, Rate Limiting |
+| **Security & Auth** | RFC 6238 TOTP 2FA, Google OAuth 2.0 / OpenID Connect (PKCE S256), AES-256-GCM, Bcrypt Hashing, Anti-CSRF, Enforced CSP, Rate Limiting |
 | **DevOps & Cloud** | Docker, Render Web Services, GitHub Actions CI/CD, GHCR Container Registry |
 | **Registries & Packages** | GitHub Container Registry (`ghcr.io`), GitHub Packages (npm), Composer |
 
@@ -175,6 +182,8 @@ All application configuration is driven by environment variables. Configure them
 | `APP_CURRENCY` | `₹` | Currency symbol | `₹` or `$` |
 | `APP_DEBUG` | `0` | Expose detailed error stack traces to super admins | `0` (off) or `1` (on) |
 | `BASE_URL` | *(auto)* | Root URL path (auto-detected when blank) | `""` (web root) or `"/bus-reservation"` |
+| `BREVO_API_KEY` | *(empty)* | Brevo HTTPS REST API Key for cloud transactional emails (port 443) | `xkeysib-your_brevo_api_key` |
+| `EMAIL_FROM` | *(empty)* | Brevo sender identity formatted as `"Name <email>"` | `"Bus Reservation System <reservations@example.com>"` |
 | `MAIL_ENABLED` | `false` | Enable outbound RFC 5321 SMTP email delivery | `true` |
 | `MAIL_HOST` | *(empty)* | SMTP Relay Host | `smtp.example.com` |
 | `MAIL_PORT` | `587` | SMTP Relay Port | `587` |
@@ -182,8 +191,11 @@ All application configuration is driven by environment variables. Configure them
 | `MAIL_PASS` | *(empty)* | SMTP Password / Secret Key | `your_smtp_secret` |
 | `MAIL_FROM` | *(empty)* | Outbound From Address | `reservations@example.com` |
 | `MAIL_FROM_NAME` | `"Bus Reservation System"` | Outbound Sender Name | `"Bus Reservation System"` |
-| `APP_URL` | *(auto via Render)* | Trusted public base URL for password reset email links | `https://bus-resrvation.onrender.com` |
+| `APP_URL` | *(auto via Render)* | Trusted public base URL for password resets & OAuth callbacks | `https://bus-resrvation.onrender.com` |
 | `PASSWORD_RESET_TTL_MIN` | `10` | Password reset link lifetime in minutes (`5` to `60`) | `10` |
+| `GOOGLE_CLIENT_ID` | *(empty)* | Google Cloud OAuth 2.0 Web Client ID | `xxxxxx.apps.googleusercontent.com` |
+| `GOOGLE_CLIENT_SECRET` | *(empty)* | Google Cloud OAuth 2.0 Client Secret | `GOCSPX-xxxxxx` |
+| `GOOGLE_REDIRECT_URI` | *(auto)* | Explicit OAuth callback URI (defaults to `<APP_URL>/google-callback.php`) | `https://bus-resrvation.onrender.com/google-callback.php` |
 
 ---
 
@@ -313,8 +325,11 @@ php tests/test_departure_carousel.php
 php tests/test_perf_overview.php
 php tests/test_dashboard_audit.php
 
-# Email password reset link flow, SHA-256 token hashing & anti-enumeration suite
+# Email password reset link flow, SHA-256 token hashing & anti-enumeration suite (39 assertions)
 php tests/test_password_reset.php
+
+# Google OAuth 2.0, OpenID Connect, PKCE, re-auth, session sync & profile guards (120 assertions)
+php tests/test_google_auth.php
 ```
 
 ---
@@ -324,10 +339,13 @@ php tests/test_password_reset.php
 ```
 Bus-Reservation/
 ├── index.php                 # Canonical entry point (redirects to homepage.php)
-├── homepage.php              # Public landing page, login modal & PNR status check
-├── login.php                 # Standalone login endpoint
+├── homepage.php              # Public landing page, login modal, Google sign-in & PNR lookup
+├── login.php                 # Standalone customer login endpoint (password & Google SSO)
 ├── forgot-password.php       # Customer password reset link request endpoint
 ├── reset-password.php        # Single-use SHA-256 hashed token password reset completion
+├── google-login.php          # Google OAuth 2.0 / OpenID Connect authorization redirector
+├── google-callback.php       # Google OAuth 2.0 PKCE token exchange & customer login handler
+├── google-reauth.php         # Fresh Google re-authentication challenge for sensitive actions
 ├── admin.php                 # Backward-compatibility shim (redirects to admin/index.php)
 │
 ├── admin/                    # 👑 Administrator Management Subsystem
@@ -355,7 +373,7 @@ Bus-Reservation/
 │   ├── index.php             # Customer dashboard, upcoming journey card & custom city dropdowns
 │   ├── booking.php           # Reservation engine, fluid seat map & sticky mobile summary bar
 │   ├── my-bookings.php       # Personal booking history, status tabs & cancellation
-│   ├── profile.php           # Account security, password rotation, email change & deactivation
+│   ├── profile.php           # Account security, Google re-auth, credential badges & deactivation
 │   ├── ticket.php            # Digital boarding pass, QR code & Native Web Share integration
 │   └── verify.php            # Public QR boarding pass verification endpoint
 │
@@ -363,7 +381,9 @@ Bus-Reservation/
 │   ├── config.php            # Dynamic BASE_URL detector, global error handling & env defaults
 │   ├── db_con.php            # Environment-driven database connector with TLS/SSL support
 │   ├── helpers.php           # Prepared statements, create_booking(), PDF generator, CSRF, CSV streaming
+│   ├── google-auth.php       # Google OAuth 2.0/OIDC engine, PKCE, token verification & re-auth
 │   ├── password-reset.php    # Email reset-link flow, SHA-256 token hashing & anti-enumeration engine
+│   ├── smtp.php              # Dual-transport email delivery (Brevo HTTPS REST API & RFC 5321 SMTP)
 │   ├── admin-crud.php        # Shared admin CRUD helpers, soft-delete & UI components
 │   ├── auth/
 │   │   ├── session-bootstrap.php # Hardened session manager & secure cookie policy
@@ -376,6 +396,7 @@ Bus-Reservation/
 │       ├── header-admin.php  # Admin sidebar, SVG sprite system, topbar & cache-busting
 │       ├── header-user.php   # Customer sidebar, SVG sprite system, topbar & cache-busting
 │       ├── header-edit.php   # Edit pages header
+│       ├── google-button.php # Accessible "Continue with Google" button component
 │       ├── footer.php        # Public & edit footer scripts
 │       ├── footer-admin.php  # Admin footer scripts & drawer controller
 │       └── footer-user.php   # Customer footer scripts & idle timeout integration
@@ -404,7 +425,7 @@ Bus-Reservation/
 │   ├── reset-mfa.php         # CLI emergency break-glass 2FA reset script
 │   ├── expire-holds.php      # CLI expired seat hold release utility
 │   ├── purge-audit-log.php   # CLI audit log retention cleanup utility
-│   └── migrations/           # 🔄 Sequential Schema Migrations (001 to 011)
+│   └── migrations/           # 🔄 Sequential Schema Migrations (001 to 013)
 │       ├── 001_hardening.sql                         # Base hardening & indexes
 │       ├── 002_hash_passwords.php                    # Password migration & rehashing
 │       ├── 003_bus_capacity.sql                      # Fleet bus capacity bounds
@@ -415,7 +436,9 @@ Bus-Reservation/
 │       ├── 008_query_inbox_enhancements.sql          # Inquiry status & reply tracking
 │       ├── 009_admin_accounts_and_soft_delete.sql    # Admin security columns & recovery codes
 │       ├── 010_query_inbox_enhancements.sql          # Inbox timestamps & enhancements
-│       └── 011_password_reset_hashed_tokens.sql      # SHA-256 hashed password reset tokens
+│       ├── 011_password_reset_hashed_tokens.sql      # SHA-256 hashed password reset tokens
+│       ├── 012_customer_google_signin.sql            # Customer google_id unique identifier
+│       └── 013_google_pwd_set.sql                    # Customer pwd_set credential state flag
 │
 ├── packages/                 # 📦 npm UI Packages
 │   ├── bus-seat-picker/      # @jashan-randhawa/bus-seat-picker package
@@ -432,6 +455,7 @@ Bus-Reservation/
 │   ├── test_phase2.php       # Phase 2: Money & reporting test suite
 │   ├── test_phase3.php       # Phase 3: Data integrity test suite
 │   ├── test_phase4.php       # Phase 4: Hygiene & hardening test suite
+│   ├── test_google_auth.php  # Google OAuth 2.0, OpenID Connect & re-auth test suite
 │   ├── test_admin_layout.php # Admin mobile drawer, topbar & global theme test suite
 │   ├── test_user_layout.php  # Customer portal mobile & custom dropdown test suite
 │   ├── test_route_ui.php     # Route schedule KPI, filter & corridor UI test suite
@@ -478,7 +502,9 @@ Bus-Reservation/
 
 - 🛡️ **100% Prepared Statements (C-01, C-02):** Parameterized queries across all database operations with zero string concatenation.
 - 🔑 **Modern Bcrypt Password Hashing (C-03, C-04):** Passwords hashed using `password_hash()` with auto-rehashing on login.
-- 🔐 **RFC 6238 TOTP 2FA & Encrypted Secrets:** High-assurance two-factor authentication with AES-256-GCM secret encryption at rest and client-side canvas QR code generation complying with strict CSP.
+- 🔐 **RFC 6238 TOTP 2FA & Encrypted Secrets:** High-assurance two-factor authentication for administrative accounts with AES-256-GCM secret encryption at rest, 10 single-use recovery codes, and client-side canvas QR code generation complying with strict CSP.
+- 🌐 **Customer-Scoped Google OAuth 2.0 & OpenID Connect:** Server-side authorization-code exchange with RFC 7636 PKCE (`S256`), cryptographic CSRF state validation, and cryptographic nonce verification. Scoped strictly to customers (`costumer` table) to preserve absolute isolation from administrative credentials. Features automatic pre-hijack defense (invalidating legacy unverified passwords on linking) and Google re-authentication (`max_age=300`) verification for high-risk account modifications.
+- ✉️ **Zero-Enumeration Password Recovery & Resilient Dual Mail Transport:** Cryptographically secure 64-character reset tokens stored strictly as SHA-256 hashes with 10-minute expiry and uniform timing responses. Delivered via Brevo HTTPS REST API (Port 443) to guarantee deliverability in cloud environments restricting SMTP port 587/25, with automatic fallback to standard RFC 5321 SMTP.
 - 🛡️ **Cross-Site Request Forgery (CSRF) Tokens (H-03):** Cryptographic anti-CSRF token verified across all state-modifying requests.
 - 🚦 **Strict Role Isolation & Live Session Checks (H-01, H-02):** Immediate enforcement of role demotions and deactivations against the database; viewer role restricted to read-only views with PII phone/email masking.
 - 🔒 **Transactional Seat Locking:** Concurrency-safe seat reservation using dedicated `seat_lock` table and row-level locks preventing race conditions.
