@@ -2,6 +2,8 @@
 .env
 .env.*
 !.env.example
+assets/partials/_db-local.php
+!assets/partials/_db-local.example.php
 
 # IDE & Editor files
 .vscode/

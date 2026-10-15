@@ -1,0 +1,46 @@
+{
+  "name": "Bus Reservation System",
+  "short_name": "Bus Service",
+  "description": "Full-stack digital bus ticketing, real-time seat availability, and fleet operations management platform.",
+  "start_url": "./homepage.php",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "categories": ["travel", "navigation", "transportation"],
+  "icons": [
+    {
+      "src": "assets/img/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/images/bus.svg",
+      "sizes": "64x64 128x128 192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Book Ticket",
+      "short_name": "Book",
+      "url": "./homepage.php",
+      "icons": [{ "src": "assets/img/app-icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Check PNR Status",
+      "short_name": "PNR",
+      "url": "./homepage.php#pnr-enquiry",
+      "icons": [{ "src": "assets/img/app-icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Customer Login",
+      "short_name": "Sign In",
+      "url": "./login.php",
+      "icons": [{ "src": "assets/img/app-icon.svg", "sizes": "any" }]
+    }
+  ]
+}

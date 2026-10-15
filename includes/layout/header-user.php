@@ -23,6 +23,9 @@
 
     <!-- Global Theme Toggle (Head load to avoid FOUC) -->
     <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>
+
+    <!-- PWA Meta Tags & Service Worker -->
+    <?php require_once dirname(__DIR__, 2) . '/assets/partials/_pwa-head.php'; ?>
 </head>
 
 <body>
