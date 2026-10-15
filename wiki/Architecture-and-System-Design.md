@@ -44,8 +44,13 @@ The codebase is organized into isolated functional domains:
 ```
 Bus-Reservation/
 ├── index.php                 # Canonical entry point (redirects to homepage.php)
-├── homepage.php              # Public landing page, login modals & PNR status check
-├── login.php                 # Standalone login endpoint
+├── homepage.php              # Public landing page, login modals, Google sign-in & PNR lookup
+├── login.php                 # Standalone customer login endpoint (password & Google SSO)
+├── forgot-password.php       # Customer password reset link request endpoint
+├── reset-password.php        # Single-use SHA-256 hashed token password reset completion
+├── google-login.php          # Google OAuth 2.0 / OpenID Connect authorization redirector
+├── google-callback.php       # Google OAuth 2.0 PKCE token exchange & customer login handler
+├── google-reauth.php         # Fresh Google re-authentication challenge for sensitive actions
 ├── admin.php                 # Backward-compatibility shim (redirects to admin/index.php)
 │
 ├── admin/                    # 👑 Administrator Management Subsystem
@@ -73,7 +78,7 @@ Bus-Reservation/
 │   ├── index.php             # Customer dashboard, upcoming journey card & custom city dropdowns
 │   ├── booking.php           # Reservation engine, fluid seat map & sticky mobile summary bar
 │   ├── my-bookings.php       # Personal booking history, status tabs & cancellation
-│   ├── profile.php           # Account security, password rotation, email change & deactivation
+│   ├── profile.php           # Account security, Google re-auth, credential badges & deactivation
 │   ├── ticket.php            # Digital boarding pass, QR code & Native Web Share integration
 │   └── verify.php            # Public QR boarding pass verification endpoint
 │
@@ -81,6 +86,9 @@ Bus-Reservation/
 │   ├── config.php            # Dynamic BASE_URL detector, global error handling & env defaults
 │   ├── db_con.php            # Environment-driven database connector with TLS/SSL support
 │   ├── helpers.php           # Prepared statements, create_booking(), PDF generator, CSRF, CSV streaming
+│   ├── google-auth.php       # Google OAuth 2.0/OIDC engine, PKCE, token verification & re-auth
+│   ├── password-reset.php    # Email reset-link flow, SHA-256 token hashing & anti-enumeration engine
+│   ├── smtp.php              # Dual-transport email delivery (Brevo HTTPS REST API & RFC 5321 SMTP)
 │   ├── admin-crud.php        # Shared admin CRUD helpers, soft-delete & UI components
 │   ├── auth/
 │   │   ├── session-bootstrap.php # Hardened session manager & secure cookie policy
@@ -93,6 +101,7 @@ Bus-Reservation/
 │       ├── header-admin.php  # Admin sidebar, SVG sprite system, topbar & cache-busting
 │       ├── header-user.php   # Customer sidebar, SVG sprite system, topbar & cache-busting
 │       ├── header-edit.php   # Edit pages header
+│       ├── google-button.php # Accessible "Continue with Google" button component
 │       ├── footer.php        # Public & edit footer scripts
 │       ├── footer-admin.php  # Admin footer scripts & drawer controller
 │       └── footer-user.php   # Customer footer scripts & idle timeout integration
@@ -117,8 +126,12 @@ Bus-Reservation/
 ├── database/                 # 🗄️ Relational Schema & Migration Engine
 │   ├── init.sql              # Idempotent hardened schema DDL
 │   ├── db_migrate.php        # Robust database migration runner with advisory locking
-│   └── migrations/           # Sequential Schema Migrations (001 to 010)
-└── tests/                    # 🧪 Automated Test Harnesses
+│   ├── create-admin.php      # CLI administrator provisioning script
+│   ├── reset-mfa.php         # CLI emergency break-glass 2FA reset script
+│   ├── expire-holds.php      # CLI expired seat hold release utility
+│   ├── purge-audit-log.php   # CLI audit log retention cleanup utility
+│   └── migrations/           # Sequential Schema Migrations (001 to 013)
+└── tests/                    # 🧪 Automated Test Harnesses (12 suites, 350+ assertions)
 ```
 
 ---

@@ -32,7 +32,8 @@ flowchart LR
 
 ## 🛠️ Technology Stack Reference
 
-- **Backend Runtime:** PHP 8.3 / 8.4 with MySQLi extension & Pure-PHP Native PDF 1.4 Engine (`generate_manifest_pdf_doc()`)
+- **Backend Runtime:** PHP 8.3 / 8.4 with MySQLi extension, Pure-PHP Native PDF 1.4 Engine (`generate_manifest_pdf_doc()`), and Brevo HTTPS REST API / RFC 5321 SMTP Dual Mailer
+- **Authentication & Security:** RFC 6238 TOTP 2FA, Google OAuth 2.0 / OpenID Connect (PKCE S256), SHA-256 Hashed Password Resets, Bcrypt, and CSRF Protection
 - **Web Server:** Apache 2.4 HTTP Server with `mod_rewrite` and `mod_headers`
 - **Database Engine:** TiDB Cloud Serverless (MySQL 8.0 compatible wire protocol)
 - **Frontend UI:** HTML5, CSS3 (Custom Design Tokens with Global Light/White & Dark/Slate Theme System), JavaScript (ES6), Bootstrap 4.6, Chart.js, AOS.js, QRCode.js, Inline SVG Sprite System

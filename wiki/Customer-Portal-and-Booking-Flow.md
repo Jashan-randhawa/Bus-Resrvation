@@ -26,7 +26,7 @@ sequenceDiagram
         Home->>DB: SELECT * FROM costumer WHERE email=?
         DB-->>Home: Customer record found
         Home->>Home: Verify password_verify(pwd, hash)
-        Home->>Session: Store $_SESSION['uid'], $_SESSION['name'], $_SESSION['phone']
+        Home->>Session: Store $_SESSION['uid'], $_SESSION['name'], $_SESSION['email'], $_SESSION['phone'], $_SESSION['google_id'], $_SESSION['pwd_set']
         Home->>Portal: Redirect to /user/index.php
     else Continue with Google (Customer Only)
         User->>Home: Click "Continue with Google" (google-login.php)
@@ -34,11 +34,11 @@ sequenceDiagram
         Home->>User: Redirect to Google OAuth 2.0 Consent Screen
         User->>Home: Google redirects back to google-callback.php?code=...&state=...
         Home->>Home: Validate session state & consume (single use)
-        Home->>Home: Exchange code for ID token via TLS
+        Home->>Home: Exchange code for ID token via TLS (forced IPv4)
         Home->>Home: Validate ID token (issuer, audience, exp, nonce, email_verified)
         Home->>DB: Match by google_id or email (Migration 012)
-        Home->>Session: login_user('user', customer)
-        Home->>Portal: Redirect to /user/index.php
+        Home->>Session: login_user('user', customer) + session_write_close()
+        Home->>Portal: Instant redirect to /user/index.php
     end
 ```
 
@@ -71,6 +71,33 @@ sequenceDiagram
     User->>Profile: Submits sensitive change within 300s
     Profile->>Profile: customer_proof_ok() evaluates to true
     Profile->>DB: Executes mutation (updates email / password / deactivates)
+```
+
+### 1.2 Password Reset by Email Link Flow (`forgot-password.php`, `reset-password.php`)
+
+```mermaid
+sequenceDiagram
+    actor User as Passenger
+    participant Forgot as forgot-password.php
+    participant DB as TiDB / MySQL
+    participant Mail as Brevo API / SMTP
+    participant Reset as reset-password.php
+
+    User->>Forgot: Submits email address
+    Forgot->>Forgot: Validates CSRF token & rate limits (3 requests / 15m)
+    Forgot->>Forgot: Flush uniform success response (anti-enumeration)
+    Forgot->>DB: Query customer by email (active accounts only)
+    Forgot->>Forgot: Generate cryptographically random 64-hex token
+    Forgot->>DB: INSERT INTO password_resets (email, token=sha256(token), expires_at)
+    Forgot->>Mail: Dispatch transactional email via Brevo HTTPS REST API (port 443)
+    Mail-->>User: Delivers password reset link with ?code=...
+    User->>Reset: Clicks link (?code=token)
+    Reset->>Reset: Compute sha256(code) & check expiration (<10 min)
+    Reset->>DB: SELECT * FROM password_resets WHERE token=hash AND expires_at > NOW()
+    User->>Reset: Submits new password (min 8 chars)
+    Reset->>DB: UPDATE costumer SET pwd=hash, pwd_set=1 WHERE email=?
+    Reset->>DB: DELETE FROM password_resets WHERE email=?
+    Reset->>User: Redirects to login with success notice
 ```
 
 ---

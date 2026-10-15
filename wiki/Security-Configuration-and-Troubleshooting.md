@@ -10,8 +10,11 @@ This document explains security hardening measures, multi-role RBAC, concurrency
 All production credentials and API keys are injected dynamically via environment variables (`includes/db_con.php`, `includes/config.php`):
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_SSL`
 - `ADMIN_MFA_ENFORCE`
+- `BREVO_API_KEY`, `EMAIL_FROM` (transactional email dispatch over HTTPS port 443)
+- `MAIL_ENABLED`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM`, `MAIL_FROM_NAME` (RFC 5321 SMTP relay)
+- `APP_URL`, `PASSWORD_RESET_TTL_MIN`
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`
 - `TICKET_HMAC_SECRET` (used for digital boarding pass signature generation and verification)
-- `MAIL_*`
 
 ### 1.2 Multi-Role RBAC & Live Session Checks
 - **Role Enforcement:** Administrative privileges are scoped into `super_admin`, `operator`, and `viewer`.
@@ -118,6 +121,7 @@ php tests/test_google_auth.php
 - **Pre-Hijack Account Protection:** Linking Google to an existing email clears previous unverified passwords, preventing pre-hijacking attacks.
 - **Sensitive Action Re-Authentication Window (`max_age=300`):** Customers with Google-only accounts (`pwd_set = 0`) must complete Google re-authentication (`google-reauth.php`) to unlock sensitive actions (change email, change/set password, deactivate account). Google mandates `prompt=login`, `max_age=300`, and verifies the `auth_time` claim within 300 seconds to ensure the user is actively present.
 - **Session Replay & Hijacking Defense:** Re-authentication state is single use, stored securely in `$_SESSION['reauth_at']`, and automatically invalidates after `GOOGLE_REAUTH_TTL` (300 s).
+- **Zero Callback Latency & Lock Contention Elimination:** Configures `CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4` on token exchange (`oauth2.googleapis.com`) to eliminate dual-stack IPv6 DNS resolution stalls. Calls explicit `session_write_close()` before issuing 302 redirect headers in `google-callback.php` and `pr_after_response()` so customer portal pages load instantaneously without PHP session lock contention.
 
 ---
 
@@ -163,3 +167,7 @@ php tests/test_google_auth.php
 ### Issue 8: "TiDB cannot add a STORED generated column via ALTER TABLE (Migration 005)"
 - **Cause:** TiDB Cloud Serverless does not support adding `STORED` generated columns via `ALTER TABLE`.
 - **Fix:** `database/db_migrate.php` implements an automated fallback to `VIRTUAL` generated columns for `active_seat`, ensuring the unique index `uq_booking_active_seat` is created without failure.
+
+### Issue 9: "SMTP Connection Timed Out / Outbound Port 587 Blocked on Cloud Host"
+- **Cause:** Cloud hosting environments such as Render restrict direct outbound TCP connections on SMTP ports (`25`, `465`, `587`).
+- **Fix:** Use the built-in Brevo HTTPS REST API transport over standard HTTPS port 443. Set `BREVO_API_KEY` and `EMAIL_FROM` in your Render dashboard environment variables; outbound emails are dispatched via direct HTTPS REST requests without port restrictions.

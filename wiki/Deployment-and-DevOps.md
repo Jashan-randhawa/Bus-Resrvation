@@ -80,6 +80,8 @@ All credentials, policies, and operational switches are injected via environment
 | `APP_CURRENCY` | `₹` | Currency symbol | `₹` or `$` |
 | `APP_DEBUG` | `0` | Expose error traces to super admins | `0` (off) or `1` (on) |
 | `BASE_URL` | *(auto)* | Root URL path | `""` (web root) or `"/bus-reservation"` |
+| `BREVO_API_KEY` | *(empty)* | Brevo HTTPS REST API Key for transactional emails (port 443) | `xkeysib-...` |
+| `EMAIL_FROM` | *(empty)* | Brevo sender identity formatted as `"Name <email>"` | `"Bus Reservation System <reservations@example.com>"` |
 | `MAIL_ENABLED` | `false` | Enable RFC 5321 SMTP email dispatch | `true` |
 | `MAIL_HOST` | *(empty)* | Outbound SMTP Relay Host | `smtp.example.com` |
 | `MAIL_PORT` | `587` | SMTP Relay Port | `587` |
@@ -87,6 +89,11 @@ All credentials, policies, and operational switches are injected via environment
 | `MAIL_PASS` | *(empty)* | SMTP Secret Key | `your_smtp_secret` |
 | `MAIL_FROM` | *(empty)* | Outbound From Address | `reservations@example.com` |
 | `MAIL_FROM_NAME` | `"Bus Reservation System"` | Outbound Sender Name | `"Bus Reservation System"` |
+| `APP_URL` | *(auto via Render)* | Trusted public base URL for password reset links & OAuth callbacks | `https://bus-resrvation.onrender.com` |
+| `PASSWORD_RESET_TTL_MIN` | `10` | Password reset link validity in minutes (`5` to `60`) | `10` |
+| `GOOGLE_CLIENT_ID` | *(empty)* | Google Cloud OAuth 2.0 Web Client ID | `xxxxxx.apps.googleusercontent.com` |
+| `GOOGLE_CLIENT_SECRET` | *(empty)* | Google Cloud OAuth 2.0 Client Secret | `GOCSPX-xxxxxx` |
+| `GOOGLE_REDIRECT_URI` | *(auto)* | Explicit OAuth callback URI (defaults to `<APP_URL>/google-callback.php`) | `https://bus-resrvation.onrender.com/google-callback.php` |
 
 ---
 

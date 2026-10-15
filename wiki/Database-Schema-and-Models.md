@@ -15,6 +15,7 @@ erDiagram
     BOOKING ||--o{ SEAT_LOCK : "locks"
     ADMIN ||--o{ ADMIN_RECOVERY_CODES : "holds"
     ADMIN ||--o{ AUDIT_LOG : "records"
+    COSTUMER ||--o{ PASSWORD_RESETS : "requests"
     
     ADMIN {
         int id PK
@@ -44,9 +45,19 @@ erDiagram
         varchar name
         varchar email "UK uq_customer_email"
         varchar pwd "bcrypt 255"
+        varchar google_id "UK uq_customer_google_id"
+        tinyint pwd_set "1 or 0"
         varchar phone
         text address
         datetime archived_at
+    }
+
+    PASSWORD_RESETS {
+        int id PK
+        varchar email "idx_pr_email"
+        char token "UK sha256 64-hex"
+        datetime expires_at
+        datetime created_at
     }
 
     BUSES {
@@ -283,6 +294,19 @@ Customer accounts, profile credentials, and Google OAuth bindings.
 | `phone` | `VARCHAR(20)` | No | Passenger contact phone number |
 | `address` | `TEXT` | Yes | Passenger residential address |
 | `archived_at` | `DATETIME` | Yes | Soft-delete timestamp (NULL = active) |
+
+---
+
+### 2.10 Table: `password_resets`
+Stores single-use SHA-256 hashed password reset tokens with strict expiration and delivery invalidation.
+
+| Column | Type | Nullable | Description |
+|---|---|:---:|---|
+| `id` | `INT AUTO_INCREMENT` | No | Primary Key |
+| `email` | `VARCHAR(100)` | No | Customer email address (**Index: `idx_pr_email`**) |
+| `token` | `CHAR(64)` | No | SHA-256 cryptographic hash of 64-character hex token (**Unique Key: `uq_pr_token`**) |
+| `expires_at` | `DATETIME` | No | Expiration timestamp (`PASSWORD_RESET_TTL_MIN`, default 10 min) |
+| `created_at` | `DATETIME` | No | Token generation timestamp |
 
 ---
 
