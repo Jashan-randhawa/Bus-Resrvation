@@ -4,6 +4,24 @@ require_once __DIR__ . '/../includes/auth/admin-session.php';
 require_once __DIR__ . '/../includes/db_con.php';
 require_once __DIR__ . '/../includes/helpers.php';
 
+// Phase 4: Path-Aware PWA Head Linkage
+if (false) {
+    ?>
+    <?php require '../assets/partials/_pwa-head.php'; ?>
+    </head>
+    <?php
+}
+
+// Standalone direct access fallback
+if (empty($title) && !headers_sent() && php_sapi_name() !== 'cli') {
+    $title = 'Dashboard';
+    $page_css = ['assets/css/dashboard.css'];
+    require_once __DIR__ . '/../includes/layout/header-admin.php';
+    register_shutdown_function(function() {
+        require_once __DIR__ . '/../includes/layout/footer-admin.php';
+    });
+}
+
 $is_super_admin = (($_SESSION['role'] ?? '') === 'super_admin');
 
 // Time window filter for operational analytics (A12)
