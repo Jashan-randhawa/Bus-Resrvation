@@ -129,3 +129,59 @@ self.addEventListener('sync', (event) => {
 async function replayQueuedInquiries() {
   console.log('[SW] Background Sync: Stable network detected. Replaying queued submissions.');
 }
+
+// Push Notifications: Listen for incoming push messages from the server
+self.addEventListener('push', (event) => {
+  let data = {};
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data = { title: 'Bus Booking Update', body: event.data.text() };
+    }
+  }
+
+  const title = data.title || 'Bus Reservation System';
+  const options = {
+    body: data.body || 'Your bus booking or route status has been updated.',
+    icon: './assets/img/app-icon.svg',
+    badge: './assets/img/app-icon.svg',
+    data: {
+      url: data.url || './index.php'
+    },
+    actions: [
+      { action: 'open', title: 'View Ticket' },
+      { action: 'close', title: 'Dismiss' }
+    ],
+    vibrate: [100, 50, 100]
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Notification Click: Navigate to target booking or route on tap
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  if (event.action === 'close') {
+    return;
+  }
+
+  const targetUrl = (event.notification.data && event.notification.data.url)
+    ? event.notification.data.url
+    : './index.php';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          if ('navigate' in client) client.navigate(targetUrl);
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
+});
