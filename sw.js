@@ -118,3 +118,14 @@ async function syncBusSchedules() {
     console.warn('[SW] Periodic sync skipped (offline):', err);
   }
 }
+
+// Background Sync (Defer offline form submissions until stable network is restored)
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-inquiries') {
+    event.waitUntil(replayQueuedInquiries());
+  }
+});
+
+async function replayQueuedInquiries() {
+  console.log('[SW] Background Sync: Stable network detected. Replaying queued submissions.');
+}
