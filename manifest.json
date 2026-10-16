@@ -3,6 +3,8 @@
   "name": "Simple Bus Ticket Booking System",
   "short_name": "BusBooking",
   "description": "Book bus tickets, check live PNR status, and manage routes, seats, and reservations.",
+  "lang": "en-US",
+  "dir": "ltr",
   "start_url": "./index.php",
   "scope": "./",
   "display": "standalone",
@@ -23,12 +25,45 @@
   "background_color": "#212529",
   "theme_color": "#212529",
   "categories": ["travel", "transportation", "productivity"],
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
+  "prefer_related_applications": false,
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://bus-resrvation.onrender.com/manifest.json",
+      "id": "sbtbs-bus-reservation-app"
+    }
+  ],
+  "note_taking": {
+    "new_note_url": "./index.php?action=new_note"
+  },
+  "scope_extensions": [
+    {
+      "origin": "https://bus-resrvation.onrender.com"
+    }
+  ],
   "icons": [
     {
       "src": "assets/img/app-icon.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/img/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Bus Ticket Booking Desktop Dashboard"
+    },
+    {
+      "src": "assets/img/screenshot-narrow.png",
+      "sizes": "720x1280",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile Bus Ticket Booking and PNR Tracker"
     }
   ],
   "shortcuts": [
@@ -112,15 +147,16 @@
       "name": "Bus Departure & PNR Tracker",
       "description": "View live bus departures and quick ticket status",
       "tag": "bus-departure-widget",
-      "template": "widgets/bus-widget.json",
+      "template": "bus-departure-widget-template",
+      "ms_ac_template": "widgets/bus-widget.json",
       "data": "widgets/bus-widget-data.json",
       "type": "application/json",
       "auth": false,
       "update": 900,
       "screenshots": [
         {
-          "src": "assets/img/app-icon.svg",
-          "sizes": "512x512",
+          "src": "assets/img/screenshot-wide.png",
+          "sizes": "1280x720",
           "label": "Bus Widget Preview"
         }
       ],
