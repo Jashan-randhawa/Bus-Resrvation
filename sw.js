@@ -98,3 +98,23 @@ async function renderWidget(widget) {
     console.warn('[SW] Widget render warning:', err);
   }
 }
+
+// Periodic Background Sync (Fetch route timetables in the background)
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'update-bus-routes') {
+    event.waitUntil(syncBusSchedules());
+  }
+});
+
+async function syncBusSchedules() {
+  try {
+    const response = await fetch('./index.php');
+    if (response && response.status === 200) {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put('./index.php', response);
+      console.log('[SW] Periodic Sync: Latest bus schedules updated in background.');
+    }
+  } catch (err) {
+    console.warn('[SW] Periodic sync skipped (offline):', err);
+  }
+}

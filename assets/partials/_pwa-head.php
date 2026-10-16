@@ -90,6 +90,19 @@ $root_prefix = $is_admin_route ? '../' : './';
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
       navigator.serviceWorker.register(rootPrefix + 'sw.js', { scope: rootPrefix })
+        .then(async function (reg) {
+          // Register Periodic Background Sync if supported
+          if ('periodicSync' in reg) {
+            try {
+              const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
+              if (status.state === 'granted') {
+                await reg.periodicSync.register('update-bus-routes', {
+                  minInterval: 12 * 60 * 60 * 1000
+                });
+              }
+            } catch (e) {}
+          }
+        })
         .catch(function (err) {
           console.warn('[PWA] Service Worker registration failed:', err);
         });
