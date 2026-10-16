@@ -29,6 +29,11 @@
   "prefer_related_applications": false,
   "related_applications": [
     {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.onrender.bus_resrvation.twa",
+      "id": "com.onrender.bus_resrvation.twa"
+    },
+    {
       "platform": "webapp",
       "url": "https://bus-resrvation.onrender.com/manifest.json",
       "id": "sbtbs-bus-reservation-app"

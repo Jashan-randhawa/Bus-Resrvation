@@ -1,0 +1,20 @@
+{
+  "name": "@jashan-randhawa/busres-app",
+  "version": "1.0.0",
+  "description": "Android Trusted Web Activity (TWA) and PWA store distribution package for Bus Reservation System",
+  "main": "BusBooking.apk",
+  "files": [
+    "BusBooking.apk",
+    "BusBooking.aab",
+    "assetlinks.json",
+    "signing-key-info.txt",
+    "signing.keystore",
+    "README.md"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jashan-randhawa/Bus-Resrvation.git",
+    "directory": "packages/app"
+  }
+}

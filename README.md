@@ -5,6 +5,7 @@
 ### *A Modern, Cloud-Ready Full-Stack Bus Ticket Booking & Fleet Management Platform*
 
 [![Latest Release](https://img.shields.io/badge/Release-v2.4.0-blue?style=for-the-badge&logo=github)](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/tag/v2.4.0)
+[![Android Package](https://img.shields.io/badge/Android%20App-APK%20%7C%20AAB-3DDC84?style=for-the-badge&logo=android&logoColor=white)](packages/app)
 [![Docker Package](https://img.shields.io/badge/GitHub%20Package-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation)
 [![npm Packages](https://img.shields.io/badge/GitHub%20Packages-npm-CB3837?style=for-the-badge&logo=npm&logoColor=white)](https://github.com/Jashan-randhawa/Bus-Resrvation/packages)
 [![Wiki Docs](https://img.shields.io/badge/Documentation-Wiki-green?style=for-the-badge&logo=gitbook&logoColor=white)](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki)
@@ -15,7 +16,7 @@
 
 <br/>
 
-[📖 Explore Technical Wiki](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki) • [📦 Download v2.4.0 Release Bundle](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/tag/v2.4.0) • [🐳 Pull Docker Image](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation)
+[📖 Explore Technical Wiki](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki) • [📦 Download v2.4.0 Release Bundle](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/tag/v2.4.0) • [📱 Android Package (APK/AAB)](packages/app) • [🐳 Pull Docker Image](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation)
 
 </div>
 
@@ -128,8 +129,20 @@ flowchart TD
 | **⚡ Docker Migration Runner** | [`ghcr.io/jashan-randhawa/bus-resrvation-migrate`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation-migrate) | One-off CLI database migration runner (`:latest`, `:1.0.0`) |
 | **💺 Seat Picker Widget (npm)** | [`@jashan-randhawa/bus-seat-picker`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/npm/bus-seat-picker) | Accessible seat selection widget with live availability polling |
 | **🎨 Design Tokens & UI (npm)** | [`@jashan-randhawa/busres-ui`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/npm/busres-ui) | Design tokens, components, and dark/light theme toggle |
+| **📱 Android Native App (TWA)** | [`packages/app`](packages/app) | Native Android APK (~999 KB) & Play Store AAB Bundle (~1.08 MB) |
 | **🗜️ Release Zip Archive** | [`bus-reservation-v2.4.0.zip`](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/download/v2.4.0/bus-reservation-v2.4.0.zip) | Curated distribution bundle via GitHub Actions |
 | **📄 Implementation Plan PDF** | [`Bus_Reservation_GitHub_Packages_Plan.pdf`](https://github.com/Jashan-randhawa/Bus-Resrvation/blob/main/docs/Bus_Reservation_GitHub_Packages_Plan.pdf) | GitHub Packages Release Plan |
+
+### 📱 Android Native Package (Trusted Web Activity)
+
+The application is packaged as a production native Android package via Trusted Web Activity (TWA) under package name `com.onrender.bus_resrvation.twa`:
+
+- **Direct Android Sideload (`.apk`)**: Download [`packages/app/BusBooking.apk`](packages/app/BusBooking.apk) and install directly or run:
+  ```bash
+  adb install -r packages/app/BusBooking.apk
+  ```
+- **Google Play Store Publishing (`.aab`)**: Production Android App Bundle [`packages/app/BusBooking.aab`](packages/app/BusBooking.aab) signed with production release keystore [`packages/app/signing.keystore`](packages/app/signing.keystore). Keystore credentials are documented in [`packages/app/signing-key-info.txt`](packages/app/signing-key-info.txt).
+- **Digital Asset Links Verification**: Hosted live at [`/.well-known/assetlinks.json`](.well-known/assetlinks.json), establishing cryptographic domain ownership and unlocking full-screen standalone Android execution without URL bars.
 
 ### 📦 Installing npm Packages from GitHub Packages
 
