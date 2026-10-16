@@ -77,5 +77,15 @@
         "text/csv": [".csv"]
       }
     }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+bus",
+      "url": "./pnr.php?pnr=%s"
+    },
+    {
+      "protocol": "web+ticket",
+      "url": "./pnr.php?ticket=%s"
+    }
   ]
 }

@@ -4,11 +4,21 @@
  * Connects ticket check to PWA head partial and loads PNR verification.
  */
 require_once __DIR__ . '/includes/config.php';
-$pnr = trim((string)($_GET['pnr'] ?? ''));
+$raw_input = trim((string)($_GET['pnr'] ?? $_GET['ticket'] ?? ''));
+$pnr = '';
 
-if ($pnr !== '') {
-    header('Location: ' . BASE_URL . '/homepage.php?pnr=' . urlencode($pnr) . '#pnr');
-    exit;
+if ($raw_input !== '') {
+    // If passed via protocol handler (e.g. web+ticket://ABC1234567 or web+bus://ABC1234567)
+    if (preg_match('/(?:web\+[a-z]+:\/\/(?:[^\/]*\/)*)?([A-Za-z0-9_-]+)/i', $raw_input, $matches)) {
+        $pnr = $matches[1];
+    } else {
+        $pnr = $raw_input;
+    }
+
+    if ($pnr !== '') {
+        header('Location: ' . BASE_URL . '/homepage.php?pnr=' . urlencode($pnr) . '#pnr');
+        exit;
+    }
 }
 ?>
 <!DOCTYPE html>
