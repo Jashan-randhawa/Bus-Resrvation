@@ -67,6 +67,18 @@ $root_prefix = $is_admin_route ? '../' : './';
     display: none !important;
   }
 }
+
+/* Window Controls Overlay (Desktop Custom Titlebar) */
+@media (display-mode: window-controls-overlay) {
+  .titlebar-drag-region {
+    app-region: drag;
+    -webkit-app-region: drag;
+  }
+  .titlebar-no-drag {
+    app-region: no-drag;
+    -webkit-app-region: no-drag;
+  }
+}
 </style>
 
 <!-- Service Worker Registration & Install Prompt Controller -->
