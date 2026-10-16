@@ -87,5 +87,14 @@
       "protocol": "web+ticket",
       "url": "./pnr.php?ticket=%s"
     }
-  ]
+  ],
+  "share_target": {
+    "action": "./pnr.php",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
 }
