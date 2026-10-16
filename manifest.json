@@ -1,7 +1,7 @@
 {
   "id": "sbtbs-bus-reservation-app",
-  "name": "Simple Bus Ticket Booking System",
-  "short_name": "BusBooking",
+  "name": "BusBook - Bus Reservation System",
+  "short_name": "BusBook",
   "description": "Book bus tickets, check live PNR status, and manage routes, seats, and reservations.",
   "lang": "en-US",
   "dir": "ltr",

@@ -4,6 +4,15 @@ All notable changes to this project are documented in this file.
 
 ## [2.4.0] - 2026-10-16
 
+### Brand Identity & Visual Asset Overhaul
+- **Official BusBook Brand Integration**:
+  - Replaced legacy placeholders with official **BusBook** brand assets: stylized transit coach inside a speed-ticket voucher (`#0B1E3F` navy motion trails, `#0066FF` electric blue notch, and clean white coach body with windshield reflection).
+  - High-resolution master assets saved at `assets/images/logo.png`, `assets/images/bus-emblem.png`, and `assets/images/bus-logo.png`.
+  - Replaced PWA square raster icons (`assets/img/app-icon-192.png`, `assets/img/app-icon-512.png`) respecting maskable safe-zone paddings and purpose declarations (`any` and `maskable`).
+  - Scalable vector brand emblem and PWA vector icon updated at `assets/images/bus.svg` and `assets/img/app-icon.svg`.
+  - Web App Manifest updated with brand title `BusBook - Bus Reservation System` and short name `BusBook`.
+  - iOS home screen web application title updated to `BusBook` in `assets/partials/_pwa-head.php`.
+
 ### Progressive Web App (PWA) & App Store Readiness
 - **Complete Progressive Web App (PWA) Implementation**:
   - Implemented Web App Manifest (`manifest.json`) supporting standalone display mode, dual quick-actions (`Book Tickets`, `Admin Dashboard`), and high-res icon assets.

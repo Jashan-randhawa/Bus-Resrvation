@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🚌 Bus Reservation System
+<img src="assets/images/logo.png" alt="BusBook Logo" width="280">
+
+# 🚌 BusBook — Bus Reservation System
 
 ### *A Modern, Cloud-Ready Full-Stack Bus Ticket Booking & Fleet Management Platform*
 
@@ -429,7 +431,9 @@ Bus-Reservation/
 │   │   ├── theme-toggle.js   # Persistent Light/Dark theme switcher
 │   │   └── user-idle.js      # Customer session idle warning & auto-logout monitor
 │   └── images/
-│       └── bus.svg           # High-definition vector bus brand icon
+│       ├── logo.png          # High-resolution BusBook brand master logo
+│       ├── bus-emblem.png    # Transparent speed-ticket transit coach emblem
+│       └── bus.svg           # Scalable vector bus brand emblem
 │
 ├── database/                 # 🗄️ Relational Schema & Migration Engine
 │   ├── init.sql              # Idempotent hardened schema DDL

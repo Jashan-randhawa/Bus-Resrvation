@@ -10,6 +10,8 @@ const STATIC_ASSETS = [
   './assets/img/screenshot-wide.png',
   './assets/img/screenshot-narrow.png',
   './assets/images/bus.svg',
+  './assets/images/bus-emblem.png',
+  './assets/images/logo.png',
   './assets/css/design-system.css',
   './assets/css/home.css',
   './assets/css/public.css',
