@@ -12,6 +12,10 @@ All notable changes to this project are documented in this file.
   - Scalable vector brand emblem and PWA vector icon updated at `assets/images/bus.svg` and `assets/img/app-icon.svg`.
   - Web App Manifest updated with brand title `BusBook - Bus Reservation System` and short name `BusBook`.
   - iOS home screen web application title updated to `BusBook` in `assets/partials/_pwa-head.php`.
+  - **Website Bar & Browser Tab Integration**:
+    - Integrated the official **BusBook** emblem and brand title into the public website navigation bar (`header-public.php`), footer (`footer-public.php`), admin topbar and drawer (`header-admin.php`), user portal topbar (`header-user.php`), and auth views (`login.php`, `forgot-password.php`, `reset-password.php`, `user/verify.php`).
+    - Generated native multi-resolution `favicon.ico` in root and assets directories for browser address/tab bars.
+    - Fixed image dimensions and positioning on embedded SVG elements (`assets/images/bus.svg` and `assets/img/app-icon.svg`) for cross-browser rendering.
 
 ### Progressive Web App (PWA) & App Store Readiness
 - **Complete Progressive Web App (PWA) Implementation**:

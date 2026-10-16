@@ -56,8 +56,8 @@ require_once __DIR__ . '/includes/layout/header-login.php';
     <div class="auth-card">
         <div class="auth-header text-center">
             <a href="<?= BASE_URL ?>/homepage.php" class="d-inline-flex align-items-center mb-2 text-decoration-none">
-                <img src="<?= BASE_URL ?>/assets/images/bus.svg" alt="Logo" style="width: 32px; height: 32px;" class="mr-2">
-                <h4 class="font-weight-bold text-dark mb-0">Bus Service</h4>
+                <img src="<?= BASE_URL ?>/assets/images/bus-emblem.png" alt="BusBook Logo" style="width: 32px; height: 32px;" class="mr-2">
+                <h4 class="font-weight-bold text-dark mb-0">BusBook</h4>
             </a>
             <h5 class="font-weight-bold mb-1">Set New Password</h5>
             <p class="text-muted small mb-0">Choose a secure password for your account.</p>

@@ -53,9 +53,9 @@ $is_valid_for_travel = ($is_verified && !$is_cancelled && !$is_expired && !$is_p
 <body>
     <div class="verify-card">
         <div class="p-3 p-sm-4 text-center border-bottom bg-light">
-            <img src="<?= BASE_URL ?>/assets/images/bus.svg" alt="Logo" style="width: 40px; height: 40px;" class="mb-2">
+            <img src="<?= BASE_URL ?>/assets/images/bus-emblem.png" alt="BusBook Logo" style="width: 40px; height: 40px;" class="mb-2">
             <h5 class="font-weight-bold mb-0 text-dark">Digital Pass Verification</h5>
-            <small class="text-muted">Bus Reservation Conductor &amp; Passenger Verification</small>
+            <small class="text-muted">BusBook Conductor &amp; Passenger Verification</small>
         </div>
 
         <div class="p-3 p-sm-4">

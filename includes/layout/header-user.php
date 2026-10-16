@@ -5,7 +5,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title><?= e($title ?? 'Customer Portal') ?> - Bus Reservation</title>
+    <link rel="shortcut icon" href="<?= BASE_URL ?>/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="<?= BASE_URL ?>/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= BASE_URL ?>/assets/images/bus-emblem.png">
+    <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/assets/images/bus.svg">
+    <title><?= e($title ?? 'Customer Portal') ?> - BusBook</title>
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -70,8 +74,8 @@
             <!-- Brand Header -->
             <div class="admin-brand">
                 <a href="<?= BASE_URL ?>/user/index.php" class="brand-link">
-                    <img src="<?= BASE_URL ?>/assets/images/bus.svg" alt="Bus Logo" class="brand-logo">
-                    <span class="brand-title">Bus Service</span>
+                    <img src="<?= BASE_URL ?>/assets/images/bus-emblem.png" alt="BusBook Logo" class="brand-logo">
+                    <span class="brand-title">BusBook</span>
                 </a>
                 <div class="d-flex align-items-center">
                     <span class="badge badge-info p-1 px-2 font-weight-bold mr-1" style="font-size:0.65rem;">User</span>

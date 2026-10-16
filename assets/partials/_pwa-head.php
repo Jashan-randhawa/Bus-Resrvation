@@ -16,6 +16,9 @@ $root_prefix = $is_admin_route ? '../' : './';
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="BusBook">
+<link rel="shortcut icon" href="<?php echo $root_prefix; ?>favicon.ico">
+<link rel="icon" type="image/x-icon" href="<?php echo $root_prefix; ?>favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="<?php echo $root_prefix; ?>assets/images/bus-emblem.png">
 <link rel="icon" type="image/svg+xml" href="<?php echo $root_prefix; ?>assets/img/app-icon.svg">
 <link rel="icon" type="image/png" sizes="192x192" href="<?php echo $root_prefix; ?>assets/img/app-icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="<?php echo $root_prefix; ?>assets/img/app-icon-512.png">

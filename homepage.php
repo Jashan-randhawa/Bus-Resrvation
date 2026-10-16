@@ -1279,7 +1279,7 @@ if (isset($_POST['subbtn'])) {
     <div class="modal-content">
       <div class="modal-header admin-auth-header">
         <div class="d-flex align-items-center">
-          <img src="<?= BASE_URL ?>/assets/images/bus.svg" alt="Bus Service Logo" width="28" height="28" class="mr-2">
+          <img src="<?= BASE_URL ?>/assets/images/bus.svg" alt="BusBook Logo" width="28" height="28" class="mr-2">
           <h5 id="adminLoginModalTitle" class="admin-modal-title">Administration Portal</h5>
         </div>
         <div class="d-flex align-items-center">

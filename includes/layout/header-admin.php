@@ -7,9 +7,11 @@ require_once __DIR__ . '/../config.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow">
-    <meta name="theme-color" content="#0f172a">
+    <link rel="shortcut icon" href="<?= BASE_URL ?>/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="<?= BASE_URL ?>/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= BASE_URL ?>/assets/images/bus-emblem.png">
     <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/assets/images/bus.svg">
-    <title><?= e($title ?? 'Admin') ?> - Bus Reservation</title>
+    <title><?= e($title ?? 'Admin') ?> - BusBook</title>
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -137,8 +139,8 @@ require_once __DIR__ . '/../config.php';
         <!-- Brand Header (Bus Service text visible on all viewports) -->
         <div class="admin-brand">
             <a href="<?= BASE_URL ?>/admin/index.php" class="brand-link">
-                <img src="<?= BASE_URL ?>/assets/images/bus.svg" alt="Logo" class="brand-logo">
-                <span class="brand-title">Bus Service</span>
+                <img src="<?= BASE_URL ?>/assets/images/bus-emblem.png" alt="BusBook Logo" class="brand-logo">
+                <span class="brand-title">BusBook</span>
             </a>
             <div class="d-flex align-items-center">
                 <span class="brand-badge mr-1">Admin</span>

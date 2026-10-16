@@ -4,8 +4,8 @@
     <div class="row align-items-center">
       <div class="col-md-6 mb-3 mb-md-0">
         <div class="d-flex align-items-center mb-2">
-          <img src="<?= BASE_URL ?>/assets/images/bus.svg" alt="Bus Service Logo" width="28" height="28" class="mr-2">
-          <span class="font-weight-bold text-dark h5 mb-0">Bus Service</span>
+          <img src="<?= BASE_URL ?>/assets/images/bus-emblem.png" alt="BusBook Logo" width="28" height="28" class="mr-2">
+          <span class="font-weight-bold text-dark h5 mb-0">BusBook</span>
         </div>
         <p class="text-muted small mb-0">
           Reliable intercity bus bookings with real-time seat selection and verified PNR status tracking.
@@ -30,7 +30,7 @@
           </li>
         </ul>
         <p class="text-muted small mb-0">
-          &copy; <?= date('Y') ?> Bus Service System. All rights reserved.
+          &copy; <?= date('Y') ?> BusBook System. All rights reserved.
         </p>
       </div>
     </div>

@@ -13,7 +13,7 @@ $user_role = $_SESSION['role'] ?? null;
 
   <!-- Open Graph & Canonical (P19) -->
   <link rel="canonical" href="<?= e(BASE_URL) ?>/homepage.php">
-  <meta property="og:title" content="Bus Service - Safe &amp; Simple Ticket Booking">
+  <meta property="og:title" content="BusBook - Safe &amp; Simple Ticket Booking">
   <meta property="og:description" content="Simple and reliable bus ticket booking system. Real-time seats and instant PNR lookup.">
   <meta property="og:image" content="<?= e(BASE_URL) ?>/assets/images/hero-800.webp">
   <meta property="og:url" content="<?= e(BASE_URL) ?>/homepage.php">
@@ -21,6 +21,9 @@ $user_role = $_SESSION['role'] ?? null;
   <meta name="twitter:card" content="summary_large_image">
 
   <!-- Favicon -->
+  <link rel="shortcut icon" href="<?= BASE_URL ?>/favicon.ico">
+  <link rel="icon" type="image/x-icon" href="<?= BASE_URL ?>/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="<?= BASE_URL ?>/assets/images/bus-emblem.png">
   <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/assets/images/bus.svg">
 
   <!-- Google Fonts: Inter (400, 500, 600, 700) -->
@@ -32,7 +35,7 @@ $user_role = $_SESSION['role'] ?? null;
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
     integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
   
-  <title>Bus Service - Safe &amp; Simple Ticket Booking</title>
+  <title>BusBook - Safe &amp; Simple Ticket Booking</title>
   
   <!-- Design System & Custom CSS -->
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css?v=2026-10-10">
@@ -53,8 +56,8 @@ $user_role = $_SESSION['role'] ?? null;
   <nav class="navbar navbar-expand-lg navbar-public fixed-top" id="publicNav" aria-label="Main Navigation">
     <div class="container">
       <a href="<?= BASE_URL ?>/homepage.php#home" class="navbar-brand-custom">
-        <img src="<?= BASE_URL ?>/assets/images/bus.svg" alt="Bus Service Logo" width="32" height="32">
-        <span>Bus Service</span>
+        <img src="<?= BASE_URL ?>/assets/images/bus-emblem.png" alt="BusBook Logo" width="36" height="36" class="mr-2">
+        <span>BusBook</span>
       </a>
       
       <!-- Accessible Mobile Menu Toggler (>= 44px touch target) -->

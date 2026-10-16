@@ -22,9 +22,15 @@
     <!-- Global Theme Toggle (Head load to avoid FOUC) -->
     <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>
 
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="<?= BASE_URL ?>/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="<?= BASE_URL ?>/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= BASE_URL ?>/assets/images/bus-emblem.png">
+    <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/assets/images/bus.svg">
+
     <!-- PWA Meta Tags & Service Worker -->
     <?php require_once dirname(__DIR__, 2) . '/assets/partials/_pwa-head.php'; ?>
-    <title><?= e($title ?? 'Sign In') ?> - Bus Reservation</title>
+    <title><?= e($title ?? 'Sign In') ?> - BusBook</title>
 </head>
 
 <body>

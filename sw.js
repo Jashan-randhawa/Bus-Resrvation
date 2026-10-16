@@ -18,7 +18,8 @@ const STATIC_ASSETS = [
   './assets/css/admin.css',
   './assets/css/dashboard.css',
   './assets/css/user.css',
-  './assets/js/theme-toggle.js'
+  './assets/js/theme-toggle.js',
+  './favicon.ico'
 ];
 
 self.addEventListener('install', (event) => {
