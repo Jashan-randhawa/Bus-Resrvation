@@ -43,5 +43,36 @@
         }
       ]
     }
+  ],
+  "file_handlers": [
+    {
+      "action": "./pnr.php",
+      "name": "Bus Ticket Voucher",
+      "icons": [
+        {
+          "src": "assets/img/app-icon.svg",
+          "sizes": "512x512",
+          "type": "image/svg+xml"
+        }
+      ],
+      "accept": {
+        "application/json": [".json"],
+        "text/plain": [".ticket", ".txt"]
+      }
+    },
+    {
+      "action": "./admin/dashboard.php",
+      "name": "Bus Booking & Manifest Report",
+      "icons": [
+        {
+          "src": "assets/img/app-icon.svg",
+          "sizes": "512x512",
+          "type": "image/svg+xml"
+        }
+      ],
+      "accept": {
+        "text/csv": [".csv"]
+      }
+    }
   ]
 }
