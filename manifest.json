@@ -7,6 +7,9 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
+  "launch_handler": {
+    "client_mode": ["focus-existing", "auto"]
+  },
   "background_color": "#212529",
   "theme_color": "#212529",
   "categories": ["travel", "transportation", "productivity"],
