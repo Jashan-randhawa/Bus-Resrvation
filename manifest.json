@@ -96,5 +96,30 @@
       "text": "text",
       "url": "url"
     }
-  }
+  },
+  "widgets": [
+    {
+      "name": "Bus Departure & PNR Tracker",
+      "description": "View live bus departures and quick ticket status",
+      "tag": "bus-departure-widget",
+      "template": "widgets/bus-widget.json",
+      "data": "widgets/bus-widget-data.json",
+      "type": "application/json",
+      "auth": false,
+      "update": 900,
+      "screenshots": [
+        {
+          "src": "assets/img/app-icon.svg",
+          "sizes": "512x512",
+          "label": "Bus Widget Preview"
+        }
+      ],
+      "icons": [
+        {
+          "src": "assets/img/app-icon.svg",
+          "sizes": "512x512"
+        }
+      ]
+    }
+  ]
 }

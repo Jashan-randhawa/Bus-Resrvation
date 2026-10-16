@@ -1,0 +1,48 @@
+{
+  "type": "AdaptiveCard",
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "🚌 Bus Travel Updates",
+      "weight": "Bolder",
+      "size": "Medium"
+    },
+    {
+      "type": "TextBlock",
+      "text": "${headerMessage}",
+      "isSubtle": true,
+      "spacing": "None"
+    },
+    {
+      "type": "FactSet",
+      "facts": [
+        {
+          "title": "Next Bus:",
+          "value": "${nextBusRoute}"
+        },
+        {
+          "title": "Departure:",
+          "value": "${departureTime}"
+        },
+        {
+          "title": "Seats Available:",
+          "value": "${seatsAvailable}"
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.OpenUrl",
+      "title": "Check PNR",
+      "url": "https://bus-resrvation.onrender.com/pnr.php"
+    },
+    {
+      "type": "Action.OpenUrl",
+      "title": "Book Tickets",
+      "url": "https://bus-resrvation.onrender.com/index.php"
+    }
+  ]
+}

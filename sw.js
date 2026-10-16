@@ -66,3 +66,35 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// Windows 11 Widget Board Integration (Win + W)
+self.addEventListener('widgetinstall', (event) => {
+  if (event.widget) {
+    event.waitUntil(renderWidget(event.widget));
+  }
+});
+
+self.addEventListener('widgetresume', (event) => {
+  if (event.widget) {
+    event.waitUntil(renderWidget(event.widget));
+  }
+});
+
+self.addEventListener('widgetclick', (event) => {
+  if (event.action === 'check-pnr') {
+    event.waitUntil(clients.openWindow('./pnr.php'));
+  } else if (event.action === 'book-ticket') {
+    event.waitUntil(clients.openWindow('./index.php'));
+  }
+});
+
+async function renderWidget(widget) {
+  if (!widget || !self.widgets) return;
+  try {
+    const template = await (await fetch('./widgets/bus-widget.json')).text();
+    const data = await (await fetch('./widgets/bus-widget-data.json')).text();
+    await self.widgets.updateByTag(widget.definition.tag, { template, data });
+  } catch (err) {
+    console.warn('[SW] Widget render warning:', err);
+  }
+}
