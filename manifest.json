@@ -6,7 +6,13 @@
   "start_url": "./index.php",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone"],
+  "display_override": ["window-controls-overlay", "tabbed", "standalone"],
+  "tab_strip": {
+    "home_tab": "auto",
+    "new_tab_button": {
+      "url": "./index.php"
+    }
+  },
   "orientation": "any",
   "launch_handler": {
     "client_mode": ["focus-existing", "auto"]
