@@ -62,6 +62,14 @@ check_item('Recommended', 'display', !empty($manifest['display']));
 check_item('Recommended', 'theme_color', !empty($manifest['theme_color']));
 check_item('Recommended', 'background_color', !empty($manifest['background_color']));
 check_item('Recommended', 'description', !empty($manifest['description']));
+$has_512_png_any = false;
+foreach ($manifest['icons'] as $icon) {
+    if (($icon['sizes'] ?? '') === '512x512' && ($icon['type'] ?? '') === 'image/png' && ($icon['purpose'] ?? '') === 'any' && file_exists($root . '/' . $icon['src'])) {
+        $has_512_png_any = true;
+        break;
+    }
+}
+check_item('Recommended', 'icons (512x512 PNG with purpose any)', $has_512_png_any);
 check_item('Recommended', 'screenshots', is_array($manifest['screenshots']) && count($manifest['screenshots']) >= 2 && file_exists($root . '/' . $manifest['screenshots'][0]['src']));
 
 // 3. Optional
