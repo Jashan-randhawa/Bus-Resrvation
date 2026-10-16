@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0B1E3F">
+  <meta name="theme-color" content="#081225">
   <meta name="description" content="BusBook - Real-time Bus Reservation and Ticket Booking Platform">
-  <title>Loading BusBook...</title>
+  <title>BusBook Express - Loading System...</title>
 
   <!-- Favicons -->
   <link rel="shortcut icon" href="favicon.ico">
@@ -14,252 +14,696 @@
   <link rel="icon" type="image/svg+xml" href="assets/images/bus.svg">
   <link rel="apple-touch-icon" href="assets/img/app-icon-512.png">
 
-  <!-- Inter Font -->
+  <!-- Inter & JetBrains Mono Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 
   <style>
+    /* ==========================================================================
+       BUSBOOK CINEMATIC LOADING THEME & RESET
+       ========================================================================== */
     :root {
-      --bg-dark: #081225;
-      --bg-card: rgba(15, 30, 65, 0.75);
-      --border-card: rgba(0, 102, 255, 0.25);
+      --bg-space: #040914;
+      --bg-horizon: #0b1e42;
+      --road-color: #0c1626;
+      --road-lane: #00d2ff;
+      --road-lane-glow: rgba(0, 210, 255, 0.6);
       --primary: #0066FF;
       --primary-light: #38bdf8;
-      --accent: #00d2ff;
-      --navy-deep: #0B1E3F;
+      --accent: #00f0ff;
+      --neon-amber: #f59e0b;
+      --neon-red: #ef4444;
+      --hud-bg: rgba(7, 18, 38, 0.78);
+      --hud-border: rgba(56, 189, 248, 0.28);
+      --hud-glow: rgba(0, 102, 255, 0.35);
       --text-main: #ffffff;
       --text-muted: #94a3b8;
-      --glow: rgba(0, 102, 255, 0.35);
+      --text-dim: #64748b;
     }
 
     [data-theme="light"] {
-      --bg-dark: #f0f4f8;
-      --bg-card: rgba(255, 255, 255, 0.88);
-      --border-card: rgba(0, 102, 255, 0.2);
+      --bg-space: #bdd8f8;
+      --bg-horizon: #e2eeff;
+      --road-color: #2a374a;
+      --road-lane: #0066FF;
+      --road-lane-glow: rgba(0, 102, 255, 0.5);
+      --primary: #0052cc;
+      --primary-light: #0284c7;
+      --accent: #0066FF;
+      --hud-bg: rgba(255, 255, 255, 0.88);
+      --hud-border: rgba(0, 102, 255, 0.25);
+      --hud-glow: rgba(0, 102, 255, 0.2);
       --text-main: #0B1E3F;
-      --text-muted: #64748b;
-      --glow: rgba(0, 102, 255, 0.2);
+      --text-muted: #475569;
+      --text-dim: #64748b;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: var(--bg-dark);
-      color: var(--text-main);
-      min-height: 100vh;
-      min-height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
+    html, body {
+      width: 100%;
+      height: 100%;
       overflow: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-space);
+      color: var(--text-main);
       position: relative;
-      transition: background-color 0.3s ease, color 0.3s ease;
+      touch-action: manipulation;
+      transition: background-color 0.4s ease, color 0.4s ease;
     }
 
-    /* Animated background ambient glow & speed lines */
-    .ambient-bg {
+    /* ==========================================================================
+       CANVAS & SKYLINE ATMOSPHERE
+       ========================================================================== */
+    #skyCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Ambient atmospheric gradient horizon haze */
+    .horizon-haze {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 25%;
+      height: 35%;
+      background: radial-gradient(ellipse at 50% 100%, var(--hud-glow) 0%, transparent 75%);
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.8;
+      animation: hazeBreath 6s ease-in-out infinite alternate;
+    }
+
+    @keyframes hazeBreath {
+      0% { opacity: 0.5; transform: scaleY(0.9); }
+      100% { opacity: 0.9; transform: scaleY(1.1); }
+    }
+
+    /* ==========================================================================
+       3D HIGHWAY STAGE & PERSPECTIVE RUNWAY
+       ========================================================================== */
+    .highway-viewport {
       position: absolute;
       inset: 0;
       overflow: hidden;
+      perspective: 700px;
+      perspective-origin: 50% 52%;
+      z-index: 2;
       pointer-events: none;
-      z-index: 0;
     }
 
-    .ambient-orb {
+    .road-plane {
       position: absolute;
-      border-radius: 50%;
-      filter: blur(90px);
-      opacity: 0.45;
-      animation: floatOrb 8s ease-in-out infinite alternate;
-    }
-
-    .orb-1 {
-      width: 450px;
-      height: 450px;
-      background: radial-gradient(circle, #0066FF, transparent 70%);
-      top: -100px;
-      left: 10%;
-    }
-
-    .orb-2 {
-      width: 400px;
-      height: 400px;
-      background: radial-gradient(circle, #0284c7, transparent 70%);
-      bottom: -80px;
-      right: 15%;
-      animation-duration: 10s;
-      animation-delay: -3s;
-    }
-
-    /* Stylized perspective road/speed lines */
-    .road-grid {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 40%;
-      background: linear-gradient(to top, rgba(0, 102, 255, 0.08), transparent 90%);
-      perspective: 400px;
+      left: -50%;
+      width: 200%;
+      bottom: -150px;
+      height: 75vh;
+      background: linear-gradient(to top, var(--road-color) 0%, #060c16 95%);
+      transform-origin: 50% 100%;
+      transform: rotateX(74deg) translateZ(0);
       overflow: hidden;
+      box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.9);
     }
 
-    .road-lines {
+    [data-theme="light"] .road-plane {
+      background: linear-gradient(to top, #334155 0%, #1e293b 95%);
+    }
+
+    /* Roadside illuminated borders */
+    .road-plane::before, .road-plane::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 6px;
+      background: var(--road-lane);
+      box-shadow: 0 0 20px var(--road-lane-glow);
+    }
+    .road-plane::before { left: 35%; }
+    .road-plane::after { right: 35%; }
+
+    /* Animated perspective dashed lane dividers */
+    .road-lanes {
       position: absolute;
       inset: -100% 0 0 0;
       background-image: 
-        linear-gradient(90deg, transparent 48%, rgba(0, 102, 255, 0.12) 49%, rgba(0, 102, 255, 0.12) 51%, transparent 52%),
-        linear-gradient(0deg, rgba(0, 102, 255, 0.06) 1px, transparent 1px);
-      background-size: 80px 40px;
-      transform: rotateX(60deg);
-      transform-origin: bottom center;
-      animation: roadTravel 2s linear infinite;
+        linear-gradient(90deg, 
+          transparent 44.5%, var(--road-lane) 44.7%, var(--road-lane) 45.3%, transparent 45.5%,
+          transparent 49.6%, var(--road-lane) 49.8%, var(--road-lane) 50.2%, transparent 50.4%,
+          transparent 54.5%, var(--road-lane) 54.7%, var(--road-lane) 55.3%, transparent 55.5%
+        ),
+        linear-gradient(0deg, 
+          rgba(0, 210, 255, 0.8) 0px, 
+          rgba(0, 210, 255, 0.8) 35px, 
+          transparent 35px, 
+          transparent 80px
+        );
+      background-size: 100% 100%, 100% 80px;
+      animation: roadSpeed 0.75s linear infinite;
     }
 
-    @keyframes roadTravel {
-      0% { background-position: 0 0; }
-      100% { background-position: 0 40px; }
+    .road-lanes.boost-active {
+      animation-duration: 0.22s !important;
     }
 
-    @keyframes floatOrb {
-      0% { transform: translateY(0) scale(1); }
-      100% { transform: translateY(40px) scale(1.1); }
+    @keyframes roadSpeed {
+      0% { background-position: 0 0, 0 0; }
+      100% { background-position: 0 0, 0 80px; }
     }
 
-    /* Main Loading Card */
-    .loader-card {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      max-width: 440px;
-      background: var(--bg-card);
-      border: 1px solid var(--border-card);
-      border-radius: 28px;
-      padding: 44px 36px 36px;
-      text-align: center;
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      box-shadow: 
-        0 20px 50px rgba(0, 0, 0, 0.35),
-        0 0 40px var(--glow);
+    /* Volumetric headlight cone cast on tarmac */
+    .headlight-cone-road {
+      position: absolute;
+      left: 50%;
+      bottom: 20%;
+      transform: translateX(-50%);
+      width: 520px;
+      height: 480px;
+      background: radial-gradient(ellipse 60% 80% at 50% 100%, rgba(56, 189, 248, 0.45) 0%, rgba(0, 102, 255, 0.2) 40%, transparent 75%);
+      pointer-events: none;
+      filter: blur(12px);
+      transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
+    }
+
+    .headlight-cone-road.boost-active {
+      width: 750px;
+      height: 600px;
+      background: radial-gradient(ellipse 70% 85% at 50% 100%, rgba(0, 240, 255, 0.7) 0%, rgba(56, 189, 248, 0.35) 50%, transparent 80%);
+    }
+
+    /* Chassis underglow aura */
+    .chassis-underglow {
+      position: absolute;
+      left: 50%;
+      bottom: 8%;
+      transform: translateX(-50%);
+      width: 240px;
+      height: 120px;
+      background: radial-gradient(circle, rgba(0, 210, 255, 0.65) 0%, rgba(0, 102, 255, 0.25) 55%, transparent 75%);
+      filter: blur(18px);
+      animation: underglowPulse 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes underglowPulse {
+      0% { opacity: 0.6; transform: translateX(-50%) scale(0.95); }
+      100% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+    }
+
+    /* ==========================================================================
+       HERO 3D BUS VEHICLE ENTITY (BUILT AROUND BUSBOOK EMBLEM)
+       ========================================================================== */
+    .bus-stage {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 3;
       display: flex;
       flex-direction: column;
       align-items: center;
-      animation: cardEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      justify-content: center;
+      pointer-events: auto;
+      cursor: pointer;
+      transition: transform 0.15s cubic-bezier(0.1, 0.9, 0.2, 1);
     }
 
-    @keyframes cardEntrance {
-      0% {
-        opacity: 0;
-        transform: translateY(24px) scale(0.96);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    /* Logo Presentation */
-    .logo-wrapper {
+    .bus-chassis {
       position: relative;
-      width: 120px;
-      height: 120px;
-      margin-bottom: 24px;
+      width: 220px;
+      height: 220px;
       display: flex;
       align-items: center;
       justify-content: center;
+      animation: busSuspension 1.8s ease-in-out infinite alternate;
+      will-change: transform;
     }
 
-    /* Pulsing halo ring around logo */
-    .logo-halo {
+    @keyframes busSuspension {
+      0% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-5px) rotate(-0.5deg); }
+      100% { transform: translateY(3px) rotate(0.5deg); }
+    }
+
+    /* Holographic glowing rings around BusBook Logo */
+    .emblem-holo-ring {
       position: absolute;
       inset: -12px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(0, 102, 255, 0.35) 0%, rgba(56, 189, 248, 0.15) 50%, transparent 70%);
-      animation: haloPulse 2.4s ease-in-out infinite;
+      border: 2px dashed rgba(56, 189, 248, 0.5);
+      box-shadow: 0 0 30px rgba(0, 102, 255, 0.4), inset 0 0 20px rgba(56, 189, 248, 0.2);
+      animation: ringSpin 12s linear infinite;
     }
 
-    .logo-ring {
+    .emblem-pulse-orb {
       position: absolute;
-      inset: -6px;
+      inset: -4px;
       border-radius: 50%;
-      border: 2px dashed rgba(0, 102, 255, 0.45);
-      animation: rotateRing 14s linear infinite;
+      background: radial-gradient(circle, rgba(0, 102, 255, 0.35) 0%, rgba(56, 189, 248, 0.1) 60%, transparent 80%);
+      animation: orbPulse 2.4s ease-in-out infinite alternate;
     }
 
-    @keyframes haloPulse {
-      0%, 100% { transform: scale(0.95); opacity: 0.6; }
-      50% { transform: scale(1.15); opacity: 1; }
-    }
-
-    @keyframes rotateRing {
+    @keyframes ringSpin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
 
-    .logo-img {
+    @keyframes orbPulse {
+      0% { transform: scale(0.92); opacity: 0.5; }
+      100% { transform: scale(1.12); opacity: 0.95; }
+    }
+
+    /* The BusBook Emblem Image */
+    .bus-emblem-img {
       position: relative;
-      z-index: 2;
-      width: 96px;
-      height: 96px;
+      z-index: 4;
+      width: 140px;
+      height: 140px;
       object-fit: contain;
-      filter: drop-shadow(0 10px 20px rgba(0, 102, 255, 0.45));
-      animation: logoBob 3s ease-in-out infinite alternate;
+      filter: drop-shadow(0 15px 35px rgba(0, 102, 255, 0.65)) drop-shadow(0 0 15px rgba(56, 189, 248, 0.8));
+      transition: transform 0.25s ease, filter 0.25s ease;
     }
 
-    @keyframes logoBob {
-      0% { transform: translateY(0) scale(1); }
-      100% { transform: translateY(-6px) scale(1.02); }
+    .bus-stage:hover .bus-emblem-img {
+      transform: scale(1.06);
+      filter: drop-shadow(0 20px 45px rgba(0, 240, 255, 0.8)) drop-shadow(0 0 25px rgba(56, 189, 248, 1));
     }
 
-    /* Brand Typography */
-    .brand-title {
-      font-size: 28px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      margin-bottom: 6px;
-      background: linear-gradient(135deg, #ffffff 40%, #93c5fd 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    /* Dual LED Projector Headlights on the vehicle */
+    .headlight {
+      position: absolute;
+      bottom: 22px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 
+        0 0 15px #38bdf8,
+        0 0 35px #00d2ff,
+        0 0 70px #0066FF;
+      z-index: 5;
     }
 
-    [data-theme="light"] .brand-title {
-      background: linear-gradient(135deg, #0B1E3F 40%, #0066FF 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    .headlight.left {
+      left: 28px;
+    }
+    .headlight.right {
+      right: 28px;
     }
 
-    .brand-subtitle {
-      font-size: 13px;
-      font-weight: 600;
+    /* Volumetric light beam shooting forward from headlight */
+    .light-beam {
+      position: absolute;
+      bottom: 10px;
+      width: 70px;
+      height: 280px;
+      background: linear-gradient(to top, rgba(255, 255, 255, 0.7) 0%, rgba(56, 189, 248, 0.35) 30%, transparent 100%);
+      clip-path: polygon(42% 100%, 58% 100%, 100% 0%, 0% 0%);
+      transform-origin: bottom center;
+      filter: blur(2px);
+      pointer-events: none;
+      z-index: 3;
+      opacity: 0.85;
+      transition: height 0.3s ease, opacity 0.3s ease;
+    }
+    .light-beam.left {
+      left: 0;
+      transform: rotate(6deg);
+    }
+    .light-beam.right {
+      right: 0;
+      transform: rotate(-6deg);
+    }
+
+    .light-beam.boost-active {
+      height: 380px;
+      opacity: 1;
+      background: linear-gradient(to top, rgba(255, 255, 255, 0.95) 0%, rgba(0, 240, 255, 0.5) 40%, transparent 100%);
+    }
+
+    /* Slipstream aerodynamic speed ribbons */
+    .slipstream-trails {
+      position: absolute;
+      inset: -60px;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .slip-line {
+      position: absolute;
+      background: linear-gradient(to top, transparent, rgba(56, 189, 248, 0.7), transparent);
+      border-radius: 4px;
+      animation: slipFlow 0.8s linear infinite;
+    }
+
+    .slip-1 { width: 2px; height: 110px; top: 10px; left: 15%; animation-delay: 0s; }
+    .slip-2 { width: 3px; height: 140px; top: -30px; left: 82%; animation-delay: 0.3s; }
+    .slip-3 { width: 2px; height: 90px; top: 40px; left: 95%; animation-delay: 0.5s; }
+    .slip-4 { width: 2.5px; height: 120px; top: -10px; left: 5%; animation-delay: 0.2s; }
+
+    @keyframes slipFlow {
+      0% { transform: translateY(-80px) scaleY(0.4); opacity: 0; }
+      50% { opacity: 0.9; }
+      100% { transform: translateY(120px) scaleY(1.3); opacity: 0; }
+    }
+
+    /* Vehicle floating telemetry tag */
+    .vehicle-tag {
+      position: absolute;
+      bottom: -32px;
+      background: rgba(0, 102, 255, 0.25);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      backdrop-filter: blur(10px);
+      padding: 3px 12px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--primary-light);
-      margin-bottom: 28px;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
     }
 
-    /* Progress bar */
+    .pulse-dot-green {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: dotPulse 1.2s infinite alternate;
+    }
+
+    /* ==========================================================================
+       TOP TELEMETRY FLIGHT BAR
+       ========================================================================== */
+    .top-telemetry-bar {
+      position: absolute;
+      top: 20px;
+      left: 24px;
+      right: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 10;
+      pointer-events: auto;
+    }
+
+    .brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--hud-bg);
+      border: 1px solid var(--hud-border);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 8px 18px;
+      border-radius: 100px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+
+    .brand-mini-icon {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+    }
+
+    .brand-name {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: var(--text-main);
+    }
+
+    .brand-badge {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: rgba(0, 102, 255, 0.2);
+      color: var(--primary-light);
+      border: 1px solid rgba(0, 102, 255, 0.3);
+    }
+
+    .quick-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hud-control-btn {
+      background: var(--hud-bg);
+      border: 1px solid var(--hud-border);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 8px 16px;
+      border-radius: 100px;
+      color: var(--text-main);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
+
+    .hud-control-btn:hover {
+      background: rgba(0, 102, 255, 0.25);
+      border-color: var(--primary-light);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--hud-glow);
+    }
+
+    .hud-control-btn:active {
+      transform: translateY(0);
+    }
+
+    /* ==========================================================================
+       MAIN COCKPIT HUD & TELEMETRY DASHBOARD CARD
+       ========================================================================== */
+    .cockpit-card {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 48px);
+      max-width: 680px;
+      background: var(--hud-bg);
+      border: 1px solid var(--hud-border);
+      border-radius: 28px;
+      padding: 24px 28px;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow: 
+        0 24px 60px rgba(0, 0, 0, 0.5),
+        0 0 40px var(--hud-glow);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      animation: cardSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes cardSlideUp {
+      0% { opacity: 0; transform: translate(-50%, 40px); }
+      100% { opacity: 1; transform: translate(-50%, 0); }
+    }
+
+    /* Telemetry HUD upper grid */
+    .hud-telemetry-grid {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 20px;
+      align-items: center;
+    }
+
+    /* Circular SVG Speedometer */
+    .speedo-wrap {
+      position: relative;
+      width: 86px;
+      height: 86px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .speedo-svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .speedo-track {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.1);
+      stroke-width: 6;
+    }
+
+    .speedo-gauge {
+      fill: none;
+      stroke: url(#speedoGradient);
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-dasharray: 226;
+      stroke-dashoffset: 226;
+      transition: stroke-dashoffset 0.15s ease;
+      filter: drop-shadow(0 0 6px #00d2ff);
+    }
+
+    .speedo-center {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .speedo-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--text-main);
+    }
+
+    .speedo-unit {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--primary-light);
+      margin-top: 2px;
+    }
+
+    /* Central route & audio telemetry */
+    .route-telemetry {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .route-node-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+
+    .node-origin { color: var(--primary-light); }
+    .node-dest { color: #10b981; }
+
+    .route-track-bar {
+      position: relative;
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: visible;
+    }
+
+    .route-bus-marker {
+      position: absolute;
+      top: 50%;
+      left: 0%;
+      transform: translate(-50%, -50%);
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #00d2ff;
+      box-shadow: 0 0 10px #00d2ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      transition: left 0.2s ease;
+    }
+
+    /* Audio engine frequency equalizer bars */
+    .audio-eq-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 14px;
+    }
+
+    .eq-bar {
+      flex: 1;
+      background: var(--primary-light);
+      border-radius: 2px;
+      height: 3px;
+      transition: height 0.1s ease;
+      opacity: 0.85;
+    }
+
+    /* Gear & Odometer side column */
+    .telemetry-metrics {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      flex-shrink: 0;
+    }
+
+    .metric-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(0, 102, 255, 0.18);
+      color: var(--primary-light);
+      border: 1px solid rgba(0, 102, 255, 0.3);
+    }
+
+    .metric-odo {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    /* ==========================================================================
+       PROGRESS BAR, STATUS & SHIMMER (REQUIRED FOR TESTS)
+       ========================================================================== */
+    .progress-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
     .progress-track {
       width: 100%;
       height: 8px;
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.1);
       border-radius: 100px;
       overflow: hidden;
       position: relative;
-      margin-bottom: 18px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     [data-theme="light"] .progress-track {
-      background: rgba(0, 0, 0, 0.06);
-      border-color: rgba(0, 0, 0, 0.06);
+      background: rgba(0, 0, 0, 0.08);
+      border-color: rgba(0, 0, 0, 0.08);
     }
 
     .progress-fill {
@@ -268,80 +712,115 @@
       top: 0;
       bottom: 0;
       width: 0%;
-      background: linear-gradient(90deg, #0066FF, #00d2ff, #38bdf8);
+      background: linear-gradient(90deg, #0066FF 0%, #00d2ff 60%, #38bdf8 100%);
       border-radius: 100px;
-      box-shadow: 0 0 12px rgba(0, 102, 255, 0.6);
-      transition: width 0.3s ease;
+      box-shadow: 0 0 16px rgba(0, 210, 255, 0.7);
+      transition: width 0.18s cubic-bezier(0.1, 0.9, 0.2, 1);
     }
 
-    /* Shimmer effect over progress bar */
     .progress-shimmer {
       position: absolute;
       inset: 0;
       background: linear-gradient(
         90deg,
-        transparent,
-        rgba(255, 255, 255, 0.5),
-        transparent
+        transparent 0%,
+        rgba(255, 255, 255, 0.7) 50%,
+        transparent 100%
       );
-      animation: shimmer 1.5s infinite;
+      animation: shimmerMove 1.6s infinite;
     }
 
-    @keyframes shimmer {
+    @keyframes shimmerMove {
       0% { transform: translateX(-100%); }
       100% { transform: translateX(100%); }
     }
 
-    /* Status Text & Percentage */
     .status-row {
-      width: 100%;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 24px;
+      font-size: 13px;
     }
 
     .status-message {
-      font-size: 13.5px;
-      font-weight: 500;
       color: var(--text-muted);
+      font-weight: 500;
       display: flex;
       align-items: center;
       gap: 8px;
-      text-align: left;
     }
 
     .status-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background-color: var(--primary-light);
-      box-shadow: 0 0 8px var(--primary-light);
+      background: var(--primary-light);
+      box-shadow: 0 0 10px var(--primary-light);
       animation: dotPulse 1.2s infinite alternate;
     }
 
     @keyframes dotPulse {
       0% { transform: scale(0.8); opacity: 0.5; }
-      100% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1.25); opacity: 1; }
     }
 
     .status-percentage {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 14px;
+      font-weight: 700;
       color: var(--primary-light);
     }
 
-    /* Quick Action / Launch Button */
+    /* ==========================================================================
+       ACTION BUTTONS & INTERACTIVE CONTROLS
+       ========================================================================== */
+    .cockpit-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Nitro Boost Hold Button */
+    .boost-btn {
+      flex: 1;
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(245, 158, 11, 0.25) 100%);
+      border: 1px solid rgba(245, 158, 11, 0.5);
+      color: #fbbf24;
+      font-size: 13.5px;
+      font-weight: 700;
+      padding: 12px 18px;
+      border-radius: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2);
+    }
+
+    .boost-btn:hover, .boost-btn.active {
+      background: linear-gradient(135deg, #ef4444 0%, #f59e0b 100%);
+      color: #ffffff;
+      border-color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(245, 158, 11, 0.6);
+    }
+
+    .boost-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Primary Direct Launch Button */
     .action-btn {
-      width: 100%;
+      flex: 1.5;
       background: linear-gradient(135deg, #0066FF 0%, #0052cc 100%);
       color: #ffffff;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 13px 20px;
-      font-size: 14.5px;
-      font-weight: 600;
-      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 12px 22px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 14px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
@@ -349,13 +828,13 @@
       gap: 10px;
       text-decoration: none;
       transition: all 0.2s ease;
-      box-shadow: 0 4px 16px rgba(0, 102, 255, 0.35);
+      box-shadow: 0 4px 20px rgba(0, 102, 255, 0.4);
     }
 
     .action-btn:hover {
       background: linear-gradient(135deg, #1a75ff 0%, #0066FF 100%);
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0, 102, 255, 0.45);
+      box-shadow: 0 8px 30px rgba(0, 102, 255, 0.6);
       color: #ffffff;
     }
 
@@ -363,42 +842,54 @@
       transform: translateY(0);
     }
 
-    /* Bottom utilities */
-    .footer-tools {
-      position: absolute;
-      bottom: 18px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      z-index: 2;
+    /* ==========================================================================
+       RESPONSIVE & ACCESSIBILITY MEDIA QUERIES
+       ========================================================================== */
+    @media (max-width: 640px) {
+      .cockpit-card {
+        padding: 18px 20px;
+        bottom: 16px;
+        width: calc(100% - 24px);
+        gap: 14px;
+      }
+      .hud-telemetry-grid {
+        grid-template-columns: auto 1fr;
+        gap: 14px;
+      }
+      .telemetry-metrics {
+        display: none;
+      }
+      .bus-stage {
+        top: 36%;
+      }
+      .bus-chassis {
+        width: 170px;
+        height: 170px;
+      }
+      .bus-emblem-img {
+        width: 110px;
+        height: 110px;
+      }
+      .top-telemetry-bar {
+        top: 14px;
+        left: 14px;
+        right: 14px;
+      }
+      .cockpit-actions {
+        flex-direction: column;
+      }
+      .boost-btn, .action-btn {
+        width: 100%;
+      }
     }
 
-    .tool-link {
-      color: var(--text-muted);
-      font-size: 12px;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .tool-link:hover {
-      background: rgba(255, 255, 255, 0.12);
-      color: var(--text-main);
-    }
-
-    /* Accessibility reduced motion */
+    /* Accessibility prefers-reduced-motion requirement */
     @media (prefers-reduced-motion: reduce) {
-      .ambient-orb, .road-lines, .logo-halo, .logo-ring, .logo-img, .progress-shimmer, .status-dot {
+      .road-lanes, .horizon-haze, .bus-chassis, .emblem-holo-ring, 
+      .emblem-pulse-orb, .slip-line, .progress-shimmer, .status-dot {
         animation: none !important;
       }
-      .loader-card {
+      .cockpit-card {
         animation: none !important;
       }
     }
@@ -406,103 +897,517 @@
 </head>
 <body>
 
-  <!-- Ambient background elements -->
-  <div class="ambient-bg" aria-hidden="true">
-    <div class="ambient-orb orb-1"></div>
-    <div class="ambient-orb orb-2"></div>
-    <div class="road-grid">
-      <div class="road-lines"></div>
+  <!-- Sky Canvas for Starfield, Skyline & Atmospheric FX -->
+  <canvas id="skyCanvas" aria-hidden="true"></canvas>
+
+  <!-- Ambient Horizon Gradient Glow -->
+  <div class="horizon-haze" aria-hidden="true"></div>
+
+  <!-- Top Floating Telemetry & Quick Brand Strip -->
+  <header class="top-telemetry-bar">
+    <div class="brand-cluster">
+      <img src="assets/images/bus-emblem.png" alt="BusBook Logo" class="brand-mini-icon">
+      <span class="brand-name">BusBook Express</span>
+      <span class="brand-badge">PRO-SPEED</span>
+    </div>
+
+    <div class="quick-controls">
+      <!-- Synthesized Audio Engine Toggle -->
+      <button type="button" class="hud-control-btn" id="soundToggleBtn" aria-label="Toggle Engine Audio Sound">
+        <span id="soundIcon">🔇</span>
+        <span id="soundLabel">Sound Off</span>
+      </button>
+
+      <!-- Theme Switcher (Required for tests) -->
+      <button type="button" class="hud-control-btn" id="themeToggleBtn" aria-label="Toggle Light and Dark Mode">
+        <span id="themeIcon">☀️</span>
+        <span id="themeLabel">Light Mode</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 3D Perspective Highway Stage -->
+  <div class="highway-viewport" aria-hidden="true">
+    <div class="road-plane" id="roadPlane">
+      <div class="road-lanes" id="roadLanes"></div>
+      <div class="headlight-cone-road" id="roadLightCone"></div>
+      <div class="chassis-underglow"></div>
     </div>
   </div>
 
-  <!-- Loading Card Container -->
-  <main class="loader-card" role="status" aria-live="polite">
-    
-    <!-- Logo with pulse glow -->
-    <div class="logo-wrapper">
-      <div class="logo-halo" aria-hidden="true"></div>
-      <div class="logo-ring" aria-hidden="true"></div>
-      <img src="assets/images/bus-emblem.png" alt="BusBook Logo" class="logo-img" width="96" height="96">
-    </div>
+  <!-- Hero 3D Bus Vehicle Entity with Logo & Dual Headlight Beams -->
+  <div class="bus-stage" id="busStage" role="img" aria-label="BusBook high-speed coach cruising on highway">
+    <div class="bus-chassis" id="busChassis">
+      <!-- Holographic Logo Rings -->
+      <div class="emblem-holo-ring" aria-hidden="true"></div>
+      <div class="emblem-pulse-orb" aria-hidden="true"></div>
 
-    <!-- Title and Subtitle -->
-    <h1 class="brand-title">BusBook</h1>
-    <p class="brand-subtitle">Bus Reservation System</p>
+      <!-- BusBook Official Transparent Emblem -->
+      <img src="assets/images/bus-emblem.png" alt="BusBook Logo" class="bus-emblem-img" id="heroEmblem" width="140" height="140">
 
-    <!-- Animated Progress Bar -->
-    <div class="progress-track" aria-hidden="true">
-      <div class="progress-fill" id="progressBar">
-        <div class="progress-shimmer"></div>
+      <!-- Dual LED Projector Headlights -->
+      <div class="headlight left" aria-hidden="true"></div>
+      <div class="headlight right" aria-hidden="true"></div>
+
+      <!-- Volumetric 3D Light Beams -->
+      <div class="light-beam left" id="beamLeft" aria-hidden="true"></div>
+      <div class="light-beam right" id="beamRight" aria-hidden="true"></div>
+
+      <!-- Aerodynamic Slipstream Particles -->
+      <div class="slipstream-trails" aria-hidden="true">
+        <div class="slip-line slip-1"></div>
+        <div class="slip-line slip-2"></div>
+        <div class="slip-line slip-3"></div>
+        <div class="slip-line slip-4"></div>
       </div>
     </div>
 
-    <!-- Dynamic Status Label & Percentage -->
-    <div class="status-row">
-      <div class="status-message">
-        <span class="status-dot" aria-hidden="true"></span>
-        <span id="statusText">Initializing application...</span>
+    <!-- Floating Vehicle Status Tag -->
+    <div class="vehicle-tag" aria-hidden="true">
+      <span class="pulse-dot-green"></span>
+      <span>COACH #101 • CRUISE ACTIVE</span>
+    </div>
+  </div>
+
+  <!-- Main Cockpit HUD Telemetry Container (role=status, aria-live=polite) -->
+  <main class="cockpit-card" role="status" aria-live="polite">
+
+    <!-- Top Telemetry Row: Speedometer, Route Tracker & Equalizer -->
+    <div class="hud-telemetry-grid">
+      
+      <!-- Circular Speedometer SVG Gauge -->
+      <div class="speedo-wrap" aria-hidden="true">
+        <svg class="speedo-svg" viewBox="0 0 86 86">
+          <defs>
+            <linearGradient id="speedoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#0066FF"/>
+              <stop offset="60%" stop-color="#00d2ff"/>
+              <stop offset="100%" stop-color="#38bdf8"/>
+            </linearGradient>
+          </defs>
+          <circle class="speedo-track" cx="43" cy="43" r="36"/>
+          <circle class="speedo-gauge" id="speedoGauge" cx="43" cy="43" r="36"/>
+        </svg>
+        <div class="speedo-center">
+          <span class="speedo-val" id="speedoValue">0</span>
+          <span class="speedo-unit">KM/H</span>
+        </div>
       </div>
-      <div class="status-percentage" id="percentageText">0%</div>
+
+      <!-- Route Node Journey & Audio Telemetry -->
+      <div class="route-telemetry">
+        <div class="route-node-line">
+          <span class="node-origin">Central Hub</span>
+          <span class="node-dest">Destination</span>
+        </div>
+        <div class="route-track-bar" aria-hidden="true">
+          <div class="route-bus-marker" id="routeMarker">🚍</div>
+        </div>
+        <!-- Live Audio/Engine Frequency Wave Equalizer -->
+        <div class="audio-eq-row" id="audioEq" aria-hidden="true">
+          <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+          <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+          <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+          <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+        </div>
+      </div>
+
+      <!-- Gear & Odometer Telemetry -->
+      <div class="telemetry-metrics" aria-hidden="true">
+        <span class="metric-badge" id="gearIndicator">GEAR: D1</span>
+        <span class="metric-odo" id="odoIndicator">0042.8 KM</span>
+      </div>
+
     </div>
 
-    <!-- Direct Navigation Button -->
-    <a href="homepage.php" class="action-btn" id="launchBtn">
-      <span>Continue to BusBook</span>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-        <polyline points="12 5 19 12 12 19"></polyline>
-      </svg>
-    </a>
+    <!-- Progress Track & Dynamic Status Readout (Required for test assertions) -->
+    <div class="progress-section">
+      <div class="progress-track" aria-hidden="true">
+        <div class="progress-fill" id="progressBar">
+          <div class="progress-shimmer"></div>
+        </div>
+      </div>
+
+      <div class="status-row">
+        <div class="status-message">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="statusText">Initializing high-speed transit network...</span>
+        </div>
+        <div class="status-percentage" id="percentageText">0%</div>
+      </div>
+    </div>
+
+    <!-- Action Bar: Interactive Nitro Boost & Launch Button -->
+    <div class="cockpit-actions">
+      <!-- Interactive Nitro Boost (Click or hold) -->
+      <button type="button" class="boost-btn" id="boostBtn" aria-label="Activate Nitro Boost for faster travel">
+        <span>⚡</span>
+        <span id="boostLabel">HOLD FOR NITRO BOOST</span>
+      </button>
+
+      <!-- Primary Continue / Launch Action (Required for tests) -->
+      <a href="homepage.php" class="action-btn" id="launchBtn">
+        <span>Continue to BusBook</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </div>
+
   </main>
 
-  <!-- Bottom Floating Tools -->
-  <div class="footer-tools">
-    <button type="button" class="tool-link" id="themeToggleBtn" aria-label="Toggle Light and Dark Mode">
-      <span id="themeIcon">☀️</span>
-      <span id="themeLabel">Light Mode</span>
-    </button>
-    <a href="homepage.php#search" class="tool-link">
-      <span>🔍</span>
-      <span>Search Routes</span>
-    </a>
-    <a href="homepage.php?login=admin" class="tool-link">
-      <span>🛡️</span>
-      <span>Admin Portal</span>
-    </a>
-  </div>
-
+  <!-- ==========================================================================
+       CINEMATIC CONTROLLER JAVASCRIPT
+       ========================================================================== -->
   <script>
     (function() {
+      // Elements
       const progressBar = document.getElementById('progressBar');
       const percentageText = document.getElementById('percentageText');
       const statusText = document.getElementById('statusText');
       const launchBtn = document.getElementById('launchBtn');
+      const boostBtn = document.getElementById('boostBtn');
+      const boostLabel = document.getElementById('boostLabel');
+      const speedoValue = document.getElementById('speedoValue');
+      const speedoGauge = document.getElementById('speedoGauge');
+      const routeMarker = document.getElementById('routeMarker');
+      const gearIndicator = document.getElementById('gearIndicator');
+      const odoIndicator = document.getElementById('odoIndicator');
       const themeToggleBtn = document.getElementById('themeToggleBtn');
       const themeIcon = document.getElementById('themeIcon');
       const themeLabel = document.getElementById('themeLabel');
+      const soundToggleBtn = document.getElementById('soundToggleBtn');
+      const soundIcon = document.getElementById('soundIcon');
+      const soundLabel = document.getElementById('soundLabel');
+      const busStage = document.getElementById('busStage');
+      const busChassis = document.getElementById('busChassis');
+      const roadLanes = document.getElementById('roadLanes');
+      const roadLightCone = document.getElementById('roadLightCone');
+      const beamLeft = document.getElementById('beamLeft');
+      const beamRight = document.getElementById('beamRight');
+      const eqBars = document.querySelectorAll('.eq-bar');
+      const canvas = document.getElementById('skyCanvas');
+      const ctx = canvas.getContext('2d');
 
+      // Milestone Messages
       const messages = [
-        { at: 15, text: "Connecting to transit network..." },
-        { at: 40, text: "Loading route schedules & buses..." },
-        { at: 70, text: "Checking real-time seat availability..." },
-        { at: 90, text: "Syncing offline ticketing cache..." },
-        { at: 100, text: "Ready! Welcome to BusBook." }
+        { at: 18, text: "Connecting to real-time express transit network..." },
+        { at: 42, text: "Syncing interstate bus schedules & live routes..." },
+        { at: 70, text: "Verifying seat maps & instant ticket reservations..." },
+        { at: 90, text: "Priming offline travel passes & PWA cache..." },
+        { at: 100, text: "Express line ready! Welcome aboard BusBook." }
       ];
 
+      // ========================================================================
+      // 1. SKY CANVAS: STARFIELD, METEORS & DISTANT NEON SKYLINE
+      // ========================================================================
+      let stars = [];
+      let meteors = [];
+      let buildings = [];
+      let w, h;
+
+      function resizeCanvas() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+        initScene();
+      }
+
+      function initScene() {
+        // Generate Starfield
+        stars = [];
+        const starCount = Math.floor(w * 0.12);
+        for (let i = 0; i < starCount; i++) {
+          stars.push({
+            x: Math.random() * w,
+            y: Math.random() * (h * 0.55),
+            radius: Math.random() * 1.5 + 0.4,
+            baseAlpha: Math.random() * 0.7 + 0.3,
+            speed: Math.random() * 0.05 + 0.01,
+            phase: Math.random() * Math.PI * 2
+          });
+        }
+
+        // Generate City Skyline Silhouettes
+        buildings = [];
+        let currX = 0;
+        while (currX < w + 60) {
+          const bWidth = Math.floor(Math.random() * 45) + 35;
+          const bHeight = Math.floor(Math.random() * (h * 0.22)) + (h * 0.1);
+          const hasTower = Math.random() > 0.65;
+          const windowRows = Math.floor(bHeight / 14);
+          const windowCols = Math.floor(bWidth / 9);
+
+          buildings.push({
+            x: currX,
+            w: bWidth,
+            h: bHeight,
+            hasTower: hasTower,
+            rows: windowRows,
+            cols: windowCols,
+            seed: Math.random()
+          });
+          currX += bWidth + (Math.random() * 12);
+        }
+      }
+
+      function createMeteor() {
+        if (Math.random() < 0.03 && meteors.length < 3) {
+          meteors.push({
+            x: Math.random() * (w * 0.8),
+            y: Math.random() * (h * 0.2),
+            length: Math.random() * 120 + 80,
+            speed: Math.random() * 14 + 10,
+            angle: Math.PI / 4 + (Math.random() * 0.2 - 0.1),
+            alpha: 1
+          });
+        }
+      }
+
+      function drawSkyScene() {
+        ctx.clearRect(0, 0, w, h);
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+        // Sky Gradient
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.6);
+        if (isDark) {
+          skyGrad.addColorStop(0, '#040914');
+          skyGrad.addColorStop(0.5, '#081630');
+          skyGrad.addColorStop(1, '#0e2348');
+        } else {
+          skyGrad.addColorStop(0, '#a5ccf7');
+          skyGrad.addColorStop(0.5, '#cce2ff');
+          skyGrad.addColorStop(1, '#ffeedb');
+        }
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, w, h * 0.6);
+
+        // Draw Twinkling Stars (in dark theme)
+        if (isDark) {
+          for (let s of stars) {
+            s.phase += s.speed;
+            const alpha = s.baseAlpha + Math.sin(s.phase) * 0.25;
+            ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.1, alpha)})`;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // Draw Meteors
+          createMeteor();
+          for (let i = meteors.length - 1; i >= 0; i--) {
+            const m = meteors[i];
+            m.x += Math.cos(m.angle) * m.speed;
+            m.y += Math.sin(m.angle) * m.speed;
+            m.alpha -= 0.02;
+
+            if (m.alpha <= 0) {
+              meteors.splice(i, 1);
+              continue;
+            }
+
+            const tailX = m.x - Math.cos(m.angle) * m.length;
+            const tailY = m.y - Math.sin(m.angle) * m.length;
+
+            const grad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
+            grad.addColorStop(0, `rgba(56, 189, 248, ${m.alpha})`);
+            grad.addColorStop(0.4, `rgba(0, 210, 255, ${m.alpha * 0.6})`);
+            grad.addColorStop(1, 'transparent');
+
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(m.x, m.y);
+            ctx.lineTo(tailX, tailY);
+            ctx.stroke();
+          }
+        }
+
+        // Draw City Skyline Silhouette at Horizon
+        const baseY = h * 0.52;
+        ctx.fillStyle = isDark ? '#050c18' : '#64748b';
+
+        for (let b of buildings) {
+          const topY = baseY - b.h;
+          ctx.fillRect(b.x, topY, b.w, b.h);
+
+          // Tower antenna beacon
+          if (b.hasTower) {
+            ctx.fillStyle = isDark ? '#02060e' : '#475569';
+            ctx.fillRect(b.x + b.w / 2 - 1.5, topY - 24, 3, 24);
+            // Red blinking aviation beacon
+            const beaconOn = (Date.now() % 1400) < 700;
+            if (beaconOn) {
+              ctx.fillStyle = '#ef4444';
+              ctx.shadowColor = '#ef4444';
+              ctx.shadowBlur = 8;
+              ctx.beginPath();
+              ctx.arc(b.x + b.w / 2, topY - 24, 2.5, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.shadowBlur = 0;
+            }
+            ctx.fillStyle = isDark ? '#050c18' : '#64748b';
+          }
+
+          // Illuminated Windows
+          if (isDark) {
+            for (let r = 0; r < b.rows; r++) {
+              for (let c = 0; c < b.cols; c++) {
+                const lit = ((b.seed * (r + 1) * (c + 1) * 997) % 1) > 0.65;
+                if (lit) {
+                  const wx = b.x + 5 + c * 8;
+                  const wy = topY + 8 + r * 12;
+                  if (wx < b.x + b.w - 4 && wy < baseY - 6) {
+                    ctx.fillStyle = ((r + c) % 3 === 0) ? 'rgba(56, 189, 248, 0.7)' : 'rgba(254, 240, 138, 0.65)';
+                    ctx.fillRect(wx, wy, 4, 6);
+                  }
+                }
+              }
+            }
+            ctx.fillStyle = '#050c18';
+          }
+        }
+
+        requestAnimationFrame(drawSkyScene);
+      }
+
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+      requestAnimationFrame(drawSkyScene);
+
+      // ========================================================================
+      // 2. SYNTHESIZED WEB AUDIO API SOUND ENGINE (NO EXTERNAL FILES)
+      // ========================================================================
+      let audioCtx = null;
+      let engineOsc1 = null;
+      let engineOsc2 = null;
+      let engineGain = null;
+      let engineFilter = null;
+      let soundEnabled = false;
+
+      function initAudio() {
+        if (audioCtx) return;
+        try {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          audioCtx = new AudioContext();
+
+          // Low-frequency engine rumble
+          engineOsc1 = audioCtx.createOscillator();
+          engineOsc2 = audioCtx.createOscillator();
+          engineGain = audioCtx.createGain();
+          engineFilter = audioCtx.createBiquadFilter();
+
+          engineOsc1.type = 'sawtooth';
+          engineOsc2.type = 'triangle';
+
+          engineOsc1.frequency.setValueAtTime(55, audioCtx.currentTime);
+          engineOsc2.frequency.setValueAtTime(110, audioCtx.currentTime);
+
+          engineFilter.type = 'lowpass';
+          engineFilter.frequency.setValueAtTime(160, audioCtx.currentTime);
+
+          engineGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+
+          engineOsc1.connect(engineFilter);
+          engineOsc2.connect(engineFilter);
+          engineFilter.connect(engineGain);
+          engineGain.connect(audioCtx.destination);
+
+          engineOsc1.start();
+          engineOsc2.start();
+        } catch(e) {
+          console.warn("Web Audio not supported", e);
+        }
+      }
+
+      function updateEngineSound(speedRatio, isBoost) {
+        if (!audioCtx || !soundEnabled) return;
+        try {
+          const now = audioCtx.currentTime;
+          const baseFreq = 48 + speedRatio * 85 + (isBoost ? 60 : 0);
+          engineOsc1.frequency.setTargetAtTime(baseFreq, now, 0.08);
+          engineOsc2.frequency.setTargetAtTime(baseFreq * 1.5, now, 0.08);
+
+          const filterFreq = 140 + speedRatio * 450 + (isBoost ? 600 : 0);
+          engineFilter.frequency.setTargetAtTime(filterFreq, now, 0.08);
+
+          const volume = isBoost ? 0.15 : 0.08;
+          engineGain.gain.setTargetAtTime(volume, now, 0.05);
+        } catch(e) {}
+      }
+
+      function playChime() {
+        if (!audioCtx || !soundEnabled) return;
+        try {
+          const notes = [659.25, 830.61, 987.77, 1318.51]; // E5, G#5, B5, E6
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.08);
+
+            gain.gain.setValueAtTime(0.001, audioCtx.currentTime + idx * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.18, audioCtx.currentTime + idx * 0.08 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + idx * 0.08 + 0.8);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(audioCtx.currentTime + idx * 0.08);
+            osc.stop(audioCtx.currentTime + idx * 0.08 + 0.9);
+          });
+        } catch(e) {}
+      }
+
+      function toggleSound() {
+        initAudio();
+        soundEnabled = !soundEnabled;
+        if (soundEnabled) {
+          if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+          soundIcon.textContent = '🔊';
+          soundLabel.textContent = 'Sound On';
+          updateEngineSound(progress / 100, isNitroActive);
+        } else {
+          soundIcon.textContent = '🔇';
+          soundLabel.textContent = 'Sound Off';
+          if (engineGain) engineGain.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.05);
+        }
+      }
+
+      soundToggleBtn.addEventListener('click', toggleSound);
+
+      // ========================================================================
+      // 3. PROGRESS, SPEEDOMETER HUD & TELEMETRY PROGRESSION
+      // ========================================================================
       let progress = 0;
       let targetProgress = 100;
-      const duration = 2200; // 2.2s smooth animated loading sequence
-      const intervalMs = 25;
-      const step = (100 / (duration / intervalMs));
+      let isNitroActive = false;
+      const normalStep = 0.65;
+      const nitroStep = 2.4;
+      let mileage = 42.8;
 
-      const timer = setInterval(() => {
+      const progressLoop = setInterval(() => {
+        const step = isNitroActive ? nitroStep : normalStep;
         progress = Math.min(progress + step, targetProgress);
         const rounded = Math.floor(progress);
 
+        // Update progress bar & percentage text (Required for tests)
         progressBar.style.width = rounded + '%';
         percentageText.textContent = rounded + '%';
 
-        // Update message depending on percentage
+        // Update Speedometer Gauge (0 to 140 km/h)
+        const currentSpeed = isNitroActive ? Math.floor(125 + Math.random() * 15) : Math.floor((rounded / 100) * 110 + 10);
+        speedoValue.textContent = currentSpeed;
+
+        // SVG arc circumference: 2 * PI * 36 = ~226
+        const offset = 226 - (226 * (currentSpeed / 140));
+        speedoGauge.style.strokeDashoffset = offset;
+
+        // Update Route marker position
+        routeMarker.style.left = rounded + '%';
+
+        // Update Status Message
         for (let i = 0; i < messages.length; i++) {
           if (rounded <= messages[i].at) {
             statusText.textContent = messages[i].text;
@@ -510,23 +1415,108 @@
           }
         }
 
+        // Update Gear Indicator
+        if (rounded < 20) gearIndicator.textContent = "GEAR: D1";
+        else if (rounded < 45) gearIndicator.textContent = "GEAR: D2";
+        else if (rounded < 70) gearIndicator.textContent = "GEAR: D3";
+        else if (rounded < 90) gearIndicator.textContent = "GEAR: D4";
+        else gearIndicator.textContent = isNitroActive ? "GEAR: BOOST" : "GEAR: D5 [OD]";
+
+        // Update Odometer
+        mileage += (currentSpeed / 3600);
+        odoIndicator.textContent = mileage.toFixed(1) + " KM";
+
+        // Animate Equalizer bars
+        eqBars.forEach((bar, idx) => {
+          const h = Math.floor(Math.sin(Date.now() * 0.01 + idx) * 5 + 7 + (isNitroActive ? 4 : 0));
+          bar.style.height = Math.max(2, h) + 'px';
+        });
+
+        // Update sound engine
+        updateEngineSound(rounded / 100, isNitroActive);
+
+        // Completion
         if (progress >= 100) {
-          clearInterval(timer);
-          statusText.textContent = "Ready! Redirecting...";
-          
-          // Check if auto-redirect query parameter is disabled (?stay=1 for previewing)
+          clearInterval(progressLoop);
+          statusText.textContent = "Ready! Launching BusBook...";
+          playChime();
+
           const urlParams = new URLSearchParams(window.location.search);
           if (urlParams.get('stay') !== '1') {
             setTimeout(() => {
               window.location.href = 'homepage.php';
-            }, 600);
+            }, 650);
           } else {
             launchBtn.textContent = "Launch BusBook Home";
           }
         }
-      }, intervalMs);
+      }, 30);
 
-      // Theme toggle functionality
+      // ========================================================================
+      // 4. INTERACTIVE NITRO BOOST MODE
+      // ========================================================================
+      function activateBoost() {
+        if (isNitroActive) return;
+        isNitroActive = true;
+        boostBtn.classList.add('active');
+        boostLabel.textContent = "⚡ NITRO CHARGED!";
+        roadLanes.classList.add('boost-active');
+        roadLightCone.classList.add('boost-active');
+        beamLeft.classList.add('boost-active');
+        beamRight.classList.add('boost-active');
+        initAudio();
+        if (soundEnabled && audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      }
+
+      function deactivateBoost() {
+        if (!isNitroActive) return;
+        isNitroActive = false;
+        boostBtn.classList.remove('active');
+        boostLabel.textContent = "HOLD FOR NITRO BOOST";
+        roadLanes.classList.remove('boost-active');
+        roadLightCone.classList.remove('boost-active');
+        beamLeft.classList.remove('boost-active');
+        beamRight.classList.remove('boost-active');
+      }
+
+      // Mouse & Touch events for Boost button
+      boostBtn.addEventListener('mousedown', activateBoost);
+      window.addEventListener('mouseup', deactivateBoost);
+      boostBtn.addEventListener('touchstart', (e) => { e.preventDefault(); activateBoost(); }, { passive: false });
+      window.addEventListener('touchend', deactivateBoost);
+
+      // Click hero emblem to boost
+      busStage.addEventListener('mousedown', activateBoost);
+
+      // ========================================================================
+      // 5. 3D INTERACTIVE PARALLAX TILT ON MOUSE MOVE
+      // ========================================================================
+      let targetTiltX = 0;
+      let targetTiltY = 0;
+      let currentTiltX = 0;
+      let currentTiltY = 0;
+
+      window.addEventListener('mousemove', (e) => {
+        const xNorm = (e.clientX / window.innerWidth) - 0.5; // -0.5 to 0.5
+        const yNorm = (e.clientY / window.innerHeight) - 0.5;
+        targetTiltX = xNorm * 22; // Steering lean degrees
+        targetTiltY = yNorm * 12;
+      });
+
+      function renderParallax() {
+        currentTiltX += (targetTiltX - currentTiltX) * 0.1;
+        currentTiltY += (targetTiltY - currentTiltY) * 0.1;
+
+        // Lean and steer bus chassis
+        busStage.style.transform = `translate(calc(-50% + ${currentTiltX * 4}px), -50%) rotateY(${currentTiltX * 0.6}deg) rotateZ(${currentTiltX * 0.4}deg)`;
+
+        requestAnimationFrame(renderParallax);
+      }
+      requestAnimationFrame(renderParallax);
+
+      // ========================================================================
+      // 6. LIGHT / DARK THEME TOGGLE (REQUIRED FOR TESTS)
+      // ========================================================================
       function applyTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('busbook_theme', theme);
@@ -547,6 +1537,7 @@
         const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
         applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
       });
+
     })();
   </script>
 </body>
