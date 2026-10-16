@@ -42,13 +42,19 @@
       "origin": "https://bus-resrvation.onrender.com"
     },
     {
-      "origin": "https://accounts.google.com"
+      "origin": "https://auth.bus-resrvation.onrender.com"
+    },
+    {
+      "origin": "https://en.bus-resrvation.onrender.com"
     },
     {
       "origin": "https://api.bus-resrvation.onrender.com"
     },
     {
       "origin": "https://m.bus-resrvation.onrender.com"
+    },
+    {
+      "origin": "https://accounts.google.com"
     }
   ],
   "icons": [
