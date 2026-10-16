@@ -10,6 +10,9 @@
   "launch_handler": {
     "client_mode": ["focus-existing", "auto"]
   },
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
   "background_color": "#212529",
   "theme_color": "#212529",
   "categories": ["travel", "transportation", "productivity"],
