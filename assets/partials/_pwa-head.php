@@ -17,7 +17,9 @@ $root_prefix = $is_admin_route ? '../' : './';
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="BusBooking">
 <link rel="icon" type="image/svg+xml" href="<?php echo $root_prefix; ?>assets/img/app-icon.svg">
-<link rel="apple-touch-icon" href="<?php echo $root_prefix; ?>assets/img/app-icon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="<?php echo $root_prefix; ?>assets/img/app-icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="<?php echo $root_prefix; ?>assets/img/app-icon-512.png">
+<link rel="apple-touch-icon" href="<?php echo $root_prefix; ?>assets/img/app-icon-512.png">
 
 <!-- Mobile App Ergonomics, Seat Grid Scroll & Ticket Print Fixes -->
 <style>

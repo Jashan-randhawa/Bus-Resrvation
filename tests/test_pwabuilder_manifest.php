@@ -44,6 +44,14 @@ echo "[1] Required Criteria:\n";
 check_item('Required', 'start_url', !empty($manifest['start_url']));
 check_item('Required', 'short_name', !empty($manifest['short_name']));
 check_item('Required', 'icons', is_array($manifest['icons']) && count($manifest['icons']) > 0);
+$has_192_png_any = false;
+foreach ($manifest['icons'] as $icon) {
+    if (($icon['sizes'] ?? '') === '192x192' && ($icon['type'] ?? '') === 'image/png' && strpos(($icon['purpose'] ?? 'any'), 'any') !== false && file_exists($root . '/' . $icon['src'])) {
+        $has_192_png_any = true;
+        break;
+    }
+}
+check_item('Required', 'icons (192x192 PNG with purpose any)', $has_192_png_any);
 check_item('Required', 'name', !empty($manifest['name']));
 
 // 2. Recommended
