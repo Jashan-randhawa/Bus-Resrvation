@@ -2,7 +2,38 @@
 
 All notable changes to this project are documented in this file.
 
-## [Unreleased]
+## [2.4.0] - 2026-10-16
+
+### Progressive Web App (PWA) & App Store Readiness
+- **Complete Progressive Web App (PWA) Implementation**:
+  - Implemented Web App Manifest (`manifest.json`) supporting standalone display mode, dual quick-actions (`Book Tickets`, `Admin Dashboard`), and high-res icon assets.
+  - Developed root Service Worker (`sw.js`) implementing `sbtbs-bus-cache-v1` with non-GET mutation protection and offline fallback routing (`offline.html`).
+  - Created Path-Aware Layout Head partial (`assets/partials/_pwa-head.php`) dynamically resolving root (`./`) vs admin (`../`) asset scopes, enabling mobile seat/table horizontal scroll touch ergonomics, print style protection, and DOM-injected floating install banner.
+- **Web Push Notifications & Notification Actions**:
+  - Service worker handles incoming remote `push` events with action buttons (*View Ticket*, *Dismiss*), vibration patterns, and app badges.
+  - Implemented `notificationclick` handler focusing existing windows or navigating to target booking records.
+- **Background Sync & Periodic Background Sync**:
+  - Registered Background Sync (`sync`) handler for deferred replay of customer booking inquiries upon network reconnect.
+  - Registered Periodic Background Sync (`periodicsync`) fetching latest route schedules every 12 hours.
+- **Modern Desktop & Operating System Integrations**:
+  - **Windows 11 Widgets Board**: Adaptive Cards integration with preview templates and JSON data endpoints (`widgets/bus-widget.json`, `widgets/bus-widget-data.json`).
+  - **Microsoft Edge Side Panel**: Configured `edge_side_panel` with 400px preferred width.
+  - **Window Controls Overlay**: Configured `window-controls-overlay` display override and titlebar drag regions for native app look and feel.
+  - **Tabbed Display Mode**: Multi-document interface with `tabbed` display override and `tab_strip` configuration.
+  - **Protocol Handlers**: OS registration for `web+bus` and `web+ticket` URI schemes with instant search redirection in `pnr.php`.
+  - **Web Share Target API**: Inbound share listener in `pnr.php` receiving shared PNR strings from WhatsApp and messaging apps.
+  - **File Handlers**: OS file associations for `.ticket`, `.json`, and `.csv` bookings and manifest exports.
+- **PWABuilder & App Store Packaging Readiness**:
+  - Generated square `192x192` and `512x512` PNG raster icons with explicit `purpose: "any"` and `purpose: "maskable"` entries.
+  - Generated desktop (`1280x720`, wide) and mobile (`720x1280`, narrow) UI preview screenshots.
+  - Added localization and text direction attributes (`lang: "en-US"`, `dir: "ltr"`).
+  - Configured international age rating certification (`iarc_rating_id`) and native app store preference (`prefer_related_applications: false`).
+  - Added `note_taking` quick integration endpoint (`./index.php?action=new_note`).
+  - Extended domain scope (`scope_extensions`) covering Google OAuth and service subdomains, paired with `.well-known/web-app-origin-association`.
+- **Automated Verification Suites**:
+  - Added comprehensive PWABuilder manifest test suite (`tests/test_pwabuilder_manifest.php`) verifying all 30 Required, Recommended, and Optional criteria (30/30 passing).
+
+### Core Platform Enhancements
 
 - **Google Sign-In Performance & Session Data Synchronization (`includes/auth/session-bootstrap.php`, `includes/google-auth.php`, `google-callback.php`, `includes/password-reset.php`, `homepage.php`)**:
   - **Zero Callback Latency**: Configured `CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4` on Google OAuth token exchange (`oauth2.googleapis.com`) to eliminate 3–5 second dual-stack IPv6 DNS resolution stalls.

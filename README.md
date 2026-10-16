@@ -4,7 +4,7 @@
 
 ### *A Modern, Cloud-Ready Full-Stack Bus Ticket Booking & Fleet Management Platform*
 
-[![Latest Release](https://img.shields.io/badge/Release-v2.3.0-blue?style=for-the-badge&logo=github)](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/tag/v2.3.0)
+[![Latest Release](https://img.shields.io/badge/Release-v2.4.0-blue?style=for-the-badge&logo=github)](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/tag/v2.4.0)
 [![Docker Package](https://img.shields.io/badge/GitHub%20Package-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation)
 [![npm Packages](https://img.shields.io/badge/GitHub%20Packages-npm-CB3837?style=for-the-badge&logo=npm&logoColor=white)](https://github.com/Jashan-randhawa/Bus-Resrvation/packages)
 [![Wiki Docs](https://img.shields.io/badge/Documentation-Wiki-green?style=for-the-badge&logo=gitbook&logoColor=white)](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki)
@@ -15,7 +15,7 @@
 
 <br/>
 
-[📖 Explore Technical Wiki](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki) • [📦 Download v2.3.0 Release Bundle](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/tag/v2.3.0) • [🐳 Pull Docker Image](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation)
+[📖 Explore Technical Wiki](https://github.com/Jashan-randhawa/Bus-Resrvation/wiki) • [📦 Download v2.4.0 Release Bundle](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/tag/v2.4.0) • [🐳 Pull Docker Image](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation)
 
 </div>
 
@@ -124,11 +124,11 @@ flowchart TD
 
 | Distribution Package | Target / Registry | Description |
 |---|---|---|
-| **🐳 Docker App Container** | [`ghcr.io/jashan-randhawa/bus-resrvation`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation) | Production app image (`:latest`, `:2.3.0`, `:edge`) |
+| **🐳 Docker App Container** | [`ghcr.io/jashan-randhawa/bus-resrvation`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation) | Production app image (`:latest`, `:2.4.0`, `:edge`) |
 | **⚡ Docker Migration Runner** | [`ghcr.io/jashan-randhawa/bus-resrvation-migrate`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation-migrate) | One-off CLI database migration runner (`:latest`, `:1.0.0`) |
 | **💺 Seat Picker Widget (npm)** | [`@jashan-randhawa/bus-seat-picker`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/npm/bus-seat-picker) | Accessible seat selection widget with live availability polling |
 | **🎨 Design Tokens & UI (npm)** | [`@jashan-randhawa/busres-ui`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/npm/busres-ui) | Design tokens, components, and dark/light theme toggle |
-| **🗜️ Release Zip Archive** | [`bus-reservation-v2.3.0.zip`](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/download/v2.3.0/bus-reservation-v2.3.0.zip) | Curated distribution bundle via GitHub Actions |
+| **🗜️ Release Zip Archive** | [`bus-reservation-v2.4.0.zip`](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/download/v2.4.0/bus-reservation-v2.4.0.zip) | Curated distribution bundle via GitHub Actions |
 | **📄 Implementation Plan PDF** | [`Bus_Reservation_GitHub_Packages_Plan.pdf`](https://github.com/Jashan-randhawa/Bus-Resrvation/blob/main/docs/Bus_Reservation_GitHub_Packages_Plan.pdf) | GitHub Packages Release Plan |
 
 ### 📦 Installing npm Packages from GitHub Packages

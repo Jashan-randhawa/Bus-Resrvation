@@ -1,6 +1,6 @@
 {
   "name": "@jashan-randhawa/busres-ui",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Design tokens, theme toggle, and component styles for Bus Reservation System",
   "main": "dist/busres-ui.css",
   "style": "dist/busres-ui.css",
