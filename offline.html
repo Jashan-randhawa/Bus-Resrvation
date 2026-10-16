@@ -3,34 +3,44 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Offline - Bus Reservation System</title>
+<title>Offline - BusBook</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-background-color: #f8f9fa; color: #212529;
+background-color: #081225; color: #ffffff;
 display: flex; align-items: center; justify-content: center;
 min-height: 100vh; padding: 24px; text-align: center;
 }
 .card {
-background: #ffffff; max-width: 420px; width: 100%;
-padding: 32px 24px; border-radius: 16px;
-border: 1px solid #dee2e6; border-top: 5px solid #ffc107;
+background: rgba(15, 30, 65, 0.85); max-width: 420px; width: 100%;
+padding: 36px 28px; border-radius: 24px;
+border: 1px solid rgba(0, 102, 255, 0.3); border-top: 4px solid #0066FF;
+box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(0, 102, 255, 0.25);
 }
-.icon { width: 68px; height: 68px; margin-bottom: 16px; }
-h1 { font-size: 20px; margin-bottom: 10px; }
-p { font-size: 14px; color: #6c757d; line-height: 1.5; margin-bottom: 20px; }
+.icon { width: 84px; height: 84px; margin-bottom: 20px; filter: drop-shadow(0 8px 16px rgba(0, 102, 255, 0.45)); }
+h1 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+.brand-name { color: #38bdf8; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; }
+p { font-size: 14px; color: #94a3b8; line-height: 1.5; margin-bottom: 24px; }
 button {
-background: #212529; color: #ffffff; border: none;
-padding: 12px 24px; font-size: 14px; font-weight: 600;
-border-radius: 8px; cursor: pointer; width: 100%;
+background: linear-gradient(135deg, #0066FF, #0052cc); color: #ffffff; border: none;
+padding: 14px 24px; font-size: 14px; font-weight: 700;
+border-radius: 12px; cursor: pointer; width: 100%;
+box-shadow: 0 4px 16px rgba(0, 102, 255, 0.35);
+transition: all 0.2s ease;
+}
+button:hover {
+background: linear-gradient(135deg, #1a75ff, #0066FF);
+transform: translateY(-2px);
+box-shadow: 0 8px 24px rgba(0, 102, 255, 0.45);
 }
 </style>
 </head>
 <body>
 <div class="card">
-<img src="assets/img/app-icon.svg" alt="Bus App Icon" class="icon">
+<img src="assets/images/bus-emblem.png" alt="BusBook Logo" class="icon">
 <h1>You're Currently Offline</h1>
+<div class="brand-name">BusBook System</div>
 <p>Live seat availability, PNR verification, and ticket bookings require an active internet connection.</p>
 <button onclick="window.location.reload()">Reconnect & Try Again</button>
 </div>

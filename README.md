@@ -79,6 +79,7 @@ Comprehensive architectural, operational, and security documentation is availabl
 - 💬 **Customer Query Inbox & Email Replies:** Support inquiry lifecycle (`new`, `replied`, `closed`), modal email replies with RFC 5321 SMTP transport, and a live sidebar unread query counter.
 - 🎟️ **Bulk Booking Operations:** Multi-select checkboxes for batch reservation cancellations and selected-row CSV exports.
 - 🎨 **Global Light (White) & Dark Theme System & Responsive Navigation:** Unified design token architecture (`assets/css/design-system.css`) delivering a crisp pure-white Light Mode surface (`#ffffff`) and slate-navy Dark Mode (`#0f172a`) across both Customer and Admin portals, complete with a custom SVG vector icon sprite system, high-definition bus brand emblem (`assets/images/bus.svg`), glassmorphic sticky topbar with semantic section eyebrow pills, automatic CSS cache-busting, and an accessible touch-first mobile navigation drawer (`<992px`).
+- ⚡ **Animated BusBook Splash & Loading Experience:** Dedicated standalone loading page (`loading.html`) and responsive app preloader overlay (`assets/partials/_preloader.php`) built around the luminous BusBook speed-ticket logo, featuring perspective road travel animations, gradient progress indicator, journey status updates, and auto-dismiss logic.
 
 ---
 

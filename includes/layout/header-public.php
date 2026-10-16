@@ -50,6 +50,9 @@ $user_role = $_SESSION['role'] ?? null;
 </head>
 
 <body class="home-page">
+  <!-- Brand Preloader Overlay -->
+  <?php require_once dirname(__DIR__, 2) . '/assets/partials/_preloader.php'; ?>
+
   <!-- Skip to Main Content Link for Keyboard / Assistive Tech -->
   <a href="#main" class="skip-link sr-only sr-only-focusable">Skip to main content</a>
 

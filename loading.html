@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0B1E3F">
+  <meta name="description" content="BusBook - Real-time Bus Reservation and Ticket Booking Platform">
+  <title>Loading BusBook...</title>
+
+  <!-- Favicons -->
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/bus-emblem.png">
+  <link rel="icon" type="image/svg+xml" href="assets/images/bus.svg">
+  <link rel="apple-touch-icon" href="assets/img/app-icon-512.png">
+
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #081225;
+      --bg-card: rgba(15, 30, 65, 0.75);
+      --border-card: rgba(0, 102, 255, 0.25);
+      --primary: #0066FF;
+      --primary-light: #38bdf8;
+      --accent: #00d2ff;
+      --navy-deep: #0B1E3F;
+      --text-main: #ffffff;
+      --text-muted: #94a3b8;
+      --glow: rgba(0, 102, 255, 0.35);
+    }
+
+    [data-theme="light"] {
+      --bg-dark: #f0f4f8;
+      --bg-card: rgba(255, 255, 255, 0.88);
+      --border-card: rgba(0, 102, 255, 0.2);
+      --text-main: #0B1E3F;
+      --text-muted: #64748b;
+      --glow: rgba(0, 102, 255, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow: hidden;
+      position: relative;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Animated background ambient glow & speed lines */
+    .ambient-bg {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .ambient-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.45;
+      animation: floatOrb 8s ease-in-out infinite alternate;
+    }
+
+    .orb-1 {
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, #0066FF, transparent 70%);
+      top: -100px;
+      left: 10%;
+    }
+
+    .orb-2 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, #0284c7, transparent 70%);
+      bottom: -80px;
+      right: 15%;
+      animation-duration: 10s;
+      animation-delay: -3s;
+    }
+
+    /* Stylized perspective road/speed lines */
+    .road-grid {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 40%;
+      background: linear-gradient(to top, rgba(0, 102, 255, 0.08), transparent 90%);
+      perspective: 400px;
+      overflow: hidden;
+    }
+
+    .road-lines {
+      position: absolute;
+      inset: -100% 0 0 0;
+      background-image: 
+        linear-gradient(90deg, transparent 48%, rgba(0, 102, 255, 0.12) 49%, rgba(0, 102, 255, 0.12) 51%, transparent 52%),
+        linear-gradient(0deg, rgba(0, 102, 255, 0.06) 1px, transparent 1px);
+      background-size: 80px 40px;
+      transform: rotateX(60deg);
+      transform-origin: bottom center;
+      animation: roadTravel 2s linear infinite;
+    }
+
+    @keyframes roadTravel {
+      0% { background-position: 0 0; }
+      100% { background-position: 0 40px; }
+    }
+
+    @keyframes floatOrb {
+      0% { transform: translateY(0) scale(1); }
+      100% { transform: translateY(40px) scale(1.1); }
+    }
+
+    /* Main Loading Card */
+    .loader-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 440px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 28px;
+      padding: 44px 36px 36px;
+      text-align: center;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 
+        0 20px 50px rgba(0, 0, 0, 0.35),
+        0 0 40px var(--glow);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: cardEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes cardEntrance {
+      0% {
+        opacity: 0;
+        transform: translateY(24px) scale(0.96);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* Logo Presentation */
+    .logo-wrapper {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Pulsing halo ring around logo */
+    .logo-halo {
+      position: absolute;
+      inset: -12px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 102, 255, 0.35) 0%, rgba(56, 189, 248, 0.15) 50%, transparent 70%);
+      animation: haloPulse 2.4s ease-in-out infinite;
+    }
+
+    .logo-ring {
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 2px dashed rgba(0, 102, 255, 0.45);
+      animation: rotateRing 14s linear infinite;
+    }
+
+    @keyframes haloPulse {
+      0%, 100% { transform: scale(0.95); opacity: 0.6; }
+      50% { transform: scale(1.15); opacity: 1; }
+    }
+
+    @keyframes rotateRing {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .logo-img {
+      position: relative;
+      z-index: 2;
+      width: 96px;
+      height: 96px;
+      object-fit: contain;
+      filter: drop-shadow(0 10px 20px rgba(0, 102, 255, 0.45));
+      animation: logoBob 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes logoBob {
+      0% { transform: translateY(0) scale(1); }
+      100% { transform: translateY(-6px) scale(1.02); }
+    }
+
+    /* Brand Typography */
+    .brand-title {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #ffffff 40%, #93c5fd 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    [data-theme="light"] .brand-title {
+      background: linear-gradient(135deg, #0B1E3F 40%, #0066FF 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-subtitle {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--primary-light);
+      margin-bottom: 28px;
+    }
+
+    /* Progress bar */
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 100px;
+      overflow: hidden;
+      position: relative;
+      margin-bottom: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    [data-theme="light"] .progress-track {
+      background: rgba(0, 0, 0, 0.06);
+      border-color: rgba(0, 0, 0, 0.06);
+    }
+
+    .progress-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 0%;
+      background: linear-gradient(90deg, #0066FF, #00d2ff, #38bdf8);
+      border-radius: 100px;
+      box-shadow: 0 0 12px rgba(0, 102, 255, 0.6);
+      transition: width 0.3s ease;
+    }
+
+    /* Shimmer effect over progress bar */
+    .progress-shimmer {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.5),
+        transparent
+      );
+      animation: shimmer 1.5s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* Status Text & Percentage */
+    .status-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .status-message {
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-align: left;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--primary-light);
+      box-shadow: 0 0 8px var(--primary-light);
+      animation: dotPulse 1.2s infinite alternate;
+    }
+
+    @keyframes dotPulse {
+      0% { transform: scale(0.8); opacity: 0.5; }
+      100% { transform: scale(1.2); opacity: 1; }
+    }
+
+    .status-percentage {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary-light);
+    }
+
+    /* Quick Action / Launch Button */
+    .action-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #0066FF 0%, #0052cc 100%);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 13px 20px;
+      font-size: 14.5px;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 16px rgba(0, 102, 255, 0.35);
+    }
+
+    .action-btn:hover {
+      background: linear-gradient(135deg, #1a75ff 0%, #0066FF 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 102, 255, 0.45);
+      color: #ffffff;
+    }
+
+    .action-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Bottom utilities */
+    .footer-tools {
+      position: absolute;
+      bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 2;
+    }
+
+    .tool-link {
+      color: var(--text-muted);
+      font-size: 12px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tool-link:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+    }
+
+    /* Accessibility reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .ambient-orb, .road-lines, .logo-halo, .logo-ring, .logo-img, .progress-shimmer, .status-dot {
+        animation: none !important;
+      }
+      .loader-card {
+        animation: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient background elements -->
+  <div class="ambient-bg" aria-hidden="true">
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+    <div class="road-grid">
+      <div class="road-lines"></div>
+    </div>
+  </div>
+
+  <!-- Loading Card Container -->
+  <main class="loader-card" role="status" aria-live="polite">
+    
+    <!-- Logo with pulse glow -->
+    <div class="logo-wrapper">
+      <div class="logo-halo" aria-hidden="true"></div>
+      <div class="logo-ring" aria-hidden="true"></div>
+      <img src="assets/images/bus-emblem.png" alt="BusBook Logo" class="logo-img" width="96" height="96">
+    </div>
+
+    <!-- Title and Subtitle -->
+    <h1 class="brand-title">BusBook</h1>
+    <p class="brand-subtitle">Bus Reservation System</p>
+
+    <!-- Animated Progress Bar -->
+    <div class="progress-track" aria-hidden="true">
+      <div class="progress-fill" id="progressBar">
+        <div class="progress-shimmer"></div>
+      </div>
+    </div>
+
+    <!-- Dynamic Status Label & Percentage -->
+    <div class="status-row">
+      <div class="status-message">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="statusText">Initializing application...</span>
+      </div>
+      <div class="status-percentage" id="percentageText">0%</div>
+    </div>
+
+    <!-- Direct Navigation Button -->
+    <a href="homepage.php" class="action-btn" id="launchBtn">
+      <span>Continue to BusBook</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+        <polyline points="12 5 19 12 12 19"></polyline>
+      </svg>
+    </a>
+  </main>
+
+  <!-- Bottom Floating Tools -->
+  <div class="footer-tools">
+    <button type="button" class="tool-link" id="themeToggleBtn" aria-label="Toggle Light and Dark Mode">
+      <span id="themeIcon">☀️</span>
+      <span id="themeLabel">Light Mode</span>
+    </button>
+    <a href="homepage.php#search" class="tool-link">
+      <span>🔍</span>
+      <span>Search Routes</span>
+    </a>
+    <a href="homepage.php?login=admin" class="tool-link">
+      <span>🛡️</span>
+      <span>Admin Portal</span>
+    </a>
+  </div>
+
+  <script>
+    (function() {
+      const progressBar = document.getElementById('progressBar');
+      const percentageText = document.getElementById('percentageText');
+      const statusText = document.getElementById('statusText');
+      const launchBtn = document.getElementById('launchBtn');
+      const themeToggleBtn = document.getElementById('themeToggleBtn');
+      const themeIcon = document.getElementById('themeIcon');
+      const themeLabel = document.getElementById('themeLabel');
+
+      const messages = [
+        { at: 15, text: "Connecting to transit network..." },
+        { at: 40, text: "Loading route schedules & buses..." },
+        { at: 70, text: "Checking real-time seat availability..." },
+        { at: 90, text: "Syncing offline ticketing cache..." },
+        { at: 100, text: "Ready! Welcome to BusBook." }
+      ];
+
+      let progress = 0;
+      let targetProgress = 100;
+      const duration = 2200; // 2.2s smooth animated loading sequence
+      const intervalMs = 25;
+      const step = (100 / (duration / intervalMs));
+
+      const timer = setInterval(() => {
+        progress = Math.min(progress + step, targetProgress);
+        const rounded = Math.floor(progress);
+
+        progressBar.style.width = rounded + '%';
+        percentageText.textContent = rounded + '%';
+
+        // Update message depending on percentage
+        for (let i = 0; i < messages.length; i++) {
+          if (rounded <= messages[i].at) {
+            statusText.textContent = messages[i].text;
+            break;
+          }
+        }
+
+        if (progress >= 100) {
+          clearInterval(timer);
+          statusText.textContent = "Ready! Redirecting...";
+          
+          // Check if auto-redirect query parameter is disabled (?stay=1 for previewing)
+          const urlParams = new URLSearchParams(window.location.search);
+          if (urlParams.get('stay') !== '1') {
+            setTimeout(() => {
+              window.location.href = 'homepage.php';
+            }, 600);
+          } else {
+            launchBtn.textContent = "Launch BusBook Home";
+          }
+        }
+      }, intervalMs);
+
+      // Theme toggle functionality
+      function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('busbook_theme', theme);
+        if (theme === 'dark') {
+          themeIcon.textContent = '☀️';
+          themeLabel.textContent = 'Light Mode';
+        } else {
+          themeIcon.textContent = '🌙';
+          themeLabel.textContent = 'Dark Mode';
+        }
+      }
+
+      const savedTheme = localStorage.getItem('busbook_theme') || 
+        (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      applyTheme(savedTheme);
+
+      themeToggleBtn.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -16,6 +16,11 @@ All notable changes to this project are documented in this file.
     - Integrated the official **BusBook** emblem and brand title into the public website navigation bar (`header-public.php`), footer (`footer-public.php`), admin topbar and drawer (`header-admin.php`), user portal topbar (`header-user.php`), and auth views (`login.php`, `forgot-password.php`, `reset-password.php`, `user/verify.php`).
     - Generated native multi-resolution `favicon.ico` in root and assets directories for browser address/tab bars.
     - Fixed image dimensions and positioning on embedded SVG elements (`assets/images/bus.svg` and `assets/img/app-icon.svg`) for cross-browser rendering.
+  - **BusBook Brand Splash & Loading Page Experience**:
+    - Developed a standalone responsive loading and splash page (`loading.html`) centered on the official BusBook logo with an animated luminous halo, 3D perspective road travel lines, gradient shimmer progress track, and live journey status messages.
+    - Implemented a path-aware brand preloader partial (`assets/partials/_preloader.php`), stylesheet (`assets/css/preloader.css`), and JavaScript controller (`assets/js/preloader.js`) with fail-safe timeout and programmatic `window.BusBookLoader` API across all portal views.
+    - Modernized `offline.html` with the BusBook brand emblem, slate-navy backdrop, and glowing container card.
+    - Added automated verification suite `tests/test_loading_page.php` verifying all 26 loading and preloader criteria.
 
 ### Progressive Web App (PWA) & App Store Readiness
 - **Complete Progressive Web App (PWA) Implementation**:

@@ -46,6 +46,9 @@ require_once __DIR__ . '/../config.php';
     <?php require_once dirname(__DIR__, 2) . '/assets/partials/_pwa-head.php'; ?>
 </head>
 <body>
+<!-- BusBook Brand Preloader Overlay -->
+<?php require_once dirname(__DIR__, 2) . '/assets/partials/_preloader.php'; ?>
+
 <!-- Inline SVG Sprite for Admin Navigation Icons (Section 3.3) -->
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
     <symbol id="nav-dashboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
