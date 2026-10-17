@@ -92,8 +92,8 @@
             <div class="admin-profile">
                 <img src="<?= BASE_URL ?>/assets/images/userav-min.png" alt="User Avatar" class="profile-avatar">
                 <div class="profile-info">
-                    <div class="profile-name"><?= e($_SESSION['name'] ?? 'Passenger') ?></div>
-                    <div class="profile-role">Registered Account</div>
+                    <div class="profile-name"><?= e($_SESSION['name'] ?? ($booking['name'] ?? 'Passenger')) ?></div>
+                    <div class="profile-role"><?= !empty($_SESSION['uid']) ? 'Registered Account' : 'Digital Pass' ?></div>
                 </div>
             </div>
 
@@ -137,12 +137,18 @@
                     <span>Public Homepage</span>
                     <svg class="ml-1.5" width="14" height="14" aria-hidden="true"><use href="#nav-external-link"></use></svg>
                 </a>
+                <?php if (!empty($_SESSION['uid'])): ?>
                 <form action="<?= BASE_URL ?>/user/index.php" method="post" class="m-0">
                     <?= csrf_field() ?>
                     <button type="submit" value="logout" name="logout" class="btn btn-sm btn-danger btn-block">
                         Log Out
                     </button>
                 </form>
+                <?php else: ?>
+                <a href="<?= BASE_URL ?>/homepage.php" class="btn btn-sm btn-primary btn-block">
+                    Sign In
+                </a>
+                <?php endif; ?>
             </div>
         </aside>
 
@@ -184,6 +190,7 @@
             <?php endif; ?>
 
             <!-- Idle Session Warning Modal (U-14, F14) -->
+            <?php if (!empty($_SESSION['uid'])): ?>
             <div class="modal fade" id="idleSessionModal" tabindex="-1" role="dialog" aria-labelledby="idleSessionModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false" data-heartbeat-url="<?= BASE_URL ?>/user/api-heartbeat.php" data-login-url="<?= BASE_URL ?>/homepage.php">
                 <div class="modal-dialog modal-dialog-centered" role="document">
                     <div class="modal-content border-0 shadow">
@@ -203,3 +210,4 @@
                     </div>
                 </div>
             </div>
+            <?php endif; ?>

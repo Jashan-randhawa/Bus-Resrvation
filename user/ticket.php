@@ -1,20 +1,41 @@
 <?php
 // user/ticket.php -- Printable Boarding Pass & Ticket View (U-16, Phase 2.1, 2.2, 2.3, 3.1)
-require_once __DIR__ . '/../includes/auth/user-session.php';
+require_once __DIR__ . '/../includes/auth/session-bootstrap.php';
 require_once __DIR__ . '/../includes/db_con.php';
 
 $uid = (int)($_SESSION['uid'] ?? 0);
 $pnr = trim((string)($_GET['pnr'] ?? ''));
+$sig = trim((string)($_GET['sig'] ?? ''));
 $is_new_booking = (isset($_GET['new']) && $_GET['new'] === '1');
 
 if ($pnr === '') {
     flash_set('danger', 'Please provide a valid ticket PNR to view.');
-    header('Location: ' . BASE_URL . '/user/my-bookings.php');
+    header('Location: ' . (!empty($_SESSION['uid']) ? BASE_URL . '/user/my-bookings.php' : BASE_URL . '/homepage.php#pnr'));
     exit;
 }
 
-$booking = db_one($link, 'SELECT * FROM booking WHERE pnr = ? AND id = ?', 'si', [$pnr, $uid]);
+$booking = db_one($link, 'SELECT * FROM booking WHERE pnr = ?', 's', [$pnr]);
 if (!$booking) {
+    flash_set('danger', 'Ticket record not found. Please verify the booking reference (PNR).');
+    header('Location: ' . (!empty($_SESSION['uid']) ? BASE_URL . '/user/my-bookings.php' : BASE_URL . '/homepage.php#pnr'));
+    exit;
+}
+
+// Access authorization:
+// 1. Valid cryptographic ticket seal (&sig=...)
+// 2. OR Authenticated passenger who owns the booking (booking.id == session.uid)
+// 3. OR Authenticated administrator
+$expected_sig = get_ticket_signature($booking);
+$sig_valid = ($sig !== '' && hash_equals($expected_sig, $sig));
+$is_owner = ($uid > 0 && (int)$booking['id'] === $uid);
+$is_admin = in_array($_SESSION['role'] ?? '', ['super_admin', 'operator', 'viewer'], true);
+
+if (!$sig_valid && !$is_owner && !$is_admin) {
+    if (empty($_SESSION['role'])) {
+        $req_uri = $_SERVER['REQUEST_URI'] ?? (BASE_URL . '/user/ticket.php?pnr=' . urlencode($pnr));
+        header('Location: ' . BASE_URL . '/homepage.php?next=' . urlencode($req_uri));
+        exit;
+    }
     flash_set('danger', 'Ticket not found or does not belong to your account.');
     header('Location: ' . BASE_URL . '/user/my-bookings.php');
     exit;
@@ -123,9 +144,15 @@ $full_verify_url = $proto . $host . $verify_path;
 <?php endif; ?>
 
 <div class="no-print mb-4 d-flex flex-wrap justify-content-between align-items-center">
-    <a href="<?= BASE_URL ?>/user/my-bookings.php" class="btn btn-outline-secondary mb-2 mb-sm-0" style="min-height: 44px; display: inline-flex; align-items: center;">
-        &larr; Back to My Bookings
-    </a>
+    <?php if (!empty($_SESSION['uid'])): ?>
+        <a href="<?= BASE_URL ?>/user/my-bookings.php" class="btn btn-outline-secondary mb-2 mb-sm-0" style="min-height: 44px; display: inline-flex; align-items: center;">
+            &larr; Back to My Bookings
+        </a>
+    <?php else: ?>
+        <a href="<?= BASE_URL ?>/homepage.php" class="btn btn-outline-secondary mb-2 mb-sm-0" style="min-height: 44px; display: inline-flex; align-items: center;">
+            &larr; Back to Home
+        </a>
+    <?php endif; ?>
     <div class="d-flex flex-wrap gap-2">
         <?php if (!$is_cancelled && !$is_expired): ?>
             <button type="button" id="shareTicketBtn" class="btn btn-outline-primary shadow-sm font-weight-bold mr-2 mb-2 mb-sm-0" style="min-height: 44px; display: none;">

@@ -57,6 +57,34 @@ function get_ticket_signature(array $booking): string {
     return substr(hash_hmac('sha256', $pnr . '|' . $date . '|' . $time . '|' . $seat, $secret), 0, 12);
 }
 
+/**
+ * Resolves the full public base URL of the application including scheme and domain.
+ * Example: https://bus-resrvation.onrender.com or http://localhost/bus-reservation
+ */
+function get_app_url(): string {
+    $v = rtrim(trim((string)getenv('APP_URL')), '/');
+    if ($v !== '') {
+        return $v;
+    }
+    $v = rtrim(trim((string)getenv('RENDER_EXTERNAL_URL')), '/');
+    if ($v !== '') {
+        return $v . (defined('BASE_URL') ? BASE_URL : '');
+    }
+    $renderHost = trim((string)getenv('RENDER_EXTERNAL_HOSTNAME'));
+    if ($renderHost !== '') {
+        return 'https://' . $renderHost . (defined('BASE_URL') ? BASE_URL : '');
+    }
+    $host = (string)($_SERVER['HTTP_HOST'] ?? '');
+    if ($host !== '') {
+        $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+        $scheme = $https ? 'https://' : 'http://';
+        $base = defined('BASE_URL') ? BASE_URL : '';
+        return $scheme . $host . $base;
+    }
+    return defined('BASE_URL') ? BASE_URL : '';
+}
+
 /* ---------- Date & Time Formatting (U-18) ---------- */
 function fmt_date(?string $date, string $format = 'D, j M Y'): string {
     if ($date === null || $date === '') {

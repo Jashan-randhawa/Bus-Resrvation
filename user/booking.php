@@ -99,7 +99,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Phase 3.1: Send confirmation email with ticket link if account email exists
                     $cust_email = (string)($_SESSION['email'] ?? '');
                     if ($cust_email !== '') {
-                        $ticket_url = BASE_URL . '/user/ticket.php?pnr=' . urlencode($result['pnr']);
+                        $ticket_sig = get_ticket_signature([
+                            'pnr'  => $result['pnr'],
+                            'date' => $post_date,
+                            'time' => $sub_route['time'],
+                            'seat' => $seat,
+                        ]);
+                        $ticket_url = get_app_url() . '/user/ticket.php?pnr=' . urlencode($result['pnr']) . '&sig=' . urlencode($ticket_sig);
                         $email_subject = 'Bus Reservation Confirmation - PNR: ' . $result['pnr'];
                         $email_body = '<div style="font-family:sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #e2e8f0;border-radius:8px;">'
                             . '<h2 style="color:#2563eb;margin-top:0;">Your Bus Reservation is Confirmed!</h2>'
@@ -114,8 +120,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             . '<tr><td style="padding:6px 0;color:#64748b;">Fare:</td><td style="padding:6px 0;font-weight:bold;">' . CURRENCY . number_format((float)$sub_route['price'], 2) . '</td></tr>'
                             . '</table>'
                             . '<div style="margin-top:20px;">'
-                            . '<a href="' . htmlspecialchars($ticket_url) . '" style="background:#2563eb;color:#ffffff;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block;font-weight:bold;">View &amp; Print Boarding Pass</a>'
+                            . '<a href="' . htmlspecialchars($ticket_url) . '" style="background:#2563eb;color:#ffffff;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;font-size:15px;">View &amp; Print Boarding Pass</a>'
                             . '</div>'
+                            . '<p style="margin-top:20px;color:#64748b;font-size:12px;line-height:1.5;">'
+                            . 'If the button above does not open, copy and paste this link into your browser:<br>'
+                            . '<a href="' . htmlspecialchars($ticket_url) . '" style="color:#2563eb;word-break:break-all;">' . htmlspecialchars($ticket_url) . '</a>'
+                            . '</p>'
                             . '</div>';
                         send_app_mail($cust_email, $email_subject, $email_body);
                     }

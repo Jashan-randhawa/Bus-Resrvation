@@ -1029,9 +1029,15 @@ if (isset($_POST['subbtn'])) {
                     <div class="item-label">Seat Assigned</div>
                     <div class="item-value text-primary font-weight-bold">Seat #<?= e((string)$b['seat']) ?></div>
                   </div>
-                  <div class="col-12 pt-3 border-top d-flex justify-content-between align-items-center">
-                    <span class="text-muted font-weight-bold">Total Fare:</span>
-                    <span class="font-weight-bold text-success h4 mb-0"><?= CURRENCY ?><?= e(number_format((float)$b['price'], 2)) ?></span>
+                  <?php $pass_sig = get_ticket_signature($b); ?>
+                  <div class="col-12 pt-3 border-top d-flex flex-wrap justify-content-between align-items-center">
+                    <div class="mb-2 mb-sm-0">
+                      <span class="text-muted font-weight-bold">Total Fare:</span>
+                      <span class="font-weight-bold text-success h4 mb-0 ml-1"><?= CURRENCY ?><?= e(number_format((float)$b['price'], 2)) ?></span>
+                    </div>
+                    <a href="<?= BASE_URL ?>/user/ticket.php?pnr=<?= urlencode($b['pnr']) ?>&sig=<?= urlencode($pass_sig) ?>" class="btn btn-outline-primary btn-sm font-weight-bold shadow-sm" target="_blank" rel="noopener">
+                      View &amp; Print Boarding Pass &rarr;
+                    </a>
                   </div>
                 </div>
               </div>
