@@ -38,9 +38,9 @@ $user_role = $_SESSION['role'] ?? null;
   <title>BusBook - Safe &amp; Simple Ticket Booking</title>
   
   <!-- Design System & Custom CSS -->
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css?v=2026-10-10">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/home.css?v=2026-10-10">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/public.css?v=2026-10-10">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css?v=<?= file_exists(dirname(__DIR__, 2) . '/assets/css/design-system.css') ? filemtime(dirname(__DIR__, 2) . '/assets/css/design-system.css') : '2.4.1' ?>">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/home.css?v=<?= file_exists(dirname(__DIR__, 2) . '/assets/css/home.css') ? filemtime(dirname(__DIR__, 2) . '/assets/css/home.css') : '2.4.1' ?>">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/public.css?v=<?= file_exists(dirname(__DIR__, 2) . '/assets/css/public.css') ? filemtime(dirname(__DIR__, 2) . '/assets/css/public.css') : '2.4.1' ?>">
   
   <!-- Global Theme Toggle (Head load to avoid FOUC) -->
   <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>

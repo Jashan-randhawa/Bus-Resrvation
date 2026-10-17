@@ -1038,6 +1038,166 @@ if (isset($_POST['subbtn'])) {
     </div>
   </section>
 
+  <style>
+    /* ── Features Carousel (Exact Popular Routes Alignment) ────────── */
+    @media (max-width: 767.98px) {
+      .features-carousel-wrap {
+        position: relative !important;
+        padding: 0 28px !important;
+        margin: 0 -10px !important;
+      }
+
+      .features-container {
+        display: flex !important;
+        overflow-x: auto !important;
+        scroll-snap-type: x mandatory !important;
+        scroll-behavior: smooth !important;
+        -webkit-overflow-scrolling: touch !important;
+        gap: 16px !important;
+        margin-top: 1.5rem !important;
+        margin-bottom: 0.5rem !important;
+        padding: 8px 4px 16px !important;
+        scrollbar-width: none !important;
+        position: relative !important;
+      }
+
+      .features-container::-webkit-scrollbar {
+        display: none !important;
+      }
+
+      .features-container:focus-visible {
+        outline: 2px solid var(--home-primary, #2563eb) !important;
+        outline-offset: 2px !important;
+      }
+
+      .features-container .feature-card {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        scroll-snap-align: center !important;
+        scroll-snap-stop: always !important;
+        background: var(--home-bg-white, #ffffff) !important;
+        border: 1px solid var(--home-border, #e2e8f0) !important;
+        border-radius: var(--radius-lg, 12px) !important;
+        padding: 2rem 1.5rem !important;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        transition: transform 0.25s ease, box-shadow 0.25s ease !important;
+      }
+
+      .features-carousel-controls {
+        position: static !important;
+      }
+
+      .features-carousel-arrow {
+        position: absolute !important;
+        top: 45% !important;
+        transform: translateY(-50%) !important;
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        border-radius: 50% !important;
+        background-color: #ffffff !important;
+        border: 1px solid rgba(0, 0, 0, 0.12) !important;
+        color: #1e293b !important;
+        opacity: 0.95 !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        z-index: 10 !important;
+        padding: 0 !important;
+        touch-action: manipulation !important;
+      }
+
+      .features-carousel-arrow.prev {
+        left: 0 !important;
+      }
+
+      .features-carousel-arrow.next {
+        right: 0 !important;
+      }
+
+      .features-carousel-arrow:hover {
+        background-color: var(--home-primary, #2563eb) !important;
+        border-color: var(--home-primary, #2563eb) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35) !important;
+        transform: translateY(-50%) scale(1.05) !important;
+      }
+
+      .features-carousel-arrow:active {
+        transform: translateY(-50%) scale(0.95) !important;
+      }
+
+      .features-carousel-dots {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        margin-top: 1.25rem !important;
+        padding-bottom: 0.25rem !important;
+      }
+
+      .features-dot {
+        width: 12px !important;
+        height: 12px !important;
+        min-width: 12px !important;
+        min-height: 12px !important;
+        border-radius: 50% !important;
+        background-color: #cbd5e1 !important;
+        border: none !important;
+        padding: 0 !important;
+        cursor: pointer !important;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        touch-action: manipulation !important;
+      }
+
+      .features-dot:hover {
+        background-color: #94a3b8 !important;
+      }
+
+      .features-dot.active {
+        width: 28px !important;
+        border-radius: 9999px !important;
+        background-color: var(--home-primary, #2563eb) !important;
+        box-shadow: 0 0 10px rgba(0, 102, 255, 0.35) !important;
+      }
+
+      html[data-theme="dark"] .features-carousel-arrow {
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+        color: #f1f5f9 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+      }
+
+      html[data-theme="dark"] .features-carousel-arrow:hover {
+        background-color: var(--home-primary, #2563eb) !important;
+        border-color: var(--home-primary, #2563eb) !important;
+        color: #ffffff !important;
+      }
+
+      html[data-theme="dark"] .features-dot {
+        background-color: #475569 !important;
+      }
+
+      html[data-theme="dark"] .features-dot.active {
+        background-color: var(--home-primary, #2563eb) !important;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .features-carousel-controls,
+      .features-carousel-arrow {
+        display: none !important;
+      }
+    }
+  </style>
+
   <!-- 4. Features & Facts Section (C1, B4, P14) -->
   <section id="about" class="home-section bg-light" aria-labelledby="aboutHeading">
     <div class="container text-center">
@@ -1048,6 +1208,11 @@ if (isset($_POST['subbtn'])) {
       </p>
 
       <div class="features-carousel-wrap">
+        <!-- Floating Left Arrow Button -->
+        <button type="button" class="features-carousel-arrow prev d-md-none" id="featuresPrevBtn" aria-label="Previous feature slide">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+
         <div class="features-container text-left" id="featuresContainer" role="region" aria-roledescription="carousel" aria-label="Key features and benefits">
           <div class="feature-card" role="group" aria-roledescription="slide" aria-label="1 of 3: Guaranteed Seat Selection">
             <div class="feature-svg-icon" aria-hidden="true">
@@ -1077,19 +1242,18 @@ if (isset($_POST['subbtn'])) {
           </div>
         </div>
 
-        <!-- Mobile Carousel Navigation Controls (Floating side arrows & bottom indicators) -->
+        <!-- Floating Right Arrow Button -->
+        <button type="button" class="features-carousel-arrow next d-md-none" id="featuresNextBtn" aria-label="Next feature slide">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+
+        <!-- Centered Pagination Indicators -->
         <div class="features-carousel-controls d-md-none" aria-label="Feature navigation">
-          <button type="button" class="features-carousel-arrow prev" id="featuresPrevBtn" aria-label="Previous feature slide">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
-          </button>
           <div class="features-carousel-dots" role="tablist" aria-label="Feature slide selection">
             <button type="button" class="features-dot active" data-index="0" role="tab" aria-selected="true" aria-label="Slide 1: Guaranteed Seat Selection"></button>
             <button type="button" class="features-dot" data-index="1" role="tab" aria-selected="false" aria-label="Slide 2: Instant Ticket Access"></button>
             <button type="button" class="features-dot" data-index="2" role="tab" aria-selected="false" aria-label="Slide 3: Secure & Protected"></button>
           </div>
-          <button type="button" class="features-carousel-arrow next" id="featuresNextBtn" aria-label="Next feature slide">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
-          </button>
         </div>
       </div>
     </div>

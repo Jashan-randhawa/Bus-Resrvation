@@ -589,7 +589,8 @@ section[id] {
 }
 
 @media (min-width: 768px) {
-  .features-carousel-controls {
+  .features-carousel-controls,
+  .features-carousel-arrow {
     display: none !important;
   }
 }

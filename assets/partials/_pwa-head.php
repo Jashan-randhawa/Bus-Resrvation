@@ -96,6 +96,7 @@ $root_prefix = $is_admin_route ? '../' : './';
     window.addEventListener('load', function () {
       navigator.serviceWorker.register(rootPrefix + 'sw.js', { scope: rootPrefix })
         .then(async function (reg) {
+          try { reg.update(); } catch (e) {}
           // Register Periodic Background Sync if supported
           if ('periodicSync' in reg) {
             try {
