@@ -55,11 +55,14 @@ Comprehensive architectural, operational, and security documentation is availabl
 - 🌐 **"Continue with Google" OAuth 2.0 / OpenID Connect:** Frictionless 1-click Google sign-in and registration (`google-login.php`, `google-callback.php`) featuring PKCE (`S256`), cryptographic state/nonce verification, low-latency IPv4 DNS pre-resolution, non-blocking session release, and automatic display name synchronization.
 - 🔐 **Sensitive Action Re-Authentication & Profile Credential Controls:** Fresh Google re-authentication challenge (`google-reauth.php` with `max_age=300`) securing high-risk operations (email modifications, account deactivation) for Google-authenticated users, complemented by explicit credential state tracking (`costumer.pwd_set`), credential status badges, and optional permanent password provisioning (`user/profile.php`).
 - 🔑 **Secure Password Reset by Email Link:** Zero-enumeration password recovery (`forgot-password.php`, `reset-password.php`) generating cryptographically secure 64-character tokens stored exclusively as SHA-256 hashes (`password_resets`), featuring 10-minute configurable TTL, IP/address rate limiting, single-use invalidation, and transactional email delivery via Brevo HTTPS REST API (Port 443) or RFC 5321 SMTP.
-- 🛫 **Airline-Grade Digital Boarding Pass & QR Verification:** Interactive Upcoming Journey Hero card (`user/index.php`), printable/shareable digital boarding pass (`user/ticket.php`) with QR code generation, Native Web Share API (`navigator.share`) support, and public QR verification endpoint (`user/verify.php`).
+- 🛫 **Mobile-Optimized Digital Boarding Pass & QR Verification:** Airline-grade boarding pass card (`user/ticket.php`) with fluid typography (`clamp()`), authentic perforated stub styling, 1-tap PNR copy to clipboard with floating toast feedback, and an adaptive high-contrast QR code (120px on mobile for fast conductor camera scanning). Includes public verification (`user/verify.php`) and Web Share API (`navigator.share`) integration.
+- ✉️ **Emailed Boarding Pass Button with Cryptographic Seal:** Confirmation emails deliver a 1-click "View & Print Boarding Pass" button built with fully qualified public URLs via `get_app_url()` and protected by a 12-character HMAC-SHA256 ticket signature (`&sig=...`), allowing passengers to open, view, and print their pass directly from any mobile mail app without requiring prior login.
+- 👤 **Modern User Profile Pill & Dropdown Navbar:** Clean, compact passenger account menu (`header-public.php`, `home.css`) replacing cluttered navbar buttons with a unified Profile Pill, gradient avatar circle with initials, fast links to Dashboard, My Bookings, and Account Settings, isolated CSRF Sign Out, and zero text wrapping (`white-space: nowrap;`).
+- 🎠 **Touch-First Mobile Carousels & 5-Second Autoplay:** Hardware-accelerated swipeable carousels for Features and Popular Routes on mobile viewports with native CSS scroll-snap (`scroll-snap-type: x mandatory`), 44px touch arrows, active dot indicators, and synchronized 5-second auto-scroll with pause-on-touch interaction.
 - 🧭 **Custom Search Dropdowns & Interactive City Swap:** Accessible in-DOM custom dropdown menus (`.custom-dropdown-widget`) with Title Case city formatting, dynamic connected-route destination filtering, and 1-click circular origin/destination swap controls (`⇄`) across the homepage and user portal.
 - 🔒 **Atomic Concurrency:** Concurrency-safe seat reservation engine with database transactions and row-level locks preventing double-booking race conditions.
 - 🎫 **Instant Cryptographic PNR:** Auto-generated unique random 10-character token with departure details, seat assignment, and pricing.
-- 🔎 **Two-Factor Public PNR Lookup:** Check reservation status directly from the homepage without logging in, protected by rate limiting and phone number verification.
+- 🔎 **Two-Factor Public PNR Lookup:** Check reservation status directly from the homepage without logging in, protected by rate limiting, phone number verification, and direct links to full boarding passes.
 - 📱 **Mobile-First Customer Portal:** Profile & account security settings (`user/profile.php` with password rotation, email change, and account deactivation), 3-column reservation status filter tabs (`user/my-bookings.php`), and self-service cancellation with cutoff window safeguards.
 - 💬 **Inquiry Support:** Direct feedback and query submission form for passenger support.
 
@@ -472,10 +475,15 @@ Bus-Reservation/
 │   ├── test_phase1.php       # Phase 1: Access & auth test suite
 │   ├── test_phase2.php       # Phase 2: Money & reporting test suite
 │   ├── test_phase3.php       # Phase 3: Data integrity test suite
+│   ├── test_phase3_pwa.php   # Dynamic PWA root resolution, service worker & print guard test suite
 │   ├── test_phase4.php       # Phase 4: Hygiene & hardening test suite
 │   ├── test_google_auth.php  # Google OAuth 2.0, OpenID Connect & re-auth test suite
 │   ├── test_admin_layout.php # Admin mobile drawer, topbar & global theme test suite
 │   ├── test_user_layout.php  # Customer portal mobile & custom dropdown test suite
+│   ├── test_email_ticket_link.php # Boarding pass email button & HMAC signature authorization test suite
+│   ├── test_features_carousel.php # Mobile features & routes swipe carousels & 5s auto-scroll test suite
+│   ├── test_loading_page.php # Standalone loading page & preloader overlay test suite
+│   ├── test_pwabuilder_manifest.php # PWABuilder web app manifest compliance test suite
 │   ├── test_route_ui.php     # Route schedule KPI, filter & corridor UI test suite
 │   ├── test_pdf_manifest.php # Native PDF manifest generator & mobile view test suite
 │   ├── test_departure_carousel.php # Today's Departures schedule list test suite
@@ -526,7 +534,7 @@ Bus-Reservation/
 - 🛡️ **Cross-Site Request Forgery (CSRF) Tokens (H-03):** Cryptographic anti-CSRF token verified across all state-modifying requests.
 - 🚦 **Strict Role Isolation & Live Session Checks (H-01, H-02):** Immediate enforcement of role demotions and deactivations against the database; viewer role restricted to read-only views with PII phone/email masking.
 - 🔒 **Transactional Seat Locking:** Concurrency-safe seat reservation using dedicated `seat_lock` table and row-level locks preventing race conditions.
-- 🎟️ **Cryptographic PNR Privacy:** Random 10-character hexadecimal tokens replacing sequential IDs, with rate-limited two-factor status lookup.
+- 🎟️ **Cryptographic PNR Privacy & HMAC-SHA256 Boarding Pass Seals:** Random 10-character hexadecimal tokens replacing sequential IDs, with rate-limited two-factor status lookup and tamper-proof 12-character HMAC-SHA256 digital seals securing direct mobile email boarding pass access without authentication bottlenecks.
 - 📊 **Streaming CSV Formula Injection Defense:** Prepends `'` to cells beginning with `=`, `+`, `-`, or `@` to neutralize spreadsheet execution exploits.
 - 🧼 **XSS Output Sanitization:** Context-aware `e()` HTML escaping on all dynamic data.
 - 🐳 **Hardened Container Runtime:** PHP 8.4-apache with HSTS, CSP (`script-src`, `img-src data:`, SRI hashes), X-Frame-Options, and X-Content-Type-Options headers.
