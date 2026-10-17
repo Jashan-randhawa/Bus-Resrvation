@@ -26,7 +26,7 @@ All notable changes to this project are documented in this file.
   - Replaced all external `cdn.jsdelivr.net` references across public, admin, user, auth headers and footers (`header-public.php`, `header-admin.php`, `header-user.php`, `header-login.php`, `footer.php`, `footer-admin.php`, `footer-user.php`, `admin/mfa.php`, `pnr.php`, `user/verify.php`, `admin/dashboard.php`, and `helpers.php`).
   - Completely eliminates Microsoft Edge, Brave, and Safari "Tracking Prevention blocked access to storage" warnings and ensures full offline PWA resilience.
   - Pre-cached local Bootstrap and jQuery vendor bundles in `sw.js` (`sbtbs-bus-cache-v1-rev5`).
-  - Exported `window.installBusApp()` global API and added informative logging for deferred PWA installation prompts.
+  - Exported `window.installBusApp()` global API and eliminated Chrome's `Banner not shown: beforeinstallpromptevent.preventDefault() called` diagnostic warning while retaining the custom `📲 Install Bus App` button.
 
 ### Progressive Web App (PWA) & App Store Readiness
 - **Complete Progressive Web App (PWA) Implementation**:

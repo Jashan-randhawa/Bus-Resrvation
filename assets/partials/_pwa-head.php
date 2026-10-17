@@ -150,9 +150,11 @@ $root_prefix = $is_admin_route ? '../' : './';
 
   // 3. Listen for Browser Installability Event
   window.addEventListener('beforeinstallprompt', function (e) {
-    e.preventDefault();
+    // Note: e.preventDefault() is deliberately omitted so Chrome does not emit
+    // the "Banner not shown: beforeinstallpromptevent.preventDefault() called" warning.
+    // We stash the event so our custom "📲 Install Bus App" button can still invoke prompt().
     deferredInstallPrompt = e;
-    console.info('[PWA] Native mini-infobar deferred to custom "📲 Install Bus App" button.');
+    console.info('[PWA] App install prompt ready. Custom button and native prompt active.');
 
     if (window.matchMedia('(display-mode: standalone)').matches) {
       return;
