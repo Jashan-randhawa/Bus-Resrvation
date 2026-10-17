@@ -44,14 +44,24 @@ The codebase is organized into isolated functional domains:
 ```
 Bus-Reservation/
 ├── index.php                 # Canonical entry point (redirects to homepage.php)
-├── homepage.php              # Public landing page, login modals, Google sign-in & PNR lookup
+├── homepage.php              # Public landing page, login modals, Google SSO, carousels & PNR lookup
 ├── login.php                 # Standalone customer login endpoint (password & Google SSO)
+├── loading.php               # Cinematic 3D transit loading page & preloader experience
 ├── forgot-password.php       # Customer password reset link request endpoint
 ├── reset-password.php        # Single-use SHA-256 hashed token password reset completion
 ├── google-login.php          # Google OAuth 2.0 / OpenID Connect authorization redirector
 ├── google-callback.php       # Google OAuth 2.0 PKCE token exchange & customer login handler
 ├── google-reauth.php         # Fresh Google re-authentication challenge for sensitive actions
 ├── admin.php                 # Backward-compatibility shim (redirects to admin/index.php)
+├── manifest.json             # PWABuilder-compliant Web App Manifest (Widgets, Shortcuts, Handlers)
+├── sw.js                     # Service Worker (Cache-First static, Network-First dynamic, Background Sync)
+├── offline.html              # Branded offline fallback screen for network outages
+│
+├── android/                  # 🤖 Android TWA Native App Package
+│   ├── BusBook-v2.4.0.apk    # Signed production release APK for direct installation
+│   ├── app-release.aab       # Production Android App Bundle for Google Play Store
+│   ├── busbook-release.keystore # RSA 2048-bit release signing keystore
+│   └── app/                  # Android Studio TWA project & launcher resources
 │
 ├── admin/                    # 👑 Administrator Management Subsystem
 │   ├── index.php             # Dashboard entry point
@@ -79,13 +89,13 @@ Bus-Reservation/
 │   ├── booking.php           # Reservation engine, fluid seat map & sticky mobile summary bar
 │   ├── my-bookings.php       # Personal booking history, status tabs & cancellation
 │   ├── profile.php           # Account security, Google re-auth, credential badges & deactivation
-│   ├── ticket.php            # Digital boarding pass, QR code & Native Web Share integration
+│   ├── ticket.php            # Mobile-optimized boarding pass, 1-tap PNR copy, QR code & Web Share
 │   └── verify.php            # Public QR boarding pass verification endpoint
 │
 ├── includes/                 # 🔧 Core Framework & Security Libraries
 │   ├── config.php            # Dynamic BASE_URL detector, global error handling & env defaults
 │   ├── db_con.php            # Environment-driven database connector with TLS/SSL support
-│   ├── helpers.php           # Prepared statements, create_booking(), PDF generator, CSRF, CSV streaming
+│   ├── helpers.php           # Prepared statements, get_app_url(), PDF generator, CSRF, CSV streaming
 │   ├── google-auth.php       # Google OAuth 2.0/OIDC engine, PKCE, token verification & re-auth
 │   ├── password-reset.php    # Email reset-link flow, SHA-256 token hashing & anti-enumeration engine
 │   ├── smtp.php              # Dual-transport email delivery (Brevo HTTPS REST API & RFC 5321 SMTP)
@@ -96,32 +106,41 @@ Bus-Reservation/
 │   │   ├── user-session.php  # Customer session authentication guard
 │   │   └── totp.php          # RFC 6238 TOTP engine, AES-256-GCM encryption & recovery codes
 │   └── layout/
-│       ├── header-public.php # Homepage header
+│       ├── header-public.php # Homepage header with user profile pill & dropdown
 │       ├── header-login.php  # Login page header
 │       ├── header-admin.php  # Admin sidebar, SVG sprite system, topbar & cache-busting
 │       ├── header-user.php   # Customer sidebar, SVG sprite system, topbar & cache-busting
 │       ├── header-edit.php   # Edit pages header
+│       ├── pwa-head.php      # Path-aware PWA manifest, meta tags & service worker injector
 │       ├── google-button.php # Accessible "Continue with Google" button component
 │       ├── footer.php        # Public & edit footer scripts
 │       ├── footer-admin.php  # Admin footer scripts & drawer controller
 │       └── footer-user.php   # Customer footer scripts & idle timeout integration
 │
-├── assets/                   # 🎨 Stylesheets, Scripts & Vector Brand Assets
+├── assets/                   # 🎨 Stylesheets, Scripts, Vendor Libraries & Vector Assets
+│   ├── vendor/               # 📦 Self-Hosted Dependencies (Zero CDN tracking warnings)
+│   │   ├── bootstrap/        # Bootstrap 4.6.2 CSS & bundle JS
+│   │   └── jquery/           # jQuery 3.5.1 production minified runtime
 │   ├── css/
 │   │   ├── design-system.css # Global Light (White) & Dark (Slate) design tokens
 │   │   ├── admin.css         # Admin workspace, topbar, sidebar & table styles
 │   │   ├── admin-mobile-responsive.css # Responsive mobile drawer & card adaptations
 │   │   ├── dashboard.css     # Attention Center, Today's Departures & Analytics styles
-│   │   ├── user.css          # Customer portal, boarding pass & custom dropdown styles
+│   │   ├── user.css          # Customer portal, mobile boarding pass & custom dropdown styles
 │   │   ├── seat-map.css      # Fluid seat map grid & sticky mobile booking bar
-│   │   └── home.css          # Public landing page styles
+│   │   ├── preloader.css     # Cinematic 3D preloader & transit overlay animation
+│   │   └── home.css          # Public landing page styles & user profile pill navbar
 │   ├── js/
 │   │   ├── admin-mobile.js   # Accessible off-canvas drawer & swipe gesture controller
 │   │   ├── perf-chart.js     # Chart.js dual-axis booking/revenue & status donut charts
 │   │   ├── theme-toggle.js   # Persistent Light/Dark theme switcher
+│   │   ├── preloader.js      # Global preloader transition controller
+│   │   ├── pwa-install.js    # Progressive Web App installation prompt controller
 │   │   └── user-idle.js      # Customer session idle warning & auto-logout monitor
 │   └── images/
-│       └── bus.svg           # High-definition vector bus brand icon
+│       ├── bus.svg           # High-definition vector bus brand icon
+│       ├── bus-emblem.png    # High-resolution BusBook brand emblem
+│       └── pwa/              # 192x192, 512x512 standard & maskable application icons
 │
 ├── database/                 # 🗄️ Relational Schema & Migration Engine
 │   ├── init.sql              # Idempotent hardened schema DDL
@@ -131,12 +150,12 @@ Bus-Reservation/
 │   ├── expire-holds.php      # CLI expired seat hold release utility
 │   ├── purge-audit-log.php   # CLI audit log retention cleanup utility
 │   └── migrations/           # Sequential Schema Migrations (001 to 013)
-└── tests/                    # 🧪 Automated Test Harnesses (12 suites, 350+ assertions)
+└── tests/                    # 🧪 Automated Test Harnesses (17 suites, 450+ assertions)
 ```
 
 ---
 
-## 3. UI Design System & Global Theme Architecture
+## 3. UI Design System, PWA & Global Theme Architecture
 
 The frontend uses a centralized CSS custom property token system (`assets/css/design-system.css`) shared across both the Customer Portal (`user/`) and Administrator Control Center (`admin/`):
 
@@ -144,12 +163,19 @@ The frontend uses a centralized CSS custom property token system (`assets/css/de
    - **Light Mode (`:root`):** Crisp pure-white navigation sidebar and card surfaces (`--sidebar-bg: #ffffff`, `--surface: #ffffff`), slate typography (`--text-primary: #0f172a`), and royal blue active accents (`#2563eb`).
    - **Dark Mode (`[data-theme="dark"]`):** Deep midnight navy surfaces (`--sidebar-bg: #0f172a`, `--bg-body: #0b1120`) with high-contrast slate text (`#f8fafc`) and glowing indigo accents.
    - Controlled persistently via `assets/js/theme-toggle.js` and `localStorage.getItem('busres_theme')`.
-2. **Inline SVG Vector Sprite System & Brand Emblem:**
+2. **Modern Passenger Profile Pill & Navbar:**
+   - `includes/layout/header-public.php` renders a unified profile pill for logged-in passengers featuring a gradient avatar circle with passenger initials, one-line layout (`white-space: nowrap;`), quick shortcuts to Dashboard, My Bookings, and Account Settings, and an isolated CSRF signout link.
+3. **Touch-First Mobile Carousels & 5-Second Autoplay:**
+   - On viewports `<768px`, the Features and Popular Routes sections automatically transform into swipeable carousels with native CSS scroll-snap (`scroll-snap-type: x mandatory`), 44px side navigation arrows, dot indicators, and synchronized 5-second auto-scroll with pause-on-touch interaction.
+4. **Cinematic Transit Preloader & Self-Hosted Assets:**
+   - Eliminates external CDN dependencies by self-hosting Bootstrap 4.6.2 and jQuery 3.5.1 in `assets/vendor/`, preventing browser tracking-prevention blocks.
+   - Smooth page transitions with BusBook's animated preloader (`assets/js/preloader.js`, `loading.php`).
+5. **Inline SVG Vector Sprite System & Brand Emblem:**
    - Both `includes/layout/header-admin.php` and `includes/layout/header-user.php` embed an inline `<svg>` symbol sprite sheet alongside the vector bus brand icon (`assets/images/bus.svg`).
    - Sticky glassmorphic topbars (`backdrop-filter: blur(14px)`) display semantic section eyebrow pills (`OVERVIEW`, `FLEET & ROUTES`, `BOOKINGS & TRIPS`, `ACCOUNT`, `SUPPORT`, `GOVERNANCE`) and active page headers.
-3. **Automatic Asset Cache-Busting:**
+6. **Automatic Asset Cache-Busting:**
    - Stylesheet references append `?v=filemtime(...)` dynamically so CSS updates take effect immediately across browser sessions without stale cache artifacts.
-4. **Responsive Off-Canvas Navigation Drawer (`<992px`):**
+7. **Responsive Off-Canvas Navigation Drawer (`<992px`):**
    - `assets/js/admin-mobile.js` powers an accessible mobile navigation drawer (`min(86vw, 320px)`) with swipe-to-dismiss gesture detection, focus trapping, `inert` background locking, and `44x44px` minimum touch targets.
 
 ---

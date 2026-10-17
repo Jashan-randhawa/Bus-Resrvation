@@ -102,8 +102,20 @@ sequenceDiagram
 
 ---
 
-## 2. Dashboard, Upcoming Journey Hero Card & Custom Search (`user/index.php`)
+## 2. Public Navigation, Mobile Carousels & Customer Dashboard (`homepage.php`, `user/index.php`)
 
+### 2.1 Modern Passenger Profile Pill Navbar (`header-public.php`)
+For authenticated passengers browsing the public homepage, the navigation bar consolidates disparate links into a modern **Profile Pill**:
+- **Gradient Avatar Circle:** Displays the traveler's uppercase initials against a vibrant indigo gradient.
+- **Unified Account Dropdown:** Features zero text-wrapping (`white-space: nowrap;`), immediate shortcuts to **Dashboard**, **My Bookings**, and **Account Settings**, along with an isolated CSRF-protected **Sign Out** action.
+
+### 2.2 Touch-First Mobile Carousels & 5-Second Autoplay
+On mobile viewports (`<768px`), the **Features** and **Popular Routes** sections automatically transition into hardware-accelerated swipe carousels:
+- **Native CSS Scroll-Snap:** Uses `scroll-snap-type: x mandatory` with smooth scroll behavior.
+- **Controls & Indicators:** 44px circular side navigation buttons (`.carousel-nav-btn`) and bottom dot pill indicators.
+- **5-Second Autoplay:** Slides advance smoothly every 5 seconds, automatically pausing on touch gestures (`touchstart`) or mouse hover (`mouseenter`).
+
+### 2.3 Customer Dashboard & Custom Search (`user/index.php`)
 The Customer Dashboard combines an airline-grade boarding pass preview with an accessible search engine:
 1. **Upcoming Journey Hero Card:** Automatically highlights the passenger's next confirmed departure with a live pulsing status badge, origin/destination route visualization, departure countdown, assigned seat & PNR pills, and 1-tap **Boarding Pass** and **Share** actions.
 2. **Accessible In-DOM Custom City Dropdowns (`.custom-dropdown-widget`):**
@@ -152,17 +164,28 @@ Passengers can inspect their travel history strictly bound to their authenticate
 
 ---
 
-## 6. Digital Boarding Pass, Native Share & HMAC-SHA256 Seal (`user/ticket.php`, `user/verify.php`)
+## 6. Mobile Digital Boarding Pass, Email Button & HMAC-SHA256 Seal (`user/ticket.php`, `user/verify.php`)
 
-Tickets carry a cryptographically signed verification seal, QR code, and native sharing capabilities:
-1. **HMAC-SHA256 Signature:** Computed over `PNR|Date|Time|Seat` using `TICKET_HMAC_SECRET`.
-2. **Dedicated Validity States:**
+Tickets deliver an airline-grade mobile boarding pass experience with cryptographic authentication and offline-ready sharing:
+
+1. **Mobile-Optimized Layout & Fluid Typography:**
+   - **Fluid Corridor Names:** Uses `clamp(1rem, 3.6vw, 1.35rem)` and `word-break: break-word` preventing multi-line truncation or container overflow on narrow phone screens.
+   - **Authentic Perforated Stub:** Detailed CSS tear-off notches (`.ticket-notch`) and dashed border separators (`.ticket-stub`).
+   - **1-Tap PNR Copy:** Passengers can tap `#copyPnrBtn` to copy their 10-character PNR directly to the clipboard, receiving instant visual confirmation via floating toast (`#ticketToast`).
+   - **Responsive Action Targets:** 44px min-touch action bar (`.ticket-actions-bar`) featuring equal-width flex buttons on mobile (`📤 Share Pass` and `🖨️ Print Ticket / Save PDF`).
+   - **Adaptive High-Contrast QR Code:** Sized dynamically to 120px on viewports `<576px` with optimized margins for rapid scanning by conductor smartphone cameras.
+2. **Emailed Boarding Pass Button with Cryptographic Seal:**
+   - Confirmation emails deliver a responsive **"View & Print Boarding Pass"** action button built with fully qualified public URLs via `get_app_url()` (eliminating relative-path 404 errors in webmail clients like Gmail).
+   - The link is signed with a 12-character HMAC-SHA256 signature (`&sig=...`).
+   - **Session-Bypass Security:** `user/ticket.php` verifies the signature using constant-time `hash_equals()`. If the signature matches, the ticket renders immediately on the passenger's mobile browser without requiring login.
+   - Includes a fallback copyable text URL below the button in plain-text emails.
+3. **Dedicated Ticket Validity States:**
    - **`VALID PASS`:** Future departure, confirmed booking status.
    - **`COMPLETED`:** Departed past journey (receipt remains viewable/printable for expense accounting).
    - **`PENDING PAYMENT`:** Seat hold active, awaiting payment confirmation.
    - **`VOID`:** Cancelled or expired reservations (watermarked overlay displayed).
-3. **Native Web Share API Integration:** Clicking **Share Boarding Pass** invokes `navigator.share` on mobile devices (with automatic clipboard fallback on desktop) to share trip details and the verification link.
-4. **Public QR Code & Verification Endpoint (`user/verify.php`):**
+4. **Native Web Share API Integration:** Clicking **Share Pass** invokes `navigator.share` on mobile devices (with automatic clipboard fallback on desktop) to share trip details and the verification link.
+5. **Public QR Code & Verification Endpoint (`user/verify.php`):**
    - Conductors and travelers can scan the QR code to verify the ticket against the live database using constant-time `hash_equals($expected_sig, $sig)`.
 
 ---
@@ -184,7 +207,7 @@ Travelers can verify ticket status from the homepage without logging in:
 2. **Rate Limited (O1):** Public lookups are protected against brute-force enumeration:
    - Max 10 attempts per 10 minutes per IP.
    - Max 5 attempts per 15 minutes per target PNR token.
-3. Displays live status badge (`Confirmed`, `Pending`, `Expired`, `Cancelled`), passenger initials, route, seat number, and departure time.
+3. Displays live status badge (`Confirmed`, `Pending`, `Expired`, `Cancelled`), passenger initials, route, seat number, departure time, and a direct **"View & Print Boarding Pass &rarr;"** button linking to the full mobile ticket.
 
 ---
 

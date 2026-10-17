@@ -94,6 +94,7 @@ All credentials, policies, and operational switches are injected via environment
 | `GOOGLE_CLIENT_ID` | *(empty)* | Google Cloud OAuth 2.0 Web Client ID | `xxxxxx.apps.googleusercontent.com` |
 | `GOOGLE_CLIENT_SECRET` | *(empty)* | Google Cloud OAuth 2.0 Client Secret | `GOCSPX-xxxxxx` |
 | `GOOGLE_REDIRECT_URI` | *(auto)* | Explicit OAuth callback URI (defaults to `<APP_URL>/google-callback.php`) | `https://bus-resrvation.onrender.com/google-callback.php` |
+| `TICKET_HMAC_SECRET` | *(empty)* | Secret key for signing and authorizing digital boarding pass URLs (`&sig=`) | `hex_or_random_secret_string` |
 
 ---
 
@@ -102,7 +103,7 @@ All credentials, policies, and operational switches are injected via environment
 1. **Create Web Service:** Go to [dashboard.render.com](https://dashboard.render.com) &rarr; **New +** &rarr; **Web Service**.
 2. **Connect Repository:** Select `Jashan-randhawa/Bus-Resrvation`.
 3. **Runtime:** Select **Docker**.
-4. **Environment Variables:** Populate `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME`, and `DB_SSL=true`.
+4. **Environment Variables:** Populate `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_SSL=true`, `APP_URL=https://bus-resrvation.onrender.com`, and `TICKET_HMAC_SECRET`.
 5. **Auto-Deploy:** On every `git push origin main`, Render builds the Dockerfile, runs `entrypoint.sh` (executing `db_migrate.php` to apply all migrations), and starts Apache.
 
 ---
@@ -126,12 +127,23 @@ docker run --rm \
 
 ---
 
-## 6. GitHub Packages Distribution
+## 6. Android Trusted Web Activity (TWA) Distribution
 
-The repository publishes pre-built distribution packages to **GitHub Packages**:
+The platform includes a production-ready Android TWA native application package located under `android/`:
 
-| Package | Registry | Description |
+- **Production APK (`android/BusBook-v2.4.0.apk`):** Signed with the RSA 2048-bit release keystore (`android/busbook-release.keystore`), ready for immediate side-loading or internal testing.
+- **Android App Bundle (`android/app-release.aab`):** Optimized bundle ready for Google Play Console submission.
+- **Digital Asset Links (`.well-known/assetlinks.json`):** Deployed on the web host to grant the Android app permission to handle all domain URLs without rendering the browser address bar.
+
+---
+
+## 7. GitHub Packages & Releases Distribution
+
+The repository publishes pre-built distribution packages to **GitHub Packages** and **GitHub Releases**:
+
+| Package | Registry / Destination | Description |
 |---|---|---|
+| **🤖 Android Native App (APK)** | [GitHub Releases](https://github.com/Jashan-randhawa/Bus-Resrvation/releases) | Standalone signed Android APK (`BusBook-v2.4.0.apk`) |
 | **🐳 Docker App Container** | `ghcr.io/jashan-randhawa/bus-resrvation` | Production app container image |
 | **⚡ Migration Runner** | `ghcr.io/jashan-randhawa/bus-resrvation-migrate` | Standalone CLI database migration image |
 | **💺 Seat Picker Widget** | `@jashan-randhawa/bus-seat-picker` | Standalone accessible seat selection widget |
