@@ -27,6 +27,7 @@ All notable changes to this project are documented in this file.
   - Implemented Web App Manifest (`manifest.json`) supporting standalone display mode, dual quick-actions (`Book Tickets`, `Admin Dashboard`), and high-res icon assets.
   - Developed root Service Worker (`sw.js`) implementing `sbtbs-bus-cache-v1` with non-GET mutation protection and offline fallback routing (`offline.html`).
   - Created Path-Aware Layout Head partial (`assets/partials/_pwa-head.php`) and Brand Preloader partial (`assets/partials/_preloader.php`) dynamically resolving root (`./`), admin (`../`), and user portal (`../`) asset scopes, ensuring `manifest.json`, `sw.js`, `preloader.css`, and `preloader.js` resolve cleanly across all directory levels without 404 or MIME type errors.
+  - Resolved Chromium and Edge manifest console validation warnings: added explicit `share_target.enctype` (`application/x-www-form-urlencoded`), added required `"type": "origin"` property to all `scope_extensions` objects, and provided dedicated `assets/img/widget-screenshot.png` (640x360) respecting the <= 1024x1024 widget screenshot size limit.
   - Enabled mobile seat/table horizontal scroll touch ergonomics, print style protection, and DOM-injected floating install banner.
 - **Web Push Notifications & Notification Actions**:
   - Service worker handles incoming remote `push` events with action buttons (*View Ticket*, *Dismiss*), vibration patterns, and app badges.

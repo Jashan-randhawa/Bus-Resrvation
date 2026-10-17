@@ -44,21 +44,27 @@
   },
   "scope_extensions": [
     {
+      "type": "origin",
       "origin": "https://bus-resrvation.onrender.com"
     },
     {
+      "type": "origin",
       "origin": "https://auth.bus-resrvation.onrender.com"
     },
     {
+      "type": "origin",
       "origin": "https://en.bus-resrvation.onrender.com"
     },
     {
+      "type": "origin",
       "origin": "https://api.bus-resrvation.onrender.com"
     },
     {
+      "type": "origin",
       "origin": "https://m.bus-resrvation.onrender.com"
     },
     {
+      "type": "origin",
       "origin": "https://accounts.google.com"
     }
   ],
@@ -174,6 +180,7 @@
   "share_target": {
     "action": "./pnr.php",
     "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
     "params": {
       "title": "title",
       "text": "text",
@@ -193,9 +200,11 @@
       "update": 900,
       "screenshots": [
         {
-          "src": "assets/img/screenshot-wide.png",
-          "sizes": "1280x720",
-          "label": "Bus Widget Preview"
+          "src": "assets/img/widget-screenshot.png",
+          "sizes": "640x360",
+          "type": "image/png",
+          "label": "Bus Widget Preview",
+          "platform": "windows"
         }
       ],
       "icons": [

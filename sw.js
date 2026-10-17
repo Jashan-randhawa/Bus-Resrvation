@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sbtbs-bus-cache-v1-rev3'; // increments sbtbs-bus-cache-v1
+const CACHE_NAME = 'sbtbs-bus-cache-v1-rev4'; // increments sbtbs-bus-cache-v1
 const OFFLINE_URL = './offline.html';
 
 const STATIC_ASSETS = [
@@ -9,6 +9,7 @@ const STATIC_ASSETS = [
   './assets/img/app-icon-512.png',
   './assets/img/screenshot-wide.png',
   './assets/img/screenshot-narrow.png',
+  './assets/img/widget-screenshot.png',
   './assets/images/bus.svg',
   './assets/images/bus-emblem.png',
   './assets/images/logo.png',

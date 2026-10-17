@@ -78,6 +78,8 @@ check_item('Optional', 'scope', !empty($manifest['scope']));
 check_item('Optional', 'display_override', is_array($manifest['display_override']) && count($manifest['display_override']) > 0);
 check_item('Optional', 'edge_side_panel', is_array($manifest['edge_side_panel']) && isset($manifest['edge_side_panel']['preferred_width']));
 check_item('Optional', 'share_target', is_array($manifest['share_target']) && !empty($manifest['share_target']['action']));
+$has_valid_enctype = !empty($manifest['share_target']['enctype']) && in_array($manifest['share_target']['enctype'], ['application/x-www-form-urlencoded', 'multipart/form-data']);
+check_item('Optional', 'share_target (explicit valid enctype)', $has_valid_enctype);
 check_item('Optional', 'protocol_handlers', is_array($manifest['protocol_handlers']) && count($manifest['protocol_handlers']) > 0);
 check_item('Optional', 'launch_handler', is_array($manifest['launch_handler']) && !empty($manifest['launch_handler']['client_mode']));
 check_item('Optional', 'file_handlers', is_array($manifest['file_handlers']) && count($manifest['file_handlers']) > 0);
@@ -87,10 +89,44 @@ check_item('Optional', 'prefer_related_applications', isset($manifest['prefer_re
 check_item('Optional', 'related_applications', is_array($manifest['related_applications']) && count($manifest['related_applications']) > 0);
 check_item('Optional', 'iarc_rating_id', !empty($manifest['iarc_rating_id']));
 check_item('Optional', 'widgets', is_array($manifest['widgets']) && !empty($manifest['widgets'][0]['ms_ac_template']));
+
+$widget_screenshots_valid = true;
+if (!empty($manifest['widgets'][0]['screenshots'])) {
+    foreach ($manifest['widgets'][0]['screenshots'] as $ws) {
+        $src = $root . '/' . ($ws['src'] ?? '');
+        if (!file_exists($src)) {
+            $widget_screenshots_valid = false;
+            break;
+        }
+        $sizes = explode('x', $ws['sizes'] ?? '');
+        if (count($sizes) === 2) {
+            $w = (int)$sizes[0];
+            $h = (int)$sizes[1];
+            if ($w > 1024 || $h > 1024 || $w <= 0 || $h <= 0) {
+                $widget_screenshots_valid = false;
+                break;
+            }
+        } else {
+            $widget_screenshots_valid = false;
+            break;
+        }
+    }
+}
+check_item('Optional', 'widgets (screenshots <= 1024x1024)', $widget_screenshots_valid);
+
 check_item('Optional', 'note_taking', is_array($manifest['note_taking']) && !empty($manifest['note_taking']['new_note_url']));
 check_item('Optional', 'lang', !empty($manifest['lang']));
 check_item('Optional', 'dir', !empty($manifest['dir']));
 check_item('Optional', 'scope_extensions', is_array($manifest['scope_extensions']) && count($manifest['scope_extensions']) > 0);
+
+$scope_extensions_valid = true;
+foreach ($manifest['scope_extensions'] as $se) {
+    if (empty($se['type']) || empty($se['origin'])) {
+        $scope_extensions_valid = false;
+        break;
+    }
+}
+check_item('Optional', 'scope_extensions (entries define both type and origin)', $scope_extensions_valid);
 
 echo "\n========================================================\n";
 echo "   Results: $passed Passed, $failed Failed\n";
