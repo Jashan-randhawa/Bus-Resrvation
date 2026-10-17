@@ -772,10 +772,33 @@ if (isset($_POST['subbtn'])) {
         <?php endif; ?>
       </div>
 
-      <div class="routes-snap d-md-none" role="region" aria-label="Popular routes, swipe sideways" tabindex="0">
-        <?php foreach ($popular_routes as $pr): ?>
-          <div class="routes-snap-item"><?php $render_route_card($pr); ?></div>
-        <?php endforeach; ?>
+      <div class="routes-carousel-wrap d-md-none">
+        <!-- Floating Left Arrow Button -->
+        <button type="button" class="routes-carousel-arrow prev" id="routesPrevBtn" aria-label="Previous route slide">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+
+        <div class="routes-snap" id="routesContainer" role="region" aria-roledescription="carousel" aria-label="Popular routes">
+          <?php foreach ($popular_routes as $idx => $pr): ?>
+            <div class="routes-snap-item" role="group" aria-roledescription="slide" aria-label="Route <?= $idx + 1 ?> of <?= count($popular_routes) ?>">
+              <?php $render_route_card($pr); ?>
+            </div>
+          <?php endforeach; ?>
+        </div>
+
+        <!-- Floating Right Arrow Button -->
+        <button type="button" class="routes-carousel-arrow next" id="routesNextBtn" aria-label="Next route slide">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+
+        <!-- Centered Pagination Indicators -->
+        <div class="routes-carousel-controls" aria-label="Route navigation">
+          <div class="routes-carousel-dots" role="tablist" aria-label="Route slide selection">
+            <?php foreach ($popular_routes as $idx => $pr): ?>
+              <button type="button" class="routes-dot <?= $idx === 0 ? 'active' : '' ?>" data-index="<?= $idx ?>" role="tab" aria-selected="<?= $idx === 0 ? 'true' : 'false' ?>" aria-label="Slide <?= $idx + 1 ?>: <?= e($pr['city1']) ?> to <?= e($pr['city2']) ?>"></button>
+            <?php endforeach; ?>
+          </div>
+        </div>
       </div>
 
       <script>
@@ -1038,15 +1061,17 @@ if (isset($_POST['subbtn'])) {
   </section>
 
   <style>
-    /* ── Features Carousel (Exact Popular Routes Alignment) ────────── */
+    /* ── Features & Mobile Popular Routes Carousel ────────── */
     @media (max-width: 767.98px) {
-      .features-carousel-wrap {
+      .features-carousel-wrap,
+      .routes-carousel-wrap {
         position: relative !important;
         padding: 0 28px !important;
         margin: 0 -10px !important;
       }
 
-      .features-container {
+      .features-container,
+      .routes-snap {
         display: flex !important;
         overflow-x: auto !important;
         scroll-snap-type: x mandatory !important;
@@ -1060,20 +1085,26 @@ if (isset($_POST['subbtn'])) {
         position: relative !important;
       }
 
-      .features-container::-webkit-scrollbar {
+      .features-container::-webkit-scrollbar,
+      .routes-snap::-webkit-scrollbar {
         display: none !important;
       }
 
-      .features-container:focus-visible {
+      .features-container:focus-visible,
+      .routes-snap:focus-visible {
         outline: 2px solid var(--home-primary, #2563eb) !important;
         outline-offset: 2px !important;
       }
 
-      .features-container .feature-card {
+      .features-container .feature-card,
+      .routes-snap .routes-snap-item {
         flex: 0 0 100% !important;
         max-width: 100% !important;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important;
+      }
+
+      .features-container .feature-card {
         background: var(--home-bg-white, #ffffff) !important;
         border: 1px solid var(--home-border, #e2e8f0) !important;
         border-radius: var(--radius-lg, 12px) !important;
@@ -1085,11 +1116,18 @@ if (isset($_POST['subbtn'])) {
         transition: transform 0.25s ease, box-shadow 0.25s ease !important;
       }
 
-      .features-carousel-controls {
+      .routes-snap-item .popular-route-card {
+        border-radius: 12px !important;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08) !important;
+      }
+
+      .features-carousel-controls,
+      .routes-carousel-controls {
         position: static !important;
       }
 
-      .features-carousel-arrow {
+      .features-carousel-arrow,
+      .routes-carousel-arrow {
         position: absolute !important;
         top: 45% !important;
         transform: translateY(-50%) !important;
@@ -1113,15 +1151,18 @@ if (isset($_POST['subbtn'])) {
         touch-action: manipulation !important;
       }
 
-      .features-carousel-arrow.prev {
+      .features-carousel-arrow.prev,
+      .routes-carousel-arrow.prev {
         left: 0 !important;
       }
 
-      .features-carousel-arrow.next {
+      .features-carousel-arrow.next,
+      .routes-carousel-arrow.next {
         right: 0 !important;
       }
 
-      .features-carousel-arrow:hover {
+      .features-carousel-arrow:hover,
+      .routes-carousel-arrow:hover {
         background-color: var(--home-primary, #2563eb) !important;
         border-color: var(--home-primary, #2563eb) !important;
         color: #ffffff !important;
@@ -1129,11 +1170,13 @@ if (isset($_POST['subbtn'])) {
         transform: translateY(-50%) scale(1.05) !important;
       }
 
-      .features-carousel-arrow:active {
+      .features-carousel-arrow:active,
+      .routes-carousel-arrow:active {
         transform: translateY(-50%) scale(0.95) !important;
       }
 
-      .features-carousel-dots {
+      .features-carousel-dots,
+      .routes-carousel-dots {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -1142,7 +1185,8 @@ if (isset($_POST['subbtn'])) {
         padding-bottom: 0.25rem !important;
       }
 
-      .features-dot {
+      .features-dot,
+      .routes-dot {
         width: 12px !important;
         height: 12px !important;
         min-width: 12px !important;
@@ -1156,42 +1200,50 @@ if (isset($_POST['subbtn'])) {
         touch-action: manipulation !important;
       }
 
-      .features-dot:hover {
+      .features-dot:hover,
+      .routes-dot:hover {
         background-color: #94a3b8 !important;
       }
 
-      .features-dot.active {
+      .features-dot.active,
+      .routes-dot.active {
         width: 28px !important;
         border-radius: 9999px !important;
         background-color: var(--home-primary, #2563eb) !important;
         box-shadow: 0 0 10px rgba(0, 102, 255, 0.35) !important;
       }
 
-      html[data-theme="dark"] .features-carousel-arrow {
+      html[data-theme="dark"] .features-carousel-arrow,
+      html[data-theme="dark"] .routes-carousel-arrow {
         background-color: #1e293b !important;
         border-color: #334155 !important;
         color: #f1f5f9 !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
       }
 
-      html[data-theme="dark"] .features-carousel-arrow:hover {
+      html[data-theme="dark"] .features-carousel-arrow:hover,
+      html[data-theme="dark"] .routes-carousel-arrow:hover {
         background-color: var(--home-primary, #2563eb) !important;
         border-color: var(--home-primary, #2563eb) !important;
         color: #ffffff !important;
       }
 
-      html[data-theme="dark"] .features-dot {
+      html[data-theme="dark"] .features-dot,
+      html[data-theme="dark"] .routes-dot {
         background-color: #475569 !important;
       }
 
-      html[data-theme="dark"] .features-dot.active {
+      html[data-theme="dark"] .features-dot.active,
+      html[data-theme="dark"] .routes-dot.active {
         background-color: var(--home-primary, #2563eb) !important;
       }
     }
 
     @media (min-width: 768px) {
       .features-carousel-controls,
-      .features-carousel-arrow {
+      .features-carousel-arrow,
+      .routes-carousel-controls,
+      .routes-carousel-arrow {
         display: none !important;
       }
     }
@@ -1648,6 +1700,175 @@ document.addEventListener('DOMContentLoaded', function () {
     var prevBtn = document.getElementById('featuresPrevBtn');
     var nextBtn = document.getElementById('featuresNextBtn');
     var dots = document.querySelectorAll('.features-dot');
+    if (!cards.length) return;
+
+    var currentIndex = 0;
+    var autoScrollInterval = 5000; // 5-second auto-scroll
+    var autoScrollTimer = null;
+    var isPaused = false;
+
+    var isMobile = function () {
+      return window.matchMedia('(max-width: 767.98px)').matches;
+    };
+
+    var prefersReducedMotion = function () {
+      return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    };
+
+    function updateControls(index) {
+      currentIndex = index;
+      dots.forEach(function (dot, idx) {
+        if (idx === index) {
+          dot.classList.add('active');
+          dot.setAttribute('aria-selected', 'true');
+        } else {
+          dot.classList.remove('active');
+          dot.setAttribute('aria-selected', 'false');
+        }
+      });
+    }
+
+    function scrollToCard(index) {
+      if (index < 0 || index >= cards.length) return;
+      var targetCard = cards[index];
+      if (!targetCard) return;
+
+      var reduceMotion = prefersReducedMotion();
+      var cardLeft = targetCard.offsetLeft;
+      var centerOffset = (container.clientWidth - targetCard.clientWidth) / 2;
+      var targetScrollLeft = cardLeft - centerOffset;
+
+      container.scrollTo({
+        left: Math.max(0, targetScrollLeft),
+        behavior: reduceMotion ? 'auto' : 'smooth'
+      });
+
+      updateControls(index);
+    }
+
+    function startAutoScroll() {
+      stopAutoScroll();
+      if (prefersReducedMotion()) return;
+      autoScrollTimer = setInterval(function () {
+        if (!isMobile() || isPaused) return;
+        var nextIdx = (currentIndex + 1) % cards.length;
+        scrollToCard(nextIdx);
+      }, autoScrollInterval);
+    }
+
+    function stopAutoScroll() {
+      if (autoScrollTimer) {
+        clearInterval(autoScrollTimer);
+        autoScrollTimer = null;
+      }
+    }
+
+    function resetAutoScroll() {
+      stopAutoScroll();
+      startAutoScroll();
+    }
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', function () {
+        var targetIdx = currentIndex > 0 ? currentIndex - 1 : cards.length - 1;
+        scrollToCard(targetIdx);
+        resetAutoScroll();
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', function () {
+        var targetIdx = currentIndex < cards.length - 1 ? currentIndex + 1 : 0;
+        scrollToCard(targetIdx);
+        resetAutoScroll();
+      });
+    }
+
+    dots.forEach(function (dot) {
+      dot.addEventListener('click', function () {
+        var idx = parseInt(this.getAttribute('data-index'), 10);
+        if (!isNaN(idx)) {
+          scrollToCard(idx);
+          resetAutoScroll();
+        }
+      });
+    });
+
+    // Pause auto-scroll on hover or touch
+    if (wrap) {
+      wrap.addEventListener('mouseenter', function () { isPaused = true; });
+      wrap.addEventListener('mouseleave', function () { isPaused = false; });
+      wrap.addEventListener('touchstart', function () { isPaused = true; }, { passive: true });
+      wrap.addEventListener('touchend', function () {
+        setTimeout(function () { isPaused = false; }, 2000);
+      }, { passive: true });
+    }
+
+    // Pause when keyboard focus is inside carousel
+    container.setAttribute('tabindex', '0');
+    container.addEventListener('focusin', function () { isPaused = true; });
+    container.addEventListener('focusout', function () { isPaused = false; });
+
+    // Track active slide on swipe using scroll event
+    var scrollDebounceTimer = null;
+    container.addEventListener('scroll', function () {
+      if (!isMobile()) return;
+      clearTimeout(scrollDebounceTimer);
+      scrollDebounceTimer = setTimeout(function () {
+        var containerCenter = container.scrollLeft + container.clientWidth / 2;
+        var closestIndex = 0;
+        var minDistance = Infinity;
+
+        cards.forEach(function (card, idx) {
+          var cardCenter = card.offsetLeft + card.clientWidth / 2;
+          var dist = Math.abs(containerCenter - cardCenter);
+          if (dist < minDistance) {
+            minDistance = dist;
+            closestIndex = idx;
+          }
+        });
+
+        updateControls(closestIndex);
+      }, 50);
+    }, { passive: true });
+
+    // Keyboard left/right arrow navigation
+    container.addEventListener('keydown', function (e) {
+      if (!isMobile()) return;
+      if (e.key === 'ArrowLeft' && currentIndex > 0) {
+        e.preventDefault();
+        scrollToCard(currentIndex - 1);
+        resetAutoScroll();
+      } else if (e.key === 'ArrowRight' && currentIndex < cards.length - 1) {
+        e.preventDefault();
+        scrollToCard(currentIndex + 1);
+        resetAutoScroll();
+      }
+    });
+
+    // Update on resize or orientation change
+    window.addEventListener('resize', function () {
+      if (isMobile()) {
+        scrollToCard(currentIndex);
+      }
+    }, { passive: true });
+
+    updateControls(0);
+    startAutoScroll();
+  })();
+
+  // -------------------------------------------------------------------------
+  // Mobile Popular Routes Carousel Controller (5s auto-scroll)
+  // -------------------------------------------------------------------------
+  (function initMobileRoutesCarousel() {
+    var container = document.getElementById('routesContainer');
+    if (!container) return;
+
+    var wrap = container.closest('.routes-carousel-wrap') || container.parentElement;
+    var cards = container.querySelectorAll('.routes-snap-item');
+    var prevBtn = document.getElementById('routesPrevBtn');
+    var nextBtn = document.getElementById('routesNextBtn');
+    var dots = wrap ? wrap.querySelectorAll('.routes-dot') : [];
     if (!cards.length) return;
 
     var currentIndex = 0;

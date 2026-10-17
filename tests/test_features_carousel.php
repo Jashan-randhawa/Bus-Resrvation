@@ -136,9 +136,42 @@ assert_carousel("features carousel pauses on hover and touch interaction",
 assert_carousel("popular routes carousel defines 5-second interval", 
     strpos($home_content, 'interval: autoplay ? 5000 : false') !== false);
 
+// Suite 4: Mobile Popular Routes Carousel
+echo "\n[*] Suite 4: Mobile Popular Routes Carousel in homepage.php & home.css\n";
+assert_carousel("homepage.php wraps mobile routes in .routes-carousel-wrap.d-md-none", 
+    strpos($home_content, 'routes-carousel-wrap d-md-none') !== false);
+
+assert_carousel("routes container defines id='routesContainer' with carousel roles", 
+    strpos($home_content, 'id="routesContainer"') !== false &&
+    strpos($home_content, 'aria-roledescription="carousel"') !== false);
+
+assert_carousel("routes navigation arrows exist (#routesPrevBtn & #routesNextBtn)", 
+    strpos($home_content, 'id="routesPrevBtn"') !== false &&
+    strpos($home_content, 'id="routesNextBtn"') !== false);
+
+assert_carousel("routes pagination dots exist with tablist and data-index", 
+    strpos($home_content, 'routes-carousel-dots') !== false &&
+    strpos($home_content, 'routes-dot') !== false);
+
+assert_carousel("home.css defines mobile routes carousel rules", 
+    strpos($css_content, '.routes-carousel-wrap') !== false &&
+    strpos($css_content, '.routes-carousel-arrow') !== false &&
+    strpos($css_content, '.routes-dot.active') !== false);
+
+assert_carousel("home.css hides mobile routes controls on desktop (min-width: 768px)", 
+    strpos($css_content, '.routes-carousel-controls') !== false &&
+    strpos($css_content, '.routes-carousel-arrow') !== false);
+
+assert_carousel("homepage.php defines initMobileRoutesCarousel controller", 
+    strpos($home_content, 'initMobileRoutesCarousel') !== false);
+
+assert_carousel("mobile routes controller implements 5-second auto-scroll timer", 
+    strpos($home_content, 'initMobileRoutesCarousel') !== false &&
+    strpos($home_content, 'autoScrollInterval = 5000') !== false);
+
 // Summary
 echo "\n========================================================\n";
-echo "   Features Carousel Results: {$passed} Passed, {$failed} Failed\n";
+echo "   Features & Mobile Routes Results: {$passed} Passed, {$failed} Failed\n";
 echo "========================================================\n";
 
 exit($failed > 0 ? 1 : 0);
