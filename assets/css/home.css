@@ -385,11 +385,17 @@ section[id] {
 }
 
 /* ── 7. Features & Capability Tiles (Section C1, C4) ────────── */
+.features-carousel-wrap {
+  position: relative;
+  width: 100%;
+}
+
 .features-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1.75rem;
   margin-top: 2.5rem;
+  position: relative;
 }
 
 .feature-card {
@@ -436,6 +442,144 @@ section[id] {
   font-size: 0.875rem;
   line-height: 1.6;
   margin-bottom: 0;
+}
+
+/* Mobile Features Carousel (< 768px) */
+@media (max-width: 767.98px) {
+  .features-container {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    gap: 16px;
+    margin-top: 1.75rem;
+    margin-bottom: 0.5rem;
+    padding: 8px 16px 16px;
+    margin-left: -15px;
+    margin-right: -15px;
+    scrollbar-width: none;
+  }
+  .features-container::-webkit-scrollbar {
+    display: none;
+  }
+  .features-container:focus-visible {
+    outline: 2px solid var(--home-primary);
+    outline-offset: 2px;
+  }
+
+  .features-container .feature-card {
+    flex: 0 0 85%;
+    max-width: 320px;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .features-carousel-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 0.75rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .features-carousel-arrow {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 50%;
+    background: var(--home-bg-white);
+    border: 1px solid var(--home-border);
+    color: var(--home-navy);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+    transition: all 0.2s ease;
+    padding: 0;
+    touch-action: manipulation;
+  }
+
+  .features-carousel-arrow:hover:not(:disabled) {
+    background: var(--home-primary);
+    color: #ffffff;
+    border-color: var(--home-primary);
+    transform: scale(1.05);
+  }
+
+  .features-carousel-arrow:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+
+  .features-carousel-arrow:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .features-carousel-dots {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .features-dot {
+    width: 10px;
+    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
+    border-radius: 50%;
+    background: #cbd5e1;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    touch-action: manipulation;
+  }
+
+  .features-dot:hover {
+    background: #94a3b8;
+  }
+
+  .features-dot.active {
+    width: 28px;
+    border-radius: 9999px;
+    background: var(--home-primary);
+    box-shadow: 0 0 10px rgba(0, 102, 255, 0.35);
+  }
+
+  html[data-theme="dark"] .features-carousel-arrow {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+  }
+
+  html[data-theme="dark"] .features-carousel-arrow:hover:not(:disabled) {
+    background: var(--home-primary);
+    color: #ffffff;
+    border-color: var(--home-primary);
+  }
+
+  html[data-theme="dark"] .features-dot {
+    background: #475569;
+  }
+
+  html[data-theme="dark"] .features-dot.active {
+    background: var(--home-primary);
+  }
+}
+
+@media (min-width: 768px) {
+  .features-carousel-controls {
+    display: none !important;
+  }
 }
 
 /* ── 8. Contact Card (Section C3) ───────────────────────────── */

@@ -1047,32 +1047,49 @@ if (isset($_POST['subbtn'])) {
         Direct seat reservations, instant boarding passes, and customer-first support designed for peace of mind.
       </p>
 
-      <div class="features-container text-left">
-        <div class="feature-card">
-          <div class="feature-svg-icon" aria-hidden="true">
-            <!-- Shield SVG icon -->
-            <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+      <div class="features-carousel-wrap">
+        <div class="features-container text-left" id="featuresContainer" role="region" aria-roledescription="carousel" aria-label="Key features and benefits">
+          <div class="feature-card" role="group" aria-roledescription="slide" aria-label="1 of 3: Guaranteed Seat Selection">
+            <div class="feature-svg-icon" aria-hidden="true">
+              <!-- Shield SVG icon -->
+              <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
+            <h3>Guaranteed Seat Selection</h3>
+            <p>Your seat is held for 10 minutes while you pay. Real-time availability ensures you never get double-booked.</p>
           </div>
-          <h3>Guaranteed Seat Selection</h3>
-          <p>Your seat is held for 10 minutes while you pay. Real-time availability ensures you never get double-booked.</p>
+
+          <div class="feature-card" role="group" aria-roledescription="slide" aria-label="2 of 3: Instant Ticket Access">
+            <div class="feature-svg-icon" aria-hidden="true">
+              <!-- Ticket SVG icon -->
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            </div>
+            <h3>Instant Ticket Access</h3>
+            <p>Check your ticket any time with your PNR and phone digits. Download or print your boarding pass whenever you need.</p>
+          </div>
+
+          <div class="feature-card" role="group" aria-roledescription="slide" aria-label="3 of 3: Secure & Protected">
+            <div class="feature-svg-icon" aria-hidden="true">
+              <!-- Lock SVG icon -->
+              <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </div>
+            <h3>Secure &amp; Protected</h3>
+            <p>Your details are stored securely. Encrypted account protection and privacy safeguards keep your bookings safe.</p>
+          </div>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-svg-icon" aria-hidden="true">
-            <!-- Ticket SVG icon -->
-            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <!-- Mobile Carousel Navigation Controls (Visible only on mobile: d-md-none) -->
+        <div class="features-carousel-controls d-md-none" aria-label="Feature navigation">
+          <button type="button" class="features-carousel-arrow prev" id="featuresPrevBtn" aria-label="Previous feature slide" disabled>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <div class="features-carousel-dots" role="tablist" aria-label="Feature slide selection">
+            <button type="button" class="features-dot active" data-index="0" role="tab" aria-selected="true" aria-label="Slide 1: Guaranteed Seat Selection"></button>
+            <button type="button" class="features-dot" data-index="1" role="tab" aria-selected="false" aria-label="Slide 2: Instant Ticket Access"></button>
+            <button type="button" class="features-dot" data-index="2" role="tab" aria-selected="false" aria-label="Slide 3: Secure & Protected"></button>
           </div>
-          <h3>Instant Ticket Access</h3>
-          <p>Check your ticket any time with your PNR and phone digits. Download or print your boarding pass whenever you need.</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-svg-icon" aria-hidden="true">
-            <!-- Lock SVG icon -->
-            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-          </div>
-          <h3>Secure &amp; Protected</h3>
-          <p>Your details are stored securely. Encrypted account protection and privacy safeguards keep your bookings safe.</p>
+          <button type="button" class="features-carousel-arrow next" id="featuresNextBtn" aria-label="Next feature slide">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
         </div>
       </div>
     </div>
@@ -1454,6 +1471,133 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var userRegForm = document.querySelector('#register-pane form');
     setupPasswordEnhancements('user_pwd', 'user-reg-pwd-toggle', 'user-reg-pwd-toggle-text', 'user-reg-caps-warning', userRegForm, '#userlogin');
+  })();
+
+  // -------------------------------------------------------------------------
+  // Mobile Features Carousel Controller
+  // -------------------------------------------------------------------------
+  (function initFeaturesCarousel() {
+    var container = document.getElementById('featuresContainer');
+    if (!container) return;
+
+    var cards = container.querySelectorAll('.feature-card');
+    var prevBtn = document.getElementById('featuresPrevBtn');
+    var nextBtn = document.getElementById('featuresNextBtn');
+    var dots = document.querySelectorAll('.features-dot');
+    if (!cards.length) return;
+
+    var currentIndex = 0;
+    var isMobile = function () {
+      return window.matchMedia('(max-width: 767.98px)').matches;
+    };
+
+    function updateControls(index) {
+      currentIndex = index;
+      dots.forEach(function (dot, idx) {
+        if (idx === index) {
+          dot.classList.add('active');
+          dot.setAttribute('aria-selected', 'true');
+        } else {
+          dot.classList.remove('active');
+          dot.setAttribute('aria-selected', 'false');
+        }
+      });
+
+      if (prevBtn) {
+        prevBtn.disabled = index === 0;
+      }
+      if (nextBtn) {
+        nextBtn.disabled = index === cards.length - 1;
+      }
+    }
+
+    function scrollToCard(index) {
+      if (index < 0 || index >= cards.length) return;
+      var targetCard = cards[index];
+      if (!targetCard) return;
+
+      var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var cardLeft = targetCard.offsetLeft;
+      var centerOffset = (container.clientWidth - targetCard.clientWidth) / 2;
+      var targetScrollLeft = cardLeft - centerOffset;
+
+      container.scrollTo({
+        left: Math.max(0, targetScrollLeft),
+        behavior: reduceMotion ? 'auto' : 'smooth'
+      });
+
+      updateControls(index);
+    }
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', function () {
+        if (currentIndex > 0) {
+          scrollToCard(currentIndex - 1);
+        }
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', function () {
+        if (currentIndex < cards.length - 1) {
+          scrollToCard(currentIndex + 1);
+        }
+      });
+    }
+
+    dots.forEach(function (dot) {
+      dot.addEventListener('click', function () {
+        var idx = parseInt(this.getAttribute('data-index'), 10);
+        if (!isNaN(idx)) {
+          scrollToCard(idx);
+        }
+      });
+    });
+
+    // Track active slide on swipe using scroll event
+    var scrollDebounceTimer = null;
+    container.addEventListener('scroll', function () {
+      if (!isMobile()) return;
+      clearTimeout(scrollDebounceTimer);
+      scrollDebounceTimer = setTimeout(function () {
+        var containerCenter = container.scrollLeft + container.clientWidth / 2;
+        var closestIndex = 0;
+        var minDistance = Infinity;
+
+        cards.forEach(function (card, idx) {
+          var cardCenter = card.offsetLeft + card.clientWidth / 2;
+          var dist = Math.abs(containerCenter - cardCenter);
+          if (dist < minDistance) {
+            minDistance = dist;
+            closestIndex = idx;
+          }
+        });
+
+        updateControls(closestIndex);
+      }, 50);
+    }, { passive: true });
+
+    // Keyboard left/right arrow navigation
+    container.setAttribute('tabindex', '0');
+    container.addEventListener('keydown', function (e) {
+      if (!isMobile()) return;
+      if (e.key === 'ArrowLeft' && currentIndex > 0) {
+        e.preventDefault();
+        scrollToCard(currentIndex - 1);
+      } else if (e.key === 'ArrowRight' && currentIndex < cards.length - 1) {
+        e.preventDefault();
+        scrollToCard(currentIndex + 1);
+      }
+    });
+
+    // Update on resize or orientation change
+    window.addEventListener('resize', function () {
+      if (isMobile()) {
+        scrollToCard(currentIndex);
+      }
+    }, { passive: true });
+
+    updateControls(0);
   })();
 });
 </script>
