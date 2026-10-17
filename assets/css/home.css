@@ -741,7 +741,7 @@ input[type="date"].form-control {
   }
 }
 
-/* ── 12. Bootstrap Carousel for Popular Routes (3s auto-scroll) ── */
+/* ── 12. Bootstrap Carousel for Popular Routes (5s auto-scroll) ── */
 #popularRoutesCarousel {
   position: relative;
   padding: 0 45px 35px 45px;

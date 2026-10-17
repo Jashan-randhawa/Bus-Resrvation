@@ -784,8 +784,7 @@ if (isset($_POST['subbtn'])) {
         var $c = $('#popularRoutesCarousel');
         if (!$c.length) return;
         var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        var touch = window.matchMedia('(pointer: coarse)').matches;
-        var autoplay = !reduce && !touch; // mouse users only; never on touch or reduced motion
+        var autoplay = !reduce; // 5-second auto-scroll; disabled only on reduced motion
         $c.carousel({
           interval: autoplay ? 5000 : false,
           ride: autoplay ? 'carousel' : false,
@@ -1644,6 +1643,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var container = document.getElementById('featuresContainer');
     if (!container) return;
 
+    var wrap = container.closest('.features-carousel-wrap') || container.parentElement;
     var cards = container.querySelectorAll('.feature-card');
     var prevBtn = document.getElementById('featuresPrevBtn');
     var nextBtn = document.getElementById('featuresNextBtn');
@@ -1651,8 +1651,16 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!cards.length) return;
 
     var currentIndex = 0;
+    var autoScrollInterval = 5000; // 5-second auto-scroll
+    var autoScrollTimer = null;
+    var isPaused = false;
+
     var isMobile = function () {
       return window.matchMedia('(max-width: 767.98px)').matches;
+    };
+
+    var prefersReducedMotion = function () {
+      return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     };
 
     function updateControls(index) {
@@ -1666,7 +1674,6 @@ document.addEventListener('DOMContentLoaded', function () {
           dot.setAttribute('aria-selected', 'false');
         }
       });
-
     }
 
     function scrollToCard(index) {
@@ -1674,7 +1681,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var targetCard = cards[index];
       if (!targetCard) return;
 
-      var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var reduceMotion = prefersReducedMotion();
       var cardLeft = targetCard.offsetLeft;
       var centerOffset = (container.clientWidth - targetCard.clientWidth) / 2;
       var targetScrollLeft = cardLeft - centerOffset;
@@ -1687,10 +1694,33 @@ document.addEventListener('DOMContentLoaded', function () {
       updateControls(index);
     }
 
+    function startAutoScroll() {
+      stopAutoScroll();
+      if (prefersReducedMotion()) return;
+      autoScrollTimer = setInterval(function () {
+        if (!isMobile() || isPaused) return;
+        var nextIdx = (currentIndex + 1) % cards.length;
+        scrollToCard(nextIdx);
+      }, autoScrollInterval);
+    }
+
+    function stopAutoScroll() {
+      if (autoScrollTimer) {
+        clearInterval(autoScrollTimer);
+        autoScrollTimer = null;
+      }
+    }
+
+    function resetAutoScroll() {
+      stopAutoScroll();
+      startAutoScroll();
+    }
+
     if (prevBtn) {
       prevBtn.addEventListener('click', function () {
         var targetIdx = currentIndex > 0 ? currentIndex - 1 : cards.length - 1;
         scrollToCard(targetIdx);
+        resetAutoScroll();
       });
     }
 
@@ -1698,6 +1728,7 @@ document.addEventListener('DOMContentLoaded', function () {
       nextBtn.addEventListener('click', function () {
         var targetIdx = currentIndex < cards.length - 1 ? currentIndex + 1 : 0;
         scrollToCard(targetIdx);
+        resetAutoScroll();
       });
     }
 
@@ -1706,9 +1737,25 @@ document.addEventListener('DOMContentLoaded', function () {
         var idx = parseInt(this.getAttribute('data-index'), 10);
         if (!isNaN(idx)) {
           scrollToCard(idx);
+          resetAutoScroll();
         }
       });
     });
+
+    // Pause auto-scroll on hover or touch
+    if (wrap) {
+      wrap.addEventListener('mouseenter', function () { isPaused = true; });
+      wrap.addEventListener('mouseleave', function () { isPaused = false; });
+      wrap.addEventListener('touchstart', function () { isPaused = true; }, { passive: true });
+      wrap.addEventListener('touchend', function () {
+        setTimeout(function () { isPaused = false; }, 2000);
+      }, { passive: true });
+    }
+
+    // Pause when keyboard focus is inside carousel
+    container.setAttribute('tabindex', '0');
+    container.addEventListener('focusin', function () { isPaused = true; });
+    container.addEventListener('focusout', function () { isPaused = false; });
 
     // Track active slide on swipe using scroll event
     var scrollDebounceTimer = null;
@@ -1734,15 +1781,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }, { passive: true });
 
     // Keyboard left/right arrow navigation
-    container.setAttribute('tabindex', '0');
     container.addEventListener('keydown', function (e) {
       if (!isMobile()) return;
       if (e.key === 'ArrowLeft' && currentIndex > 0) {
         e.preventDefault();
         scrollToCard(currentIndex - 1);
+        resetAutoScroll();
       } else if (e.key === 'ArrowRight' && currentIndex < cards.length - 1) {
         e.preventDefault();
         scrollToCard(currentIndex + 1);
+        resetAutoScroll();
       }
     });
 
@@ -1754,6 +1802,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }, { passive: true });
 
     updateControls(0);
+    startAutoScroll();
   })();
 });
 </script>

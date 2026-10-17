@@ -125,6 +125,17 @@ assert_carousel("controller provides keyboard arrow navigation (ArrowLeft & Arro
 assert_carousel("controller honors prefers-reduced-motion media query", 
     strpos($home_content, "window.matchMedia('(prefers-reduced-motion: reduce)')") !== false);
 
+assert_carousel("features carousel implements 5-second auto-scroll timer", 
+    strpos($home_content, 'autoScrollInterval = 5000') !== false &&
+    strpos($home_content, 'startAutoScroll()') !== false);
+
+assert_carousel("features carousel pauses on hover and touch interaction", 
+    strpos($home_content, "addEventListener('mouseenter'") !== false &&
+    strpos($home_content, "addEventListener('touchstart'") !== false);
+
+assert_carousel("popular routes carousel defines 5-second interval", 
+    strpos($home_content, 'interval: autoplay ? 5000 : false') !== false);
+
 // Summary
 echo "\n========================================================\n";
 echo "   Features Carousel Results: {$passed} Passed, {$failed} Failed\n";
