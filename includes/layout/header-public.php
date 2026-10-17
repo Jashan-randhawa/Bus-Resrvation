@@ -91,36 +91,61 @@ $user_role = $_SESSION['role'] ?? null;
           <!-- Presentation-only Session-Aware Nav Elements (P16) -->
           <?php if ($user_role === 'user'): ?>
             <?php
-            $display_first_name = '';
-            if (!empty($_SESSION['name'])) {
-              $name_parts = explode(' ', trim($_SESSION['name']));
-              $display_first_name = $name_parts[0];
-            }
+            $user_full_name = trim((string)($_SESSION['name'] ?? 'Passenger'));
+            $name_parts = explode(' ', $user_full_name);
+            $display_first_name = $name_parts[0] !== '' ? $name_parts[0] : 'Passenger';
+            $user_initial = strtoupper(mb_substr($display_first_name, 0, 1, 'UTF-8'));
+            $user_email = trim((string)($_SESSION['email'] ?? ''));
             ?>
-            <?php if (!empty($display_first_name)): ?>
-              <li class="nav-item ml-lg-3 mt-2 mt-lg-0 d-flex align-items-center">
-                <span class="text-muted small font-weight-bold">
-                  Hi, <?= e($display_first_name) ?>
-                </span>
-              </li>
-            <?php endif; ?>
-            <li class="nav-item ml-lg-2 mt-2 mt-lg-0">
-              <a href="<?= BASE_URL ?>/user/my-bookings.php" class="btn btn-outline-primary btn-nav-action">
+            <li class="nav-item ml-lg-2 mt-2 mt-lg-0 d-none d-xl-inline-block">
+              <a href="<?= BASE_URL ?>/user/my-bookings.php" class="btn btn-outline-primary btn-nav-action text-nowrap">
+                <svg class="mr-1" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V9z"></path><line x1="9" y1="12" x2="9.01" y2="12"></line><line x1="13" y1="12" x2="15" y2="12"></line></svg>
                 My Bookings
               </a>
             </li>
             <li class="nav-item ml-lg-2 mt-2 mt-lg-0">
-              <a href="<?= BASE_URL ?>/user/index.php" class="btn btn-primary btn-nav-action">
+              <a href="<?= BASE_URL ?>/user/index.php" class="btn btn-primary btn-nav-action text-nowrap shadow-sm">
                 Dashboard &rarr;
               </a>
             </li>
-            <li class="nav-item ml-lg-2 mt-2 mt-lg-0">
-              <form method="post" action="<?= BASE_URL ?>/homepage.php" class="d-inline">
-                <?= csrf_field() ?>
-                <button type="submit" name="logout" value="logout" class="btn btn-outline-danger btn-nav-action" title="Sign out of passenger account">
-                  Sign Out
-                </button>
-              </form>
+            <li class="nav-item dropdown nav-user-dropdown ml-lg-2 mt-2 mt-lg-0">
+              <button class="btn nav-user-pill dropdown-toggle d-flex align-items-center text-nowrap" type="button" id="userAccountDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Open user menu for <?= e($display_first_name) ?>">
+                <span class="nav-user-avatar" aria-hidden="true"><?= e($user_initial) ?></span>
+                <span class="nav-user-name font-weight-semibold"><?= e($display_first_name) ?></span>
+              </button>
+              <div class="dropdown-menu dropdown-menu-right nav-user-menu shadow-lg border-0 py-2" aria-labelledby="userAccountDropdown">
+                <div class="nav-user-header px-3 py-2 border-bottom">
+                  <div class="d-flex align-items-center">
+                    <span class="nav-user-avatar nav-user-avatar-lg mr-2" aria-hidden="true"><?= e($user_initial) ?></span>
+                    <div class="overflow-hidden">
+                      <div class="font-weight-bold text-dark text-truncate nav-user-fullname"><?= e($user_full_name) ?></div>
+                      <small class="text-muted d-block text-truncate nav-user-meta"><?= !empty($user_email) ? e($user_email) : 'Passenger Account' ?></small>
+                    </div>
+                  </div>
+                </div>
+                <div class="nav-user-links py-1">
+                  <a class="dropdown-item d-flex align-items-center py-2 text-nowrap" href="<?= BASE_URL ?>/user/index.php">
+                    <svg class="nav-menu-icon mr-2 text-primary" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    <span>Dashboard</span>
+                  </a>
+                  <a class="dropdown-item d-flex align-items-center py-2 text-nowrap" href="<?= BASE_URL ?>/user/my-bookings.php">
+                    <svg class="nav-menu-icon mr-2 text-primary" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V9z"></path><line x1="9" y1="12" x2="9.01" y2="12"></line><line x1="13" y1="12" x2="15" y2="12"></line></svg>
+                    <span>My Bookings</span>
+                  </a>
+                  <a class="dropdown-item d-flex align-items-center py-2 text-nowrap" href="<?= BASE_URL ?>/user/profile.php">
+                    <svg class="nav-menu-icon mr-2 text-primary" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    <span>Account Settings</span>
+                  </a>
+                </div>
+                <div class="dropdown-divider my-1"></div>
+                <form method="post" action="<?= BASE_URL ?>/homepage.php" class="m-0">
+                  <?= csrf_field() ?>
+                  <button type="submit" name="logout" value="logout" class="dropdown-item text-danger d-flex align-items-center py-2 text-nowrap font-weight-medium" title="Sign out of passenger account">
+                    <svg class="nav-menu-icon mr-2 text-danger" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    <span>Sign Out</span>
+                  </button>
+                </form>
+              </div>
             </li>
           <?php elseif ($user_role === 'admin'): ?>
             <li class="nav-item ml-lg-3 mt-2 mt-lg-0">
