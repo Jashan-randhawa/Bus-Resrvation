@@ -26,7 +26,8 @@ All notable changes to this project are documented in this file.
 - **Complete Progressive Web App (PWA) Implementation**:
   - Implemented Web App Manifest (`manifest.json`) supporting standalone display mode, dual quick-actions (`Book Tickets`, `Admin Dashboard`), and high-res icon assets.
   - Developed root Service Worker (`sw.js`) implementing `sbtbs-bus-cache-v1` with non-GET mutation protection and offline fallback routing (`offline.html`).
-  - Created Path-Aware Layout Head partial (`assets/partials/_pwa-head.php`) dynamically resolving root (`./`) vs admin (`../`) asset scopes, enabling mobile seat/table horizontal scroll touch ergonomics, print style protection, and DOM-injected floating install banner.
+  - Created Path-Aware Layout Head partial (`assets/partials/_pwa-head.php`) and Brand Preloader partial (`assets/partials/_preloader.php`) dynamically resolving root (`./`), admin (`../`), and user portal (`../`) asset scopes, ensuring `manifest.json`, `sw.js`, `preloader.css`, and `preloader.js` resolve cleanly across all directory levels without 404 or MIME type errors.
+  - Enabled mobile seat/table horizontal scroll touch ergonomics, print style protection, and DOM-injected floating install banner.
 - **Web Push Notifications & Notification Actions**:
   - Service worker handles incoming remote `push` events with action buttons (*View Ticket*, *Dismiss*), vibration patterns, and app badges.
   - Implemented `notificationclick` handler focusing existing windows or navigating to target booking records.

@@ -4,7 +4,7 @@
  * Renders the centered brand logo with glowing halo and animated progress track.
  */
 $current_script_preloader = isset($_SERVER['SCRIPT_NAME']) ? str_replace('\\', '/', $_SERVER['SCRIPT_NAME']) : '';
-$is_admin_route_preloader = (strpos($current_script_preloader, '/admin/') !== false);
+$is_admin_route_preloader = (strpos($current_script_preloader, '/admin/') !== false || strpos($current_script_preloader, '/user/') !== false);
 $preloader_prefix = $is_admin_route_preloader ? '../' : './';
 ?>
 <!-- BusBook Brand Preloader Stylesheet -->

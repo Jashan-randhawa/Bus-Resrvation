@@ -45,10 +45,25 @@ report_phase3("PHP Syntax: _pwa-head.php has zero syntax errors", $lint_code ===
 $content = file_get_contents($head_path);
 
 // 2. Dynamic Path Resolution
-$has_script_check = str_contains($content, 'SCRIPT_NAME') && str_contains($content, '/admin/');
+$has_script_check = str_contains($content, 'SCRIPT_NAME') && str_contains($content, '/admin/') && str_contains($content, '/user/');
 $has_root_prefix  = str_contains($content, '$root_prefix = $is_admin_route ? \'../\' : \'./\';') ||
                     (str_contains($content, '$is_admin_route') && str_contains($content, '$root_prefix'));
-report_phase3("Path Resolution: Dynamically detects /admin/ vs root and sets \$root_prefix", $has_script_check && $has_root_prefix);
+report_phase3("Path Resolution: Dynamically detects /admin/ and /user/ vs root and sets \$root_prefix", $has_script_check && $has_root_prefix);
+
+// 2b. Runtime Path Resolution Execution Check
+$_SERVER['SCRIPT_NAME'] = '/user/index.php';
+ob_start();
+include $head_path;
+ob_end_clean();
+$user_resolves_up = isset($root_prefix) && $root_prefix === '../';
+
+$_SERVER['SCRIPT_NAME'] = '/index.php';
+ob_start();
+include $head_path;
+ob_end_clean();
+$root_resolves_here = isset($root_prefix) && $root_prefix === './';
+
+report_phase3("Runtime Path Depth: /user/ resolves to '../' and root resolves to './'", $user_resolves_up && $root_resolves_here);
 
 // 3. Root Service Worker Scope
 $has_sw_scope = str_contains($content, 'scope: rootPrefix') && str_contains($content, 'serviceWorker.register');

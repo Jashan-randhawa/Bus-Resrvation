@@ -69,6 +69,20 @@ assert_loading("assets/partials/_preloader.php exists", file_exists($partial_pat
 
 $partial_content = file_exists($partial_path) ? file_get_contents($partial_path) : '';
 assert_loading("_preloader.php resolves path depth for admin vs root", strpos($partial_content, '$is_admin_route_preloader') !== false);
+assert_loading("_preloader.php detects /user/ portal route", strpos($partial_content, '/user/') !== false);
+
+$_SERVER['SCRIPT_NAME'] = '/user/index.php';
+ob_start();
+include $partial_path;
+ob_end_clean();
+assert_loading("_preloader.php resolves preloader_prefix to '../' for /user/ routes", isset($preloader_prefix) && $preloader_prefix === '../');
+
+$_SERVER['SCRIPT_NAME'] = '/index.php';
+ob_start();
+include $partial_path;
+ob_end_clean();
+assert_loading("_preloader.php resolves preloader_prefix to './' for root routes", isset($preloader_prefix) && $preloader_prefix === './');
+
 assert_loading("_preloader.php embeds #busbook-preloader element", strpos($partial_content, 'id="busbook-preloader"') !== false);
 
 $header_public = file_get_contents($root . '/includes/layout/header-public.php');

@@ -4,9 +4,10 @@
  * Automatically resolves relative paths whether included from:
  * - Root pages (/index.php, /pnr.php) -> "./"
  * - Admin pages (/admin/*.php) -> "../"
+ * - User pages (/user/*.php) -> "../"
  */
 $current_script = isset($_SERVER['SCRIPT_NAME']) ? str_replace('\\', '/', $_SERVER['SCRIPT_NAME']) : '';
-$is_admin_route = (strpos($current_script, '/admin/') !== false);
+$is_admin_route = (strpos($current_script, '/admin/') !== false || strpos($current_script, '/user/') !== false);
 $root_prefix = $is_admin_route ? '../' : './';
 ?>
 <!-- PWA Manifest & Mobile App Meta Tags -->
