@@ -1077,10 +1077,10 @@ if (isset($_POST['subbtn'])) {
           </div>
         </div>
 
-        <!-- Mobile Carousel Navigation Controls (Visible only on mobile: d-md-none) -->
+        <!-- Mobile Carousel Navigation Controls (Floating side arrows & bottom indicators) -->
         <div class="features-carousel-controls d-md-none" aria-label="Feature navigation">
-          <button type="button" class="features-carousel-arrow prev" id="featuresPrevBtn" aria-label="Previous feature slide" disabled>
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <button type="button" class="features-carousel-arrow prev" id="featuresPrevBtn" aria-label="Previous feature slide">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
           <div class="features-carousel-dots" role="tablist" aria-label="Feature slide selection">
             <button type="button" class="features-dot active" data-index="0" role="tab" aria-selected="true" aria-label="Slide 1: Guaranteed Seat Selection"></button>
@@ -1088,7 +1088,7 @@ if (isset($_POST['subbtn'])) {
             <button type="button" class="features-dot" data-index="2" role="tab" aria-selected="false" aria-label="Slide 3: Secure & Protected"></button>
           </div>
           <button type="button" class="features-carousel-arrow next" id="featuresNextBtn" aria-label="Next feature slide">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </button>
         </div>
       </div>
@@ -1503,12 +1503,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       });
 
-      if (prevBtn) {
-        prevBtn.disabled = index === 0;
-      }
-      if (nextBtn) {
-        nextBtn.disabled = index === cards.length - 1;
-      }
     }
 
     function scrollToCard(index) {
@@ -1531,17 +1525,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (prevBtn) {
       prevBtn.addEventListener('click', function () {
-        if (currentIndex > 0) {
-          scrollToCard(currentIndex - 1);
-        }
+        var targetIdx = currentIndex > 0 ? currentIndex - 1 : cards.length - 1;
+        scrollToCard(targetIdx);
       });
     }
 
     if (nextBtn) {
       nextBtn.addEventListener('click', function () {
-        if (currentIndex < cards.length - 1) {
-          scrollToCard(currentIndex + 1);
-        }
+        var targetIdx = currentIndex < cards.length - 1 ? currentIndex + 1 : 0;
+        scrollToCard(targetIdx);
       });
     }
 
