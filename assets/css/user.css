@@ -596,3 +596,381 @@ html[data-theme="dark"] .custom-dropdown-option.selected {
   background-color: rgba(59, 130, 246, 0.28);
   color: #93c5fd;
 }
+
+/* ── Digital Boarding Pass Mobile Responsiveness (user/ticket.php) ── */
+.ticket-wrapper {
+  max-width: 680px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.ticket-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px !important;
+  background-color: var(--c-surface, #ffffff) !important;
+  border: 1px solid var(--c-border, #e2e8f0) !important;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
+  transition: all 0.2s ease;
+}
+
+/* Subtle airline-grade top accent strip */
+.ticket-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #2563eb, #3b82f6, #06b6d4);
+  z-index: 5;
+}
+
+/* Action button bar */
+.ticket-actions-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+  align-items: center;
+}
+.ticket-action-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+@media (max-width: 575.98px) {
+  .ticket-actions-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .ticket-actions-bar .btn-back {
+    width: 100%;
+    justify-content: center;
+  }
+  .ticket-action-btns {
+    width: 100%;
+    display: flex;
+  }
+  .ticket-action-btns .btn {
+    flex: 1 1 0;
+    justify-content: center;
+    padding: 0.5rem 0.5rem;
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
+}
+
+/* Header & Status Section */
+.ticket-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.ticket-brand-title {
+  font-size: clamp(1.25rem, 4vw, 1.65rem);
+  font-weight: 800;
+  color: var(--c-primary, #2563eb);
+  line-height: 1.2;
+}
+.ticket-brand-sub {
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.ticket-pnr-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 5px 12px;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px dashed rgba(37, 99, 235, 0.35);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.ticket-pnr-pill:hover,
+.ticket-pnr-pill:focus {
+  background: rgba(37, 99, 235, 0.15);
+  border-color: #2563eb;
+  transform: translateY(-1px);
+}
+.ticket-pnr-pill .pnr-label {
+  font-weight: 600;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+.ticket-pnr-pill .pnr-val {
+  font-family: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 0.05em;
+}
+.ticket-pnr-copy-icon {
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+.ticket-pnr-pill:hover .ticket-pnr-copy-icon {
+  opacity: 1;
+}
+
+/* Route corridor */
+.ticket-corridor {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem 0.75rem;
+}
+.ticket-city-name {
+  font-size: clamp(1rem, 3.6vw, 1.35rem);
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.25;
+  word-break: break-word;
+}
+.ticket-city-sub {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 2px;
+}
+.ticket-route-arrow-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.ticket-route-arrow {
+  color: #2563eb;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Trip Meta Grid */
+.ticket-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem 1rem;
+}
+@media (min-width: 576px) {
+  .ticket-meta-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem 1.5rem;
+  }
+}
+.ticket-meta-item {
+  min-width: 0;
+}
+.ticket-meta-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+}
+.ticket-meta-val {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.3;
+  word-break: break-word;
+}
+.ticket-meta-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Highlight badge for Seat */
+.ticket-seat-pill {
+  display: inline-block;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff !important;
+  font-size: 1.1rem;
+  font-weight: 800;
+  padding: 4px 14px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  letter-spacing: 0.02em;
+}
+
+/* Highlight tariff for Fare */
+.ticket-fare-val {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #16a34a;
+}
+
+/* Perforated ticket stub border */
+.ticket-perforated-stub {
+  position: relative;
+  border-top: 2px dashed #cbd5e1;
+  margin: 1.25rem 0 1rem;
+}
+
+/* Digital pass & QR seal container */
+.ticket-seal-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+}
+#ticket-qrcode {
+  display: inline-block;
+  background: #ffffff;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+#ticket-qrcode img,
+#ticket-qrcode canvas {
+  margin: 0 auto;
+  display: block;
+}
+
+/* Boarding instructions list */
+.ticket-instructions-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.ticket-instructions-list li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 0.45rem;
+  font-size: 0.8125rem;
+  color: #475569;
+  line-height: 1.45;
+}
+.ticket-instructions-list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #2563eb;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+/* Toast feedback for copy */
+.ticket-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(40px);
+  background: #0f172a;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1080;
+}
+.ticket-toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* Dark mode theme overrides */
+html[data-theme="dark"] .ticket-container {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+html[data-theme="dark"] .ticket-brand-title {
+  color: #60a5fa;
+}
+html[data-theme="dark"] .ticket-brand-sub {
+  color: #94a3b8;
+}
+html[data-theme="dark"] .ticket-pnr-pill {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(96, 165, 250, 0.3);
+}
+html[data-theme="dark"] .ticket-pnr-pill .pnr-label {
+  color: #94a3b8;
+}
+html[data-theme="dark"] .ticket-pnr-pill .pnr-val {
+  color: #f1f5f9;
+}
+html[data-theme="dark"] .ticket-corridor {
+  background: #0f172a;
+  border-color: #334155;
+}
+html[data-theme="dark"] .ticket-city-name {
+  color: #f8fafc;
+}
+html[data-theme="dark"] .ticket-city-sub {
+  color: #94a3b8;
+}
+html[data-theme="dark"] .ticket-meta-label {
+  color: #94a3b8;
+}
+html[data-theme="dark"] .ticket-meta-val {
+  color: #f1f5f9;
+}
+html[data-theme="dark"] .ticket-meta-sub {
+  color: #94a3b8;
+}
+html[data-theme="dark"] .ticket-perforated-stub {
+  border-top-color: #334155;
+}
+html[data-theme="dark"] .ticket-seal-card {
+  background: #0f172a;
+  border-color: #334155;
+}
+html[data-theme="dark"] .ticket-instructions-list li {
+  color: #cbd5e1;
+}
+
+/* Print styles override (strictly pure white for paper) */
+@media print {
+  .ticket-container {
+    background-color: #ffffff !important;
+    border: 2px solid #000000 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 1.5rem !important;
+  }
+  .ticket-container::before {
+    display: none !important;
+  }
+  .ticket-brand-title,
+  .ticket-city-name,
+  .ticket-meta-val,
+  .ticket-pnr-pill .pnr-val {
+    color: #000000 !important;
+  }
+  .ticket-seat-pill {
+    background: #000000 !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+  }
+  .ticket-fare-val {
+    color: #000000 !important;
+  }
+  .ticket-corridor,
+  .ticket-seal-card {
+    background: #ffffff !important;
+    border: 1px solid #000000 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
