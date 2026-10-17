@@ -42,7 +42,7 @@ $is_valid_for_travel = ($is_verified && !$is_cancelled && !$is_expired && !$is_p
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title><?= e($title) ?> | Bus Service</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/bootstrap.min.css?v=4.6.2">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css">
     <style>
         body { background: #f8fafc; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }

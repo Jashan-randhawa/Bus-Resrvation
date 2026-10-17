@@ -21,6 +21,12 @@ All notable changes to this project are documented in this file.
     - Implemented a path-aware brand preloader partial (`assets/partials/_preloader.php`), stylesheet (`assets/css/preloader.css`), and JavaScript controller (`assets/js/preloader.js`) with fail-safe timeout and programmatic `window.BusBookLoader` API across all portal views.
     - Modernized `offline.html` with the BusBook brand emblem, slate-navy backdrop, and glowing container card.
     - Added automated verification suite `tests/test_loading_page.php` verifying all 26 loading and preloader criteria.
+- **Local Vendor Self-Hosting & Privacy Hardening**:
+  - Downloaded and locally vendored Bootstrap 4.6.2 (`assets/css/bootstrap.min.css`, `assets/js/vendor/bootstrap.bundle.min.js`), jQuery 3.5.1 (`assets/js/vendor/jquery.slim.min.js`), and Chart.js 4.4.7 (`assets/js/vendor/chart.umd.min.js`), along with source maps.
+  - Replaced all external `cdn.jsdelivr.net` references across public, admin, user, auth headers and footers (`header-public.php`, `header-admin.php`, `header-user.php`, `header-login.php`, `footer.php`, `footer-admin.php`, `footer-user.php`, `admin/mfa.php`, `pnr.php`, `user/verify.php`, `admin/dashboard.php`, and `helpers.php`).
+  - Completely eliminates Microsoft Edge, Brave, and Safari "Tracking Prevention blocked access to storage" warnings and ensures full offline PWA resilience.
+  - Pre-cached local Bootstrap and jQuery vendor bundles in `sw.js` (`sbtbs-bus-cache-v1-rev5`).
+  - Exported `window.installBusApp()` global API and added informative logging for deferred PWA installation prompts.
 
 ### Progressive Web App (PWA) & App Store Readiness
 - **Complete Progressive Web App (PWA) Implementation**:

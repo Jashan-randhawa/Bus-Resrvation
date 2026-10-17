@@ -1645,7 +1645,5 @@ function switchCorridorRank(type) {
 </script>
 
 <!-- Dashboard Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
-    integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
-    crossorigin="anonymous" defer></script>
+<script src="<?= BASE_URL ?>/assets/js/vendor/chart.umd.min.js?v=4.4.7" defer></script>
 <script src="<?= BASE_URL ?>/assets/js/perf-chart.js?v=<?= @filemtime(__DIR__ . '/../assets/js/perf-chart.js') ?: '2026-10-10' ?>" defer></script>

@@ -119,6 +119,18 @@ $root_prefix = $is_admin_route ? '../' : './';
   // 2. Dynamically Inject Floating Install Button Once DOM is Ready
   let deferredInstallPrompt = null;
 
+  window.installBusApp = async function () {
+    if (!deferredInstallPrompt) return false;
+    deferredInstallPrompt.prompt();
+    const choiceResult = await deferredInstallPrompt.userChoice;
+    const btn = document.getElementById('pwa-install-banner');
+    if (choiceResult && choiceResult.outcome === 'accepted' && btn) {
+      btn.style.display = 'none';
+    }
+    deferredInstallPrompt = null;
+    return choiceResult && choiceResult.outcome === 'accepted';
+  };
+
   function ensureInstallButton() {
     let btn = document.getElementById('pwa-install-banner');
     if (!btn && document.body) {
@@ -129,14 +141,8 @@ $root_prefix = $is_admin_route ? '../' : './';
       btn.innerHTML = '📲 Install Bus App';
       document.body.appendChild(btn);
 
-      btn.addEventListener('click', async function () {
-        if (!deferredInstallPrompt) return;
-        deferredInstallPrompt.prompt();
-        const choiceResult = await deferredInstallPrompt.userChoice;
-        if (choiceResult.outcome === 'accepted') {
-          btn.style.display = 'none';
-        }
-        deferredInstallPrompt = null;
+      btn.addEventListener('click', function () {
+        window.installBusApp();
       });
     }
     return btn;
@@ -146,6 +152,7 @@ $root_prefix = $is_admin_route ? '../' : './';
   window.addEventListener('beforeinstallprompt', function (e) {
     e.preventDefault();
     deferredInstallPrompt = e;
+    console.info('[PWA] Native mini-infobar deferred to custom "📲 Install Bus App" button.');
 
     if (window.matchMedia('(display-mode: standalone)').matches) {
       return;

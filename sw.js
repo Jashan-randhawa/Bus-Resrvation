@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sbtbs-bus-cache-v1-rev4'; // increments sbtbs-bus-cache-v1
+const CACHE_NAME = 'sbtbs-bus-cache-v1-rev5'; // increments sbtbs-bus-cache-v1
 const OFFLINE_URL = './offline.html';
 
 const STATIC_ASSETS = [
@@ -13,6 +13,7 @@ const STATIC_ASSETS = [
   './assets/images/bus.svg',
   './assets/images/bus-emblem.png',
   './assets/images/logo.png',
+  './assets/css/bootstrap.min.css',
   './assets/css/design-system.css',
   './assets/css/home.css',
   './assets/css/public.css',
@@ -20,6 +21,8 @@ const STATIC_ASSETS = [
   './assets/css/dashboard.css',
   './assets/css/user.css',
   './assets/css/preloader.css',
+  './assets/js/vendor/jquery.slim.min.js',
+  './assets/js/vendor/bootstrap.bundle.min.js',
   './assets/js/preloader.js',
   './assets/js/theme-toggle.js',
   './favicon.ico',

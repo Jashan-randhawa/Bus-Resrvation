@@ -31,7 +31,7 @@ if ($raw_input !== '') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Check PNR Status - Bus Reservation</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css?v=4.6.2">
     <link rel="stylesheet" href="assets/css/design-system.css">
     <?php require 'assets/partials/_pwa-head.php'; ?>
 </head>
