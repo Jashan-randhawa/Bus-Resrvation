@@ -25,6 +25,9 @@
     var key = storageKey || config.storageKey;
     try {
       var saved = localStorage.getItem(key);
+      if (!saved && (key === 'busres_theme_mode' || key === 'theme')) {
+        saved = localStorage.getItem('theme') || localStorage.getItem('busres_theme_mode');
+      }
       if (saved === 'dark' || saved === 'light') {
         return saved;
       }
@@ -49,6 +52,31 @@
       root.classList.remove('dark-mode');
     }
 
+    if (document.body) {
+      if (isDark) {
+        document.body.setAttribute('data-theme', 'dark');
+        document.body.classList.add('dark-mode');
+      } else {
+        document.body.removeAttribute('data-theme');
+        document.body.classList.remove('dark-mode');
+      }
+    }
+
+    // Synchronize PWA status bar theme-color
+    try {
+      var metas = document.querySelectorAll('meta[name="theme-color"]');
+      metas.forEach(function (meta) {
+        var media = meta.getAttribute('media');
+        if (!media) {
+          meta.setAttribute('content', isDark ? '#0B0F19' : '#ffffff');
+        } else if (media.indexOf('dark') !== -1 && isDark) {
+          meta.setAttribute('content', '#0B0F19');
+        } else if (media.indexOf('light') !== -1 && !isDark) {
+          meta.setAttribute('content', '#ffffff');
+        }
+      });
+    } catch (e) {}
+
     var buttons = document.querySelectorAll('.theme-toggle-btn');
     buttons.forEach(function (btn) {
       var iconSpan = btn.querySelector('.theme-toggle-icon');
@@ -71,10 +99,12 @@
 
   function toggle(storageKey) {
     var key = storageKey || config.storageKey;
-    var current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    var current = (document.documentElement.getAttribute('data-theme') === 'dark' || (document.body && document.body.classList.contains('dark-mode'))) ? 'dark' : 'light';
     var next = (current === 'dark') ? 'light' : 'dark';
     try {
       localStorage.setItem(key, next);
+      localStorage.setItem('theme', next);
+      localStorage.setItem('busres_theme_mode', next);
     } catch (e) {}
     applyTheme(next, key);
     return next;
@@ -89,7 +119,11 @@
     return {
       getTheme: function () { return getSavedTheme(config.storageKey); },
       setTheme: function (t) {
-        try { localStorage.setItem(config.storageKey, t); } catch (e) {}
+        try {
+          localStorage.setItem(config.storageKey, t);
+          localStorage.setItem('theme', t);
+          localStorage.setItem('busres_theme_mode', t);
+        } catch (e) {}
         applyTheme(t, config.storageKey);
       },
       toggle: function () { return toggle(config.storageKey); }

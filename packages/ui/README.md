@@ -68,6 +68,12 @@ theme.toggle();
 console.log('Current theme:', theme.getTheme());
 ```
 
+### Features
+- **PWA Status Bar Synchronization:** Automatically detects `<meta name="theme-color">` elements (including media-query dark/light variants) and syncs `#0B0F19` / `#ffffff` status bar colors dynamically on theme switch.
+- **Dual Element & Key Support:** Sets `data-theme="dark"` and `.dark-mode` class on both `document.documentElement` and `document.body`, with fallback synchronization for both `theme` and `busres_theme_mode` local storage keys.
+- **FOUC Prevention:** Immediately initializes before DOM ready to prevent visual flickering.
+
 ## License
 
 MIT © Jashan Randhawa
+
