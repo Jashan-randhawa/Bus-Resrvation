@@ -116,14 +116,40 @@
 }
 
 /* ── Dark Theme Tokens Override (html[data-theme="dark"]) ──── */
+:root[data-theme="dark"],
 html[data-theme="dark"],
-html.dark-mode {
-  --c-bg:            #090d16;
-  --c-surface:       #131b2e;
-  --c-text:          #f1f5f9;
-  --c-text-muted:    #94a3b8;
-  --c-text-light:    #64748b;
-  --c-border:        #1e293b;
+html.dark-mode,
+body.dark-mode {
+  /* 3-Tier Surface Elevation (Slate Palette) */
+  --bg-base: #0B0F19;        /* Tier 0: Deepest background (Body) */
+  --bg-surface: #111827;     /* Tier 1: Cards, Seat Map Container, Admin Tables */
+  --bg-elevated: #1E293B;    /* Tier 2: Modals, Dropdowns, Hover states, Active Nav */
+  --bg-glass: rgba(17, 24, 39, 0.78); /* For sticky headers & PWA bottom-nav */
+
+  /* Typography Hierarchy (Avoid pure #FFFFFF to prevent halation/eye strain) */
+  --text-primary: #F8FAFC;   /* Headings, Bus Numbers, Prices */
+  --text-secondary: #94A3B8; /* Route subtext, timestamps, table headers */
+  --text-muted: #64748B;     /* Disabled states, placeholders, seat labels */
+
+  /* Brand & Semantic Accents */
+  --accent-primary: #F59E0B; /* Amber Gold - Primary CTAs & active highlights */
+  --accent-glow: rgba(245, 158, 11, 0.2);
+  --accent-secondary: #6366F1; /* Electric Indigo - Admin badges / secondary actions */
+
+  /* Borders & Hairlines */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-focus: rgba(245, 158, 11, 0.5);
+
+  /* Force Native Dark Controls (fixes date/time pickers, scrollbars & select menus) */
+  color-scheme: dark;
+
+  /* Design System Token Mappings */
+  --c-bg:            #0B0F19;
+  --c-surface:       #111827;
+  --c-text:          #F8FAFC;
+  --c-text-muted:    #94A3B8;
+  --c-text-light:    #64748B;
+  --c-border:        rgba(255, 255, 255, 0.08);
   --c-border-dark:   #334155;
 
   --c-primary-light: #1e3a8a;
@@ -185,54 +211,160 @@ html.dark-mode {
   stroke: currentColor;
 }
 
-/* Dark mode bootstrap tweaks */
+/* Dark mode bootstrap & surface depth tweaks */
+html[data-theme="dark"] body {
+  background-color: var(--bg-base, #0B0F19);
+  color: var(--text-primary, #F8FAFC);
+}
 html[data-theme="dark"] .bg-light,
 html[data-theme="dark"] .bg-white {
-  background-color: var(--c-surface) !important;
+  background-color: var(--bg-surface, #111827) !important;
 }
 html[data-theme="dark"] .text-dark {
-  color: #f1f5f9 !important;
+  color: var(--text-primary, #F8FAFC) !important;
 }
 html[data-theme="dark"] .text-muted {
-  color: #94a3b8 !important;
+  color: var(--text-secondary, #94A3B8) !important;
 }
-html[data-theme="dark"] .thead-light th {
-  background-color: #1a243b !important;
-  color: #cbd5e1 !important;
-  border-color: #24304d !important;
+
+/* Top-Edge Specular Highlights & Elevated Cards */
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .bus-card,
+html[data-theme="dark"] .admin-panel-card,
+html[data-theme="dark"] .data-table-wrapper,
+html[data-theme="dark"] .table-card {
+  background: var(--bg-surface, #111827);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  border-top: 1px solid rgba(255, 255, 255, 0.14); /* Top specular highlight */
+  border-radius: 14px;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
 }
-html[data-theme="dark"] .table {
-  color: #e2e8f0;
-}
-html[data-theme="dark"] .table-hover tbody tr:hover {
-  background-color: #1a253d;
-}
-html[data-theme="dark"] .card {
-  background-color: var(--c-surface);
-  border-color: var(--c-border);
-}
-html[data-theme="dark"] .form-control,
-html[data-theme="dark"] .custom-select {
-  background-color: #0f172a;
-  color: #f1f5f9;
-  border-color: var(--c-border);
-}
-html[data-theme="dark"] .form-control:focus {
-  background-color: #0f172a;
-  color: #ffffff;
-}
+
+/* Modals (Tier 2 Elevation) */
 html[data-theme="dark"] .modal-content {
-  background-color: var(--c-surface);
-  color: var(--c-text);
-  border: 1px solid var(--c-border);
+  background-color: var(--bg-elevated, #1E293B);
+  color: var(--text-primary, #F8FAFC);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7);
+  border-radius: 16px;
 }
 html[data-theme="dark"] .modal-header,
 html[data-theme="dark"] .modal-footer {
-  border-color: var(--c-border);
+  border-color: var(--border-subtle, rgba(255, 255, 255, 0.08));
 }
+
+/* Recessed Form Controls & Date/Time Pickers (Section 4) */
+html[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] .form-control,
+html[data-theme="dark"] .custom-select {
+  background-color: #090D16 !important;
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08)) !important;
+  color: var(--text-primary, #F8FAFC) !important;
+  border-radius: 8px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+html[data-theme="dark"] input:focus,
+html[data-theme="dark"] select:focus,
+html[data-theme="dark"] textarea:focus,
+html[data-theme="dark"] .form-control:focus,
+html[data-theme="dark"] .custom-select:focus {
+  outline: none !important;
+  border-color: var(--accent-primary, #F59E0B) !important;
+  box-shadow: 0 0 0 3px var(--accent-glow, rgba(245, 158, 11, 0.2)) !important;
+  background-color: #090D16 !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] ::placeholder {
+  color: var(--text-muted, #64748B) !important;
+  opacity: 1;
+}
+
+/* Admin Tables: Contrast, Subtle Striping & Amber Hover (Section 6) */
+html[data-theme="dark"] .table {
+  color: var(--text-primary, #F8FAFC);
+  background-color: transparent;
+}
+html[data-theme="dark"] .table tbody tr:nth-of-type(even) {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+html[data-theme="dark"] .table-hover tbody tr:hover,
+html[data-theme="dark"] .table tbody tr:hover {
+  background-color: rgba(245, 158, 11, 0.05) !important;
+}
+html[data-theme="dark"] .thead-light th,
+html[data-theme="dark"] .table thead th {
+  background-color: var(--bg-surface, #111827) !important;
+  color: var(--text-secondary, #94A3B8) !important;
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08)) !important;
+}
+html[data-theme="dark"] .table td,
+html[data-theme="dark"] .table th {
+  border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+}
+
+/* Modern Dark Mode Pill Badges (15% opacity background, 100% brightness text) */
+html[data-theme="dark"] .badge-success,
+html[data-theme="dark"] .badge-confirmed,
+html[data-theme="dark"] .status-confirmed {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #34D399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  border-radius: 9999px;
+  font-weight: 600;
+  padding: 0.3em 0.7em;
+}
+
+html[data-theme="dark"] .badge-warning,
+html[data-theme="dark"] .badge-pending,
+html[data-theme="dark"] .status-pending {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #FBBF24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+  border-radius: 9999px;
+  font-weight: 600;
+  padding: 0.3em 0.7em;
+}
+
+html[data-theme="dark"] .badge-danger,
+html[data-theme="dark"] .badge-cancelled,
+html[data-theme="dark"] .status-cancelled {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #F87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  border-radius: 9999px;
+  font-weight: 600;
+  padding: 0.3em 0.7em;
+}
+
+html[data-theme="dark"] .badge-secondary,
+html[data-theme="dark"] .badge-closed,
+html[data-theme="dark"] .status-closed {
+  background: rgba(148, 163, 184, 0.15) !important;
+  color: #CBD5E1 !important;
+  border: 1px solid rgba(148, 163, 184, 0.3) !important;
+  border-radius: 9999px;
+  font-weight: 600;
+  padding: 0.3em 0.7em;
+}
+
+html[data-theme="dark"] .badge-primary,
+html[data-theme="dark"] .badge-info {
+  background: rgba(99, 102, 241, 0.15) !important;
+  color: #A5B4FC !important;
+  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+  border-radius: 9999px;
+  font-weight: 600;
+  padding: 0.3em 0.7em;
+}
+
 html[data-theme="dark"] .breadcrumb {
-  background-color: var(--c-surface);
-  border-color: var(--c-border);
+  background-color: var(--bg-surface, #111827);
+  border-color: var(--border-subtle, rgba(255, 255, 255, 0.08));
 }
 
 

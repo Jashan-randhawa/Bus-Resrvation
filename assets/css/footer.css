@@ -13,19 +13,19 @@
   --footer-text-primary: #f8fafc;     /* Slate 50 */
   --footer-text-secondary: #94a3b8;   /* Slate 400 */
   --footer-text-muted: #64748b;       /* Slate 500 */
-  --footer-accent: #38bdf8;           /* Sky 400 */
-  --footer-accent-hover: #60a5fa;     /* Blue 400 */
+  --footer-accent: #f59e0b;           /* Amber Gold */
+  --footer-accent-hover: #fbbf24;
   --footer-link: #cbd5e1;             /* Slate 300 */
   --footer-btn-primary: #2563eb;      /* Blue 600 */
-  --bottom-nav-bg: rgba(15, 23, 42, 0.95);
+  --bottom-nav-bg: rgba(17, 24, 39, 0.78);
   --bottom-nav-border: rgba(255, 255, 255, 0.08);
   --bottom-nav-text: #94a3b8;
-  --bottom-nav-active: #38bdf8;
+  --bottom-nav-active: #f59e0b;
 }
 
 /* Light theme overrides for bottom nav when viewing in light browser mode */
 html:not([data-theme="dark"]) {
-  --bottom-nav-bg: rgba(255, 255, 255, 0.96);
+  --bottom-nav-bg: rgba(255, 255, 255, 0.92);
   --bottom-nav-border: rgba(226, 232, 240, 0.9);
   --bottom-nav-text: #64748b;
   --bottom-nav-active: #2563eb;
@@ -37,7 +37,7 @@ html:not([data-theme="dark"]) {
 .website-only-footer {
   background-color: var(--footer-bg);
   color: var(--footer-text-secondary);
-  border-top: 1px solid var(--footer-border);
+  border-top: 1px solid rgba(255, 255, 255, 0.14); /* Top specular highlight */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   position: relative;
   z-index: 10;

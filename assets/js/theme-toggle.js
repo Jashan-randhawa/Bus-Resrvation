@@ -49,6 +49,21 @@
       root.classList.remove('dark-mode');
     }
 
+    // Synchronize PWA status bar theme-color
+    try {
+      var metas = document.querySelectorAll('meta[name="theme-color"]');
+      metas.forEach(function (meta) {
+        var media = meta.getAttribute('media');
+        if (!media) {
+          meta.setAttribute('content', isDark ? '#0B0F19' : '#ffffff');
+        } else if (media.indexOf('dark') !== -1 && isDark) {
+          meta.setAttribute('content', '#0B0F19');
+        } else if (media.indexOf('light') !== -1 && !isDark) {
+          meta.setAttribute('content', '#ffffff');
+        }
+      });
+    } catch (e) {}
+
     var buttons = document.querySelectorAll('.theme-toggle-btn');
     buttons.forEach(function (btn) {
       var iconSpan = btn.querySelector('.theme-toggle-icon');

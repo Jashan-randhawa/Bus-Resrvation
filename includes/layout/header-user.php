@@ -5,6 +5,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- Immediate Dark Mode Pre-Script to Prevent FOUC -->
+    <script>
+    (function(){try{var k='busres_theme_mode',s=localStorage.getItem(k);if(!s&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)s='dark';if(s==='dark'){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');}}catch(e){}})();
+    </script>
     <link rel="shortcut icon" href="<?= BASE_URL ?>/favicon.ico">
     <link rel="icon" type="image/x-icon" href="<?= BASE_URL ?>/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="<?= BASE_URL ?>/assets/images/bus-emblem.png">

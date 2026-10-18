@@ -23,6 +23,20 @@
 
 html[data-theme="dark"],
 html.dark-mode {
+  /* 3-Tier Surface Elevation (Slate Palette) */
+  --bg-base: #0B0F19;
+  --bg-surface: #111827;
+  --bg-elevated: #1E293B;
+  --bg-glass: rgba(17, 24, 39, 0.78);
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --accent-primary: #F59E0B;
+  --accent-glow: rgba(245, 158, 11, 0.2);
+  --accent-secondary: #6366F1;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-focus: rgba(245, 158, 11, 0.5);
+
   --nav-active-bg: rgba(37, 99, 235, 0.2);
   --nav-active-fg: #ffffff;
   --nav-label: #94a3b8;
@@ -362,12 +376,12 @@ html.dark-mode .admin-sidebar-footer .btn-outline-light:hover {
 }
 
 html[data-theme="dark"] .admin-topbar {
-  background-color: var(--c-surface, #131b2e);
-  background: rgba(19, 27, 46, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-color: rgba(51, 65, 85, 0.7);
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
+  background-color: var(--bg-surface, #111827);
+  background: var(--bg-glass, rgba(17, 24, 39, 0.78));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
 /* Topbar Menu Hamburger Button (44x44px) */

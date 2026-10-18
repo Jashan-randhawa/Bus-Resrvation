@@ -8,8 +8,14 @@ $user_role = $_SESSION['role'] ?? null;
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <!-- Immediate Dark Mode Pre-Script to Prevent FOUC -->
+  <script>
+  (function(){try{var k='busres_theme_mode',s=localStorage.getItem(k);if(!s&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)s='dark';if(s==='dark'){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');}}catch(e){}})();
+  </script>
   <meta name="description" content="Simple and reliable bus ticket booking system. Check real-time seat availability, lookup PNR status, and reserve seats across intercity routes.">
-  <meta name="theme-color" content="#1e293b">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0B0F19" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#0B0F19">
 
   <!-- Open Graph & Canonical (P19) -->
   <link rel="canonical" href="<?= e(BASE_URL) ?>/homepage.php">
