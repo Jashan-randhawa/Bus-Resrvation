@@ -116,6 +116,94 @@ $queries = db_all($link, $query_sql, $query_types, $query_params);
 $title = 'Customer Queries';
 require_once __DIR__ . '/../includes/layout/header-admin.php';
 ?>
+
+<style>
+.query-content-cell {
+    max-width: 320px;
+    width: 320px;
+    vertical-align: top;
+}
+.query-subject-preview {
+    max-width: 100%;
+    margin-bottom: 0.25rem;
+    font-size: 0.95rem;
+}
+.query-message-preview {
+    max-height: 4.5em;
+    overflow: hidden;
+    position: relative;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    line-clamp: 3;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+.btn-view-query {
+    font-size: 0.825rem;
+    cursor: pointer;
+    text-decoration: none;
+}
+.btn-view-query:hover {
+    text-decoration: underline;
+}
+.query-desc-box {
+    max-height: 340px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    font-size: 0.925rem;
+    line-height: 1.6;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 14px 16px;
+}
+html[data-theme="dark"] .query-desc-box,
+html.dark-mode .query-desc-box {
+    background-color: rgba(15, 23, 42, 0.75) !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+html[data-theme="dark"] #viewQueryModal .modal-content,
+html.dark-mode #viewQueryModal .modal-content {
+    background-color: #1e293b;
+    color: #f8fafc;
+}
+html[data-theme="dark"] #viewQueryModal .card.bg-light,
+html.dark-mode #viewQueryModal .card.bg-light,
+html[data-theme="dark"] #viewQueryModal .modal-footer.bg-light,
+html.dark-mode #viewQueryModal .modal-footer.bg-light {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+}
+html[data-theme="dark"] #viewQueryModal .border,
+html.dark-mode #viewQueryModal .border {
+    border-color: #334155 !important;
+}
+html[data-theme="dark"] #viewQueryModal #viewModalSubject,
+html.dark-mode #viewQueryModal #viewModalSubject {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+@media (max-width: 767.98px) {
+    .table-stack td[data-label="Subject & Message"] {
+        display: block !important;
+        text-align: left !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    .table-stack td[data-label="Subject & Message"]::before {
+        display: block !important;
+        margin-bottom: 0.35rem;
+    }
+}
+</style>
+
 <div class="page-header">
     <div>
         <h1 class="page-title">Passenger Inquiries & Feedback</h1>
@@ -187,6 +275,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                             'closed'  => 'badge-secondary',
                             default   => 'badge-danger',
                         };
+                        $is_long = mb_strlen($comment) > 80 || substr_count($comment, "\n") >= 1 || mb_strlen($subject) > 35;
                         ?>
                         <tr>
                             <td data-label="ID"><span class="text-muted small">#<?= e($qid) ?></span></td>
@@ -197,15 +286,31 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                                 <strong class="text-dark"><?= e($name) ?></strong>
                                 <div><a href="mailto:<?= e($email) ?>" class="text-primary small"><?= e($email) ?></a></div>
                             </td>
-                            <td data-label="Subject & Message" style="max-width: 320px;">
-                                <div class="font-weight-bold text-dark"><?= e($subject ?: '(No Subject)') ?></div>
-                                <div class="text-muted small" style="white-space: pre-wrap;"><?= e($comment) ?></div>
+                            <td data-label="Subject & Message" class="query-content-cell">
+                                <div class="font-weight-bold text-dark text-truncate query-subject-preview" title="<?= e($subject ?: '(No Subject)') ?>">
+                                    <?= e($subject ?: '(No Subject)') ?>
+                                </div>
+                                <div class="text-muted small query-message-preview"><?= e($comment) ?></div>
+                                <?php if ($is_long): ?>
+                                    <button type="button" class="btn btn-link btn-sm p-0 font-weight-bold text-primary mt-1 btn-view-query"
+                                            data-toggle="modal" data-target="#viewQueryModal"
+                                            data-id="<?= e($qid) ?>"
+                                            data-status="<?= e($qst) ?>"
+                                            data-status-badge="<?= e($status_badge) ?>"
+                                            data-name="<?= e($name) ?>"
+                                            data-email="<?= e($email) ?>"
+                                            data-date="<?= !empty($row['created_at']) ? e(date('d M Y, H:i', strtotime($row['created_at']))) : 'N/A' ?>"
+                                            data-subject="<?= e($subject ?: '(No Subject)') ?>">
+                                        Read More &rarr;
+                                    </button>
+                                <?php endif; ?>
                                 <?php if (!empty($row['reply_text'])): ?>
-                                    <div class="alert alert-light border mt-2 p-2 small mb-0">
-                                        <strong class="text-success">Sent Reply:</strong><br>
-                                        <?= nl2br(e($row['reply_text'])) ?>
+                                    <div class="alert alert-light border mt-2 p-1 px-2 small mb-0 text-truncate" title="<?= e($row['reply_text']) ?>">
+                                        <strong class="text-success">Sent Reply:</strong> <?= e(mb_strimwidth($row['reply_text'], 0, 50, '...')) ?>
                                     </div>
                                 <?php endif; ?>
+                                <textarea class="d-none query-full-message"><?= e($comment) ?></textarea>
+                                <textarea class="d-none query-full-reply"><?= e($row['reply_text'] ?? '') ?></textarea>
                             </td>
                             <td data-label="Date Received">
                                 <small class="text-muted">
@@ -213,6 +318,18 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                                 </small>
                             </td>
                             <td data-label="Actions" class="text-right">
+                                <button type="button" class="btn btn-outline-secondary btn-sm mr-1 btn-view-query"
+                                        data-toggle="modal" data-target="#viewQueryModal"
+                                        data-id="<?= e($qid) ?>"
+                                        data-status="<?= e($qst) ?>"
+                                        data-status-badge="<?= e($status_badge) ?>"
+                                        data-name="<?= e($name) ?>"
+                                        data-email="<?= e($email) ?>"
+                                        data-date="<?= !empty($row['created_at']) ? e(date('d M Y, H:i', strtotime($row['created_at']))) : 'N/A' ?>"
+                                        data-subject="<?= e($subject ?: '(No Subject)') ?>"
+                                        title="View full inquiry details">
+                                    View
+                                </button>
                                 <?php if (can_write()): ?>
                                     <button type="button" class="btn btn-outline-primary btn-sm mr-1 btn-open-reply"
                                             data-toggle="modal" data-target="#singleReplyModal"
@@ -240,6 +357,78 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         </table>
     </div>
     <?= render_pagination($pagination, $filter_status !== 'all' ? ['status' => $filter_status] : []) ?>
+</div>
+
+<!-- Descriptive Query View Modal -->
+<div class="modal fade text-left" id="viewQueryModal" tabindex="-1" role="dialog" aria-labelledby="viewQueryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white">
+                <div class="d-flex align-items-center">
+                    <h5 class="modal-title font-weight-bold mb-0" id="viewQueryModalLabel">
+                        Inquiry Details <span class="text-muted font-weight-normal" id="viewModalId"></span>
+                    </h5>
+                    <span class="badge ml-3" id="viewModalStatusBadge"></span>
+                </div>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Passenger Info Card -->
+                <div class="card bg-light border-0 mb-3">
+                    <div class="card-body p-3">
+                        <div class="row">
+                            <div class="col-sm-4 mb-2 mb-sm-0">
+                                <small class="text-muted text-uppercase font-weight-bold d-block">Passenger</small>
+                                <span class="font-weight-bold text-dark" id="viewModalSender"></span>
+                            </div>
+                            <div class="col-sm-5 mb-2 mb-sm-0">
+                                <small class="text-muted text-uppercase font-weight-bold d-block">Email Address</small>
+                                <a href="#" id="viewModalEmailLink" class="text-primary font-weight-bold">
+                                    <span id="viewModalEmail"></span>
+                                </a>
+                            </div>
+                            <div class="col-sm-3">
+                                <small class="text-muted text-uppercase font-weight-bold d-block">Date Received</small>
+                                <span class="text-dark" id="viewModalDate"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subject Field -->
+                <div class="form-group mb-3">
+                    <label class="small font-weight-bold text-uppercase text-muted">Subject</label>
+                    <div class="h6 font-weight-bold text-dark mb-0 p-2 px-3 bg-white rounded border" id="viewModalSubject"></div>
+                </div>
+
+                <!-- Message Description Field -->
+                <div class="form-group mb-3">
+                    <label class="small font-weight-bold text-uppercase text-muted">Inquiry Description</label>
+                    <div class="query-desc-box" id="viewModalMessage"></div>
+                </div>
+
+                <!-- Sent Reply Section -->
+                <div id="viewModalReplyContainer" style="display: none;">
+                    <div class="alert alert-success border mb-0">
+                        <div class="font-weight-bold mb-1">
+                            Sent Staff Reply:
+                        </div>
+                        <div id="viewModalReplyBody" style="white-space: pre-wrap; word-break: break-word;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+                <?php if (can_write()): ?>
+                    <button type="button" class="btn btn-primary btn-sm font-weight-bold" id="btnTransitionToReply">
+                        Reply to Passenger
+                    </button>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Single Reusable Reply Modal (A10) -->
@@ -284,6 +473,73 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     if (window.jQuery) {
+        // Descriptive Query View Modal handler
+        jQuery(document).on('click', '.btn-view-query', function() {
+            var $btn = jQuery(this);
+            var id = $btn.data('id');
+            var name = $btn.data('name') || '';
+            var email = $btn.data('email') || '';
+            var date = $btn.data('date') || 'N/A';
+            var status = $btn.data('status') || 'new';
+            var statusBadge = $btn.data('status-badge') || 'badge-danger';
+            var subject = $btn.data('subject') || '(No Subject)';
+
+            var $row = $btn.closest('tr');
+            var fullMessage = $row.find('.query-full-message').val();
+            if (typeof fullMessage === 'undefined' || fullMessage === null) {
+                fullMessage = $btn.data('message') || '';
+            }
+            var fullReply = $row.find('.query-full-reply').val();
+            if (typeof fullReply === 'undefined' || fullReply === null) {
+                fullReply = $btn.data('reply') || '';
+            }
+
+            jQuery('#viewModalId').text('#' + id);
+            jQuery('#viewModalStatusBadge')
+                .attr('class', 'badge ml-3 ' + statusBadge)
+                .text(status.charAt(0).toUpperCase() + status.slice(1));
+            jQuery('#viewModalSender').text(name);
+            jQuery('#viewModalEmail').text(email);
+            jQuery('#viewModalEmailLink').attr('href', 'mailto:' + encodeURIComponent(email));
+            jQuery('#viewModalDate').text(date);
+            jQuery('#viewModalSubject').text(subject);
+            jQuery('#viewModalMessage').text(fullMessage);
+
+            if (fullReply && fullReply.trim() !== '') {
+                jQuery('#viewModalReplyBody').text(fullReply);
+                jQuery('#viewModalReplyContainer').show();
+            } else {
+                jQuery('#viewModalReplyContainer').hide();
+            }
+
+            jQuery('#btnTransitionToReply')
+                .data('id', id)
+                .data('name', name)
+                .data('email', email)
+                .data('subject', subject);
+        });
+
+        // 1-Click Transition from View Modal to Reply Modal
+        jQuery('#btnTransitionToReply').on('click', function() {
+            var $btn = jQuery(this);
+            var id = $btn.data('id');
+            var name = $btn.data('name');
+            var email = $btn.data('email');
+            var subject = $btn.data('subject');
+
+            jQuery('#viewQueryModal').modal('hide');
+            jQuery('#viewQueryModal').one('hidden.bs.modal', function() {
+                jQuery('#replyQueryId').val(id);
+                jQuery('#singleReplyModalLabel').text('Reply to ' + name);
+                jQuery('#replyModalEmail').val(email);
+                jQuery('#replyModalSubject').val(subject);
+                jQuery('#reply_message').val('');
+                jQuery('#replyCharCounter').text('0 / 2000 chars');
+                jQuery('#singleReplyModal').modal('show');
+            });
+        });
+
+        // Existing Reply Modal open handler
         jQuery('.btn-open-reply').on('click', function() {
             var $btn = jQuery(this);
             var id = $btn.data('id');
