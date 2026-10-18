@@ -78,6 +78,8 @@ Bus-Reservation/
 │   ├── profile.php           # Profile management, password rotation & TOTP 2FA setup
 │   ├── mfa.php               # Two-Factor Authentication login challenge controller
 │   ├── diagnostics.php       # Operational integrity & security diagnostics
+│   ├── includes/             # 🛠️ Admin View Partials
+│   │   └── footer.php        # Minimalist admin utility bar (version, server status, copyright)
 │   └── edit/                 # ✏️ Inline Record Editing Subsystem
 │       ├── edit-booking.php
 │       ├── edit-bus.php
@@ -96,6 +98,8 @@ Bus-Reservation/
 │   ├── config.php            # Dynamic BASE_URL detector, global error handling & env defaults
 │   ├── db_con.php            # Environment-driven database connector with TLS/SSL support
 │   ├── helpers.php           # Prepared statements, get_app_url(), PDF generator, CSRF, CSV streaming
+│   ├── footer.php            # Modern 4-column responsive web footer & PWA install action
+│   ├── bottom-nav.php        # Native-style fixed bottom navigation bar (standalone PWA & mobile)
 │   ├── google-auth.php       # Google OAuth 2.0/OIDC engine, PKCE, token verification & re-auth
 │   ├── password-reset.php    # Email reset-link flow, SHA-256 token hashing & anti-enumeration engine
 │   ├── smtp.php              # Dual-transport email delivery (Brevo HTTPS REST API & RFC 5321 SMTP)
@@ -114,6 +118,7 @@ Bus-Reservation/
 │       ├── pwa-head.php      # Path-aware PWA manifest, meta tags & service worker injector
 │       ├── google-button.php # Accessible "Continue with Google" button component
 │       ├── footer.php        # Public & edit footer scripts
+│       ├── footer-public.php # Backward-compatible public footer proxy
 │       ├── footer-admin.php  # Admin footer scripts & drawer controller
 │       └── footer-user.php   # Customer footer scripts & idle timeout integration
 │
@@ -123,6 +128,7 @@ Bus-Reservation/
 │   │   └── jquery/           # jQuery 3.5.1 production minified runtime
 │   ├── css/
 │   │   ├── design-system.css # Global Light (White) & Dark (Slate) design tokens
+│   │   ├── footer.css        # Scoped 4-column footer, dark-slate tokens & PWA media queries
 │   │   ├── admin.css         # Admin workspace, topbar, sidebar & table styles
 │   │   ├── admin-mobile-responsive.css # Responsive mobile drawer & card adaptations
 │   │   ├── dashboard.css     # Attention Center, Today's Departures & Analytics styles
@@ -150,7 +156,7 @@ Bus-Reservation/
 │   ├── expire-holds.php      # CLI expired seat hold release utility
 │   ├── purge-audit-log.php   # CLI audit log retention cleanup utility
 │   └── migrations/           # Sequential Schema Migrations (001 to 013)
-└── tests/                    # 🧪 Automated Test Harnesses (17 suites, 450+ assertions)
+└── tests/                    # 🧪 Automated Test Harnesses (18 suites, 480+ assertions)
 ```
 
 ---
@@ -165,17 +171,24 @@ The frontend uses a centralized CSS custom property token system (`assets/css/de
    - Controlled persistently via `assets/js/theme-toggle.js` and `localStorage.getItem('busres_theme')`.
 2. **Modern Passenger Profile Pill & Navbar:**
    - `includes/layout/header-public.php` renders a unified profile pill for logged-in passengers featuring a gradient avatar circle with passenger initials, one-line layout (`white-space: nowrap;`), quick shortcuts to Dashboard, My Bookings, and Account Settings, and an isolated CSRF signout link.
-3. **Touch-First Mobile Carousels & 5-Second Autoplay:**
+3. **Modern 4-Column Web Footer & PWA Standalone Bottom Navigation:**
+   - Separates desktop web utility (`includes/footer.php`) from standalone mobile app navigation (`includes/bottom-nav.php`).
+   - Web footer (`.website-only-footer`) renders a 4-column responsive grid on desktop (Brand & PWA action, Quick Links, Top Routes, and Support/Trust badges) and stacks neatly to 1-column on mobile viewports (`<768px`).
+   - Native-style fixed bottom navigation bar (`.pwa-bottom-nav`) provides 4-tab 1-tap navigation (Home, Search, My Tickets, Profile) with safe-area notch padding (`env(safe-area-inset-bottom)`).
+   - In installed PWA mode (`@media all and (display-mode: standalone)`), CSS rules automatically hide the heavy web footer and display the sleek mobile bottom bar.
+4. **Touch-First Mobile Carousels & 5-Second Autoplay:**
    - On viewports `<768px`, the Features and Popular Routes sections automatically transform into swipeable carousels with native CSS scroll-snap (`scroll-snap-type: x mandatory`), 44px side navigation arrows, dot indicators, and synchronized 5-second auto-scroll with pause-on-touch interaction.
-4. **Cinematic Transit Preloader & Self-Hosted Assets:**
+5. **Cinematic Transit Preloader & Self-Hosted Assets:**
    - Eliminates external CDN dependencies by self-hosting Bootstrap 4.6.2 and jQuery 3.5.1 in `assets/vendor/`, preventing browser tracking-prevention blocks.
    - Smooth page transitions with BusBook's animated preloader (`assets/js/preloader.js`, `loading.php`).
-5. **Inline SVG Vector Sprite System & Brand Emblem:**
+6. **Minimalist Admin Utility Bar:**
+   - `admin/includes/footer.php` delivers a streamlined, single-line utility strip across administrative pages displaying the release version (`BusBook v2.4.0`), operational health indicator, database engine info, and dynamic copyright.
+7. **Inline SVG Vector Sprite System & Brand Emblem:**
    - Both `includes/layout/header-admin.php` and `includes/layout/header-user.php` embed an inline `<svg>` symbol sprite sheet alongside the vector bus brand icon (`assets/images/bus.svg`).
    - Sticky glassmorphic topbars (`backdrop-filter: blur(14px)`) display semantic section eyebrow pills (`OVERVIEW`, `FLEET & ROUTES`, `BOOKINGS & TRIPS`, `ACCOUNT`, `SUPPORT`, `GOVERNANCE`) and active page headers.
-6. **Automatic Asset Cache-Busting:**
+8. **Automatic Asset Cache-Busting:**
    - Stylesheet references append `?v=filemtime(...)` dynamically so CSS updates take effect immediately across browser sessions without stale cache artifacts.
-7. **Responsive Off-Canvas Navigation Drawer (`<992px`):**
+9. **Responsive Off-Canvas Navigation Drawer (`<992px`):**
    - `assets/js/admin-mobile.js` powers an accessible mobile navigation drawer (`min(86vw, 320px)`) with swipe-to-dismiss gesture detection, focus trapping, `inert` background locking, and `44x44px` minimum touch targets.
 
 ---

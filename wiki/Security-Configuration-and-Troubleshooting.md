@@ -88,7 +88,7 @@ Apache security headers in `docker/apache-security.conf` enforce:
 
 ## 2. Automated Test Harnesses
 
-The system contains 17 automated test suites (450+ assertions) verifying security, concurrency, data integrity, PDF generation, PWA compliance, and UI responsiveness:
+The system contains 18 automated test suites (480+ assertions) verifying security, concurrency, data integrity, PDF generation, PWA compliance, and UI responsiveness:
 
 ```bash
 # Admin Login Entry Points, Query Whitelist & Modal UI
@@ -120,6 +120,9 @@ php tests/test_email_ticket_link.php
 
 # Mobile Features & Popular Routes Swipe Carousels & 5s Auto-Scroll
 php tests/test_features_carousel.php
+
+# Modern 4-Column Web Footer, PWA Standalone Bottom Nav & Admin Utility Bar
+php tests/test_modern_footer.php
 
 # Standalone Cinematic Loading Page & Preloader Transition
 php tests/test_loading_page.php

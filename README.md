@@ -58,6 +58,7 @@ Comprehensive architectural, operational, and security documentation is availabl
 - 🛫 **Mobile-Optimized Digital Boarding Pass & QR Verification:** Airline-grade boarding pass card (`user/ticket.php`) with fluid typography (`clamp()`), authentic perforated stub styling, 1-tap PNR copy to clipboard with floating toast feedback, and an adaptive high-contrast QR code (120px on mobile for fast conductor camera scanning). Includes public verification (`user/verify.php`) and Web Share API (`navigator.share`) integration.
 - ✉️ **Emailed Boarding Pass Button with Cryptographic Seal:** Confirmation emails deliver a 1-click "View & Print Boarding Pass" button built with fully qualified public URLs via `get_app_url()` and protected by a 12-character HMAC-SHA256 ticket signature (`&sig=...`), allowing passengers to open, view, and print their pass directly from any mobile mail app without requiring prior login.
 - 👤 **Modern User Profile Pill & Dropdown Navbar:** Clean, compact passenger account menu (`header-public.php`, `home.css`) replacing cluttered navbar buttons with a unified Profile Pill, gradient avatar circle with initials, fast links to Dashboard, My Bookings, and Account Settings, isolated CSRF Sign Out, and zero text wrapping (`white-space: nowrap;`).
+- 🦶 **Modern 4-Column Responsive Web Footer & Dynamic PWA Bottom Navigation:** Architectural separation between desktop web utility (`includes/footer.php` with dark-slate `#0f172a` design system, brand tagline, dynamic PWA `#installPwaBtn`, session-aware quick links, popular route corridors, 24/7 support helpline, and security badges) and standalone mobile app navigation (`includes/bottom-nav.php` with 4-tab native-style fixed bar for Home, Search, My Tickets, and Profile). Powered by `assets/css/footer.css` with `@media all and (display-mode: standalone)` automatic swaps and iPhone safe-area padding.
 - 🎠 **Touch-First Mobile Carousels & 5-Second Autoplay:** Hardware-accelerated swipeable carousels for Features and Popular Routes on mobile viewports with native CSS scroll-snap (`scroll-snap-type: x mandatory`), 44px touch arrows, active dot indicators, and synchronized 5-second auto-scroll with pause-on-touch interaction.
 - 🧭 **Custom Search Dropdowns & Interactive City Swap:** Accessible in-DOM custom dropdown menus (`.custom-dropdown-widget`) with Title Case city formatting, dynamic connected-route destination filtering, and 1-click circular origin/destination swap controls (`⇄`) across the homepage and user portal.
 - 🔒 **Atomic Concurrency:** Concurrency-safe seat reservation engine with database transactions and row-level locks preventing double-booking race conditions.
@@ -382,6 +383,8 @@ Bus-Reservation/
 │   ├── profile.php           # Profile management, password rotation & TOTP 2FA setup
 │   ├── mfa.php               # Two-Factor Authentication login challenge controller
 │   ├── diagnostics.php       # Operational integrity & security diagnostics
+│   ├── includes/             # 🛠️ Admin View Partials
+│   │   └── footer.php        # Minimalist admin utility bar (version, server status, copyright)
 │   └── edit/                 # ✏️ Inline Record Editing Subsystem
 │       ├── edit-booking.php
 │       ├── edit-bus.php
@@ -400,6 +403,8 @@ Bus-Reservation/
 │   ├── config.php            # Dynamic BASE_URL detector, global error handling & env defaults
 │   ├── db_con.php            # Environment-driven database connector with TLS/SSL support
 │   ├── helpers.php           # Prepared statements, create_booking(), PDF generator, CSRF, CSV streaming
+│   ├── footer.php            # Modern 4-column responsive web footer & PWA install action
+│   ├── bottom-nav.php        # Native-style fixed bottom navigation bar (standalone PWA & mobile)
 │   ├── google-auth.php       # Google OAuth 2.0/OIDC engine, PKCE, token verification & re-auth
 │   ├── password-reset.php    # Email reset-link flow, SHA-256 token hashing & anti-enumeration engine
 │   ├── smtp.php              # Dual-transport email delivery (Brevo HTTPS REST API & RFC 5321 SMTP)
@@ -417,12 +422,14 @@ Bus-Reservation/
 │       ├── header-edit.php   # Edit pages header
 │       ├── google-button.php # Accessible "Continue with Google" button component
 │       ├── footer.php        # Public & edit footer scripts
+│       ├── footer-public.php # Backward-compatible public footer proxy
 │       ├── footer-admin.php  # Admin footer scripts & drawer controller
 │       └── footer-user.php   # Customer footer scripts & idle timeout integration
 │
 ├── assets/                   # 🎨 Stylesheets, Scripts & Vector Brand Assets
 │   ├── css/
 │   │   ├── design-system.css # Global Light (White) & Dark (Slate) design tokens
+│   │   ├── footer.css        # Scoped 4-column footer, dark-slate tokens & PWA media queries
 │   │   ├── admin.css         # Admin workspace, topbar, sidebar & table styles
 │   │   ├── admin-mobile-responsive.css # Responsive mobile drawer & card adaptations
 │   │   ├── dashboard.css     # Attention Center, Today's Departures & Analytics styles
@@ -482,6 +489,7 @@ Bus-Reservation/
 │   ├── test_user_layout.php  # Customer portal mobile & custom dropdown test suite
 │   ├── test_email_ticket_link.php # Boarding pass email button & HMAC signature authorization test suite
 │   ├── test_features_carousel.php # Mobile features & routes swipe carousels & 5s auto-scroll test suite
+│   ├── test_modern_footer.php # Modern 4-column footer, PWA bottom nav & admin utility bar test suite
 │   ├── test_loading_page.php # Standalone loading page & preloader overlay test suite
 │   ├── test_pwabuilder_manifest.php # PWABuilder web app manifest compliance test suite
 │   ├── test_route_ui.php     # Route schedule KPI, filter & corridor UI test suite

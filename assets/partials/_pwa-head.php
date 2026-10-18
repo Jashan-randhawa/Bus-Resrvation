@@ -127,6 +127,10 @@ $root_prefix = $is_admin_route ? '../' : './';
     if (choiceResult && choiceResult.outcome === 'accepted' && btn) {
       btn.style.display = 'none';
     }
+    const footerBtn = document.getElementById('installPwaBtn');
+    if (choiceResult && choiceResult.outcome === 'accepted' && footerBtn) {
+      footerBtn.style.display = 'none';
+    }
     deferredInstallPrompt = null;
     return choiceResult && choiceResult.outcome === 'accepted';
   };
@@ -160,14 +164,17 @@ $root_prefix = $is_admin_route ? '../' : './';
       return;
     }
 
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function () {
-        const btn = ensureInstallButton();
-        if (btn) btn.style.display = 'block';
-      });
-    } else {
+    function showInstallTriggers() {
       const btn = ensureInstallButton();
       if (btn) btn.style.display = 'block';
+      const footerBtn = document.getElementById('installPwaBtn');
+      if (footerBtn) footerBtn.style.display = 'inline-flex';
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', showInstallTriggers);
+    } else {
+      showInstallTriggers();
     }
   });
 
@@ -176,6 +183,8 @@ $root_prefix = $is_admin_route ? '../' : './';
     deferredInstallPrompt = null;
     const btn = document.getElementById('pwa-install-banner');
     if (btn) btn.style.display = 'none';
+    const footerBtn = document.getElementById('installPwaBtn');
+    if (footerBtn) footerBtn.style.display = 'none';
   });
 })();
 </script>
