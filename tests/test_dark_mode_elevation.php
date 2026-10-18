@@ -181,6 +181,59 @@ assert_dark("Pill badges declare 15% opacity background with 100% brightness tex
     str_contains($design_css, 'color: #F87171')
 );
 
+// Suite 7: Standalone Theme Files, Body Synchronization & Seat Map Classes
+echo "\n[*] Suite 7: Standalone Theme Files, Body Synchronization & Seat Map Classes\n";
+$theme_css_path = __DIR__ . '/../assets/css/theme.css';
+$style_css_path = __DIR__ . '/../assets/css/style.css';
+$seat_map_php = file_get_contents(__DIR__ . '/../includes/seat-map.php');
+$home_css = file_get_contents(__DIR__ . '/../assets/css/home.css');
+
+assert_dark("assets/css/theme.css exists", file_exists($theme_css_path));
+assert_dark("assets/css/style.css exists", file_exists($style_css_path));
+
+$theme_css = file_get_contents($theme_css_path);
+assert_dark("theme.css defines :root[data-theme=\"dark\"], body.dark-mode elevation tokens",
+    str_contains($theme_css, ':root[data-theme="dark"], body.dark-mode') &&
+    str_contains($theme_css, '--bg-base: #0B0F19;') &&
+    str_contains($theme_css, '--bg-surface: #111827;') &&
+    str_contains($theme_css, '--bg-elevated: #1E293B;')
+);
+assert_dark("theme.css defines seat grid classes (.seat, .available, .selected, .booked, .ladies)",
+    str_contains($theme_css, '.seat {') &&
+    str_contains($theme_css, '.seat.available:hover') &&
+    str_contains($theme_css, '.seat.selected') &&
+    str_contains($theme_css, '.seat.booked') &&
+    str_contains($theme_css, '.seat.ladies')
+);
+assert_dark("theme.css defines .bus-card and .admin-panel-card specular top borders",
+    str_contains($theme_css, '.bus-card, .admin-panel-card') &&
+    str_contains($theme_css, 'border-top: 1px solid rgba(255, 255, 255, 0.14);')
+);
+assert_dark("header-public.php links assets/css/theme.css",
+    str_contains($header_public, 'assets/css/theme.css')
+);
+assert_dark("header-user.php links assets/css/theme.css",
+    str_contains($header_user, 'assets/css/theme.css')
+);
+assert_dark("header-admin.php links assets/css/theme.css",
+    str_contains($header_admin, 'assets/css/theme.css')
+);
+assert_dark("theme-toggle.js applies dark-mode to document.body and synchronizes dual keys",
+    str_contains($theme_toggle, 'document.body.classList.add(\'dark-mode\')') &&
+    str_contains($theme_toggle, 'localStorage.setItem(\'theme\', next)') &&
+    str_contains($theme_toggle, 'localStorage.setItem(\'busres_theme_mode\', next)')
+);
+assert_dark("includes/seat-map.php renders .seat and state classes on seat-box and seat-label",
+    str_contains($seat_map_php, '$seat_state_class = \'seat \'') &&
+    str_contains($seat_map_php, 'class="seat-box <?= $seat_state_class ?>"') &&
+    str_contains($seat_map_php, 'class="seat-label <?= $seat_state_class ?>"')
+);
+assert_dark("assets/css/home.css defines specular borders on home cards and overrides bg-light",
+    str_contains($home_css, 'border-top: 1px solid rgba(255, 255, 255, 0.14) !important;') &&
+    str_contains($home_css, '#search.home-section') &&
+    str_contains($home_css, 'background-color: var(--home-bg-warm, #0B0F19) !important;')
+);
+
 echo "\n========================================================\n";
 echo "   Elevation Test Results: {$passed} Passed, " . ($total - $passed) . " Failed\n";
 echo "========================================================\n";
@@ -189,3 +242,4 @@ if ($passed !== $total) {
     exit(1);
 }
 exit(0);
+

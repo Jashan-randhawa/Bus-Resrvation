@@ -408,7 +408,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                         'date'     => $search_date
                     ]);
                     ?>
-                    <div class="card border rounded-lg shadow-sm mb-3 search-result-card <?= $is_cutoff ? 'bg-light text-muted' : 'bg-white' ?>">
+                    <div class="card border rounded-lg shadow-sm mb-3 search-result-card bus-card <?= $is_cutoff ? 'bg-light text-muted' : 'bg-white' ?>">
                         <div class="card-body p-3">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div>

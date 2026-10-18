@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <!-- Immediate Dark Mode Pre-Script to Prevent FOUC -->
     <script>
-    (function(){try{var k='busres_theme_mode',s=localStorage.getItem(k);if(!s&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)s='dark';if(s==='dark'){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');}}catch(e){}})();
+    (function(){try{var s=localStorage.getItem('theme')||localStorage.getItem('busres_theme_mode');if(!s&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)s='dark';if(s==='dark'){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');if(document.body){document.body.setAttribute('data-theme','dark');document.body.classList.add('dark-mode');}else{document.addEventListener('DOMContentLoaded',function(){document.body.setAttribute('data-theme','dark');document.body.classList.add('dark-mode');});}}}catch(e){}})();
     </script>
     <link rel="shortcut icon" href="<?= BASE_URL ?>/favicon.ico">
     <link rel="icon" type="image/x-icon" href="<?= BASE_URL ?>/favicon.ico">
@@ -28,6 +28,7 @@
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin-mobile-responsive.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/admin-mobile-responsive.css') ?: 1 ?>">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/user.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/user.css') ?: 1 ?>">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/seat-map.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/seat-map.css') ?: 1 ?>">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/theme.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/theme.css') ?: 1 ?>">
 
     <!-- Global Theme Toggle (Head load to avoid FOUC) -->
     <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>

@@ -8,7 +8,7 @@ require_once __DIR__ . '/../config.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <!-- Immediate Dark Mode Pre-Script to Prevent FOUC -->
     <script>
-    (function(){try{var k='busres_theme_mode',s=localStorage.getItem(k);if(!s&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)s='dark';if(s==='dark'){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');}}catch(e){}})();
+    (function(){try{var s=localStorage.getItem('theme')||localStorage.getItem('busres_theme_mode');if(!s&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)s='dark';if(s==='dark'){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');if(document.body){document.body.setAttribute('data-theme','dark');document.body.classList.add('dark-mode');}else{document.addEventListener('DOMContentLoaded',function(){document.body.setAttribute('data-theme','dark');document.body.classList.add('dark-mode');});}}}catch(e){}})();
     </script>
     <meta name="robots" content="noindex, nofollow">
     <link rel="shortcut icon" href="<?= BASE_URL ?>/favicon.ico">
@@ -32,6 +32,7 @@ require_once __DIR__ . '/../config.php';
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/design-system.css') ?: 1 ?>">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/admin.css') ?: '2026-10-10' ?>">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin-mobile-responsive.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/admin-mobile-responsive.css') ?: '2026-10-10' ?>">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/theme.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/theme.css') ?: 1 ?>">
     <?php if (!empty($page_css)): ?>
         <?php foreach ((array)$page_css as $css_file): ?>
             <?php 
