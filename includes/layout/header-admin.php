@@ -32,6 +32,7 @@ require_once __DIR__ . '/../config.php';
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/design-system.css') ?: 1 ?>">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/admin.css') ?: '2026-10-10' ?>">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin-mobile-responsive.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/admin-mobile-responsive.css') ?: '2026-10-10' ?>">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/theme-emerald.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/theme-emerald.css') ?: 1 ?>">
     <?php if (!empty($page_css)): ?>
         <?php foreach ((array)$page_css as $css_file): ?>
             <?php 

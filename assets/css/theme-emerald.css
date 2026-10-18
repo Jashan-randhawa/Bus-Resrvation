@@ -1,0 +1,405 @@
+/* assets/css/theme-emerald.css -- Emerald Cyber (Theme B) Design System */
+/* Unified Color Tokens, Component Specs & Portal Rollout for Bus-Reservation */
+
+:root {
+  color-scheme: dark; /* Forces native select dropdowns & datepicker to dark mode */
+
+  /* ── 1. Foundation Color Tokens ────────────────────────────── */
+  --bg-canvas:       #050C0F; /* Tier 0: Deep Obsidian (Global <body> background, PWA splash canvas) */
+  --bg-surface:      #081216; /* Tier 1: Dark Pine Card ("Plan Your Journey" card, Route result cards, Admin tables) */
+  --bg-input:        #04080B; /* Recessed Well (Origin/Destination <select>, Datepicker, Form inputs) */
+  --bg-elevated:     #0F222A; /* Tier 2: Elevated Teal (Seat selection drawer, Dropdown menus, Table row hover) */
+
+  /* Brand & Accent Hierarchy */
+  --brand-emerald:       #10B981; /* Primary CTA Accent ("Find Available Buses" button, Active nav bar, Confirmed badge) */
+  --brand-emerald-hover: #059669; /* Primary Hover Accent */
+  --accent-cyan:         #06B6D4; /* Interactive Utility ("⇄ Swap" trigger, Route timeline connectors, Links) */
+  --accent-amber:        #F59E0B; /* Selection Contrast (Currently selected seat pill, Fare warning, Pending state) */
+
+  /* Borders & Specular Hairlines */
+  --border-emerald:  #134E4A; /* Specular Card Edge (1px outer perimeter border on dark surface containers) */
+  --border-subtle:   #132A32; /* Recessed hairline dividers */
+  --border-glow:     rgba(16, 185, 129, 0.32); /* Subtle radial/perimeter card glow */
+
+  /* Typography Hierarchy */
+  --text-primary:    #ECFDF5; /* High-contrast Mint White */
+  --text-secondary:  #94A3B8; /* Slate subtext, timestamps, table headers */
+  --text-muted:      #64748B; /* Disabled placeholders, seat labels */
+  --text-emerald-btn:#04130E; /* Ultra-dark pine text for high contrast on solid emerald CTAs */
+}
+
+/* ── 2. Global Canvas & Background Surface ──────────────────── */
+body.theme-emerald,
+html[data-theme="emerald"] body,
+body[data-theme="emerald"],
+body.dark-mode,
+[data-theme="dark"] body {
+  background-color: var(--bg-canvas, #050C0F);
+  color: var(--text-primary, #ECFDF5);
+}
+
+/* ── 3. Hero "Plan Your Journey" Module ──────────────────────── */
+.journey-card,
+.search-panel,
+.booking-search-card,
+[data-theme="dark"] .booking-search-card,
+body.dark-mode .booking-search-card {
+  background: radial-gradient(circle at top left, rgba(16, 185, 129, 0.07), transparent 55%), var(--bg-surface, #081216) !important;
+  border: 1px solid var(--border-glow, rgba(16, 185, 129, 0.32)) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7) !important;
+}
+
+/* "1 Seat per Booking" Badge */
+.badge-booking-limit {
+  background: rgba(16, 185, 129, 0.12) !important;
+  border: 1px solid #059669 !important;
+  color: #34D399 !important;
+  font-weight: 600;
+  border-radius: 9999px;
+  padding: 0.35rem 0.85rem;
+  letter-spacing: 0.02em;
+}
+
+/* "⇄ Swap" Action Link with 180-degree Rotation on Hover */
+.btn-swap-cities,
+.swap-btn,
+#home_swap_btn,
+#guest_swap_btn,
+#swap-cities-btn,
+#swap-cities-btn-mobile {
+  color: var(--accent-cyan, #06B6D4) !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s ease !important;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.btn-swap-cities:hover,
+.swap-btn:hover,
+#home_swap_btn:hover,
+#guest_swap_btn:hover,
+#swap-cities-btn:hover,
+#swap-cities-btn-mobile:hover {
+  transform: rotate(180deg);
+  color: #38BDF8 !important;
+}
+
+/* Dropdowns, Date Input & Recessed Wells */
+select,
+input[type="date"],
+input[type="text"],
+input[type="tel"],
+input[type="email"],
+input[type="password"],
+textarea,
+.form-control,
+.custom-select {
+  background-color: var(--bg-input, #04080B) !important;
+  border: 1px solid var(--border-subtle, #132A32) !important;
+  color: var(--text-primary, #ECFDF5) !important;
+  border-radius: 8px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+select:focus,
+input:focus,
+textarea:focus,
+.form-control:focus,
+.custom-select:focus {
+  border-color: var(--brand-emerald, #10B981) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25) !important;
+  color: var(--text-primary, #ECFDF5) !important;
+}
+
+/* Primary Emerald CTA with Ultra-Dark Pine Text (#04130E) */
+.btn-find-buses,
+.btn-primary,
+button[name="search_bus"] {
+  background-color: var(--brand-emerald, #10B981) !important;
+  border-color: var(--brand-emerald, #10B981) !important;
+  color: var(--text-emerald-btn, #04130E) !important;
+  font-weight: 700 !important;
+  border-radius: 8px;
+  transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.btn-find-buses:hover,
+.btn-primary:hover,
+button[name="search_bus"]:hover {
+  background-color: var(--brand-emerald-hover, #059669) !important;
+  border-color: var(--brand-emerald-hover, #059669) !important;
+  color: var(--text-emerald-btn, #04130E) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
+}
+
+/* ── 4. Interactive Seat Selection Matrix & Booking Flow ─────── */
+.seat-map-drawer,
+.bus-map-card {
+  background: var(--bg-surface, #081216) !important;
+  border: 1px solid var(--border-emerald, #134E4A) !important;
+  border-radius: 14px;
+}
+
+/* 1A: Available Seat - Mint Emerald */
+.seat.available,
+.seat-available,
+.seat-box.available .seat-label,
+.seat-box:not(.seat-booked):not(.booked) .seat-label {
+  background: rgba(16, 185, 129, 0.15) !important;
+  border: 1.5px solid var(--brand-emerald, #10B981) !important;
+  color: var(--text-primary, #ECFDF5) !important;
+  border-radius: 8px 8px 4px 4px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.seat.available:hover,
+.seat-available:hover,
+.seat-box.available .seat-label:hover,
+.seat-box:not(.seat-booked):not(.booked) .seat-label:hover {
+  background: rgba(16, 185, 129, 0.25) !important;
+  border-color: var(--brand-emerald, #10B981) !important;
+  transform: translateY(-2px);
+}
+
+/* 1B: Selected Seat - Amber Gold Contrast with Outer Glow */
+.seat.selected,
+.seat-selected,
+.seat-box.selected .seat-label,
+input[type="radio"]:checked + .seat-label {
+  background: rgba(245, 158, 11, 0.2) !important;
+  border: 1.5px solid var(--accent-amber, #F59E0B) !important;
+  color: #FBBF24 !important;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.35) !important;
+  font-weight: 700 !important;
+  border-radius: 8px 8px 4px 4px;
+}
+
+/* 1C: Booked Seat - Recessed Dark Charcoal */
+.seat.booked,
+.seat-booked,
+.seat-box.booked .seat-label,
+.seat-box.seat-booked .seat-label,
+.seat-box.booked {
+  background: rgba(15, 34, 42, 0.6) !important;
+  border: 1.5px solid #1e3a47 !important;
+  color: rgba(148, 163, 184, 0.4) !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+  border-radius: 8px 8px 4px 4px;
+}
+
+/* 1D: Reserved / Ladies Seat - Sky Cyan */
+.seat.reserved,
+.seat.ladies,
+.seat-reserved,
+.seat-ladies,
+.seat-box.ladies .seat-label {
+  background: rgba(6, 182, 212, 0.15) !important;
+  border: 1.5px solid var(--accent-cyan, #06B6D4) !important;
+  color: #67E8F9 !important;
+  border-radius: 8px 8px 4px 4px;
+}
+
+/* ── 5. Navigation & Auth Modals ────────────────────────────── */
+.navbar-public,
+.navbar-dark,
+.admin-topbar,
+.user-topbar {
+  background: rgba(8, 18, 22, 0.88) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid #132A32 !important;
+}
+
+.nav-link.active,
+.navbar-nav .nav-item.active .nav-link {
+  border-bottom: 2px solid var(--brand-emerald, #10B981) !important;
+  color: var(--brand-emerald, #10B981) !important;
+}
+
+/* Auth Modals (Login/Register) & Auth Cards with Emerald Top Accent Bar */
+.modal-content,
+.auth-card {
+  background: var(--bg-surface, #081216) !important;
+  border: 1px solid var(--border-subtle, #132A32) !important;
+  border-top: 3px solid var(--brand-emerald, #10B981) !important;
+  color: var(--text-primary, #ECFDF5) !important;
+  border-radius: 14px;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.8) !important;
+}
+
+.modal-header,
+.modal-footer {
+  border-color: var(--border-subtle, #132A32) !important;
+  background: var(--bg-surface, #081216) !important;
+}
+
+/* ── 6. Schedule Results & Filters ──────────────────────────── */
+.search-result-card,
+.bus-card,
+.popular-route-card {
+  background: var(--bg-surface, #081216) !important;
+  border: 1px solid var(--border-emerald, #134E4A) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5) !important;
+  color: var(--text-primary, #ECFDF5) !important;
+}
+
+/* Timestamps Vector Connector Line in Sky Cyan */
+.route-timeline-connector,
+.journey-corridor,
+.journey-arrow {
+  color: var(--accent-cyan, #06B6D4) !important;
+}
+
+.route-timeline-vector {
+  border-left: 2px dashed var(--accent-cyan, #06B6D4) !important;
+}
+
+/* Remaining Seats Counter Badges */
+.seats-available-badge.seats-high,
+.badge-seats-high {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #34D399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  animation: pulse-emerald 2s infinite ease-in-out;
+}
+
+.seats-available-badge.seats-low,
+.badge-seats-low {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #FBBF24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+@keyframes pulse-emerald {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+}
+
+/* ── 7. E-Ticket & Digital Boarding Pass ─────────────────────── */
+.ticket-container {
+  background: var(--bg-surface, #081216) !important;
+  border: 1px solid var(--border-emerald, #134E4A) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.6) !important;
+  color: var(--text-primary, #ECFDF5) !important;
+}
+
+/* Perforated Ticket Divider */
+.ticket-divider,
+.ticket-perforated-line {
+  border-top: 2px dashed var(--border-emerald, #134E4A) !important;
+  margin: 1.5rem 0;
+}
+
+/* PNR Reference Code Highlighted in Monospace Sky Cyan */
+.pnr-code,
+.journey-pnr-pill .pnr-code,
+.ticket-pnr-highlight {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace !important;
+  color: #38BDF8 !important;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+/* High-Contrast White Container for QR Code Scanning */
+.ticket-qr-wrap,
+.ticket-seal-card,
+.qr-container-high-contrast {
+  background: #ffffff !important;
+  padding: 14px !important;
+  border-radius: 12px !important;
+  display: inline-block !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.ticket-seal-card * {
+  color: #0f172a !important;
+}
+.ticket-seal-card .font-monospace {
+  color: #0284c7 !important;
+}
+
+/* ── 8. Admin Portal & Fleet Tables ─────────────────────────── */
+/* KPI Summary Cards with 4px Solid Left Accent Border */
+.stat-card,
+.kpi-card,
+.perf-stat-card,
+.admin-card-kpi,
+.perf-insights-card {
+  background: var(--bg-surface, #081216) !important;
+  border: 1px solid var(--border-subtle, #132A32) !important;
+  border-left: 4px solid var(--brand-emerald, #10B981) !important;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Alternating Table Rows: #081216 and #0B181E */
+.table {
+  color: var(--text-primary, #ECFDF5) !important;
+  background-color: transparent !important;
+}
+
+.table thead th {
+  background-color: var(--bg-elevated, #0F222A) !important;
+  color: var(--text-secondary, #94A3B8) !important;
+  border-bottom: 1px solid var(--border-subtle, #132A32) !important;
+}
+
+.table tbody tr {
+  background-color: #081216 !important;
+}
+
+.table tbody tr:nth-of-type(even) {
+  background-color: #0B181E !important;
+}
+
+.table-hover tbody tr:hover,
+.table tbody tr:hover {
+  background-color: var(--bg-elevated, #0F222A) !important;
+}
+
+.table td, .table th {
+  border-top: 1px solid var(--border-subtle, #132A32) !important;
+}
+
+/* Semantic Status Pills */
+.badge-success,
+.badge-confirmed,
+.status-confirmed {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #34D399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  border-radius: 9999px;
+  font-weight: 600;
+  padding: 0.3em 0.7em;
+}
+
+.badge-warning,
+.badge-pending,
+.status-pending {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #FBBF24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+  border-radius: 9999px;
+  font-weight: 600;
+  padding: 0.3em 0.7em;
+}
+
+.badge-danger,
+.badge-cancelled,
+.status-cancelled {
+  background: rgba(244, 63, 94, 0.15) !important;
+  color: #FB7185 !important;
+  border: 1px solid rgba(244, 63, 94, 0.3) !important;
+  border-radius: 9999px;
+  font-weight: 600;
+  padding: 0.3em 0.7em;
+}

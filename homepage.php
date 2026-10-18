@@ -361,7 +361,7 @@ if (isset($_POST['subbtn'])) {
   <!-- 2. Central Search & Booking Card (A1) -->
   <section id="search" class="home-section bg-light" aria-labelledby="searchHeading">
     <div class="container">
-      <div class="booking-search-card">
+      <div class="booking-search-card journey-card search-panel">
         <div class="card-title-bar d-flex flex-column flex-sm-row justify-content-between align-items-sm-center">
           <div>
             <h2 id="searchHeading" class="h4 font-weight-bold text-dark mb-1">Plan Your Journey</h2>
@@ -371,7 +371,7 @@ if (isset($_POST['subbtn'])) {
             </p>
           </div>
           <div class="mt-2 mt-sm-0">
-            <span class="badge badge-primary px-3 py-2 font-weight-bold">
+            <span class="badge badge-primary badge-booking-limit px-3 py-2 font-weight-bold">
               1 Seat per Booking
             </span>
           </div>
@@ -404,7 +404,7 @@ if (isset($_POST['subbtn'])) {
                   <label for="home_to" class="booking-field-label mb-0">
                     <span aria-hidden="true">🏁</span> Destination City
                   </label>
-                  <button type="button" class="swap-btn" id="home_swap_btn" aria-label="Swap departure and destination">
+                  <button type="button" class="swap-btn btn-swap-cities" id="home_swap_btn" aria-label="Swap departure and destination">
                     <span aria-hidden="true">&#8644;</span> Swap
                   </button>
                 </div>
@@ -424,7 +424,7 @@ if (isset($_POST['subbtn'])) {
               </div>
 
               <div class="form-group mb-0">
-                <button type="submit" name="subbtn" class="btn btn-primary btn-block py-2 font-weight-bold shadow-sm" style="min-height: 44px;">
+                <button type="submit" name="subbtn" class="btn btn-primary btn-find-buses btn-block py-2 font-weight-bold shadow-sm" style="min-height: 44px;">
                   Find Available Buses
                 </button>
               </div>
@@ -451,7 +451,7 @@ if (isset($_POST['subbtn'])) {
                   <label for="guest_to" class="booking-field-label mb-0">
                     <span aria-hidden="true">🏁</span> Destination City
                   </label>
-                  <button type="button" class="swap-btn" id="guest_swap_btn" aria-label="Swap departure and destination">
+                  <button type="button" class="swap-btn btn-swap-cities" id="guest_swap_btn" aria-label="Swap departure and destination">
                     <span aria-hidden="true">&#8644;</span> Swap
                   </button>
                 </div>
@@ -471,7 +471,7 @@ if (isset($_POST['subbtn'])) {
               </div>
 
               <div class="form-group mb-0">
-                <button type="submit" class="btn btn-primary btn-block py-2 font-weight-bold shadow-sm" style="min-height: 44px;">
+                <button type="submit" class="btn btn-primary btn-find-buses btn-block py-2 font-weight-bold shadow-sm" style="min-height: 44px;">
                   Find Available Buses
                 </button>
               </div>

@@ -247,7 +247,7 @@ $full_verify_url = $proto . $host . $verify_path;
             </div>
 
             <!-- Perforated Tear-off Stub -->
-            <div class="ticket-perforated-stub"></div>
+            <div class="ticket-perforated-stub ticket-divider ticket-perforated-line"></div>
 
             <!-- Instructions & Digital Verification Seal (Phase 2.1, 2.2) -->
             <div class="pt-3 d-flex flex-column-reverse flex-md-row justify-content-between align-items-center">
@@ -276,10 +276,10 @@ $full_verify_url = $proto . $host . $verify_path;
                 </div>
                 <div class="text-center mb-3 mb-md-0 ml-md-3 w-100 w-md-auto d-flex justify-content-center">
                     <!-- Phase 2.1: Digital Security Seal & QR Code (Issue 5) -->
-                    <div class="ticket-seal-card shadow-sm" style="max-width: 220px; width: 100%;">
+                    <div class="ticket-seal-card shadow-sm ticket-qr-wrap qr-container-high-contrast" style="max-width: 220px; width: 100%;">
                         <div id="ticket-qrcode" class="mb-2"></div>
                         <div class="text-muted font-weight-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.05em;">Digital Pass</div>
-                        <div class="font-weight-bold text-primary font-monospace my-1" style="font-size: 1.15rem;">
+                        <div class="font-weight-bold text-primary font-monospace my-1 pnr-code ticket-pnr-highlight" style="font-size: 1.15rem;">
                             <?= e($booking['pnr']) ?>
                         </div>
                         <a href="<?= e($verify_path) ?>" target="_blank" class="badge badge-light border text-muted px-2 py-1 font-monospace text-decoration-none d-inline-block mb-1" style="font-size: 12px;" title="Verify Ticket Authenticity">

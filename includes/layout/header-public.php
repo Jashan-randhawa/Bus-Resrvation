@@ -47,6 +47,7 @@ $user_role = $_SESSION['role'] ?? null;
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/home.css?v=<?= file_exists(dirname(__DIR__, 2) . '/assets/css/home.css') ? filemtime(dirname(__DIR__, 2) . '/assets/css/home.css') : '2.4.1' ?>">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/public.css?v=<?= file_exists(dirname(__DIR__, 2) . '/assets/css/public.css') ? filemtime(dirname(__DIR__, 2) . '/assets/css/public.css') : '2.4.1' ?>">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/footer.css?v=<?= file_exists(dirname(__DIR__, 2) . '/assets/css/footer.css') ? filemtime(dirname(__DIR__, 2) . '/assets/css/footer.css') : '2.4.1' ?>">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/theme-emerald.css?v=<?= file_exists(dirname(__DIR__, 2) . '/assets/css/theme-emerald.css') ? filemtime(dirname(__DIR__, 2) . '/assets/css/theme-emerald.css') : '2.4.1' ?>">
   
   <!-- Global Theme Toggle (Head load to avoid FOUC) -->
   <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>

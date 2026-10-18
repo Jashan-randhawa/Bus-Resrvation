@@ -22,8 +22,8 @@
   "edge_side_panel": {
     "preferred_width": 400
   },
-  "background_color": "#212529",
-  "theme_color": "#212529",
+  "background_color": "#050C0F",
+  "theme_color": "#081216",
   "categories": ["travel", "transportation", "productivity"],
   "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
   "prefer_related_applications": false,

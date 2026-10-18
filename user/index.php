@@ -192,7 +192,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
     </div>
 <?php endif; ?>
 
-<div class="card border-0 shadow-sm mb-4">
+<div class="card border-0 shadow-sm mb-4 journey-card search-panel">
     <div class="card-header bg-white py-3">
         <h5 class="mb-0 font-weight-bold">Search Journey</h5>
     </div>
@@ -214,14 +214,14 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
 
                 <!-- Desktop Swap Button -->
                 <div class="col-md-1 form-group text-center d-none d-md-block pt-3 mb-3">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" id="swap-cities-btn" title="Swap Origin and Destination" style="margin-top: 8px;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-swap-cities" id="swap-cities-btn" title="Swap Origin and Destination" style="margin-top: 8px;">
                         ⇄
                     </button>
                 </div>
 
                 <!-- Mobile Circular Swap Button (F6) -->
                 <div class="col-12 text-center d-md-none my-1">
-                    <button type="button" class="btn swap-cities-btn-circle" id="swap-cities-btn-mobile" title="Swap Origin and Destination" aria-label="Swap Origin and Destination">
+                    <button type="button" class="btn swap-cities-btn-circle btn-swap-cities" id="swap-cities-btn-mobile" title="Swap Origin and Destination" aria-label="Swap Origin and Destination">
                         ⇄
                     </button>
                 </div>
@@ -244,7 +244,7 @@ require_once __DIR__ . '/../includes/layout/header-user.php';
                 </div>
             </div>
             <div class="d-flex justify-content-end align-items-center mt-1">
-                <button type="submit" class="btn btn-primary px-4 py-2 font-weight-bold shadow-sm" id="search-submit-btn">
+                <button type="submit" class="btn btn-primary btn-find-buses px-4 py-2 font-weight-bold shadow-sm" id="search-submit-btn">
                     🔍 Find Available Buses
                 </button>
             </div>

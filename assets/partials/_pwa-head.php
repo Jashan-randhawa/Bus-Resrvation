@@ -14,7 +14,7 @@ $root_prefix = $is_admin_route ? '../' : './';
 <link rel="manifest" href="<?php echo $root_prefix; ?>manifest.json">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0F19" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#0B0F19">
+<meta name="theme-color" content="#081216">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">

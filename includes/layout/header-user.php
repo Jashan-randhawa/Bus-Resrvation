@@ -28,6 +28,7 @@
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin-mobile-responsive.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/admin-mobile-responsive.css') ?: 1 ?>">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/user.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/user.css') ?: 1 ?>">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/seat-map.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/seat-map.css') ?: 1 ?>">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/theme-emerald.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/theme-emerald.css') ?: 1 ?>">
 
     <!-- Global Theme Toggle (Head load to avoid FOUC) -->
     <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>
