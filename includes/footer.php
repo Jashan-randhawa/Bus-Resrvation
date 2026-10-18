@@ -29,8 +29,8 @@ $is_logged_in = !empty($_SESSION['uid']);
       </div>
 
       <!-- Column 2: Quick Navigation -->
-      <div class="footer-col">
-        <h4 class="footer-title">Quick Links</h4>
+      <details class="footer-col footer-accordion" open>
+        <summary class="footer-title">Quick Links</summary>
         <ul class="footer-links">
           <li>
             <a href="<?= BASE_URL ?>/homepage.php#home" class="footer-link">Home</a>
@@ -62,11 +62,11 @@ $is_logged_in = !empty($_SESSION['uid']);
             <a href="<?= BASE_URL ?>/homepage.php?login=admin" class="footer-link text-muted" data-toggle="modal" data-target="#loginModal">Admin Portal</a>
           </li>
         </ul>
-      </div>
+      </details>
 
       <!-- Column 3: Top Bus Routes -->
-      <div class="footer-col">
-        <h4 class="footer-title">Top Routes</h4>
+      <details class="footer-col footer-accordion" open>
+        <summary class="footer-title">Top Routes</summary>
         <ul class="footer-links">
           <li>
             <a href="<?= BASE_URL ?>/homepage.php#search" class="footer-link">Delhi &rarr; Chandigarh</a>
@@ -84,11 +84,11 @@ $is_logged_in = !empty($_SESSION['uid']);
             <a href="<?= BASE_URL ?>/homepage.php#search" class="footer-link">Hyderabad &rarr; Vijayawada</a>
           </li>
         </ul>
-      </div>
+      </details>
 
       <!-- Column 4: Support & Trust Badges -->
-      <div class="footer-col">
-        <h4 class="footer-title">Help &amp; Trust</h4>
+      <details class="footer-col footer-accordion" open>
+        <summary class="footer-title">Help &amp; Trust</summary>
         <div class="footer-support-items">
           <div class="footer-support-row">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -133,7 +133,7 @@ $is_logged_in = !empty($_SESSION['uid']);
             </span>
           </div>
         </div>
-      </div>
+      </details>
     </div>
 
     <!-- Bottom Sub-Footer: Copyright & Legal Policies -->
