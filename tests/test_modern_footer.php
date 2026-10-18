@@ -108,6 +108,10 @@ assert_footer("Provides safe-area-inset-bottom padding for modern phones",
     str_contains($css_content, 'env(safe-area-inset-bottom'));
 assert_footer("Hides footer elements during print", 
     str_contains($css_content, '@media print') && str_contains($css_content, 'display: none !important'));
+assert_footer("Hides bottom navigation bar in mobile view (<= 768px)", 
+    str_contains($css_content, '@media (max-width: 768px)') && str_contains($css_content, '.pwa-bottom-nav') && str_contains($css_content, 'display: none !important'));
+assert_footer("Does not force bottom-nav on <= 576px screens", 
+    !str_contains($css_content, '@media (max-width: 576px)'));
 
 $header_public = file_get_contents($base_dir . '/includes/layout/header-public.php');
 assert_footer("header-public.php links assets/css/footer.css", str_contains($header_public, 'assets/css/footer.css'));

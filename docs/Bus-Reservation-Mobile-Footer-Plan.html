@@ -207,9 +207,9 @@
         <td>Enforced WCAG 2.1 Level AAA compliant touch targets with <code>min-height: 44px</code> and isolated tap zones.</td>
       </tr>
       <tr>
-        <td><strong>PWA Bottom-Nav Clashing</strong></td>
-        <td>When running under <code>display-mode: standalone</code>, native fixed bottom action bars occlude the sub-footer copyright and policies.</td>
-        <td>Applied dynamic safe-area offset padding: <code>padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px))</code>.</td>
+        <td><strong>Mobile Bottom Navigation</strong></td>
+        <td>Fixed bottom navigation bars obstruct footer content, create double navigation bars on mobile browsers, and cause intrusive screen clutter.</td>
+        <td>Removed bottom navigation bar in mobile view (<code>@media (max-width: 768px) { display: none !important; }</code>), allowing the clean collapsible web footer to display naturally with zero overlap.</td>
       </tr>
     </tbody>
   </table>
@@ -222,7 +222,7 @@
 
   <ul>
     <li><code>includes/footer.php</code>: Full semantic web footer with mobile accordion columns and PWA install trigger.</li>
-    <li><code>includes/bottom-nav.php</code>: Glassmorphic fixed bottom navigation bar (Home, Search, My Tickets, Profile) active on mobile viewports and PWA standalone mode.</li>
+    <li><code>includes/bottom-nav.php</code>: Standalone PWA bottom navigation component (Home, Search, My Tickets, Profile) suppressed on mobile web view in favor of the clean web footer.</li>
     <li><code>admin/includes/footer.php</code>: Minimalist administrative utility bar (system operational telemetry, TLS 1.3 indicator, engine status).</li>
     <li><code>assets/css/footer.css</code>: Scoped design tokens, media queries, specular highlights, and print styles.</li>
   </ul>

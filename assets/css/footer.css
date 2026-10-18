@@ -553,15 +553,14 @@ html:not([data-theme="dark"]) {
   }
 }
 
-/* Extra small mobile screen bottom padding clearance for bottom navigation */
-@media (max-width: 576px) {
+/* Mobile Viewports: ensure bottom navigation bar is removed in mobile view */
+@media (max-width: 768px) {
   .pwa-bottom-nav {
-    display: flex;
+    display: none !important;
   }
 
-  /* Add bottom clearance so the fixed bottom-nav does not cover content */
   .website-only-footer {
-    padding-bottom: calc(3rem + 54px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
   }
 }
 
