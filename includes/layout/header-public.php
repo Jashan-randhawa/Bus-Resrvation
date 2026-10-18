@@ -10,7 +10,7 @@ $user_role = $_SESSION['role'] ?? null;
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <!-- Immediate Dark Mode Pre-Script to Prevent FOUC -->
   <script>
-  (function(){try{var s=localStorage.getItem('theme')||localStorage.getItem('busres_theme_mode');if(!s&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)s='dark';if(s==='dark'){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');if(document.body){document.body.setAttribute('data-theme','dark');document.body.classList.add('dark-mode');}else{document.addEventListener('DOMContentLoaded',function(){document.body.setAttribute('data-theme','dark');document.body.classList.add('dark-mode');});}}}catch(e){}})();
+  (function(){try{var k='busres_theme_mode',s=localStorage.getItem(k);if(!s&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)s='dark';if(s==='dark'){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');}}catch(e){}})();
   </script>
   <meta name="description" content="Simple and reliable bus ticket booking system. Check real-time seat availability, lookup PNR status, and reserve seats across intercity routes.">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
@@ -47,7 +47,6 @@ $user_role = $_SESSION['role'] ?? null;
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/home.css?v=<?= file_exists(dirname(__DIR__, 2) . '/assets/css/home.css') ? filemtime(dirname(__DIR__, 2) . '/assets/css/home.css') : '2.4.1' ?>">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/public.css?v=<?= file_exists(dirname(__DIR__, 2) . '/assets/css/public.css') ? filemtime(dirname(__DIR__, 2) . '/assets/css/public.css') : '2.4.1' ?>">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/footer.css?v=<?= file_exists(dirname(__DIR__, 2) . '/assets/css/footer.css') ? filemtime(dirname(__DIR__, 2) . '/assets/css/footer.css') : '2.4.1' ?>">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/theme.css?v=<?= file_exists(dirname(__DIR__, 2) . '/assets/css/theme.css') ? filemtime(dirname(__DIR__, 2) . '/assets/css/theme.css') : '2.4.1' ?>">
   
   <!-- Global Theme Toggle (Head load to avoid FOUC) -->
   <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>

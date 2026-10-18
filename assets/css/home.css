@@ -29,90 +29,53 @@ body.home-page {
 }
 
 /* ── Dark Theme Scoped Overrides for Home Page ──────────────── */
-:root[data-theme="dark"] body.home-page,
 html[data-theme="dark"] body.home-page,
-html.dark-mode body.home-page,
-body.home-page.dark-mode {
+html.dark-mode body.home-page {
   --home-navy:       #f8fafc;
   --home-navy-light: #cbd5e1;
   --home-text-muted: #94a3b8;
-  --home-bg-warm:    #0B0F19;
-  --home-bg-white:   #111827;
+  --home-bg-warm:    #090d16;
+  --home-bg-white:   #131b2e;
   --home-primary:    #3b82f6;
   --home-primary-h:  #60a5fa;
-  --home-accent:     #F59E0B;
-  --home-accent-fill:rgba(245, 158, 11, 0.2);
-  --home-border:     rgba(255, 255, 255, 0.08);
-  --home-border-subtle: rgba(255, 255, 255, 0.05);
+  --home-accent:     #fbbf24;
+  --home-accent-fill:rgba(217, 119, 6, 0.2);
+  --home-border:     #1e293b;
+  --home-border-subtle: rgba(30, 41, 59, 0.8);
 }
 
-html[data-theme="dark"] .hero-pill,
-body.dark-mode .hero-pill {
+html[data-theme="dark"] .hero-pill {
   background: rgba(245, 158, 11, 0.15) !important;
   color: #fbbf24 !important;
   border: 1px solid rgba(251, 191, 36, 0.35);
 }
 
-html[data-theme="dark"] .navbar-public,
-body.dark-mode .navbar-public {
-  background: rgba(17, 24, 39, 0.95);
-  border-bottom-color: rgba(255, 255, 255, 0.08);
+html[data-theme="dark"] .navbar-public {
+  background: rgba(19, 27, 46, 0.95);
+  border-bottom-color: var(--home-border);
 }
-html[data-theme="dark"] .hero-split-section,
-body.dark-mode .hero-split-section {
-  background-color: var(--home-bg-warm, #0B0F19);
+html[data-theme="dark"] .hero-split-section {
+  background-color: var(--home-bg-warm);
 }
-html[data-theme="dark"] .hero-image-wrapper,
-body.dark-mode .hero-image-wrapper {
-  background: var(--home-bg-white, #111827);
-  border-color: rgba(255, 255, 255, 0.08);
+html[data-theme="dark"] .hero-image-wrapper {
+  background: var(--home-bg-white);
+  border-color: var(--home-border);
 }
-html[data-theme="dark"] .hero-image-wrapper img,
-body.dark-mode .hero-image-wrapper img {
-  background: var(--home-bg-white, #111827);
+html[data-theme="dark"] .hero-image-wrapper img {
+  background: var(--home-bg-white);
 }
-
-/* Override Bootstrap bg-light on home sections */
-html[data-theme="dark"] #search.home-section,
-html[data-theme="dark"] #about.home-section,
-html[data-theme="dark"] .home-section.bg-light,
-body.dark-mode #search.home-section,
-body.dark-mode #about.home-section,
-body.dark-mode .home-section.bg-light {
-  background-color: var(--home-bg-warm, #0B0F19) !important;
-}
-
 html[data-theme="dark"] .booking-search-card,
 html[data-theme="dark"] .pnr-search-box,
 html[data-theme="dark"] .ticket-receipt-card,
 html[data-theme="dark"] .feature-card,
 html[data-theme="dark"] .contact-form-card,
-html[data-theme="dark"] .popular-route-card,
-body.dark-mode .booking-search-card,
-body.dark-mode .pnr-search-box,
-body.dark-mode .ticket-receipt-card,
-body.dark-mode .feature-card,
-body.dark-mode .contact-form-card,
-body.dark-mode .popular-route-card {
-  background-color: var(--home-bg-white, #111827) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.14) !important;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5) !important;
+html[data-theme="dark"] .public-footer {
+  background-color: var(--home-bg-white);
+  border-color: var(--home-border);
 }
-
-html[data-theme="dark"] .booking-search-card .form-control,
-html[data-theme="dark"] .pnr-search-box .form-control,
-body.dark-mode .booking-search-card .form-control,
-body.dark-mode .pnr-search-box .form-control {
-  background-color: #090D16 !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  color: #F8FAFC !important;
-}
-
-html[data-theme="dark"] .feature-svg-icon,
-body.dark-mode .feature-svg-icon {
+html[data-theme="dark"] .feature-svg-icon {
   background-color: #1e293b;
-  color: #3b82f6;
+  color: var(--home-primary);
 }
 
 

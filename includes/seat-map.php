@@ -47,11 +47,9 @@ function render_seat_map(array $layout, array $booked, array $meta = []): void {
                 'Pending'   => 'Pending Hold',
                 default     => 'Available',
             };
-            $is_ladies = (stripos($s_type, 'lady') !== false || stripos($s_type, 'female') !== false || $s_type === 'L');
-            $admin_seat_class = 'seat ' . ($seat_status === 'available' ? 'available' : 'booked') . ($is_ladies ? ' ladies' : '');
             ?>
-            <div class="seat-box <?= $status_class ?> <?= $admin_seat_class ?>" data-seat="<?= $s_no ?>" data-status="<?= $seat_status ?>">
-                <div class="seat-label <?= $admin_seat_class ?>" title="Seat <?= $s_no ?> (<?= e($s_type) ?> Seat - <?= $status_label ?>)"
+            <div class="seat-box <?= $status_class ?>" data-seat="<?= $s_no ?>" data-status="<?= $seat_status ?>">
+                <div class="seat-label" title="Seat <?= $s_no ?> (<?= e($s_type) ?> Seat - <?= $status_label ?>)"
                      role="img" aria-label="Seat <?= $s_no ?>, <?= e($s_type) ?>, <?= $status_label ?>" tabindex="0">
                     <!-- Real Headrest Pillow -->
                     <span class="seat-headrest" aria-hidden="true"></span>
@@ -72,17 +70,15 @@ function render_seat_map(array $layout, array $booked, array $meta = []): void {
         } else {
             $is_bk = isset($booked[$s_no]);
             $is_selected = ($s_no === $preselected && !$is_bk);
-            $is_ladies = (stripos($s_type, 'lady') !== false || stripos($s_type, 'female') !== false || $s_type === 'L');
-            $aria_state = $is_bk ? 'booked' : ($is_selected ? 'selected' : 'available');
-            $seat_state_class = 'seat ' . ($is_bk ? 'booked' : 'available') . ($is_selected ? ' selected' : '') . ($is_ladies ? ' ladies' : '');
+            $aria_state = $is_bk ? 'booked' : 'available';
             ?>
-            <div class="seat-box <?= $seat_state_class ?>">
+            <div class="seat-box">
                 <input type="radio" name="seat" id="seat-<?= $s_no ?>" value="<?= $s_no ?>" class="seat-radio"
                     data-seat-type="<?= e($s_type) ?>"
                     aria-label="Seat <?= $s_no ?>, <?= e($s_type) ?>, <?= $aria_state ?>"
                     <?= $is_bk ? 'disabled' : 'required' ?>
                     <?= $is_selected ? 'checked' : '' ?>>
-                <label for="seat-<?= $s_no ?>" class="seat-label <?= $seat_state_class ?>" title="Seat <?= $s_no ?> (<?= e($s_type) ?> Seat - <?= ucfirst($aria_state) ?>)">
+                <label for="seat-<?= $s_no ?>" class="seat-label" title="Seat <?= $s_no ?> (<?= e($s_type) ?> Seat - <?= ucfirst($aria_state) ?>)">
                     <!-- Real Headrest Pillow -->
                     <span class="seat-headrest" aria-hidden="true"></span>
 

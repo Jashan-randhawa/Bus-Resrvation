@@ -212,47 +212,27 @@ body.dark-mode {
 }
 
 /* Dark mode bootstrap & surface depth tweaks */
-:root[data-theme="dark"] body,
-html[data-theme="dark"] body,
-body.dark-mode {
+html[data-theme="dark"] body {
   background-color: var(--bg-base, #0B0F19);
   color: var(--text-primary, #F8FAFC);
 }
-:root[data-theme="dark"] .bg-light,
-:root[data-theme="dark"] .bg-white,
 html[data-theme="dark"] .bg-light,
-html[data-theme="dark"] .bg-white,
-body.dark-mode .bg-light,
-body.dark-mode .bg-white {
+html[data-theme="dark"] .bg-white {
   background-color: var(--bg-surface, #111827) !important;
 }
-:root[data-theme="dark"] .text-dark,
-html[data-theme="dark"] .text-dark,
-body.dark-mode .text-dark {
+html[data-theme="dark"] .text-dark {
   color: var(--text-primary, #F8FAFC) !important;
 }
-:root[data-theme="dark"] .text-muted,
-html[data-theme="dark"] .text-muted,
-body.dark-mode .text-muted {
+html[data-theme="dark"] .text-muted {
   color: var(--text-secondary, #94A3B8) !important;
 }
 
 /* Top-Edge Specular Highlights & Elevated Cards */
-:root[data-theme="dark"] .card,
-:root[data-theme="dark"] .bus-card,
-:root[data-theme="dark"] .admin-panel-card,
-:root[data-theme="dark"] .data-table-wrapper,
-:root[data-theme="dark"] .table-card,
 html[data-theme="dark"] .card,
 html[data-theme="dark"] .bus-card,
 html[data-theme="dark"] .admin-panel-card,
 html[data-theme="dark"] .data-table-wrapper,
-html[data-theme="dark"] .table-card,
-body.dark-mode .card,
-body.dark-mode .bus-card,
-body.dark-mode .admin-panel-card,
-body.dark-mode .data-table-wrapper,
-body.dark-mode .table-card {
+html[data-theme="dark"] .table-card {
   background: var(--bg-surface, #111827);
   border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
   border-top: 1px solid rgba(255, 255, 255, 0.14); /* Top specular highlight */
@@ -261,9 +241,7 @@ body.dark-mode .table-card {
 }
 
 /* Modals (Tier 2 Elevation) */
-:root[data-theme="dark"] .modal-content,
-html[data-theme="dark"] .modal-content,
-body.dark-mode .modal-content {
+html[data-theme="dark"] .modal-content {
   background-color: var(--bg-elevated, #1E293B);
   color: var(--text-primary, #F8FAFC);
   border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
@@ -271,31 +249,17 @@ body.dark-mode .modal-content {
   box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7);
   border-radius: 16px;
 }
-:root[data-theme="dark"] .modal-header,
-:root[data-theme="dark"] .modal-footer,
 html[data-theme="dark"] .modal-header,
-html[data-theme="dark"] .modal-footer,
-body.dark-mode .modal-header,
-body.dark-mode .modal-footer {
+html[data-theme="dark"] .modal-footer {
   border-color: var(--border-subtle, rgba(255, 255, 255, 0.08));
 }
 
 /* Recessed Form Controls & Date/Time Pickers (Section 4) */
-:root[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
-:root[data-theme="dark"] select,
-:root[data-theme="dark"] textarea,
-:root[data-theme="dark"] .form-control,
-:root[data-theme="dark"] .custom-select,
 html[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
 html[data-theme="dark"] select,
 html[data-theme="dark"] textarea,
 html[data-theme="dark"] .form-control,
-html[data-theme="dark"] .custom-select,
-body.dark-mode input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
-body.dark-mode select,
-body.dark-mode textarea,
-body.dark-mode .form-control,
-body.dark-mode .custom-select {
+html[data-theme="dark"] .custom-select {
   background-color: #090D16 !important;
   border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08)) !important;
   color: var(--text-primary, #F8FAFC) !important;
