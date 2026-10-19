@@ -454,7 +454,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     </div>
 
     <!-- Mobile Stacked Route Cards (<768px for touch friendliness and 0 horizontal overflow) -->
-    <div class="d-md-none p-3">
+    <div class="d-md-none">
         <?php if (empty($routes)): ?>
             <div class="empty-state py-5">
                 <div class="empty-icon">🗺️</div>
@@ -469,8 +469,8 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                 $bus_num = (string)($row['busno'] ?? '');
                 $dep_time = (string)($row['time'] ?? '');
                 ?>
-                <div class="route-card-mobile p-3 mb-3">
-                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                <div class="route-card-mobile <?= $is_archived ? 'route-archived' : '' ?> p-3">
+                    <div class="route-card-header">
                         <span class="small font-weight-bold text-muted">Schedule #<?= e($rid) ?></span>
                         <?php if ($is_archived): ?>
                             <span class="badge badge-secondary px-2 py-1">Archived</span>
@@ -479,8 +479,8 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         <?php endif; ?>
                     </div>
 
-                    <div class="mb-3">
-                        <div class="h6 font-weight-bold text-dark mb-0 d-flex align-items-center flex-wrap">
+                    <div class="text-center py-1 mb-3">
+                        <div class="h5 font-weight-bold text-dark text-uppercase mb-0 tracking-wide">
                             <span><?= e($row['city1'] ?? '') ?></span>
                             <span class="text-primary mx-2 font-weight-bold">&rarr;</span>
                             <span><?= e($row['city2'] ?? '') ?></span>
@@ -502,19 +502,31 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         </div>
                     </div>
 
-                    <div class="d-flex flex-wrap gap-2 pt-2 border-top">
+                    <div class="route-card-actions pt-2 border-top">
                         <?php if (!$is_archived && can_write()): ?>
-                            <a href="<?= BASE_URL ?>/admin/edit/edit-route.php?id=<?= $rid ?>" class="btn btn-outline-primary btn-sm flex-fill font-weight-bold d-inline-flex align-items-center justify-content-center mr-1" style="min-height: 44px;">
+                            <a href="<?= BASE_URL ?>/admin/edit/edit-route.php?id=<?= $rid ?>" class="btn btn-outline-primary btn-sm font-weight-bold d-inline-flex align-items-center justify-content-center" style="min-height: 44px;">
                                 ✏️ Edit
                             </a>
                         <?php endif; ?>
-                        <a href="<?= BASE_URL ?>/admin/manifest.php?bus=<?= urlencode($bus_num) ?>&time=<?= urlencode($dep_time) ?>" class="btn btn-outline-info btn-sm flex-fill font-weight-bold d-inline-flex align-items-center justify-content-center mr-1" style="min-height: 44px;">
+                        <a href="<?= BASE_URL ?>/admin/manifest.php?bus=<?= urlencode($bus_num) ?>&time=<?= urlencode($dep_time) ?>" class="btn btn-outline-info btn-sm font-weight-bold d-inline-flex align-items-center justify-content-center" style="min-height: 44px;">
                             📋 Manifest
                         </a>
-                        <?php if (can_write()): ?>
-                            <div class="flex-fill">
-                                <?= render_crud_action_buttons($rid, BASE_URL . "/admin/edit/edit-route.php?id=" . $rid, $is_archived, 'delete_route', 'restore_route', 'route schedule') ?>
-                            </div>
+                        <?php if ($is_archived && is_super_admin()): ?>
+                            <form method="post" action="" onsubmit="return confirm('Restore this route schedule to active status?');">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="restore_id" value="<?= e($rid) ?>">
+                                <button type="submit" name="restore_route" class="btn btn-outline-success btn-sm font-weight-bold d-inline-flex align-items-center justify-content-center" style="min-height: 44px;">
+                                    ♻️ Restore
+                                </button>
+                            </form>
+                        <?php elseif (!$is_archived && is_super_admin()): ?>
+                            <form method="post" action="" onsubmit="return confirm('Archive this route schedule? It can be restored later from the archive tab.');">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="delete_id" value="<?= e($rid) ?>">
+                                <button type="submit" name="delete_route" class="btn btn-outline-danger btn-sm font-weight-bold d-inline-flex align-items-center justify-content-center" style="min-height: 44px;">
+                                    🗑️ Archive
+                                </button>
+                            </form>
                         <?php endif; ?>
                     </div>
                 </div>

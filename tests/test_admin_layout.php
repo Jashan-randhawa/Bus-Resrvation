@@ -201,6 +201,20 @@ assert_layout("admin.css defines amber commercial colored borders and left accen
     str_contains($admin_css, 'html[data-theme="dark"] .buses-table tr')
 );
 
+$routes_page = file_get_contents(__DIR__ . '/../admin/routes.php');
+assert_layout("admin/routes.php outputs .route-card-mobile with .route-card-header and .route-card-actions",
+    str_contains($routes_page, 'class="route-card-mobile') &&
+    str_contains($routes_page, 'class="route-card-header"') &&
+    str_contains($routes_page, 'class="route-card-actions')
+);
+
+assert_layout("admin.css defines emerald colored borders, 5px left accent, and 24px spacing for route-card-mobile",
+    str_contains($admin_css, '.route-card-mobile {') &&
+    str_contains($admin_css, 'border-left: 5px solid #10b981 !important;') &&
+    str_contains($admin_css, 'margin-bottom: 24px !important;') &&
+    str_contains($admin_css, 'html[data-theme="dark"] .route-card-mobile')
+);
+
 // -------------------------------------------------------------
 // Suite 4: Table Cell Data-Label Consistency (F9)
 // -------------------------------------------------------------
