@@ -619,8 +619,8 @@ if (!empty($overbooked_deps)) {
             'priority_rank' => 1,
             'icon' => 'icon-shield',
             'title' => 'Overbooked Trip: ' . $od['busno'] . ' (' . $od['formatted_time'] . ')',
-            'desc' => 'Reserved seats (' . $od['booked'] . ') exceed vehicle capacity (' . $od['cap'] . ') on ' . $od['city1'] . ' &rarr; ' . $od['city2'] . '.',
-            'action_label' => 'Inspect Manifest &rarr;',
+            'desc' => 'Reserved seats (' . $od['booked'] . ') exceed vehicle capacity (' . $od['cap'] . ') on ' . $od['city1'] . ' → ' . $od['city2'] . '.',
+            'action_label' => 'Inspect Manifest →',
             'action_url' => BASE_URL . '/admin/manifest.php?bus=' . urlencode($od['busno']) . '&date=' . urlencode($today_date) . '&time=' . urlencode($od['raw_time']),
         ];
     }
@@ -638,7 +638,7 @@ if ($concurrency_diag['status'] !== 'OK') {
         'icon' => 'icon-shield',
         'title' => 'Seat-Lock Concurrency Warning',
         'desc' => !empty($diag_errors) ? e(implode('; ', array_slice($diag_errors, 0, 2))) : 'Index verification required.',
-        'action_label' => $is_super_admin ? 'Run Diagnostics &rarr;' : 'Notify Administrator',
+        'action_label' => $is_super_admin ? 'Run Diagnostics →' : 'Notify Administrator',
         'action_url' => $is_super_admin ? BASE_URL . '/admin/diagnostics.php' : '#',
     ];
 }
@@ -654,8 +654,8 @@ if (!empty($boarding_deps)) {
         'priority_rank' => 2,
         'icon' => 'icon-clock',
         'title' => count($boarding_deps) . ' Departure(s) Boarding Soon',
-        'desc' => 'Next: ' . $first_boarding['city1'] . ' &rarr; ' . $first_boarding['city2'] . ' (' . $first_boarding['busno'] . ') at ' . $first_boarding['formatted_time'] . '.',
-        'action_label' => 'View Manifest &rarr;',
+        'desc' => 'Next: ' . $first_boarding['city1'] . ' → ' . $first_boarding['city2'] . ' (' . $first_boarding['busno'] . ') at ' . $first_boarding['formatted_time'] . '.',
+        'action_label' => 'View Manifest →',
         'action_url' => BASE_URL . '/admin/manifest.php?bus=' . urlencode($first_boarding['busno']) . '&date=' . urlencode($today_date) . '&time=' . urlencode($first_boarding['raw_time']),
     ];
 }
@@ -670,7 +670,7 @@ if ($new_queries_count > 0) {
         'icon' => 'icon-mail',
         'title' => $new_queries_count . ' Unanswered Customer ' . ($new_queries_count === 1 ? 'Inquiry' : 'Inquiries'),
         'desc' => 'Customers waiting for administrative response in support inbox.',
-        'action_label' => 'Open Inbox &rarr;',
+        'action_label' => 'Open Inbox →',
         'action_url' => BASE_URL . '/admin/queries.php?filter=new',
     ];
 }
@@ -686,8 +686,8 @@ if (!empty($low_occ_deps)) {
         'priority_rank' => 3,
         'icon' => 'icon-bus',
         'title' => count($low_occ_deps) . ' Low-Occupancy Departure(s) Today',
-        'desc' => 'E.g. ' . $first_low['city1'] . ' &rarr; ' . $first_low['city2'] . ' (' . $first_low['formatted_time'] . ') at ' . $first_low['pct'] . '% capacity.',
-        'action_label' => 'Review Seats &rarr;',
+        'desc' => 'E.g. ' . $first_low['city1'] . ' → ' . $first_low['city2'] . ' (' . $first_low['formatted_time'] . ') at ' . $first_low['pct'] . '% capacity.',
+        'action_label' => 'Review Seats →',
         'action_url' => BASE_URL . '/admin/seats.php?bus=' . urlencode($first_low['busno']) . '&date=' . urlencode($today_date) . '&time=' . urlencode($first_low['raw_time']),
     ];
 }
@@ -1588,12 +1588,12 @@ usort($attention_items, static function($a, $b) {
                                     </span>
                                     <span class="attention-title"><?= e($item['title']) ?></span>
                                 </div>
-                                <div class="attention-desc"><?= e($item['desc']) ?></div>
+                                <div class="attention-desc"><?= e(str_replace('&rarr;', '→', (string)$item['desc'])) ?></div>
                             </div>
                             <?php if (!empty($item['action_url'])): ?>
                                 <div class="attention-action-wrap">
                                     <a href="<?= e($item['action_url']) ?>" class="attention-action-link">
-                                        <?= e($item['action_label']) ?>
+                                        <?= e(str_replace('&rarr;', '→', (string)$item['action_label'])) ?>
                                     </a>
                                 </div>
                             <?php endif; ?>

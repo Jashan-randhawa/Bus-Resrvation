@@ -76,6 +76,12 @@ assert_test("dashboard.php renders Attention-Needed operational panel",
 assert_test("dashboard.php includes automated seat-lock concurrency integrity check", 
     str_contains($dash_content, 'booking_concurrency_status') && 
     str_contains($dash_content, 'concurrency_diag'));
+assert_test("dashboard.php uses Unicode arrow instead of double-escaped &rarr; in attention items",
+    str_contains($dash_content, "'action_label' => 'Open Inbox →'") &&
+    !str_contains($dash_content, "'action_label' => 'Open Inbox &rarr;'"));
+assert_test("dashboard.php normalizes attention action labels and descriptions before escaping",
+    str_contains($dash_content, "e(str_replace('&rarr;', '→', (string)\$item['action_label']))") &&
+    str_contains($dash_content, "e(str_replace('&rarr;', '→', (string)\$item['desc']))"));
 
 // 7. Route Intelligence: Dual Volume & Revenue Ranking
 assert_test("dashboard.php renders Corridor Volume and Revenue tab switcher", 
