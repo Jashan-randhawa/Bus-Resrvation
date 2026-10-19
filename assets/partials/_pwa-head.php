@@ -30,7 +30,9 @@ $root_prefix = $is_admin_route ? '../' : './';
 <!-- Mobile App Ergonomics, Seat Grid Scroll & Ticket Print Fixes -->
 <style>
 #pwa-install-banner {
-  display: none;
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
   position: fixed;
   bottom: 20px;
   right: 20px;
@@ -144,6 +146,7 @@ $root_prefix = $is_admin_route ? '../' : './';
       btn.id = 'pwa-install-banner';
       btn.type = 'button';
       btn.setAttribute('aria-label', 'Install Bus Reservation App');
+      btn.style.display = 'none';
       btn.innerHTML = 'Install Bus App';
       document.body.appendChild(btn);
 
@@ -168,7 +171,7 @@ $root_prefix = $is_admin_route ? '../' : './';
 
     function showInstallTriggers() {
       const btn = ensureInstallButton();
-      if (btn) btn.style.display = 'block';
+      if (btn) btn.style.display = 'none';
       const footerBtn = document.getElementById('installPwaBtn');
       if (footerBtn) footerBtn.style.display = 'inline-flex';
     }
