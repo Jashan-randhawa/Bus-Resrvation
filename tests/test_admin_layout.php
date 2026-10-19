@@ -146,6 +146,11 @@ assert_layout("admin.css defines dark mode overrides for .bookings-table",
     str_contains($admin_css, 'html[data-theme="dark"] .bookings-table tr')
 );
 
+assert_layout("admin.css groups PNR label and code with justify-content flex-start without gap blowout",
+    str_contains($admin_css, '.bookings-table td:nth-child(2)') &&
+    str_contains($admin_css, 'justify-content: flex-start !important;')
+);
+
 // -------------------------------------------------------------
 // Suite 4: Table Cell Data-Label Consistency (F9)
 // -------------------------------------------------------------
