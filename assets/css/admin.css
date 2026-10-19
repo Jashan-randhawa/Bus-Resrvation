@@ -857,6 +857,56 @@ html[data-theme="dark"] .table-responsive .bg-light {
 .th-checkbox { width: 40px; }
 
 /* ==========================================================================
+   Desktop Table Layout Integrity for Card Tables (> 768px)
+   Guarantees standard table display for tables that convert to cards on mobile
+   ========================================================================== */
+@media (min-width: 769px) {
+  .buses-table,
+  .bookings-table,
+  .queries-table,
+  .customers-table {
+    display: table !important;
+    width: 100% !important;
+    table-layout: auto !important;
+  }
+  .buses-table thead,
+  .bookings-table thead,
+  .queries-table thead,
+  .customers-table thead {
+    display: table-header-group !important;
+  }
+  .buses-table thead tr,
+  .bookings-table thead tr,
+  .queries-table thead tr,
+  .customers-table thead tr {
+    display: table-row !important;
+  }
+  .buses-table tbody,
+  .bookings-table tbody,
+  .queries-table tbody,
+  .customers-table tbody {
+    display: table-row-group !important;
+  }
+  .buses-table tbody tr,
+  .bookings-table tbody tr,
+  .queries-table tbody tr,
+  .customers-table tbody tr {
+    display: table-row !important;
+  }
+  .buses-table th,
+  .buses-table td,
+  .bookings-table th,
+  .bookings-table td,
+  .queries-table th,
+  .queries-table td,
+  .customers-table th,
+  .customers-table td {
+    display: table-cell !important;
+    vertical-align: middle !important;
+  }
+}
+
+/* ==========================================================================
    Option 2: Modern "Boarding Pass / Ticket" Architecture for Admin Bookings Table
    Target Breakpoint: <= 768px (Mobile View)
    ========================================================================== */

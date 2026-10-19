@@ -201,6 +201,19 @@ assert_layout("admin.css defines amber commercial colored borders and left accen
     str_contains($admin_css, 'html[data-theme="dark"] .buses-table tr')
 );
 
+assert_layout("admin.css defines desktop table layout integrity for buses-table and card tables",
+    str_contains($admin_css, '@media (min-width: 769px)') &&
+    str_contains($admin_css, '.buses-table') &&
+    str_contains($admin_css, 'display: table !important') &&
+    str_contains($admin_css, 'display: table-row !important') &&
+    str_contains($admin_css, 'display: table-cell !important')
+);
+
+assert_layout("admin/buses.php fleet rows do not collide with seat map .bus-row",
+    !str_contains($buses_page, 'class="bus-row') &&
+    str_contains($buses_page, 'fleet-bus-row')
+);
+
 $routes_page = file_get_contents(__DIR__ . '/../admin/routes.php');
 assert_layout("admin/routes.php outputs .route-card-mobile with .route-card-header and .route-card-actions",
     str_contains($routes_page, 'class="route-card-mobile') &&

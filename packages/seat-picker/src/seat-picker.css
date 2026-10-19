@@ -175,7 +175,8 @@
   gap: 12px;
 }
 
-.bus-row {
+.bus-seats-grid .bus-row,
+div.bus-row {
   display: grid;
   justify-content: center;
   align-items: center;

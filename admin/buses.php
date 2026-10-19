@@ -170,7 +170,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         $lyt = (string)($row['layout'] ?? '2+2');
                         $is_archived = !empty($row['archived_at']);
                         ?>
-                        <tr class="bus-row <?= $is_archived ? 'bus-archived text-muted bg-light' : '' ?>" data-bus-id="<?= e($bid) ?>">
+                        <tr class="fleet-bus-row <?= $is_archived ? 'bus-archived text-muted bg-light' : '' ?>" data-bus-id="<?= e($bid) ?>">
                             <td data-label="ID"><span class="text-muted small">#<?= e($bid) ?></span></td>
                             <td data-label="Bus Number">
                                 <strong class="text-dark" style="font-size: 0.95rem;"><?= e($row['bus_number'] ?? '') ?></strong>
