@@ -128,6 +128,24 @@ assert_layout("admin.css styles mobile sticky bulk action bar with safe-area pad
     str_contains($admin_css, 'safe-area-inset-bottom')
 );
 
+$bookings_page = file_get_contents(__DIR__ . '/../admin/bookings.php');
+assert_layout("admin/bookings.php specifies .bookings-table on reservation table",
+    str_contains($bookings_page, 'class="table table-hover table-stack bookings-table mb-0"')
+);
+
+assert_layout("admin.css implements Option 2 Boarding Pass CSS Grid mobile layout",
+    str_contains($admin_css, '.bookings-table tr') &&
+    str_contains($admin_css, 'grid-template-areas:') &&
+    str_contains($admin_css, '"select pnr status"') &&
+    str_contains($admin_css, '"route route route"') &&
+    str_contains($admin_css, '"passenger passenger seat"') &&
+    str_contains($admin_css, 'border-bottom: 2px dashed')
+);
+
+assert_layout("admin.css defines dark mode overrides for .bookings-table",
+    str_contains($admin_css, 'html[data-theme="dark"] .bookings-table tr')
+);
+
 // -------------------------------------------------------------
 // Suite 4: Table Cell Data-Label Consistency (F9)
 // -------------------------------------------------------------

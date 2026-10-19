@@ -512,7 +512,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <span class="record-count"><?= $pagination['total_records'] ?> record(s)</span>
     </div>
     <div class="table-responsive">
-        <table class="table table-hover table-stack mb-0">
+        <table class="table table-hover table-stack bookings-table mb-0">
             <caption class="sr-only">Passenger reservations, ticket statuses, and journey details</caption>
             <thead class="thead-light">
                 <tr>

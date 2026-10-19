@@ -851,6 +851,276 @@ html[data-theme="dark"] .table-responsive .bg-light {
 .th-id-md { width: 80px; }
 .th-checkbox { width: 40px; }
 
+/* ==========================================================================
+   Option 2: Modern "Boarding Pass / Ticket" Architecture for Admin Bookings Table
+   Target Breakpoint: <= 768px (Mobile View)
+   ========================================================================== */
+@media (max-width: 768px) {
+  .bookings-table thead {
+    display: none;
+  }
+  .bookings-table tbody,
+  .bookings-table td {
+    display: block;
+    border: none;
+    padding: 0;
+  }
+  .bookings-table tr {
+    display: grid !important;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "select pnr status"
+      "route route route"
+      "bus datetime datetime"
+      "passenger passenger seat"
+      "contact contact seat"
+      "fare fare actions";
+    background: var(--c-surface, #ffffff);
+    border: 1px solid var(--c-border, #cbd5e1);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    padding: 0 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+
+  .bookings-table tr:has(td[colspan]) {
+    display: block !important;
+  }
+  .bookings-table td[colspan] {
+    grid-column: 1 / -1;
+    display: block !important;
+  }
+
+  /* Hide old stacked uppercase pseudo-labels except on Fare */
+  .bookings-table td::before {
+    display: none !important;
+  }
+
+  /* Zone 1: Ticket Header (Select + PNR + Status) */
+  .bookings-table td:nth-child(1) {
+    grid-area: select;
+    background: var(--c-bg-subtle, #f8fafc);
+    padding: 10px 6px 10px 12px;
+    border-bottom: 1px solid var(--c-border-subtle, #e2e8f0);
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  .bookings-table td:nth-child(2) {
+    grid-area: pnr;
+    background: var(--c-bg-subtle, #f8fafc);
+    padding: 10px 6px;
+    border-bottom: 1px solid var(--c-border-subtle, #e2e8f0);
+    text-align: left;
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+  }
+  .bookings-table td:nth-child(2)::before {
+    content: "PNR: ";
+    display: inline !important;
+    font-weight: 700;
+    color: var(--c-text-muted, #64748b);
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+    margin-right: 4px;
+  }
+  .bookings-table td:nth-child(2) code {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--c-primary, #2563eb);
+    background: rgba(37, 99, 235, 0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .bookings-table td:nth-child(9) {
+    grid-area: status;
+    background: var(--c-bg-subtle, #f8fafc);
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--c-border-subtle, #e2e8f0);
+    text-align: right;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  /* Zone 2A: Route Hero */
+  .bookings-table td:nth-child(6) {
+    grid-area: route;
+    text-align: center;
+    font-size: 1.15rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 14px 12px 4px;
+    color: var(--c-text, #0f172a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  /* Zone 2B: Journey Meta (Bus + Date/Time) with dashed perforation divider */
+  .bookings-table td:nth-child(3) {
+    grid-area: bus;
+    text-align: left;
+    padding: 4px 12px 12px;
+    font-size: 0.85rem;
+    border-bottom: 2px dashed var(--c-border, #cbd5e1);
+    display: flex;
+    align-items: center;
+    color: var(--c-accent, #0284c7);
+  }
+  .bookings-table td:nth-child(3)::before {
+    content: "🚌 ";
+    display: inline !important;
+    margin-right: 4px;
+  }
+  .bookings-table td:nth-child(7) {
+    grid-area: datetime;
+    text-align: right;
+    padding: 4px 12px 12px;
+    font-size: 0.85rem;
+    border-bottom: 2px dashed var(--c-border, #cbd5e1);
+    color: var(--c-text-muted, #64748b);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    white-space: nowrap;
+  }
+  .bookings-table td:nth-child(7) br {
+    display: none;
+  }
+  .bookings-table td:nth-child(7) small::before {
+    content: " • ";
+    margin: 0 4px;
+  }
+  .bookings-table td:nth-child(7) small {
+    font-size: inherit;
+    color: inherit;
+  }
+
+  /* Zone 3: Passenger Stub */
+  .bookings-table td:nth-child(4) {
+    grid-area: passenger;
+    text-align: left;
+    padding: 12px 12px 2px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--c-text, #0f172a);
+    display: block;
+  }
+  .bookings-table td:nth-child(5) {
+    grid-area: contact;
+    text-align: left;
+    padding: 2px 12px 12px;
+    font-size: 0.875rem;
+    color: var(--c-text-muted, #64748b);
+    display: flex;
+    align-items: center;
+  }
+  .bookings-table td:nth-child(5)::before {
+    content: "📞 ";
+    display: inline !important;
+    font-size: 0.85rem;
+    margin-right: 4px;
+  }
+  .bookings-table td:nth-child(8) {
+    grid-area: seat;
+    text-align: right;
+    align-self: center;
+    padding: 12px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .bookings-table td:nth-child(8) .badge {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+
+  /* Zone 4: Fare & Action Bar */
+  .bookings-table td:nth-child(10) {
+    grid-area: fare;
+    text-align: left;
+    align-self: center;
+    padding: 12px;
+    background: var(--c-bg-subtle, #f8fafc);
+    border-top: 1px solid var(--c-border-subtle, #e2e8f0);
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: var(--c-text, #0f172a);
+    display: flex;
+    align-items: center;
+  }
+  .bookings-table td:nth-child(10)::before {
+    content: "TOTAL FARE: ";
+    display: inline !important;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--c-text-muted, #64748b);
+    letter-spacing: 0.04em;
+    margin-right: 6px;
+  }
+  .bookings-table td:nth-child(11) {
+    grid-area: actions;
+    text-align: right;
+    align-self: center;
+    padding: 12px;
+    background: var(--c-bg-subtle, #f8fafc);
+    border-top: 1px solid var(--c-border-subtle, #e2e8f0);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+  .bookings-table td:nth-child(11) .btn {
+    min-height: 38px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Explicit Dark Mode Overrides for Option 2 Boarding Pass */
+@media (max-width: 768px) {
+  html[data-theme="dark"] .bookings-table tr {
+    background: var(--c-surface, #111827);
+    border-color: var(--c-border, #334155);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  }
+  html[data-theme="dark"] .bookings-table td:nth-child(1),
+  html[data-theme="dark"] .bookings-table td:nth-child(2),
+  html[data-theme="dark"] .bookings-table td:nth-child(9),
+  html[data-theme="dark"] .bookings-table td:nth-child(10),
+  html[data-theme="dark"] .bookings-table td:nth-child(11) {
+    background: #0f172a;
+    border-color: #1e293b;
+  }
+  html[data-theme="dark"] .bookings-table td:nth-child(2) code {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+  }
+  html[data-theme="dark"] .bookings-table td:nth-child(3),
+  html[data-theme="dark"] .bookings-table td:nth-child(7) {
+    border-bottom-color: #334155;
+  }
+  html[data-theme="dark"] .bookings-table td:nth-child(6),
+  html[data-theme="dark"] .bookings-table td:nth-child(4),
+  html[data-theme="dark"] .bookings-table td:nth-child(10) {
+    color: #f8fafc;
+  }
+  html[data-theme="dark"] .bookings-table td:nth-child(5) {
+    color: #94a3b8;
+  }
+}
+
 
 
 /* ==========================================================================
