@@ -556,8 +556,9 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         if ($is_pending) $badge_class = 'warning text-dark';
                         elseif ($is_expired) $badge_class = 'secondary';
                         elseif ($is_cancelled) $badge_class = 'danger';
+                        $status_slug = strtolower($status !== '' ? $status : 'confirmed');
                         ?>
-                        <tr class="<?= ($is_cancelled || $is_expired) ? 'text-muted' : '' ?>">
+                        <tr class="booking-row-<?= e($status_slug) ?> <?= ($is_cancelled || $is_expired) ? 'text-muted' : '' ?>" data-status="<?= e($status_slug) ?>">
                             <td class="text-center" data-label="Select">
                                 <input type="checkbox" name="selected_ids[]" value="<?= e($sno) ?>" form="bulkBookingsForm" class="booking-select-cb" aria-label="Select booking <?= e($display_pnr !== '' ? $display_pnr : ('#' . $sno)) ?>">
                             </td>

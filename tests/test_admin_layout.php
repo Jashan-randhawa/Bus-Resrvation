@@ -167,6 +167,19 @@ assert_layout("admin.css defines 20px card spacing for generic .table-stack rows
     str_contains($admin_css, 'margin-bottom: 20px !important;')
 );
 
+assert_layout("admin.css defines status-coded colored borders and left accents for mobile booking cards",
+    str_contains($admin_css, '.bookings-table tr:has(.badge-success)') &&
+    str_contains($admin_css, 'border-color: #10b981') &&
+    str_contains($admin_css, 'border-left: 5px solid #10b981') &&
+    str_contains($admin_css, 'border-color: #f59e0b') &&
+    str_contains($admin_css, 'border-color: #ef4444')
+);
+
+assert_layout("admin/bookings.php outputs semantic booking-row status class on tr",
+    str_contains($bookings_page, 'booking-row-') &&
+    str_contains($bookings_page, 'data-status=')
+);
+
 // -------------------------------------------------------------
 // Suite 4: Table Cell Data-Label Consistency (F9)
 // -------------------------------------------------------------

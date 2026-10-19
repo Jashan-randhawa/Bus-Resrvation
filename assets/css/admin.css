@@ -903,7 +903,8 @@ html[data-theme="dark"] .table-responsive .bg-light {
       "contact contact seat"
       "fare fare actions" !important;
     background: var(--c-surface, #ffffff);
-    border: 1px solid var(--c-border, #cbd5e1) !important;
+    border: 1.5px solid var(--c-border, #cbd5e1) !important;
+    border-left: 5px solid var(--c-primary, #0284c7) !important;
     border-radius: 12px !important;
     margin-bottom: 24px !important;
     overflow: hidden;
@@ -911,9 +912,32 @@ html[data-theme="dark"] .table-responsive .bg-light {
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
     width: 100% !important;
     box-sizing: border-box !important;
+    transition: border-color var(--transition-fast, 0.15s ease);
   }
   .bookings-table tr:last-child {
     margin-bottom: 8px !important;
+  }
+
+  /* Status-Driven Colored Borders for Option 2 Boarding Pass Cards */
+  .bookings-table tr:has(.badge-success),
+  .bookings-table tr.booking-row-confirmed {
+    border-color: #10b981 !important;
+    border-left: 5px solid #10b981 !important;
+  }
+  .bookings-table tr:has(.badge-warning),
+  .bookings-table tr.booking-row-pending {
+    border-color: #f59e0b !important;
+    border-left: 5px solid #f59e0b !important;
+  }
+  .bookings-table tr:has(.badge-danger),
+  .bookings-table tr.booking-row-cancelled {
+    border-color: #ef4444 !important;
+    border-left: 5px solid #ef4444 !important;
+  }
+  .bookings-table tr:has(.badge-secondary),
+  .bookings-table tr.booking-row-expired {
+    border-color: #94a3b8 !important;
+    border-left: 5px solid #94a3b8 !important;
   }
 
   .bookings-table tr:has(td[colspan]) {
@@ -1176,7 +1200,36 @@ html[data-theme="dark"] .table-responsive .bg-light {
   body.dark-mode .bookings-table tr {
     background: var(--c-surface, #111827) !important;
     border-color: var(--c-border, #334155) !important;
+    border-left: 5px solid var(--c-primary, #0284c7) !important;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  }
+  html[data-theme="dark"] .bookings-table tr:has(.badge-success),
+  html[data-theme="dark"] .bookings-table tr.booking-row-confirmed,
+  body.dark-mode .bookings-table tr:has(.badge-success),
+  body.dark-mode .bookings-table tr.booking-row-confirmed {
+    border-color: rgba(16, 185, 129, 0.55) !important;
+    border-left: 5px solid #10b981 !important;
+  }
+  html[data-theme="dark"] .bookings-table tr:has(.badge-warning),
+  html[data-theme="dark"] .bookings-table tr.booking-row-pending,
+  body.dark-mode .bookings-table tr:has(.badge-warning),
+  body.dark-mode .bookings-table tr.booking-row-pending {
+    border-color: rgba(245, 158, 11, 0.55) !important;
+    border-left: 5px solid #f59e0b !important;
+  }
+  html[data-theme="dark"] .bookings-table tr:has(.badge-danger),
+  html[data-theme="dark"] .bookings-table tr.booking-row-cancelled,
+  body.dark-mode .bookings-table tr:has(.badge-danger),
+  body.dark-mode .bookings-table tr.booking-row-cancelled {
+    border-color: rgba(239, 68, 68, 0.55) !important;
+    border-left: 5px solid #ef4444 !important;
+  }
+  html[data-theme="dark"] .bookings-table tr:has(.badge-secondary),
+  html[data-theme="dark"] .bookings-table tr.booking-row-expired,
+  body.dark-mode .bookings-table tr:has(.badge-secondary),
+  body.dark-mode .bookings-table tr.booking-row-expired {
+    border-color: rgba(148, 163, 184, 0.4) !important;
+    border-left: 5px solid #94a3b8 !important;
   }
   html[data-theme="dark"] .bookings-table td:nth-child(1),
   html[data-theme="dark"] .bookings-table td:nth-child(2),
