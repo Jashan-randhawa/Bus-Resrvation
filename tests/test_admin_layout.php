@@ -216,14 +216,42 @@ assert_layout("admin.css defines emerald colored borders, 5px left accent, and 2
 );
 
 // -------------------------------------------------------------
-// Suite 4: Table Cell Data-Label Consistency (F9)
+// Suite 4: Table Cell Data-Label Consistency & Mobile Queries Card
 // -------------------------------------------------------------
-echo "\n[*] Suite 4: Table Data-Label Consistency\n";
+echo "\n[*] Suite 4: Table Data-Label Consistency & Mobile Queries Card\n";
 
 $queries_content = file_get_contents(__DIR__ . '/../admin/queries.php');
 
 assert_layout("admin/queries.php action column uses data-label='Actions' matching design system",
     str_contains($queries_content, 'data-label="Actions"')
+);
+
+assert_layout("admin/queries.php specifies .queries-table and semantic query-row class",
+    str_contains($queries_content, 'queries-table') &&
+    str_contains($queries_content, 'query-row-') &&
+    str_contains($queries_content, 'data-status=')
+);
+
+assert_layout("admin.css implements Support Ticket mobile grid layout for .queries-table",
+    str_contains($admin_css, '.queries-table tr') &&
+    str_contains($admin_css, 'grid-template-areas:') &&
+    str_contains($admin_css, '"id status"') &&
+    str_contains($admin_css, '"sender sender"') &&
+    str_contains($admin_css, '"message message"') &&
+    str_contains($admin_css, '"actions actions"')
+);
+
+assert_layout("admin.css defines status-coded colored borders, 5px left accent, and 24px spacing for queries-table",
+    str_contains($admin_css, '.queries-table tr.query-row-new') &&
+    str_contains($admin_css, 'border-left: 5px solid #ef4444') &&
+    str_contains($admin_css, 'border-left: 5px solid #10b981') &&
+    str_contains($admin_css, '.queries-table tr {') &&
+    str_contains($admin_css, 'margin-bottom: 24px !important;')
+);
+
+assert_layout("admin.css defines dark mode overrides for .queries-table",
+    str_contains($admin_css, 'html[data-theme="dark"] .queries-table tr') &&
+    str_contains($admin_css, 'html[data-theme="dark"] .queries-table tr.query-row-new')
 );
 
 // -------------------------------------------------------------

@@ -1387,6 +1387,249 @@ html[data-theme="dark"] .table-responsive .bg-light {
     margin-bottom: 4px !important;
     display: block !important;
   }
+
+  /* ==========================================================================
+     Option 2: Executive Support Ticket Card Architecture for Queries Table
+     Target Breakpoint: <= 768px (Mobile View)
+     ========================================================================== */
+  .queries-table {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .queries-table thead {
+    display: none !important;
+  }
+  .queries-table tbody {
+    display: block !important;
+    width: 100% !important;
+  }
+  .queries-table tr {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-areas:
+      "id status"
+      "sender sender"
+      "message message"
+      "date date"
+      "actions actions" !important;
+    background: var(--c-surface, #ffffff);
+    border: 1.5px solid rgba(239, 68, 68, 0.45) !important;
+    border-left: 5px solid #ef4444 !important;
+    border-radius: 12px !important;
+    margin-bottom: 24px !important;
+    overflow: hidden;
+    padding: 0 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+    width: 100% !important;
+    box-sizing: border-box !important;
+    transition: border-color var(--transition-fast, 0.15s ease), box-shadow var(--transition-fast, 0.15s ease);
+  }
+  .queries-table tr:last-child {
+    margin-bottom: 8px !important;
+  }
+
+  /* Status Colors */
+  .queries-table tr.query-row-new,
+  .queries-table tr:has(.badge-danger) {
+    border-color: rgba(239, 68, 68, 0.45) !important;
+    border-left: 5px solid #ef4444 !important;
+  }
+  .queries-table tr.query-row-replied,
+  .queries-table tr:has(.badge-success) {
+    border-color: rgba(16, 185, 129, 0.45) !important;
+    border-left: 5px solid #10b981 !important;
+  }
+  .queries-table tr.query-row-closed,
+  .queries-table tr:has(.badge-secondary) {
+    border-color: #cbd5e1 !important;
+    border-left: 5px solid #94a3b8 !important;
+    opacity: 0.88;
+  }
+
+  .queries-table td {
+    border: none !important;
+    box-sizing: border-box !important;
+    text-align: left !important;
+  }
+
+  /* Shaded Top Header Bar: ID & Status */
+  .queries-table td:nth-child(1) {
+    grid-area: id !important;
+    background: var(--c-bg-subtle, #f8fafc) !important;
+    padding: 10px 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 4px !important;
+    border-bottom: 1px solid var(--c-border-subtle, #e2e8f0) !important;
+  }
+  .queries-table td:nth-child(1)::before {
+    content: "Inquiry " !important;
+    font-weight: 600 !important;
+    color: var(--c-text-muted, #64748b) !important;
+    font-size: 0.85rem !important;
+    display: inline !important;
+    margin-right: 2px !important;
+  }
+  .queries-table td:nth-child(1) span {
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    color: var(--c-text-muted, #64748b) !important;
+  }
+
+  .queries-table td:nth-child(2) {
+    grid-area: status !important;
+    background: var(--c-bg-subtle, #f8fafc) !important;
+    padding: 10px 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    border-bottom: 1px solid var(--c-border-subtle, #e2e8f0) !important;
+  }
+  .queries-table td:nth-child(2)::before {
+    display: none !important;
+  }
+  .queries-table td:nth-child(2) .badge {
+    font-size: 0.725rem !important;
+    padding: 0.35rem 0.65rem !important;
+    border-radius: 9999px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+  }
+
+  /* Sender Block */
+  .queries-table td:nth-child(3) {
+    grid-area: sender !important;
+    padding: 12px 14px 10px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    border-bottom: 1px dashed var(--c-border-subtle, #e2e8f0) !important;
+    text-align: left !important;
+  }
+  .queries-table td:nth-child(3)::before {
+    display: none !important;
+  }
+  .queries-table td:nth-child(3) strong {
+    font-size: 0.95rem;
+    color: var(--c-text, #0f172a);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-align: left !important;
+  }
+  .queries-table td:nth-child(3) strong::before {
+    content: "👤";
+    font-size: 0.9rem;
+  }
+  .queries-table td:nth-child(3) a {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 3px;
+    word-break: break-all;
+    font-size: 0.85rem;
+    text-align: left !important;
+  }
+  .queries-table td:nth-child(3) a::before {
+    content: "✉️";
+    font-size: 0.8rem;
+  }
+
+  /* Subject & Message */
+  .queries-table td:nth-child(4) {
+    grid-area: message !important;
+    padding: 12px 14px 8px !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    display: block !important;
+    text-align: left !important;
+  }
+  .queries-table td:nth-child(4)::before {
+    display: none !important;
+  }
+  .queries-table td:nth-child(4) .query-subject-preview {
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    color: var(--c-text, #0f172a) !important;
+    margin-bottom: 6px !important;
+    text-align: left !important;
+    white-space: normal !important;
+  }
+  .queries-table td:nth-child(4) .query-message-preview {
+    background: var(--c-bg-subtle, #f8fafc);
+    border: 1px solid var(--c-border-subtle, #e2e8f0);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--c-text-muted, #475569) !important;
+    line-height: 1.5;
+    margin-bottom: 6px;
+    font-size: 0.875rem;
+    text-align: left !important;
+  }
+  .queries-table td:nth-child(4) .btn-view-query {
+    font-size: 0.85rem !important;
+    display: inline-flex;
+    align-items: center;
+    font-weight: 600 !important;
+    text-align: left !important;
+  }
+
+  /* Date Received */
+  .queries-table td:nth-child(5) {
+    grid-area: date !important;
+    padding: 4px 14px 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    font-size: 0.8rem !important;
+    color: var(--c-text-muted, #64748b) !important;
+    text-align: left !important;
+  }
+  .queries-table td:nth-child(5)::before {
+    content: "🕒 Received: " !important;
+    font-weight: 600;
+    margin-right: 4px;
+    display: inline !important;
+  }
+
+  /* Actions Bar */
+  .queries-table td:nth-child(6) {
+    grid-area: actions !important;
+    padding: 10px 14px !important;
+    border-top: 1px solid var(--c-border-subtle, #e2e8f0) !important;
+    background: var(--c-bg-subtle, #f8fafc) !important;
+    display: flex !important;
+    gap: 8px !important;
+    justify-content: stretch !important;
+    text-align: left !important;
+  }
+  .queries-table td:nth-child(6)::before {
+    display: none !important;
+  }
+  .queries-table td:nth-child(6) > * {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+  .queries-table td:nth-child(6) .btn {
+    width: 100% !important;
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 600 !important;
+    font-size: 0.825rem !important;
+    white-space: nowrap !important;
+  }
+  .queries-table td:nth-child(6) form {
+    display: block !important;
+  }
 }
 
 /* Explicit Dark Mode Overrides for Option 2 Boarding Pass */
@@ -1542,6 +1785,59 @@ html[data-theme="dark"] .table-responsive .bg-light {
   }
   html[data-theme="dark"] .buses-table td:nth-child(5) .btn,
   body.dark-mode .buses-table td:nth-child(5) .btn {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+  }
+
+  /* Dark Mode Overrides for Queries Table Mobile Cards */
+  html[data-theme="dark"] .queries-table tr,
+  body.dark-mode .queries-table tr {
+    background: var(--c-surface, #111827) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  }
+  html[data-theme="dark"] .queries-table tr.query-row-new,
+  html[data-theme="dark"] .queries-table tr:has(.badge-danger) {
+    border-color: rgba(239, 68, 68, 0.55) !important;
+    border-left: 5px solid #ef4444 !important;
+  }
+  html[data-theme="dark"] .queries-table tr.query-row-replied,
+  html[data-theme="dark"] .queries-table tr:has(.badge-success) {
+    border-color: rgba(16, 185, 129, 0.55) !important;
+    border-left: 5px solid #10b981 !important;
+  }
+  html[data-theme="dark"] .queries-table tr.query-row-closed,
+  html[data-theme="dark"] .queries-table tr:has(.badge-secondary) {
+    border-color: rgba(148, 163, 184, 0.3) !important;
+    border-left: 5px solid #64748b !important;
+  }
+  html[data-theme="dark"] .queries-table td:nth-child(1),
+  html[data-theme="dark"] .queries-table td:nth-child(2),
+  html[data-theme="dark"] .queries-table td:nth-child(6),
+  body.dark-mode .queries-table td:nth-child(1),
+  body.dark-mode .queries-table td:nth-child(2),
+  body.dark-mode .queries-table td:nth-child(6) {
+    background: #0f172a !important;
+    border-color: #1e293b !important;
+  }
+  html[data-theme="dark"] .queries-table td:nth-child(3),
+  body.dark-mode .queries-table td:nth-child(3) {
+    border-bottom-color: #1e293b !important;
+  }
+  html[data-theme="dark"] .queries-table td:nth-child(3) strong,
+  body.dark-mode .queries-table td:nth-child(3) strong,
+  html[data-theme="dark"] .queries-table td:nth-child(4) .query-subject-preview,
+  body.dark-mode .queries-table td:nth-child(4) .query-subject-preview {
+    color: #f8fafc !important;
+  }
+  html[data-theme="dark"] .queries-table td:nth-child(4) .query-message-preview,
+  body.dark-mode .queries-table td:nth-child(4) .query-message-preview {
+    background: #0f172a !important;
+    border-color: #1e293b !important;
+    color: #cbd5e1 !important;
+  }
+  html[data-theme="dark"] .queries-table td:nth-child(6) .btn,
+  body.dark-mode .queries-table td:nth-child(6) .btn {
     background: #1e293b !important;
     border-color: #334155 !important;
     color: #f8fafc !important;

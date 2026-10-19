@@ -238,7 +238,7 @@ html.dark-mode #viewQueryModal #viewModalSubject {
         <span class="record-count"><?= $pagination['total_records'] ?> message(s)</span>
     </div>
     <div class="table-responsive">
-        <table class="table table-hover table-stack mb-0">
+        <table class="table table-hover table-stack queries-table mb-0">
             <caption class="sr-only">List of customer support messages and tickets</caption>
             <thead class="thead-light">
                 <tr>
@@ -277,7 +277,7 @@ html.dark-mode #viewQueryModal #viewModalSubject {
                         };
                         $is_long = mb_strlen($comment) > 80 || substr_count($comment, "\n") >= 1 || mb_strlen($subject) > 35;
                         ?>
-                        <tr>
+                        <tr class="query-row query-row-<?= e($qst) ?>" data-status="<?= e($qst) ?>">
                             <td data-label="ID"><span class="text-muted small">#<?= e($qid) ?></span></td>
                             <td data-label="Status">
                                 <span class="badge <?= $status_badge ?>"><?= ucfirst(e($qst)) ?></span>
@@ -328,7 +328,7 @@ html.dark-mode #viewQueryModal #viewModalSubject {
                                         data-date="<?= !empty($row['created_at']) ? e(date('d M Y, H:i', strtotime($row['created_at']))) : 'N/A' ?>"
                                         data-subject="<?= e($subject ?: '(No Subject)') ?>"
                                         title="View full inquiry details">
-                                    View
+                                    👁️ View
                                 </button>
                                 <?php if (can_write()): ?>
                                     <button type="button" class="btn btn-outline-primary btn-sm mr-1 btn-open-reply"
@@ -337,7 +337,7 @@ html.dark-mode #viewQueryModal #viewModalSubject {
                                             data-name="<?= e($name) ?>"
                                             data-email="<?= e($email) ?>"
                                             data-subject="<?= e($subject ?: 'Inquiry #' . $qid) ?>">
-                                        Reply
+                                        ✉️ Reply
                                     </button>
                                 <?php endif; ?>
                                 <?php if (is_super_admin()): ?>
@@ -345,7 +345,7 @@ html.dark-mode #viewQueryModal #viewModalSubject {
                                         <?= csrf_field() ?>
                                         <input type="hidden" name="delete_id" value="<?= e($qid) ?>">
                                         <button type="submit" name="delete_query" class="btn btn-outline-danger btn-sm">
-                                            Dismiss
+                                            🗑️ Dismiss
                                         </button>
                                     </form>
                                 <?php endif; ?>
