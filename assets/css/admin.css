@@ -1180,6 +1180,211 @@ html[data-theme="dark"] .table-responsive .bg-light {
     justify-content: center;
     border-radius: 6px;
   }
+
+  /* ==========================================================================
+     Option 2: Indian License Plate / Vehicle Badge Architecture for Buses Table
+     Target Breakpoint: <= 768px (Mobile View)
+     ========================================================================== */
+  .buses-table {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .buses-table thead {
+    display: none !important;
+  }
+  .buses-table tbody {
+    display: block !important;
+    width: 100% !important;
+  }
+  .buses-table tr {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-areas:
+      "id action"
+      "plate plate"
+      "capacity layout" !important;
+    background: var(--c-surface, #ffffff);
+    border: 1.5px solid rgba(245, 158, 11, 0.45) !important;
+    border-left: 5px solid #f59e0b !important;
+    border-radius: 12px !important;
+    margin-bottom: 24px !important;
+    overflow: hidden;
+    padding: 0 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+    width: 100% !important;
+    box-sizing: border-box !important;
+    transition: border-color var(--transition-fast, 0.15s ease);
+  }
+  .buses-table tr:last-child {
+    margin-bottom: 8px !important;
+  }
+  .buses-table tr.bus-archived {
+    border-color: #cbd5e1 !important;
+    border-left: 5px solid #94a3b8 !important;
+    opacity: 0.85;
+  }
+  .buses-table tr:has(td[colspan]) {
+    display: block !important;
+  }
+  .buses-table td[colspan] {
+    grid-column: 1 / -1;
+    display: block !important;
+  }
+
+  /* Reset all generic table-stack td overrides */
+  .buses-table td {
+    display: block !important;
+    width: auto !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    border: none !important;
+    padding: 0;
+    text-align: left;
+    word-break: normal;
+  }
+  .buses-table td::before {
+    display: none !important;
+  }
+
+  /* Zone 1: Top Utility Bar (Vehicle ID #1 on left, Actions/Edit on right) */
+  .buses-table td:nth-child(1) {
+    grid-area: id !important;
+    background: var(--c-bg-subtle, #f8fafc);
+    padding: 8px 14px !important;
+    border-bottom: 1px solid var(--c-border-subtle, #e2e8f0) !important;
+    font-weight: 700;
+    color: var(--c-text-muted, #334155);
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 4px;
+    text-align: left !important;
+  }
+  .buses-table td:nth-child(1)::before {
+    content: "🚌 Vehicle " !important;
+    font-weight: 600;
+    color: var(--c-text-muted, #64748b);
+    display: inline-block !important;
+    text-transform: none !important;
+    margin-right: 0 !important;
+  }
+  .buses-table td:nth-child(1) span {
+    font-size: 0.9rem !important;
+    font-weight: 800 !important;
+    color: var(--c-text, #1e293b) !important;
+  }
+
+  .buses-table td:nth-child(5) {
+    grid-area: action !important;
+    background: var(--c-bg-subtle, #f8fafc);
+    padding: 6px 14px !important;
+    border-bottom: 1px solid var(--c-border-subtle, #e2e8f0) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+  }
+  .buses-table td:nth-child(5)::before {
+    display: none !important;
+  }
+  .buses-table td:nth-child(5) .btn-group {
+    flex-direction: row !important;
+    width: auto !important;
+    margin: 0 !important;
+    justify-content: flex-end !important;
+  }
+  .buses-table td:nth-child(5) .btn {
+    width: auto !important;
+    margin-bottom: 0 !important;
+    padding: 0.25rem 0.65rem !important;
+    font-size: 0.78rem !important;
+    border-radius: 6px !important;
+  }
+
+  /* Zone 2: Authentic Indian HSRP Commercial License Plate Hero */
+  .buses-table td:nth-child(2) {
+    grid-area: plate !important;
+    text-align: center !important;
+    padding: 16px 14px 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .buses-table td:nth-child(2)::before {
+    display: none !important;
+  }
+  .buses-table td:nth-child(2) strong {
+    display: inline-flex !important;
+    align-items: center !important;
+    background: #fef3c7 !important;
+    color: #1e293b !important;
+    border: 1.5px solid #d97706 !important;
+    border-radius: 6px !important;
+    padding: 4px 14px 4px 6px !important;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important;
+    font-size: 1.15rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.08em !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.06) !important;
+  }
+  .buses-table td:nth-child(2) strong::before {
+    content: "IND";
+    display: inline-block;
+    font-size: 0.62rem;
+    font-weight: 900;
+    background: #1e40af;
+    color: #ffffff;
+    padding: 2px 4px;
+    border-radius: 3px;
+    margin-right: 8px;
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+  }
+
+  /* Zone 3: 2-Column Spec Footer (Capacity + Layout) */
+  .buses-table td:nth-child(3) {
+    grid-area: capacity !important;
+    padding: 10px 10px 12px !important;
+    border-top: 1px solid var(--c-border-subtle, #f1f5f9) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+  .buses-table td:nth-child(3)::before {
+    content: "CAPACITY" !important;
+    font-size: 0.7rem !important;
+    font-weight: 700 !important;
+    color: var(--c-text-muted, #64748b) !important;
+    letter-spacing: 0.04em !important;
+    margin-bottom: 4px !important;
+    display: block !important;
+  }
+
+  .buses-table td:nth-child(4) {
+    grid-area: layout !important;
+    padding: 10px 10px 12px !important;
+    border-top: 1px solid var(--c-border-subtle, #f1f5f9) !important;
+    border-left: 1px solid var(--c-border-subtle, #f1f5f9) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+  .buses-table td:nth-child(4)::before {
+    content: "SEATING LAYOUT" !important;
+    font-size: 0.7rem !important;
+    font-weight: 700 !important;
+    color: var(--c-text-muted, #64748b) !important;
+    letter-spacing: 0.04em !important;
+    margin-bottom: 4px !important;
+    display: block !important;
+  }
 }
 
 /* Explicit Dark Mode Overrides for Option 2 Boarding Pass */
@@ -1279,6 +1484,62 @@ html[data-theme="dark"] .table-responsive .bg-light {
   }
   html[data-theme="dark"] .bookings-table td:nth-child(11) .btn,
   body.dark-mode .bookings-table td:nth-child(11) .btn {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+  }
+
+  /* Dark Mode for Option 2 Indian License Plate / Buses Table */
+  html[data-theme="dark"] .buses-table tr,
+  body.dark-mode .buses-table tr {
+    background: var(--c-surface, #111827) !important;
+    border-color: rgba(245, 158, 11, 0.5) !important;
+    border-left: 5px solid #f59e0b !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  }
+  html[data-theme="dark"] .buses-table tr.bus-archived,
+  body.dark-mode .buses-table tr.bus-archived {
+    border-color: rgba(148, 163, 184, 0.3) !important;
+    border-left: 5px solid #64748b !important;
+  }
+  html[data-theme="dark"] .buses-table td:nth-child(1),
+  html[data-theme="dark"] .buses-table td:nth-child(5),
+  body.dark-mode .buses-table td:nth-child(1),
+  body.dark-mode .buses-table td:nth-child(5) {
+    background: #0f172a !important;
+    border-bottom-color: #1e293b !important;
+    color: #f8fafc !important;
+  }
+  html[data-theme="dark"] .buses-table td:nth-child(1) span,
+  body.dark-mode .buses-table td:nth-child(1) span {
+    color: #f8fafc !important;
+  }
+  html[data-theme="dark"] .buses-table td:nth-child(2) strong,
+  body.dark-mode .buses-table td:nth-child(2) strong {
+    background: #fef3c7 !important;
+    color: #1e293b !important;
+    border-color: #f59e0b !important;
+  }
+  html[data-theme="dark"] .buses-table td:nth-child(3),
+  html[data-theme="dark"] .buses-table td:nth-child(4),
+  body.dark-mode .buses-table td:nth-child(3),
+  body.dark-mode .buses-table td:nth-child(4) {
+    border-top-color: #1e293b !important;
+  }
+  html[data-theme="dark"] .buses-table td:nth-child(4),
+  body.dark-mode .buses-table td:nth-child(4) {
+    border-left-color: #1e293b !important;
+  }
+  html[data-theme="dark"] .buses-table td:nth-child(3) .badge,
+  html[data-theme="dark"] .buses-table td:nth-child(3) .badge.text-dark,
+  body.dark-mode .buses-table td:nth-child(3) .badge,
+  body.dark-mode .buses-table td:nth-child(3) .badge.text-dark {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+  }
+  html[data-theme="dark"] .buses-table td:nth-child(5) .btn,
+  body.dark-mode .buses-table td:nth-child(5) .btn {
     background: #1e293b !important;
     border-color: #334155 !important;
     color: #f8fafc !important;

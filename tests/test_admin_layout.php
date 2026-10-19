@@ -180,6 +180,27 @@ assert_layout("admin/bookings.php outputs semantic booking-row status class on t
     str_contains($bookings_page, 'data-status=')
 );
 
+$buses_page = file_get_contents(__DIR__ . '/../admin/buses.php');
+assert_layout("admin/buses.php specifies .buses-table on fleet vehicles table",
+    str_contains($buses_page, 'class="table table-hover table-stack buses-table mb-0"')
+);
+
+assert_layout("admin.css implements Option 2 Indian License Plate / Vehicle Badge mobile layout",
+    str_contains($admin_css, '.buses-table tr') &&
+    str_contains($admin_css, 'grid-template-areas:') &&
+    str_contains($admin_css, '"id action"') &&
+    str_contains($admin_css, '"plate plate"') &&
+    str_contains($admin_css, '"capacity layout"') &&
+    str_contains($admin_css, 'content: "🚌 Vehicle "') &&
+    str_contains($admin_css, 'content: "IND"')
+);
+
+assert_layout("admin.css defines amber commercial colored borders and left accents for buses-table",
+    str_contains($admin_css, '.buses-table tr') &&
+    str_contains($admin_css, 'border-left: 5px solid #f59e0b') &&
+    str_contains($admin_css, 'html[data-theme="dark"] .buses-table tr')
+);
+
 // -------------------------------------------------------------
 // Suite 4: Table Cell Data-Label Consistency (F9)
 // -------------------------------------------------------------
