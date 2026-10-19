@@ -259,7 +259,8 @@ html[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([ty
 html[data-theme="dark"] select,
 html[data-theme="dark"] textarea,
 html[data-theme="dark"] .form-control,
-html[data-theme="dark"] .custom-select {
+html[data-theme="dark"] .custom-select,
+html[data-theme="dark"] .input-group-text {
   background-color: #090D16 !important;
   border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08)) !important;
   color: var(--text-primary, #F8FAFC) !important;
@@ -600,6 +601,50 @@ code {
 }
 textarea.form-control {
   border-radius: var(--radius-md);
+}
+
+/* Small Form Controls & Compact Dropdowns */
+.form-control-sm,
+select.form-control-sm,
+.custom-select-sm {
+  font-size: var(--text-sm, 0.8125rem) !important;
+  padding: 0.25rem 0.65rem !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  line-height: 1.4 !important;
+  border-radius: var(--radius-md, 8px);
+}
+
+select.form-control-sm,
+select.custom-select-sm {
+  height: 36px !important;
+  min-height: 36px !important;
+  padding-top: 0.25rem !important;
+  padding-bottom: 0.25rem !important;
+  padding-left: 0.65rem !important;
+  padding-right: 1.75rem !important;
+  font-size: var(--text-sm, 0.8125rem) !important;
+  line-height: 1.4 !important;
+  vertical-align: middle;
+}
+
+.input-group-sm > .form-control,
+.input-group-sm > .input-group-prepend > .input-group-text,
+.input-group-sm > .input-group-append > .input-group-text,
+.input-group-sm > .input-group-prepend > .btn,
+.input-group-sm > .input-group-append > .btn {
+  height: 36px !important;
+  min-height: 36px !important;
+  font-size: var(--text-sm, 0.8125rem) !important;
+  padding: 0.25rem 0.65rem !important;
+  line-height: 1.4 !important;
+}
+
+.input-group-sm > .input-group-prepend > .input-group-text,
+.input-group-sm > .input-group-append > .input-group-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 label, .form-label {

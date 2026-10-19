@@ -309,25 +309,25 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
 
 <!-- Smart Search & Filter Toolbar -->
 <div class="filter-bar mb-4">
-    <form action="" method="get" class="w-100 d-flex flex-wrap align-items-center">
+    <form action="" method="get" class="routes-filter-form">
         <?php if ($view_tab === 'archived'): ?>
             <input type="hidden" name="tab" value="archived">
         <?php endif; ?>
         
-        <div class="d-none d-md-flex align-items-center mr-2 mb-2 mb-md-0">
+        <div class="d-none d-md-flex align-items-center mr-1">
             <span class="filter-label">Filter:</span>
         </div>
 
-        <div class="flex-grow-1 mr-2 mb-2 mb-md-0" style="min-width: 180px;">
+        <div class="filter-search-col">
             <div class="input-group input-group-sm">
                 <div class="input-group-prepend">
-                    <span class="input-group-text bg-white border-right-0">🔍</span>
+                    <span class="input-group-text border-right-0">🔍</span>
                 </div>
                 <input type="text" name="q" class="form-control form-control-sm border-left-0" placeholder="Search cities or bus..." value="<?= e($search_q) ?>" aria-label="Search routes">
             </div>
         </div>
 
-        <div class="mr-2 mb-2 mb-md-0" style="min-width: 130px;">
+        <div class="filter-select-col">
             <select name="origin" class="form-control form-control-sm" aria-label="Filter by origin city">
                 <option value="">All Origins</option>
                 <?php foreach ($known_origins as $orig): ?>
@@ -338,7 +338,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             </select>
         </div>
 
-        <div class="mr-2 mb-2 mb-md-0" style="min-width: 120px;">
+        <div class="filter-select-col">
             <select name="bus" class="form-control form-control-sm" aria-label="Filter by assigned bus">
                 <option value="">All Buses</option>
                 <?php foreach ($buses as $b): ?>
@@ -347,21 +347,21 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
             </select>
         </div>
 
-        <div class="mr-2 mb-2 mb-md-0" style="min-width: 140px;">
+        <div class="filter-select-col sort-col">
             <select name="sort" class="form-control form-control-sm" aria-label="Sort order">
                 <option value="id_asc" <?= $sort === 'id_asc' ? 'selected' : '' ?>>Sort: ID (Default)</option>
                 <option value="time_asc" <?= $sort === 'time_asc' ? 'selected' : '' ?>>Departure (Earliest)</option>
                 <option value="time_desc" <?= $sort === 'time_desc' ? 'selected' : '' ?>>Departure (Latest)</option>
-                <option value="price_asc" <?= $sort === 'price_asc' ? 'selected' : '' ?>>Tariff (Low &rarr; High)</option>
-                <option value="price_desc" <?= $sort === 'price_desc' ? 'selected' : '' ?>>Tariff (High &rarr; Low)</option>
+                <option value="price_asc" <?= $sort === 'price_asc' ? 'selected' : '' ?>>Tariff (Low → High)</option>
+                <option value="price_desc" <?= $sort === 'price_desc' ? 'selected' : '' ?>>Tariff (High → Low)</option>
                 <option value="route_asc" <?= $sort === 'route_asc' ? 'selected' : '' ?>>Route (Origin A-Z)</option>
             </select>
         </div>
 
-        <div class="d-flex align-items-center mb-2 mb-md-0">
-            <button type="submit" class="btn btn-sm btn-primary mr-1" style="min-height: 31px;">Apply</button>
+        <div class="filter-actions-col">
+            <button type="submit" class="btn btn-sm btn-primary">Apply</button>
             <?php if ($search_q !== '' || $filter_origin !== '' || $filter_bus !== '' || $sort !== 'id_asc'): ?>
-                <a href="<?= BASE_URL ?>/admin/routes.php<?= $view_tab === 'archived' ? '?tab=archived' : '' ?>" class="btn btn-sm btn-outline-secondary" title="Reset all filters" style="min-height: 31px;">Reset</a>
+                <a href="<?= BASE_URL ?>/admin/routes.php<?= $view_tab === 'archived' ? '?tab=archived' : '' ?>" class="btn btn-sm btn-outline-secondary" title="Reset all filters">Reset</a>
             <?php endif; ?>
         </div>
     </form>

@@ -23,6 +23,7 @@ echo "========================================================\n\n";
 $routes_content = file_get_contents(__DIR__ . '/../admin/routes.php');
 $edit_route_content = file_get_contents(__DIR__ . '/../admin/edit/edit-route.php');
 $admin_css = file_get_contents(__DIR__ . '/../assets/css/admin.css');
+$design_css = file_get_contents(__DIR__ . '/../assets/css/design-system.css');
 
 // -------------------------------------------------------------
 // Suite 1: KPI Operational Metrics & Header
@@ -67,9 +68,24 @@ assert_route_ui("routes.php supports multi-criteria sorting (departure, tariff, 
     str_contains($routes_content, 'route_asc')
 );
 
-assert_route_ui("routes.php preserves search/filter parameters across pagination and archive tabs",
-    str_contains($routes_content, 'render_pagination($pagination, $keep_params)') &&
-    str_contains($routes_content, 'admin_archive_tabs_html')
+assert_route_ui("routes.php implements .routes-filter-form with responsive columns",
+    str_contains($routes_content, 'class="routes-filter-form"') &&
+    str_contains($routes_content, 'filter-search-col') &&
+    str_contains($routes_content, 'filter-select-col') &&
+    str_contains($routes_content, 'filter-actions-col')
+);
+
+assert_route_ui("admin.css styles .routes-filter-form with responsive flex layout across viewports",
+    str_contains($admin_css, '.filter-bar .routes-filter-form') &&
+    str_contains($admin_css, '.filter-search-col') &&
+    str_contains($admin_css, '.filter-select-col') &&
+    str_contains($admin_css, '@media (max-width: 767.98px)')
+);
+
+assert_route_ui("design-system.css provides 36px height and unclipped padding for form-control-sm and selects",
+    str_contains($design_css, '.form-control-sm') &&
+    str_contains($design_css, 'select.form-control-sm') &&
+    str_contains($design_css, 'height: 36px')
 );
 
 // -------------------------------------------------------------
