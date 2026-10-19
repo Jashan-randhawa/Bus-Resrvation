@@ -219,7 +219,7 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <span class="record-count"><?= $pagination['total_records'] ?> user(s)</span>
     </div>
     <div class="table-responsive">
-        <table class="table table-hover table-stack mb-0">
+        <table class="table table-hover table-stack customers-table mb-0">
             <caption class="sr-only">Directory of registered customer accounts, contact details, and account status</caption>
             <thead class="thead-light">
                 <tr>
@@ -249,17 +249,22 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
                         $cid = (int)($row[$cust_pk] ?? $row['id'] ?? $row['sno'] ?? 0);
                         $is_archived = !empty($row['archived_at']);
                         ?>
-                        <tr class="<?= $is_archived ? 'text-muted bg-light' : '' ?>">
-                            <td data-label="ID"><span class="text-muted small">#<?= e($cid) ?></span></td>
+                        <tr class="customer-row <?= $is_archived ? 'customer-row-archived text-muted bg-light' : 'customer-row-active' ?>" data-status="<?= $is_archived ? 'archived' : 'active' ?>">
+                            <td data-label="ID">
+                                <span class="customer-id-text"><span class="text-muted small">#<?= e($cid) ?></span></span>
+                                <span class="customer-status-badge d-md-none">
+                                    <span class="badge <?= $is_archived ? 'badge-secondary' : 'badge-success' ?>"><?= $is_archived ? 'Archived' : 'Active' ?></span>
+                                </span>
+                            </td>
                             <td data-label="Full Name" class="font-weight-medium text-dark">
                                 <?= e($row['name'] ?? '') ?>
                                 <?php if ($is_archived): ?>
-                                    <span class="badge badge-secondary ml-1">Archived</span>
+                                    <span class="badge badge-secondary ml-1 d-none d-md-inline">Archived</span>
                                 <?php endif; ?>
                             </td>
                             <td data-label="Email Address"><a href="mailto:<?= e($row['email'] ?? '') ?>" class="text-primary"><?= e($row['email'] ?? '') ?></a></td>
                             <td data-label="Security"><span class="badge badge-light border text-muted">••••••••</span></td>
-                            <td data-label="Phone"><?= e($row['phone'] ?? '') ?></td>
+                            <td data-label="Phone"><?= e(!empty($row['phone']) ? $row['phone'] : 'N/A') ?></td>
                             <td data-label="Address"><small class="text-muted"><?= e($row['address'] ?? 'N/A') ?></small></td>
                             <td data-label="Actions" class="text-right">
                                 <?= render_crud_action_buttons($cid, BASE_URL . "/admin/edit/edit-customer.php?id=" . $cid, $is_archived, 'delete_customer', 'restore_customer', 'customer account') ?>

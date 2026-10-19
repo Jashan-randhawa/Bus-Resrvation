@@ -1630,6 +1630,268 @@ html[data-theme="dark"] .table-responsive .bg-light {
   .queries-table td:nth-child(6) form {
     display: block !important;
   }
+
+  /* ==========================================================================
+     Option 2: Executive Passenger Profile Card Architecture for Customers Table
+     Target Breakpoint: <= 768px (Mobile View)
+     ========================================================================== */
+  .customers-table {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .customers-table caption {
+    display: none !important;
+  }
+  .customers-table thead {
+    display: none !important;
+  }
+  .customers-table tbody {
+    display: block !important;
+    width: 100% !important;
+  }
+  .customers-table tr {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-areas:
+      "header header"
+      "name name"
+      "email email"
+      "phone security"
+      "address address"
+      "actions actions" !important;
+    background: var(--c-surface, #ffffff);
+    border: 1.5px solid rgba(99, 102, 241, 0.45) !important;
+    border-left: 5px solid #6366f1 !important;
+    border-radius: 12px !important;
+    margin-bottom: 24px !important;
+    overflow: hidden;
+    padding: 0 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+    width: 100% !important;
+    box-sizing: border-box !important;
+    transition: border-color var(--transition-fast, 0.15s ease), box-shadow var(--transition-fast, 0.15s ease);
+  }
+  .customers-table tr:last-child {
+    margin-bottom: 8px !important;
+  }
+
+  /* Status Colors */
+  .customers-table tr.customer-row-active,
+  .customers-table tr:not(.customer-row-archived) {
+    border-color: rgba(99, 102, 241, 0.45) !important;
+    border-left: 5px solid #6366f1 !important;
+  }
+  .customers-table tr.customer-row-archived,
+  .customers-table tr.text-muted {
+    border-color: #cbd5e1 !important;
+    border-left: 5px solid #94a3b8 !important;
+    opacity: 0.88;
+  }
+
+  /* Reset all generic table-stack td overrides */
+  .customers-table td {
+    display: block !important;
+    width: auto !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    border: none !important;
+    padding: 0;
+    text-align: left !important;
+    word-break: normal;
+  }
+  .customers-table td::before {
+    display: none !important;
+  }
+
+  /* 1. Shaded Top Header Bar: ID & Status */
+  .customers-table td:nth-child(1) {
+    grid-area: header !important;
+    background: var(--c-bg-subtle, #f8fafc) !important;
+    padding: 10px 14px !important;
+    border-bottom: 1px solid var(--c-border-subtle, #e2e8f0) !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    color: var(--c-text, #0f172a) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+  .customers-table td:nth-child(1)::before {
+    content: "👤 Passenger " !important;
+    font-weight: 700;
+    color: var(--c-text-muted, #64748b);
+    margin-right: 4px;
+    display: inline !important;
+  }
+  .customers-table td:nth-child(1) .customer-id-text {
+    display: inline-flex;
+    align-items: center;
+  }
+  .customers-table td:nth-child(1) .customer-status-badge {
+    margin-left: auto;
+  }
+
+  /* 2. Full Name */
+  .customers-table td:nth-child(2) {
+    grid-area: name !important;
+    padding: 14px 14px 2px !important;
+    font-size: 1.125rem !important;
+    font-weight: 700 !important;
+    color: var(--c-text, #0f172a) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px;
+    text-align: left !important;
+  }
+  .customers-table td:nth-child(2)::before {
+    display: none !important;
+  }
+
+  /* 3. Email Address */
+  .customers-table td:nth-child(3) {
+    grid-area: email !important;
+    padding: 2px 14px 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    text-align: left !important;
+  }
+  .customers-table td:nth-child(3)::before {
+    display: none !important;
+  }
+  .customers-table td:nth-child(3) a {
+    font-size: 0.875rem !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    word-break: break-all;
+  }
+  .customers-table td:nth-child(3) a::before {
+    content: "✉️";
+    font-size: 0.85rem;
+  }
+
+  /* 4. Phone (Left Half of 2-Column Spec) */
+  .customers-table td:nth-child(5) {
+    grid-area: phone !important;
+    padding: 10px 14px 12px !important;
+    border-top: 1px solid var(--c-border-subtle, #f1f5f9) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    text-align: left !important;
+    font-size: 0.925rem !important;
+    font-weight: 600 !important;
+    color: var(--c-text, #0f172a) !important;
+  }
+  .customers-table td:nth-child(5)::before {
+    content: "PHONE" !important;
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    color: var(--c-text-muted, #64748b) !important;
+    letter-spacing: 0.05em !important;
+    margin-bottom: 4px !important;
+    display: block !important;
+  }
+
+  /* 5. Security (Right Half of 2-Column Spec) */
+  .customers-table td:nth-child(4) {
+    grid-area: security !important;
+    padding: 10px 14px 12px !important;
+    border-top: 1px solid var(--c-border-subtle, #f1f5f9) !important;
+    border-left: 1px solid var(--c-border-subtle, #f1f5f9) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    text-align: left !important;
+  }
+  .customers-table td:nth-child(4)::before {
+    content: "SECURITY" !important;
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    color: var(--c-text-muted, #64748b) !important;
+    letter-spacing: 0.05em !important;
+    margin-bottom: 4px !important;
+    display: block !important;
+  }
+
+  /* 6. Address */
+  .customers-table td:nth-child(6) {
+    grid-area: address !important;
+    padding: 10px 14px 12px !important;
+    border-top: 1px solid var(--c-border-subtle, #f1f5f9) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    font-size: 0.85rem !important;
+    color: var(--c-text-muted, #64748b) !important;
+    text-align: left !important;
+  }
+  .customers-table td:nth-child(6)::before {
+    content: "📍 Address: " !important;
+    font-weight: 600;
+    margin-right: 4px;
+    display: inline !important;
+    color: var(--c-text-muted, #64748b);
+  }
+
+  /* 7. Action Bar */
+  .customers-table td:nth-child(7) {
+    grid-area: actions !important;
+    padding: 10px 14px !important;
+    border-top: 1px solid var(--c-border-subtle, #e2e8f0) !important;
+    background: var(--c-bg-subtle, #f8fafc) !important;
+    display: flex !important;
+    gap: 8px !important;
+    justify-content: stretch !important;
+    text-align: left !important;
+  }
+  .customers-table td:nth-child(7)::before {
+    display: none !important;
+  }
+  .customers-table td:nth-child(7) .d-inline-flex {
+    display: flex !important;
+    width: 100% !important;
+    gap: 8px !important;
+    justify-content: stretch !important;
+  }
+  .customers-table td:nth-child(7) .d-inline-flex > * {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+  .customers-table td:nth-child(7) .btn {
+    width: 100% !important;
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    white-space: nowrap !important;
+    border-radius: 8px !important;
+  }
+  .customers-table td:nth-child(7) a.btn::before {
+    content: "✏️ ";
+    margin-right: 4px;
+  }
+  .customers-table td:nth-child(7) button[name="delete_customer"]::before {
+    content: "📦 ";
+    margin-right: 4px;
+  }
+  .customers-table td:nth-child(7) button[name="restore_customer"]::before {
+    content: "♻️ ";
+    margin-right: 4px;
+  }
+  .customers-table td:nth-child(7) form {
+    display: block !important;
+    flex: 1 1 0 !important;
+    margin: 0 !important;
+  }
 }
 
 /* Explicit Dark Mode Overrides for Option 2 Boarding Pass */
@@ -1838,6 +2100,63 @@ html[data-theme="dark"] .table-responsive .bg-light {
   }
   html[data-theme="dark"] .queries-table td:nth-child(6) .btn,
   body.dark-mode .queries-table td:nth-child(6) .btn {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+  }
+
+  /* Dark Mode Overrides for Customers Table Mobile Cards */
+  html[data-theme="dark"] .customers-table tr,
+  body.dark-mode .customers-table tr {
+    background: var(--c-surface, #111827) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  }
+  html[data-theme="dark"] .customers-table tr.customer-row-active,
+  html[data-theme="dark"] .customers-table tr:not(.customer-row-archived) {
+    border-color: rgba(99, 102, 241, 0.55) !important;
+    border-left: 5px solid #6366f1 !important;
+  }
+  html[data-theme="dark"] .customers-table tr.customer-row-archived,
+  html[data-theme="dark"] .customers-table tr.text-muted {
+    border-color: rgba(148, 163, 184, 0.3) !important;
+    border-left: 5px solid #64748b !important;
+  }
+  html[data-theme="dark"] .customers-table td:nth-child(1),
+  html[data-theme="dark"] .customers-table td:nth-child(7),
+  body.dark-mode .customers-table td:nth-child(1),
+  body.dark-mode .customers-table td:nth-child(7) {
+    background: #0f172a !important;
+    border-color: #1e293b !important;
+  }
+  html[data-theme="dark"] .customers-table td:nth-child(1) span,
+  body.dark-mode .customers-table td:nth-child(1) span {
+    color: #f8fafc !important;
+  }
+  html[data-theme="dark"] .customers-table td:nth-child(2),
+  body.dark-mode .customers-table td:nth-child(2) {
+    color: #f8fafc !important;
+  }
+  html[data-theme="dark"] .customers-table td:nth-child(3) a,
+  body.dark-mode .customers-table td:nth-child(3) a {
+    color: #38bdf8 !important;
+  }
+  html[data-theme="dark"] .customers-table td:nth-child(4),
+  html[data-theme="dark"] .customers-table td:nth-child(5),
+  html[data-theme="dark"] .customers-table td:nth-child(6),
+  body.dark-mode .customers-table td:nth-child(4),
+  body.dark-mode .customers-table td:nth-child(5),
+  body.dark-mode .customers-table td:nth-child(6) {
+    border-color: #1e293b !important;
+    color: #cbd5e1 !important;
+  }
+  html[data-theme="dark"] .customers-table td:nth-child(4) .badge,
+  body.dark-mode .customers-table td:nth-child(4) .badge {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #94a3b8 !important;
+  }
+  html[data-theme="dark"] .customers-table td:nth-child(7) .btn,
+  body.dark-mode .customers-table td:nth-child(7) .btn {
     background: #1e293b !important;
     border-color: #334155 !important;
     color: #f8fafc !important;

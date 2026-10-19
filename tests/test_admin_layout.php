@@ -254,6 +254,38 @@ assert_layout("admin.css defines dark mode overrides for .queries-table",
     str_contains($admin_css, 'html[data-theme="dark"] .queries-table tr.query-row-new')
 );
 
+$customers_content = file_get_contents(__DIR__ . '/../admin/customers.php');
+assert_layout("admin/customers.php specifies .customers-table, semantic customer-row class, and mobile status badge",
+    str_contains($customers_content, 'customers-table') &&
+    str_contains($customers_content, 'customer-row-') &&
+    str_contains($customers_content, 'data-status=') &&
+    str_contains($customers_content, 'customer-status-badge')
+);
+
+assert_layout("admin.css implements Passenger Profile mobile grid layout for .customers-table",
+    str_contains($admin_css, '.customers-table tr') &&
+    str_contains($admin_css, 'grid-template-areas:') &&
+    str_contains($admin_css, '"header header"') &&
+    str_contains($admin_css, '"name name"') &&
+    str_contains($admin_css, '"email email"') &&
+    str_contains($admin_css, '"phone security"') &&
+    str_contains($admin_css, '"address address"') &&
+    str_contains($admin_css, '"actions actions"')
+);
+
+assert_layout("admin.css defines status-coded colored borders, 5px left accent, and 24px spacing for customers-table",
+    str_contains($admin_css, '.customers-table tr.customer-row-active') &&
+    str_contains($admin_css, 'border-left: 5px solid #6366f1') &&
+    str_contains($admin_css, 'border-left: 5px solid #94a3b8') &&
+    str_contains($admin_css, '.customers-table tr {') &&
+    str_contains($admin_css, 'margin-bottom: 24px !important;')
+);
+
+assert_layout("admin.css defines dark mode overrides for .customers-table",
+    str_contains($admin_css, 'html[data-theme="dark"] .customers-table tr') &&
+    str_contains($admin_css, 'html[data-theme="dark"] .customers-table tr.customer-row-active')
+);
+
 // -------------------------------------------------------------
 // Suite 5: SVG Sprite Icons & Navigation Semantics (Section 3.3)
 // -------------------------------------------------------------
