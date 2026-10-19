@@ -273,6 +273,8 @@ html.dark-mode .admin-brand .brand-badge {
   border-radius: 8px;
   background-color: var(--sidebar-tile-bg, #f1f5f9);
   color: currentColor;
+  margin-right: 0.75rem; /* 12px clean space between icon tile and nav label */
+  flex-shrink: 0;
   transition: background-color 150ms ease, color 150ms ease;
 }
 

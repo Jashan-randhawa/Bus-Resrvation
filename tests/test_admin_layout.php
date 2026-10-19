@@ -333,6 +333,16 @@ assert_layout("admin.css and design-system.css define global white light theme a
     str_contains($design_system_css, '--sidebar-bg:            #0f172a;')
 );
 
+assert_layout("admin.css defines 0.75rem (12px) margin-right on .nav-icon-tile for icon-text spacing",
+    str_contains($admin_css, '.nav-icon-tile {') &&
+    str_contains($admin_css, 'margin-right: 0.75rem;')
+);
+
+assert_layout("design-system.css defines fractional spacing utilities (.mr-2.5, .mr-1.5)",
+    str_contains($design_system_css, '.mr-2\\.5') &&
+    str_contains($design_system_css, '.mr-1\\.5')
+);
+
 // -------------------------------------------------------------
 // Summary
 // -------------------------------------------------------------

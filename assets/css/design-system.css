@@ -1456,3 +1456,9 @@ html[data-theme="dark"] .bus-legend-item {
     padding: var(--space-2) var(--space-3);
   }
 }
+
+/* Fractional Spacing Utilities (Micro-spacing for icons and badges) */
+.mr-1\.5 { margin-right: 0.375rem !important; }
+.ml-1\.5 { margin-left: 0.375rem !important; }
+.mr-2\.5 { margin-right: 0.75rem !important; }
+.ml-2\.5 { margin-left: 0.75rem !important; }
