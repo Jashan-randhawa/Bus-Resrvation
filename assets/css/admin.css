@@ -856,32 +856,40 @@ html[data-theme="dark"] .table-responsive .bg-light {
    Target Breakpoint: <= 768px (Mobile View)
    ========================================================================== */
 @media (max-width: 768px) {
-  .bookings-table thead {
-    display: none;
+  .bookings-table {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-collapse: separate;
+    border-spacing: 0;
   }
-  .bookings-table tbody,
-  .bookings-table td {
-    display: block;
-    border: none;
-    padding: 0;
+  .bookings-table thead {
+    display: none !important;
+  }
+  .bookings-table tbody {
+    display: block !important;
+    width: 100% !important;
   }
   .bookings-table tr {
     display: grid !important;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: 32px 1fr auto !important;
     grid-template-areas:
       "select pnr status"
       "route route route"
-      "bus datetime datetime"
+      "bus bus bus"
+      "datetime datetime datetime"
       "passenger passenger seat"
       "contact contact seat"
-      "fare fare actions";
+      "fare fare actions" !important;
     background: var(--c-surface, #ffffff);
-    border: 1px solid var(--c-border, #cbd5e1);
-    border-radius: 12px;
+    border: 1px solid var(--c-border, #cbd5e1) !important;
+    border-radius: 12px !important;
     margin-bottom: 16px;
     overflow: hidden;
     padding: 0 !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .bookings-table tr:has(td[colspan]) {
@@ -892,30 +900,39 @@ html[data-theme="dark"] .table-responsive .bg-light {
     display: block !important;
   }
 
-  /* Hide old stacked uppercase pseudo-labels except on Fare */
+  /* Reset all generic table-stack td overrides */
+  .bookings-table td {
+    display: block !important;
+    width: auto !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    border: none !important;
+    padding: 0;
+    text-align: left;
+    word-break: normal;
+  }
   .bookings-table td::before {
     display: none !important;
   }
 
   /* Zone 1: Ticket Header (Select + PNR + Status) */
   .bookings-table td:nth-child(1) {
-    grid-area: select;
+    grid-area: select !important;
     background: var(--c-bg-subtle, #f8fafc);
-    padding: 10px 6px 10px 12px;
-    border-bottom: 1px solid var(--c-border-subtle, #e2e8f0);
-    display: flex;
+    padding: 10px 4px 10px 12px !important;
+    border-bottom: 1px solid var(--c-border-subtle, #e2e8f0) !important;
+    display: flex !important;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center !important;
   }
   .bookings-table td:nth-child(2) {
-    grid-area: pnr;
+    grid-area: pnr !important;
     background: var(--c-bg-subtle, #f8fafc);
-    padding: 10px 6px;
-    border-bottom: 1px solid var(--c-border-subtle, #e2e8f0);
-    text-align: left;
-    display: flex;
+    padding: 10px 6px !important;
+    border-bottom: 1px solid var(--c-border-subtle, #e2e8f0) !important;
+    display: flex !important;
     align-items: center;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
   }
   .bookings-table td:nth-child(2)::before {
     content: "PNR: ";
@@ -927,7 +944,7 @@ html[data-theme="dark"] .table-responsive .bg-light {
     margin-right: 4px;
   }
   .bookings-table td:nth-child(2) code {
-    font-size: 0.88rem;
+    font-size: 0.85rem;
     font-weight: 700;
     color: var(--c-primary, #2563eb);
     background: rgba(37, 99, 235, 0.08);
@@ -935,27 +952,32 @@ html[data-theme="dark"] .table-responsive .bg-light {
     border-radius: 4px;
   }
   .bookings-table td:nth-child(9) {
-    grid-area: status;
+    grid-area: status !important;
     background: var(--c-bg-subtle, #f8fafc);
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--c-border-subtle, #e2e8f0);
-    text-align: right;
-    display: flex;
+    padding: 10px 12px 10px 6px !important;
+    border-bottom: 1px solid var(--c-border-subtle, #e2e8f0) !important;
+    display: flex !important;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-end !important;
+  }
+  .bookings-table td:nth-child(9) .badge {
+    font-size: 0.78rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: 9999px;
+    font-weight: 600;
   }
 
   /* Zone 2A: Route Hero */
   .bookings-table td:nth-child(6) {
-    grid-area: route;
+    grid-area: route !important;
     text-align: center;
     font-size: 1.15rem;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    padding: 14px 12px 4px;
+    letter-spacing: 0.05em;
+    padding: 14px 12px 2px !important;
     color: var(--c-text, #0f172a);
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: center;
     gap: 8px;
@@ -963,38 +985,51 @@ html[data-theme="dark"] .table-responsive .bg-light {
 
   /* Zone 2B: Journey Meta (Bus + Date/Time) with dashed perforation divider */
   .bookings-table td:nth-child(3) {
-    grid-area: bus;
-    text-align: left;
-    padding: 4px 12px 12px;
+    grid-area: bus !important;
+    text-align: center;
+    padding: 2px 12px 4px !important;
     font-size: 0.85rem;
-    border-bottom: 2px dashed var(--c-border, #cbd5e1);
-    display: flex;
+    display: flex !important;
     align-items: center;
+    justify-content: center;
     color: var(--c-accent, #0284c7);
+    font-weight: 600;
   }
   .bookings-table td:nth-child(3)::before {
-    content: "🚌 ";
+    content: "─── 🚌 ";
     display: inline !important;
+    color: #94a3b8;
     margin-right: 4px;
   }
+  .bookings-table td:nth-child(3)::after {
+    content: " ───►";
+    display: inline !important;
+    color: #94a3b8;
+    margin-left: 4px;
+  }
   .bookings-table td:nth-child(7) {
-    grid-area: datetime;
-    text-align: right;
-    padding: 4px 12px 12px;
-    font-size: 0.85rem;
-    border-bottom: 2px dashed var(--c-border, #cbd5e1);
+    grid-area: datetime !important;
+    text-align: center;
+    padding: 2px 12px 12px !important;
+    font-size: 0.82rem;
+    border-bottom: 2px dashed var(--c-border, #cbd5e1) !important;
     color: var(--c-text-muted, #64748b);
-    display: flex;
+    display: flex !important;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: center !important;
     white-space: nowrap;
   }
   .bookings-table td:nth-child(7) br {
     display: none;
   }
+  .bookings-table td:nth-child(7)::before {
+    content: "📅 ";
+    display: inline !important;
+    margin-right: 3px;
+  }
   .bookings-table td:nth-child(7) small::before {
-    content: " • ";
-    margin: 0 4px;
+    content: " • 🕒 ";
+    margin: 0 3px 0 4px;
   }
   .bookings-table td:nth-child(7) small {
     font-size: inherit;
@@ -1003,121 +1038,156 @@ html[data-theme="dark"] .table-responsive .bg-light {
 
   /* Zone 3: Passenger Stub */
   .bookings-table td:nth-child(4) {
-    grid-area: passenger;
+    grid-area: passenger !important;
     text-align: left;
-    padding: 12px 12px 2px;
+    padding: 12px 8px 2px 12px !important;
     font-weight: 700;
-    font-size: 1.05rem;
+    font-size: 1rem;
     color: var(--c-text, #0f172a);
-    display: block;
+    display: block !important;
   }
   .bookings-table td:nth-child(5) {
-    grid-area: contact;
+    grid-area: contact !important;
     text-align: left;
-    padding: 2px 12px 12px;
-    font-size: 0.875rem;
+    padding: 2px 8px 12px 12px !important;
+    font-size: 0.85rem;
     color: var(--c-text-muted, #64748b);
-    display: flex;
+    display: flex !important;
+    justify-content: flex-start !important;
     align-items: center;
+    gap: 4px;
   }
   .bookings-table td:nth-child(5)::before {
     content: "📞 ";
     display: inline !important;
     font-size: 0.85rem;
-    margin-right: 4px;
+    margin-right: 2px;
   }
   .bookings-table td:nth-child(8) {
-    grid-area: seat;
+    grid-area: seat !important;
     text-align: right;
     align-self: center;
-    padding: 12px 12px;
-    display: flex;
+    padding: 10px 12px 10px 8px !important;
+    display: flex !important;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-end !important;
   }
   .bookings-table td:nth-child(8) .badge {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     padding: 0.4rem 0.75rem;
     border-radius: 6px;
-    font-weight: 600;
+    font-weight: 700;
+    background-color: #0284c7;
+    color: #ffffff;
   }
 
   /* Zone 4: Fare & Action Bar */
   .bookings-table td:nth-child(10) {
-    grid-area: fare;
+    grid-area: fare !important;
     text-align: left;
     align-self: center;
-    padding: 12px;
+    padding: 10px 8px 10px 12px !important;
     background: var(--c-bg-subtle, #f8fafc);
-    border-top: 1px solid var(--c-border-subtle, #e2e8f0);
+    border-top: 1px solid var(--c-border-subtle, #e2e8f0) !important;
     font-weight: 800;
     font-size: 1.05rem;
     color: var(--c-text, #0f172a);
-    display: flex;
+    display: flex !important;
+    justify-content: flex-start !important;
     align-items: center;
   }
   .bookings-table td:nth-child(10)::before {
     content: "TOTAL FARE: ";
     display: inline !important;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     color: var(--c-text-muted, #64748b);
     letter-spacing: 0.04em;
     margin-right: 6px;
   }
   .bookings-table td:nth-child(11) {
-    grid-area: actions;
+    grid-area: actions !important;
     text-align: right;
     align-self: center;
-    padding: 12px;
+    padding: 10px 12px 10px 8px !important;
     background: var(--c-bg-subtle, #f8fafc);
-    border-top: 1px solid var(--c-border-subtle, #e2e8f0);
-    display: flex;
+    border-top: 1px solid var(--c-border-subtle, #e2e8f0) !important;
+    display: flex !important;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-end !important;
     gap: 6px;
   }
   .bookings-table td:nth-child(11) .btn {
-    min-height: 38px;
-    padding: 0.35rem 0.85rem;
-    font-size: 0.85rem;
+    min-height: 34px;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.82rem;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    border-radius: 6px;
   }
 }
 
 /* Explicit Dark Mode Overrides for Option 2 Boarding Pass */
 @media (max-width: 768px) {
-  html[data-theme="dark"] .bookings-table tr {
-    background: var(--c-surface, #111827);
-    border-color: var(--c-border, #334155);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  html[data-theme="dark"] .bookings-table tr,
+  body.dark-mode .bookings-table tr {
+    background: var(--c-surface, #111827) !important;
+    border-color: var(--c-border, #334155) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
   }
   html[data-theme="dark"] .bookings-table td:nth-child(1),
   html[data-theme="dark"] .bookings-table td:nth-child(2),
   html[data-theme="dark"] .bookings-table td:nth-child(9),
   html[data-theme="dark"] .bookings-table td:nth-child(10),
-  html[data-theme="dark"] .bookings-table td:nth-child(11) {
-    background: #0f172a;
-    border-color: #1e293b;
+  html[data-theme="dark"] .bookings-table td:nth-child(11),
+  body.dark-mode .bookings-table td:nth-child(1),
+  body.dark-mode .bookings-table td:nth-child(2),
+  body.dark-mode .bookings-table td:nth-child(9),
+  body.dark-mode .bookings-table td:nth-child(10),
+  body.dark-mode .bookings-table td:nth-child(11) {
+    background: #0f172a !important;
+    border-color: #1e293b !important;
   }
-  html[data-theme="dark"] .bookings-table td:nth-child(2) code {
-    background: rgba(56, 189, 248, 0.15);
-    color: #38bdf8;
+  html[data-theme="dark"] .bookings-table td:nth-child(2) code,
+  body.dark-mode .bookings-table td:nth-child(2) code {
+    background: rgba(56, 189, 248, 0.15) !important;
+    color: #38bdf8 !important;
+    border: 1px solid rgba(56, 189, 248, 0.25) !important;
   }
   html[data-theme="dark"] .bookings-table td:nth-child(3),
-  html[data-theme="dark"] .bookings-table td:nth-child(7) {
-    border-bottom-color: #334155;
+  body.dark-mode .bookings-table td:nth-child(3) {
+    color: #38bdf8 !important;
+  }
+  html[data-theme="dark"] .bookings-table td:nth-child(7),
+  body.dark-mode .bookings-table td:nth-child(7) {
+    border-bottom-color: #334155 !important;
+    color: #94a3b8 !important;
   }
   html[data-theme="dark"] .bookings-table td:nth-child(6),
   html[data-theme="dark"] .bookings-table td:nth-child(4),
-  html[data-theme="dark"] .bookings-table td:nth-child(10) {
-    color: #f8fafc;
+  html[data-theme="dark"] .bookings-table td:nth-child(10),
+  body.dark-mode .bookings-table td:nth-child(6),
+  body.dark-mode .bookings-table td:nth-child(4),
+  body.dark-mode .bookings-table td:nth-child(10) {
+    color: #f8fafc !important;
   }
-  html[data-theme="dark"] .bookings-table td:nth-child(5) {
-    color: #94a3b8;
+  html[data-theme="dark"] .bookings-table td:nth-child(5),
+  body.dark-mode .bookings-table td:nth-child(5) {
+    color: #94a3b8 !important;
+  }
+  html[data-theme="dark"] .bookings-table td:nth-child(8) .badge,
+  body.dark-mode .bookings-table td:nth-child(8) .badge {
+    background-color: rgba(2, 132, 199, 0.25) !important;
+    color: #38bdf8 !important;
+    border: 1px solid rgba(56, 189, 248, 0.35) !important;
+  }
+  html[data-theme="dark"] .bookings-table td:nth-child(11) .btn,
+  body.dark-mode .bookings-table td:nth-child(11) .btn {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
   }
 }
 
