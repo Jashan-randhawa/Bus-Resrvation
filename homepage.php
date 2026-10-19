@@ -856,32 +856,50 @@ if (isset($_POST['subbtn'])) {
   <?php endif; ?>
 
   <!-- 3. PNR Lookup Section (D1-D8) -->
-  <section id="pnr" class="home-section" aria-labelledby="pnrHeading">
-    <div class="container">
+  <section id="pnr" class="pnr-tracker-section home-section" aria-labelledby="pnrHeading">
+    <div class="pnr-container container">
       <div class="text-center mb-4">
-        <div class="pnr-eyebrow-pill mb-2">
+        <div class="pnr-eyebrow-pill status-badge mb-2">
           <span class="pnr-dot"></span> REAL-TIME TICKET TRACKER
         </div>
-        <h2 id="pnrHeading" class="font-weight-bold">Check Reservation &amp; PNR Status</h2>
-        <p class="text-muted mx-auto" style="max-width: 580px;">
+        <h2 id="pnrHeading" class="font-weight-bold pnr-title">Check Reservation &amp; PNR Status</h2>
+        <p class="pnr-subtitle text-muted mx-auto" style="max-width: 580px;">
           Enter your 10-character booking PNR and the last 4 digits of your contact phone number to track live status, check seat assignments, and access your digital boarding pass.
         </p>
         <div class="pnr-trust-strip">
-          <span class="pnr-trust-item">🛡️ Dual-Factor Privacy Protected</span>
-          <span class="pnr-trust-item">⚡ Instant Live Status Check</span>
-          <span class="pnr-trust-item">🖨️ Verified Digital Boarding Pass</span>
+          <div class="pnr-trust-item feature-item">
+            <svg class="feature-icon blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span>Dual-Factor Privacy Protected</span>
+          </div>
+          <div class="pnr-trust-item feature-item">
+            <svg class="feature-icon amber" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+            <span>Instant Live Status Check</span>
+          </div>
+          <div class="pnr-trust-item feature-item">
+            <svg class="feature-icon purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+              <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+            <span>Verified Digital Boarding Pass</span>
+          </div>
         </div>
       </div>
 
-      <div class="pnr-search-box mx-auto" style="max-width: 760px;">
+      <div class="pnr-search-box tracker-card mx-auto" style="max-width: 820px;">
         <?php
         $searched_pnr = strtoupper(trim((string)($_POST['pnr'] ?? $_GET['pnr'] ?? '')));
-        $searched_phone4 = preg_replace('/\D/', '', (string)($_POST['phone4'] ?? $_GET['phone4'] ?? ''));
-        $has_prefill_pnr = (!empty($_GET['pnr']) && empty($_POST['pnr']) && empty($_GET['phone4']) && empty($_POST['phone4']));
+        $searched_phone4 = preg_replace('/\D/', '', (string)($_POST['phone4'] ?? $_POST['phone_pin'] ?? $_GET['phone4'] ?? $_GET['phone_pin'] ?? ''));
+        $has_prefill_pnr = (!empty($_GET['pnr']) && empty($_POST['pnr']) && empty($_GET['phone4']) && empty($_POST['phone4']) && empty($_GET['phone_pin']) && empty($_POST['phone_pin']));
         ?>
         <?php if ($has_prefill_pnr && $searched_pnr !== ''): ?>
           <div class="pnr-prefill-banner" role="alert">
-            <span style="font-size: 1.25rem;">🎫</span>
+            <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 24px; height: 24px; min-width: 24px; color: #2563eb; position: static;">
+              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+            </svg>
             <div>
               <strong>PNR Code Loaded:</strong> <code><?= e($searched_pnr) ?></code>
               <div class="small text-muted mt-1">Please enter the last 4 digits of your booking phone number to authenticate and view your ticket.</div>
@@ -889,39 +907,38 @@ if (isset($_POST['subbtn'])) {
           </div>
         <?php endif; ?>
 
-        <form method="post" action="<?= e(BASE_URL) ?>/homepage.php#pnr" id="pnrSearchForm" class="row align-items-end">
+        <form method="post" action="<?= e(BASE_URL) ?>/homepage.php#pnr" id="pnrSearchForm" class="tracker-form" autocomplete="off">
           <?= csrf_field() ?>
-          <div class="col-md-5 mb-3 mb-md-0">
-            <div class="pnr-label-row">
-              <label for="pnr_input" class="pnr-label-title mb-0">
-                <span>🎫 PNR Reference</span>
-              </label>
-              <span class="pnr-char-counter" id="pnrCharCounter">0/10</span>
+          <div class="form-group">
+            <div class="label-header pnr-label-row">
+              <label for="pnr_input" class="form-label pnr-label-title mb-0">PNR Reference</label>
+              <span class="badge-hint pnr-char-counter" id="pnrCharCounter">0/10</span>
             </div>
-            <div class="pnr-input-group">
-              <span class="pnr-input-icon">🎫</span>
-              <input class="form-control pnr-code-input" 
+            <div class="input-wrapper pnr-input-group">
+              <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+              </svg>
+              <input class="form-control pnr-uppercase pnr-code-input" 
                      id="pnr_input"
                      name="pnr" 
                      maxlength="10" 
                      pattern="[A-Fa-f0-9]{10}"
                      autocomplete="off"
                      autocapitalize="characters"
-                     placeholder="e.g. 9B3A57EF10" 
+                     placeholder="E.G. 9B3A57EF10" 
                      value="<?= e($searched_pnr) ?>" 
-                     required 
-                     style="text-transform: uppercase;">
+                     required>
             </div>
           </div>
-          <div class="col-md-4 mb-3 mb-md-0">
-            <div class="pnr-label-row">
-              <label for="phone4_input" class="pnr-label-title mb-0">
-                <span>🔒 Phone Security PIN</span>
-              </label>
-              <span class="small text-muted font-weight-bold">Last 4 Digits</span>
+          <div class="form-group">
+            <div class="label-header pnr-label-row">
+              <label for="phone4_input" class="form-label pnr-label-title mb-0">Phone Security PIN</label>
+              <span class="badge-hint">Last 4 Digits</span>
             </div>
-            <div class="pnr-input-group">
-              <span class="pnr-input-icon">📱</span>
+            <div class="input-wrapper pnr-input-group">
+              <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
               <input class="form-control" 
                      id="phone4_input"
                      name="phone4" 
@@ -934,16 +951,23 @@ if (isset($_POST['subbtn'])) {
                      required>
             </div>
           </div>
-          <div class="col-md-3">
-            <button class="btn btn-primary btn-block pnr-submit-btn" id="pnrSubmitBtn" type="submit">
-              <span>🔍</span> <span>Search Ticket</span>
-            </button>
-          </div>
+          <button class="btn-search pnr-submit-btn btn-touch" id="pnrSubmitBtn" type="submit" name="search_ticket">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <span>Search Ticket</span>
+          </button>
         </form>
 
         <details class="pnr-helper-accordion">
-          <summary><span>💡 Where do I find my PNR and Phone PIN?</span></summary>
-          <div class="pnr-helper-body">
+          <summary class="help-summary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; display: inline-block; vertical-align: -2px; margin-right: 6px;">
+              <path d="M9 18h6m-4 4h2m-5-8a6 6 0 1 1 8 0c-1 1-1.5 2-1.5 3h-5c0-1-.5-2-1.5-3z"/>
+            </svg>
+            <span>Where do I find my PNR and Phone PIN?</span>
+          </summary>
+          <div class="help-body pnr-helper-body">
+            <p class="mb-2">Your 10-character PNR is on your SMS/email receipt. The PIN is the last 4 digits of your phone number.</p>
             <ul>
               <li><strong>PNR Number (10 characters):</strong> Provided in your booking confirmation SMS and email receipt (e.g., <code>9B3A57EF10</code>). It is composed of letters A-F and numbers 0-9.</li>
               <li><strong>Phone Security PIN (4 digits):</strong> The last 4 digits of the contact mobile number provided when making the reservation. This ensures your personal passenger details remain protected.</li>
@@ -965,8 +989,12 @@ if (isset($_POST['subbtn'])) {
                 counter.textContent = len + '/10';
                 if (len === 10) {
                   counter.classList.add('complete');
+                  counter.style.background = '#dcfce7';
+                  counter.style.color = '#15803d';
                 } else {
                   counter.classList.remove('complete');
+                  counter.style.background = '#f1f5f9';
+                  counter.style.color = '#64748b';
                 }
               }
             }
@@ -984,7 +1012,7 @@ if (isset($_POST['subbtn'])) {
 
             if (phoneInput) {
               phoneInput.addEventListener('input', function() {
-                this.value = this.value.replace(/\D/g, '');
+                this.value = this.value.replace(/\D/g, '').slice(0, 4);
               });
             }
 
@@ -997,7 +1025,7 @@ if (isset($_POST['subbtn'])) {
               });
               window.addEventListener('pageshow', function () {
                 btn.disabled = false;
-                btn.innerHTML = '<span>🔍</span> <span>Search Ticket</span>';
+                btn.innerHTML = '<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> <span>Search Ticket</span>';
               });
             }
 

@@ -494,27 +494,37 @@ html[data-theme="dark"] .nav-user-menu .dropdown-divider {
 }
 
 /* ── 6. PNR Verification Ticket & Section (Section D) ───────── */
-.pnr-eyebrow-pill {
+.pnr-tracker-section {
+  background: radial-gradient(circle at 50% 0%, #eff6ff 0%, #f8fafc 70%);
+  padding: 64px 20px;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #0f172a;
+}
+.pnr-container {
+  max-width: 880px;
+  margin: 0 auto;
+  text-align: center;
+}
+.status-badge, .pnr-eyebrow-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0.95rem;
-  font-size: 0.78rem;
+  gap: 8px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #2563eb;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border-radius: var(--radius-full, 9999px);
-  background: rgba(29, 78, 216, 0.08);
-  color: var(--home-primary, #1d4ed8);
-  border: 1px solid rgba(29, 78, 216, 0.22);
-  margin-bottom: 0.75rem;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  margin-bottom: 18px;
 }
-.pnr-dot {
+.pulse-dot, .pnr-dot {
   width: 8px;
   height: 8px;
+  background: #10b981;
   border-radius: 50%;
-  background-color: #10b981;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
   display: inline-block;
   animation: pnrDotPulse 2s infinite ease-in-out;
 }
@@ -523,30 +533,38 @@ html[data-theme="dark"] .nav-user-menu .dropdown-divider {
   50% { opacity: 0.6; transform: scale(0.85); }
 }
 
-.pnr-trust-strip {
+.trust-features, .pnr-trust-strip {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 0.75rem 1.75rem;
+  gap: 12px 28px;
   margin-top: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 36px;
 }
-.pnr-trust-item {
+.feature-item, .pnr-trust-item {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.85rem;
+  gap: 8px;
+  font-size: 0.875rem;
   font-weight: 600;
-  color: var(--home-text-muted, #64748b);
+  color: #475569;
 }
+.feature-icon {
+  width: 17px;
+  height: 17px;
+}
+.feature-icon.blue { color: #2563eb; }
+.feature-icon.amber { color: #f59e0b; }
+.feature-icon.purple { color: #7c3aed; }
 
-.pnr-search-box {
-  background: var(--home-bg-white);
-  border: 1px solid var(--home-border);
+.tracker-card, .pnr-search-box {
+  background: var(--home-bg-white, #ffffff);
+  border: 1px solid var(--home-border, #e2e8f0);
   border-radius: var(--radius-xl, 16px);
   padding: clamp(1.5rem, 3.5vw, 2.25rem);
   box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.02);
   position: relative;
+  text-align: left;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -570,111 +588,161 @@ html[data-theme="dark"] .nav-user-menu .dropdown-divider {
   border-radius: 4px;
 }
 
-.pnr-label-row {
+/* Core Fix: 3-Column Grid with bottom baseline lock */
+.tracker-form {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr auto;
+  gap: 16px;
+  align-items: end;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.label-header, .pnr-label-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
+  white-space: nowrap; /* Prevents 2-line label break */
   margin-bottom: 0.45rem;
 }
-.pnr-label-title {
-  font-size: 0.85rem;
+.form-label, .pnr-label-title {
+  font-size: 0.875rem;
   font-weight: 700;
-  color: var(--home-navy);
+  color: var(--home-navy, #1e293b);
   display: flex;
   align-items: center;
   gap: 0.35rem;
+  margin-bottom: 0;
 }
-.pnr-char-counter {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--home-text-muted);
+.badge-hint, .pnr-char-counter {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 6px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  transition: all 0.2s ease;
 }
-.pnr-char-counter.complete {
+.badge-hint.complete, .pnr-char-counter.complete {
+  background: #dcfce7;
   color: #15803d;
 }
 
-.pnr-input-group {
+.input-wrapper, .pnr-input-group {
   position: relative;
   display: flex;
   align-items: center;
 }
-.pnr-input-icon {
+.field-icon, .pnr-input-icon {
   position: absolute;
   left: 14px;
-  font-size: 1rem;
-  color: var(--home-text-muted);
+  width: 18px;
+  height: 18px;
+  color: #94a3b8;
   pointer-events: none;
   z-index: 2;
-  user-select: none;
+  transition: color 0.2s ease;
 }
-.pnr-input-group .form-control {
-  padding-left: 42px;
-  height: 48px;
-  border-radius: 10px;
-  font-weight: 600;
-  border: 1.5px solid var(--home-border);
-  background-color: var(--home-bg-white);
-  color: var(--home-navy);
-  transition: border-color 0.2s, box-shadow 0.2s;
+.input-wrapper .form-control, .pnr-input-group .form-control {
+  width: 100%;
+  height: 50px;
+  padding: 0 14px 0 42px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  outline: none;
+  color: var(--home-navy, #0f172a);
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
 }
-.pnr-input-group .form-control:focus {
-  border-color: var(--home-primary);
-  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
-}
-.pnr-code-input {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  letter-spacing: 0.12em;
-  font-size: 1.05rem;
+.pnr-uppercase, .pnr-code-input {
   text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.input-wrapper .form-control:focus, .pnr-input-group .form-control:focus {
+  background: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+.input-wrapper:focus-within .field-icon, .pnr-input-group:focus-within .pnr-input-icon {
+  color: #2563eb;
 }
 
-.pnr-submit-btn {
-  height: 48px;
-  border-radius: 10px;
-  font-weight: 700;
+.btn-search, .pnr-submit-btn {
+  height: 50px;
+  padding: 0 26px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
   font-size: 0.95rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 10px;
+  white-space: nowrap;
+  cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
-.pnr-submit-btn:hover {
+.btn-search .btn-icon, .pnr-submit-btn .btn-icon {
+  width: 18px;
+  height: 18px;
+}
+.btn-search:hover, .pnr-submit-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(29, 78, 216, 0.35);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+  color: #ffffff;
 }
 
-.pnr-helper-accordion {
+.help-drawer, .pnr-helper-accordion {
   margin-top: 1.5rem;
-  border-top: 1px solid var(--home-border);
+  border-top: 1px solid var(--home-border, #e2e8f0);
   padding-top: 1rem;
 }
-.pnr-helper-accordion summary {
+.help-summary, .pnr-helper-accordion summary {
   cursor: pointer;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--home-text-muted);
+  color: #64748b;
   user-select: none;
   transition: color 0.15s;
+  display: flex;
+  align-items: center;
 }
-.pnr-helper-accordion summary:hover {
-  color: var(--home-primary);
+.help-summary:hover, .pnr-helper-accordion summary:hover {
+  color: #2563eb;
 }
-.pnr-helper-body {
+.help-body, .pnr-helper-body {
+  margin-top: 0.75rem;
   padding: 0.85rem 1rem;
-  margin-top: 0.6rem;
-  background: var(--home-bg-warm);
-  border: 1px solid var(--home-border);
+  background: var(--home-bg-warm, #f8fafc);
+  border: 1px solid var(--home-border, #e2e8f0);
   border-radius: 10px;
   font-size: 0.825rem;
   line-height: 1.55;
-  color: var(--home-text-muted);
+  color: var(--home-text-muted, #475569);
 }
-.pnr-helper-body ul {
+.help-body ul, .pnr-helper-body ul {
   margin-bottom: 0;
   padding-left: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .tracker-form {
+    grid-template-columns: 1fr;
+  }
+  .btn-search, .pnr-submit-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* ── Option 2 Boarding Pass Result Card ────────────────────── */
@@ -1024,10 +1092,61 @@ html[data-theme="dark"] .nav-user-menu .dropdown-divider {
 }
 
 /* Dark Mode Specific Overrides for PNR Component */
-html[data-theme="dark"] .pnr-eyebrow-pill {
+html[data-theme="dark"] .pnr-eyebrow-pill,
+html[data-theme="dark"] .status-badge {
   background: rgba(56, 189, 248, 0.12) !important;
   color: #38bdf8 !important;
   border-color: rgba(56, 189, 248, 0.25) !important;
+}
+html[data-theme="dark"] .tracker-card {
+  background: #131b2e !important;
+  border-color: #1e293b !important;
+}
+html[data-theme="dark"] .form-label {
+  color: #f8fafc !important;
+}
+html[data-theme="dark"] .badge-hint {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+}
+html[data-theme="dark"] .badge-hint.complete {
+  background: rgba(16, 185, 129, 0.2) !important;
+  color: #34d399 !important;
+}
+html[data-theme="dark"] .input-wrapper .form-control,
+html[data-theme="dark"] .pnr-input-group .form-control {
+  background: #090d16 !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+html[data-theme="dark"] .input-wrapper .form-control:focus,
+html[data-theme="dark"] .pnr-input-group .form-control:focus {
+  background: #0d1527 !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25) !important;
+}
+html[data-theme="dark"] .field-icon {
+  color: #64748b !important;
+}
+html[data-theme="dark"] .input-wrapper:focus-within .field-icon {
+  color: #60a5fa !important;
+}
+html[data-theme="dark"] .feature-item {
+  color: #94a3b8 !important;
+}
+html[data-theme="dark"] .help-drawer {
+  border-color: #1e293b !important;
+}
+html[data-theme="dark"] .help-summary {
+  color: #94a3b8 !important;
+}
+html[data-theme="dark"] .help-summary:hover {
+  color: #60a5fa !important;
+}
+html[data-theme="dark"] .help-body {
+  background: #090d16 !important;
+  border-color: #1e293b !important;
+  color: #cbd5e1 !important;
 }
 html[data-theme="dark"] .ticket-header {
   background: #081216 !important;
