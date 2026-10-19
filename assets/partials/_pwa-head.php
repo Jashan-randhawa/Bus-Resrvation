@@ -144,7 +144,7 @@ $root_prefix = $is_admin_route ? '../' : './';
       btn.id = 'pwa-install-banner';
       btn.type = 'button';
       btn.setAttribute('aria-label', 'Install Bus Reservation App');
-      btn.innerHTML = '📲 Install Bus App';
+      btn.innerHTML = 'Install Bus App';
       document.body.appendChild(btn);
 
       btn.addEventListener('click', function () {
@@ -158,7 +158,7 @@ $root_prefix = $is_admin_route ? '../' : './';
   window.addEventListener('beforeinstallprompt', function (e) {
     // Note: e.preventDefault() is deliberately omitted so Chrome does not emit
     // the "Banner not shown: beforeinstallpromptevent.preventDefault() called" warning.
-    // We stash the event so our custom "📲 Install Bus App" button can still invoke prompt().
+    // We stash the event so our custom "Install Bus App" button can still invoke prompt().
     deferredInstallPrompt = e;
     console.info('[PWA] App install prompt ready. Custom button and native prompt active.');
 
