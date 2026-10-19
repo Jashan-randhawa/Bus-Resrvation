@@ -494,59 +494,267 @@ html[data-theme="dark"] .nav-user-menu .dropdown-divider {
 }
 
 /* ── 6. PNR Verification Ticket & Section (Section D) ───────── */
+.pnr-eyebrow-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.95rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: var(--radius-full, 9999px);
+  background: rgba(29, 78, 216, 0.08);
+  color: var(--home-primary, #1d4ed8);
+  border: 1px solid rgba(29, 78, 216, 0.22);
+  margin-bottom: 0.75rem;
+}
+.pnr-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+  display: inline-block;
+  animation: pnrDotPulse 2s infinite ease-in-out;
+}
+@keyframes pnrDotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.85); }
+}
+
+.pnr-trust-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem 1.75rem;
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+}
+.pnr-trust-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--home-text-muted, #64748b);
+}
+
 .pnr-search-box {
   background: var(--home-bg-white);
   border: 1px solid var(--home-border);
-  border-radius: var(--radius-xl, 14px);
-  padding: clamp(1.5rem, 3vw, 2rem);
-  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+  border-radius: var(--radius-xl, 16px);
+  padding: clamp(1.5rem, 3.5vw, 2.25rem);
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.02);
+  position: relative;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.pnr-prefill-banner {
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 12px;
+  padding: 0.85rem 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--home-navy);
+}
+.pnr-prefill-banner code {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1d4ed8;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+.pnr-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.45rem;
+}
+.pnr-label-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--home-navy);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.pnr-char-counter {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--home-text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.pnr-char-counter.complete {
+  color: #15803d;
+}
+
+.pnr-input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.pnr-input-icon {
+  position: absolute;
+  left: 14px;
+  font-size: 1rem;
+  color: var(--home-text-muted);
+  pointer-events: none;
+  z-index: 2;
+  user-select: none;
+}
+.pnr-input-group .form-control {
+  padding-left: 42px;
+  height: 48px;
+  border-radius: 10px;
+  font-weight: 600;
+  border: 1.5px solid var(--home-border);
+  background-color: var(--home-bg-white);
+  color: var(--home-navy);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.pnr-input-group .form-control:focus {
+  border-color: var(--home-primary);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
+}
+.pnr-code-input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.12em;
+  font-size: 1.05rem;
+  text-transform: uppercase;
+}
+
+.pnr-submit-btn {
+  height: 48px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25);
+}
+.pnr-submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(29, 78, 216, 0.35);
+}
+
+.pnr-helper-accordion {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--home-border);
+  padding-top: 1rem;
+}
+.pnr-helper-accordion summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--home-text-muted);
+  user-select: none;
+  transition: color 0.15s;
+}
+.pnr-helper-accordion summary:hover {
+  color: var(--home-primary);
+}
+.pnr-helper-body {
+  padding: 0.85rem 1rem;
+  margin-top: 0.6rem;
+  background: var(--home-bg-warm);
+  border: 1px solid var(--home-border);
+  border-radius: 10px;
+  font-size: 0.825rem;
+  line-height: 1.55;
+  color: var(--home-text-muted);
+}
+.pnr-helper-body ul {
+  margin-bottom: 0;
+  padding-left: 1.25rem;
+}
+
+/* ── Option 2 Boarding Pass Result Card ────────────────────── */
 .ticket-receipt-card {
   background: var(--home-bg-white);
   border: 1.5px solid var(--home-border);
-  border-radius: var(--radius-xl, 14px);
+  border-radius: var(--radius-xl, 16px);
   overflow: hidden;
-  box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 15px 35px -5px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.02);
   margin-top: 2rem;
+  position: relative;
 }
 
 .ticket-header {
-  background: var(--home-navy);
-  color: #ffffff;
+  background: #0f172a !important;
+  color: #ffffff !important;
   padding: 1.25rem 1.75rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
-
 .ticket-header .pnr-label {
-  color: #94a3b8;
+  color: #94a3b8 !important;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 2px;
+}
+.pnr-display-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.ticket-header .pnr-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #38bdf8 !important;
+  letter-spacing: 0.08em;
+}
+.btn-copy-pnr {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f8fafc;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  transition: all 0.2s;
 }
-
-.ticket-header .pnr-code {
-  font-family: var(--font-mono, monospace);
-  font-size: 1.35rem;
-  font-weight: 600;
+.btn-copy-pnr:hover {
+  background: rgba(255, 255, 255, 0.22);
   color: #ffffff;
-  letter-spacing: 0.05em;
+}
+.btn-copy-pnr.copied {
+  background: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
 }
 
-/* Status badge color contrast fix (Section D5) */
+/* Status Badges */
 .badge-pnr-status {
-  padding: 0.4rem 0.85rem;
-  font-weight: 600;
+  padding: 0.45rem 0.95rem;
+  font-weight: 700;
   font-size: 0.8125rem;
   border-radius: var(--radius-full, 9999px);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 .badge-pnr-confirmed {
-  background-color: #15803d !important; /* 5.0:1 contrast ratio with white */
+  background-color: #15803d !important;
   color: #ffffff !important;
 }
 .badge-pnr-pending {
@@ -557,26 +765,309 @@ html[data-theme="dark"] .nav-user-menu .dropdown-divider {
   background-color: #b91c1c !important;
   color: #ffffff !important;
 }
-
-.ticket-body {
-  padding: 1.75rem;
+.badge-pnr-completed {
+  background-color: #475569 !important;
+  color: #ffffff !important;
 }
 
-.ticket-row-item {
-  margin-bottom: 1.25rem;
+/* Zone 2: Route Corridor Hero */
+.ticket-corridor-wrap {
+  padding: 1.5rem 1.75rem 1rem;
+  background: var(--home-bg-white);
 }
-.ticket-row-item .item-label {
-  font-size: 0.75rem;
+.ticket-route-corridor {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.route-city {
+  flex: 1;
+}
+.route-city.destination {
+  text-align: right;
+}
+.route-city .city-name {
+  font-size: clamp(1.2rem, 3vw, 1.55rem);
+  font-weight: 800;
+  color: var(--home-navy);
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+.route-city .city-sub {
+  font-size: 0.72rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   color: var(--home-text-muted);
+  margin-top: 2px;
+}
+.route-transit-corridor {
+  flex: 1.4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding: 0 8px;
+}
+.transit-bus-pill {
+  background: var(--home-bg-warm);
+  border: 1px solid var(--home-border);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--home-navy);
+  margin-bottom: 6px;
+  white-space: nowrap;
+}
+.transit-track-line {
+  width: 100%;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, var(--home-border) 0, var(--home-border) 6px, transparent 6px, transparent 12px);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.transit-arrow-head {
+  font-size: 0.85rem;
+  color: var(--home-text-muted);
+  position: absolute;
+  right: -2px;
+  top: -9px;
+}
+
+.ticket-meta-schedule {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 600;
+  color: var(--home-text-muted);
+  padding: 0.5rem 1rem;
+  background: var(--home-bg-warm);
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+.schedule-dot {
+  color: var(--home-border);
+}
+
+/* Perforated divider with side notches */
+.ticket-perforated-wrap {
+  position: relative;
+  padding: 0.5rem 0;
+  background: var(--home-bg-white);
+}
+.ticket-perforated-line {
+  border-top: 2px dashed var(--home-border) !important;
+  width: 100%;
+  margin: 0;
+}
+.ticket-notch {
+  position: absolute;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  background: var(--home-bg-warm);
+  border-radius: 50%;
+  transform: translateY(-50%);
+  border: 1.5px solid var(--home-border);
+  z-index: 3;
+}
+.ticket-notch-left {
+  left: -12px;
+  box-shadow: inset -2px 0 4px rgba(0, 0, 0, 0.05);
+}
+.ticket-notch-right {
+  right: -12px;
+  box-shadow: inset 2px 0 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Zone 3: Passenger & Seat Stub */
+.ticket-stub-details {
+  padding: 1.25rem 1.75rem;
+  background: var(--home-bg-white);
+}
+.ticket-stub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+.stub-cell-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  color: var(--home-text-muted);
   margin-bottom: 0.25rem;
 }
-.ticket-row-item .item-value {
+.stub-cell-value {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--home-navy);
+}
+.ticket-seat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(2, 132, 199, 0.12);
+  color: #0284c7;
+  border: 1px solid rgba(2, 132, 199, 0.25);
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+/* Zone 4: Action & Utility Bar */
+.ticket-receipt-footer {
+  background: var(--home-bg-warm);
+  border-top: 1px solid var(--home-border);
+  padding: 1.15rem 1.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.ticket-total-fare {
+  font-size: 0.85rem;
+  color: var(--home-text-muted);
+  font-weight: 700;
+}
+.fare-highlight {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #10b981;
+  margin-left: 0.35rem;
+}
+.ticket-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* Legacy class compatibility */
+.ticket-body {
+  padding: 0;
+}
+.ticket-row-item {
+  margin-bottom: 1rem;
+}
+.ticket-row-item .item-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--home-text-muted);
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+.ticket-row-item .item-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--home-navy);
+}
+
+/* Assistance & Error State Cards */
+.pnr-alert-card {
+  background: var(--home-bg-white);
+  border: 1.5px solid var(--home-border);
+  border-radius: var(--radius-xl, 16px);
+  padding: 2rem 1.75rem;
+  margin-top: 2rem;
+  text-align: center;
+  box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.06);
+}
+.pnr-alert-icon {
+  font-size: 2.25rem;
+  margin-bottom: 0.75rem;
+  display: block;
+}
+.pnr-alert-title {
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--home-navy);
+  margin-bottom: 0.5rem;
+}
+.pnr-alert-desc {
+  color: var(--home-text-muted);
+  max-width: 500px;
+  margin: 0 auto 1.25rem;
+  font-size: 0.925rem;
+  line-height: 1.55;
+}
+.pnr-tips-box {
+  background: var(--home-bg-warm);
+  border: 1px solid var(--home-border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  text-align: left;
+  max-width: 520px;
+  margin: 0 auto 1.5rem;
+  font-size: 0.85rem;
+  color: var(--home-text-muted);
+}
+.pnr-tips-box ul {
+  margin-bottom: 0;
+  padding-left: 1.25rem;
+}
+.pnr-tips-box li {
+  margin-bottom: 0.35rem;
+}
+.pnr-tips-box li:last-child {
+  margin-bottom: 0;
+}
+
+/* Dark Mode Specific Overrides for PNR Component */
+html[data-theme="dark"] .pnr-eyebrow-pill {
+  background: rgba(56, 189, 248, 0.12) !important;
+  color: #38bdf8 !important;
+  border-color: rgba(56, 189, 248, 0.25) !important;
+}
+html[data-theme="dark"] .ticket-header {
+  background: #081216 !important;
+  border-bottom-color: #132a32 !important;
+}
+html[data-theme="dark"] .ticket-notch {
+  background: var(--home-bg-warm) !important;
+  border-color: var(--home-border) !important;
+}
+html[data-theme="dark"] .ticket-seat-pill {
+  background: rgba(56, 189, 248, 0.15) !important;
+  color: #38bdf8 !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+}
+html[data-theme="dark"] .transit-bus-pill {
+  background: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+html[data-theme="dark"] .ticket-meta-schedule {
+  background: #0f172a !important;
+  color: #94a3b8 !important;
+}
+html[data-theme="dark"] .ticket-corridor-wrap,
+html[data-theme="dark"] .ticket-perforated-wrap,
+html[data-theme="dark"] .ticket-stub-details {
+  background: var(--home-bg-white) !important;
+}
+html[data-theme="dark"] .ticket-receipt-footer {
+  background: #0b111e !important;
+  border-top-color: var(--home-border) !important;
+}
+html[data-theme="dark"] .pnr-prefill-banner {
+  background: rgba(56, 189, 248, 0.1) !important;
+  border-color: rgba(56, 189, 248, 0.25) !important;
+  color: #f8fafc !important;
+}
+html[data-theme="dark"] .pnr-prefill-banner code {
+  background: rgba(56, 189, 248, 0.2) !important;
+  color: #38bdf8 !important;
 }
 
 /* ── 7. Features & Capability Tiles (Section C1, C4) ────────── */

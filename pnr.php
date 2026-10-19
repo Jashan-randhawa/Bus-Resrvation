@@ -5,6 +5,7 @@
  */
 require_once __DIR__ . '/includes/config.php';
 $raw_input = trim((string)($_GET['pnr'] ?? $_GET['ticket'] ?? $_GET['text'] ?? $_GET['url'] ?? ''));
+$raw_phone = trim((string)($_GET['phone4'] ?? $_GET['phone'] ?? ''));
 $pnr = '';
 
 if ($raw_input !== '') {
@@ -18,11 +19,20 @@ if ($raw_input !== '') {
     } else {
         $pnr = $raw_input;
     }
+}
 
-    if ($pnr !== '') {
-        header('Location: ' . BASE_URL . '/homepage.php?pnr=' . urlencode($pnr) . '#pnr');
-        exit;
+$phone4 = preg_replace('/\D/', '', $raw_phone);
+if (strlen($phone4) > 4) {
+    $phone4 = substr($phone4, -4);
+}
+
+if ($pnr !== '') {
+    $redirect_target = BASE_URL . '/homepage.php?pnr=' . urlencode($pnr);
+    if ($phone4 !== '') {
+        $redirect_target .= '&phone4=' . urlencode($phone4);
     }
+    header('Location: ' . $redirect_target . '#pnr');
+    exit;
 }
 ?>
 <!DOCTYPE html>
@@ -35,11 +45,16 @@ if ($raw_input !== '') {
     <link rel="stylesheet" href="assets/css/design-system.css">
     <?php require 'assets/partials/_pwa-head.php'; ?>
 </head>
-<body class="bg-light">
-    <div class="container py-5 text-center">
-        <h2>Bus Ticket PNR Verification</h2>
-        <p class="text-muted">Redirecting to passenger enquiry portal...</p>
-        <a href="homepage.php#pnr" class="btn btn-primary">Go to PNR Lookup</a>
+<body class="bg-light d-flex align-items-center justify-content-center" style="min-height: 100vh;">
+    <div class="container py-5 text-center" style="max-width: 520px;">
+        <div class="card shadow-sm border-0 rounded-lg p-4">
+            <div class="mb-3 text-primary" style="font-size: 2.5rem;">🎫</div>
+            <h3 class="font-weight-bold mb-2">Bus Ticket PNR Verification</h3>
+            <p class="text-muted mb-4">Redirecting you to the secure passenger enquiry portal...</p>
+            <a href="homepage.php#pnr" class="btn btn-primary btn-block py-2 font-weight-bold">
+                Go to PNR Lookup &rarr;
+            </a>
+        </div>
     </div>
     <script>window.location.replace("homepage.php#pnr");</script>
 </body>

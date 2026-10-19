@@ -858,58 +858,136 @@ if (isset($_POST['subbtn'])) {
   <!-- 3. PNR Lookup Section (D1-D8) -->
   <section id="pnr" class="home-section" aria-labelledby="pnrHeading">
     <div class="container">
-      <div class="text-center mb-5">
-        <span class="badge badge-info p-2 px-3 mb-2 font-weight-bold">TICKET VERIFICATION</span>
-        <h2 id="pnrHeading" class="font-weight-bold">Check Reservation Status</h2>
-        <p class="text-muted mx-auto" style="max-width: 540px;">
-          Enter your 10-character booking PNR and the last 4 digits of your contact phone number to view ticket details.
+      <div class="text-center mb-4">
+        <div class="pnr-eyebrow-pill mb-2">
+          <span class="pnr-dot"></span> REAL-TIME TICKET TRACKER
+        </div>
+        <h2 id="pnrHeading" class="font-weight-bold">Check Reservation &amp; PNR Status</h2>
+        <p class="text-muted mx-auto" style="max-width: 580px;">
+          Enter your 10-character booking PNR and the last 4 digits of your contact phone number to track live status, check seat assignments, and access your digital boarding pass.
         </p>
+        <div class="pnr-trust-strip">
+          <span class="pnr-trust-item">🛡️ Dual-Factor Privacy Protected</span>
+          <span class="pnr-trust-item">⚡ Instant Live Status Check</span>
+          <span class="pnr-trust-item">🖨️ Verified Digital Boarding Pass</span>
+        </div>
       </div>
 
-      <div class="pnr-search-box mx-auto" style="max-width: 700px;">
+      <div class="pnr-search-box mx-auto" style="max-width: 760px;">
         <?php
         $searched_pnr = strtoupper(trim((string)($_POST['pnr'] ?? $_GET['pnr'] ?? '')));
         $searched_phone4 = preg_replace('/\D/', '', (string)($_POST['phone4'] ?? $_GET['phone4'] ?? ''));
+        $has_prefill_pnr = (!empty($_GET['pnr']) && empty($_POST['pnr']) && empty($_GET['phone4']) && empty($_POST['phone4']));
         ?>
-        <form method="post" action="<?= e(BASE_URL) ?>/homepage.php#pnr" id="pnrSearchForm" class="row">
+        <?php if ($has_prefill_pnr && $searched_pnr !== ''): ?>
+          <div class="pnr-prefill-banner" role="alert">
+            <span style="font-size: 1.25rem;">🎫</span>
+            <div>
+              <strong>PNR Code Loaded:</strong> <code><?= e($searched_pnr) ?></code>
+              <div class="small text-muted mt-1">Please enter the last 4 digits of your booking phone number to authenticate and view your ticket.</div>
+            </div>
+          </div>
+        <?php endif; ?>
+
+        <form method="post" action="<?= e(BASE_URL) ?>/homepage.php#pnr" id="pnrSearchForm" class="row align-items-end">
           <?= csrf_field() ?>
           <div class="col-md-5 mb-3 mb-md-0">
-            <label for="pnr_input" class="d-block font-weight-bold small text-muted">PNR Number</label>
-            <input class="form-control" 
-                   id="pnr_input"
-                   name="pnr" 
-                   maxlength="10" 
-                   pattern="[A-Fa-f0-9]{10}"
-                   autocomplete="off"
-                   autocapitalize="characters"
-                   placeholder="e.g. 9B3A57EF10" 
-                   value="<?= e($searched_pnr) ?>" 
-                   required 
-                   style="text-transform: uppercase;">
+            <div class="pnr-label-row">
+              <label for="pnr_input" class="pnr-label-title mb-0">
+                <span>🎫 PNR Reference</span>
+              </label>
+              <span class="pnr-char-counter" id="pnrCharCounter">0/10</span>
+            </div>
+            <div class="pnr-input-group">
+              <span class="pnr-input-icon">🎫</span>
+              <input class="form-control pnr-code-input" 
+                     id="pnr_input"
+                     name="pnr" 
+                     maxlength="10" 
+                     pattern="[A-Fa-f0-9]{10}"
+                     autocomplete="off"
+                     autocapitalize="characters"
+                     placeholder="e.g. 9B3A57EF10" 
+                     value="<?= e($searched_pnr) ?>" 
+                     required 
+                     style="text-transform: uppercase;">
+            </div>
           </div>
           <div class="col-md-4 mb-3 mb-md-0">
-            <label for="phone4_input" class="d-block font-weight-bold small text-muted">Last 4 Digits of Phone</label>
-            <input class="form-control" 
-                   id="phone4_input"
-                   name="phone4" 
-                   maxlength="4" 
-                   pattern="\d{4}" 
-                   inputmode="numeric"
-                   autocomplete="off"
-                   placeholder="e.g. 5521" 
-                   value="<?= e($searched_phone4) ?>" 
-                   required>
+            <div class="pnr-label-row">
+              <label for="phone4_input" class="pnr-label-title mb-0">
+                <span>🔒 Phone Security PIN</span>
+              </label>
+              <span class="small text-muted font-weight-bold">Last 4 Digits</span>
+            </div>
+            <div class="pnr-input-group">
+              <span class="pnr-input-icon">📱</span>
+              <input class="form-control" 
+                     id="phone4_input"
+                     name="phone4" 
+                     maxlength="4" 
+                     pattern="\d{4}" 
+                     inputmode="numeric"
+                     autocomplete="off"
+                     placeholder="e.g. 5521" 
+                     value="<?= e($searched_phone4) ?>" 
+                     required>
+            </div>
           </div>
-          <div class="col-md-3 d-flex align-items-end">
-            <button class="btn btn-primary btn-block py-2 btn-touch" id="pnrSubmitBtn" type="submit">
-              Search Ticket
+          <div class="col-md-3">
+            <button class="btn btn-primary btn-block pnr-submit-btn" id="pnrSubmitBtn" type="submit">
+              <span>🔍</span> <span>Search Ticket</span>
             </button>
           </div>
         </form>
+
+        <details class="pnr-helper-accordion">
+          <summary><span>💡 Where do I find my PNR and Phone PIN?</span></summary>
+          <div class="pnr-helper-body">
+            <ul>
+              <li><strong>PNR Number (10 characters):</strong> Provided in your booking confirmation SMS and email receipt (e.g., <code>9B3A57EF10</code>). It is composed of letters A-F and numbers 0-9.</li>
+              <li><strong>Phone Security PIN (4 digits):</strong> The last 4 digits of the contact mobile number provided when making the reservation. This ensures your personal passenger details remain protected.</li>
+            </ul>
+          </div>
+        </details>
+
         <script>
           (function() {
             var f = document.getElementById('pnrSearchForm');
             var btn = document.getElementById('pnrSubmitBtn');
+            var pnrInput = document.getElementById('pnr_input');
+            var phoneInput = document.getElementById('phone4_input');
+            var counter = document.getElementById('pnrCharCounter');
+
+            function updateCounter() {
+              if (pnrInput && counter) {
+                var len = pnrInput.value.length;
+                counter.textContent = len + '/10';
+                if (len === 10) {
+                  counter.classList.add('complete');
+                } else {
+                  counter.classList.remove('complete');
+                }
+              }
+            }
+
+            if (pnrInput) {
+              pnrInput.addEventListener('input', function() {
+                this.value = this.value.toUpperCase().replace(/[^A-F0-9]/g, '');
+                updateCounter();
+                if (this.value.length === 10 && phoneInput && !phoneInput.value) {
+                  phoneInput.focus();
+                }
+              });
+              updateCounter();
+            }
+
+            if (phoneInput) {
+              phoneInput.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '');
+              });
+            }
+
             if (f && btn) {
               f.addEventListener('submit', function () {
                 setTimeout(function () {
@@ -919,9 +997,51 @@ if (isset($_POST['subbtn'])) {
               });
               window.addEventListener('pageshow', function () {
                 btn.disabled = false;
-                btn.textContent = 'Search Ticket';
+                btn.innerHTML = '<span>🔍</span> <span>Search Ticket</span>';
               });
             }
+
+            <?php if ($has_prefill_pnr): ?>
+            document.addEventListener('DOMContentLoaded', function() {
+              if (phoneInput && !phoneInput.value) {
+                phoneInput.focus();
+              }
+            });
+            <?php endif; ?>
+
+            // 1-Click Copy PNR Handler
+            document.addEventListener('click', function(e) {
+              var copyBtn = e.target.closest('.btn-copy-pnr');
+              if (copyBtn) {
+                var pnrText = copyBtn.getAttribute('data-pnr') || '';
+                if (pnrText && navigator.clipboard) {
+                  navigator.clipboard.writeText(pnrText).then(function() {
+                    copyBtn.classList.add('copied');
+                    copyBtn.innerHTML = '<span>✓</span> <span>Copied!</span>';
+                    setTimeout(function() {
+                      copyBtn.classList.remove('copied');
+                      copyBtn.innerHTML = '<span>📋</span> <span>Copy PNR</span>';
+                    }, 2000);
+                  });
+                }
+              }
+
+              // Search Another button handlers
+              if (e.target.closest('#btnSearchAnother, #btnTryAgainThrottled, #btnTryAgainInvalid, #btnTryAgainNotFound')) {
+                if (pnrInput) {
+                  pnrInput.value = '';
+                  updateCounter();
+                  pnrInput.focus();
+                }
+                if (phoneInput) {
+                  phoneInput.value = '';
+                }
+                var pnrSec = document.getElementById('pnr');
+                if (pnrSec) {
+                  pnrSec.scrollIntoView({ behavior: 'smooth' });
+                }
+              }
+            });
           })();
         </script>
 
@@ -986,73 +1106,183 @@ if (isset($_POST['subbtn'])) {
             } elseif ($tObj = DateTime::createFromFormat('H:i', $rawTime)) {
               $formattedTime = $tObj->format('h:i A');
             }
+
+            $b_status = (string)($b['status'] ?? 'Confirmed');
+            $dep_ts = !empty($b['date']) ? strtotime($b['date'] . ' ' . $rawTime) : 0;
+            $is_past = ($dep_ts > 0 && $dep_ts <= time());
+            $is_cancelled = ($b_status === 'Cancelled');
+            $is_expired = ($b_status === 'Expired');
+
+            $status_class = 'badge-pnr-confirmed';
+            $status_icon = '✓';
+            $status_display = $b_status;
+
+            if ($is_cancelled) {
+              $status_class = 'badge-pnr-cancelled';
+              $status_icon = '✕';
+              $status_display = 'Cancelled';
+            } elseif ($is_expired) {
+              $status_class = 'badge-pnr-cancelled';
+              $status_icon = '✕';
+              $status_display = 'Expired';
+            } elseif ($b_status === 'Pending') {
+              $status_class = 'badge-pnr-pending';
+              $status_icon = '⏳';
+              $status_display = 'Pending Payment';
+            } elseif ($is_past) {
+              $status_class = 'badge-pnr-completed';
+              $status_icon = '✓';
+              $status_display = 'Trip Completed';
+            }
+            $pass_sig = get_ticket_signature($b);
             ?>
             <div class="ticket-receipt-card" role="status" tabindex="-1" id="pnrResultArea">
+              <!-- Zone 1: Authority Bar & PNR -->
               <div class="ticket-header">
                 <div>
                   <div class="pnr-label">Booking Reference (PNR)</div>
-                  <div class="pnr-code"><?= e($b['pnr']) ?></div>
+                  <div class="pnr-display-wrap">
+                    <span class="pnr-code"><?= e($b['pnr']) ?></span>
+                    <button type="button" class="btn-copy-pnr" data-pnr="<?= e($b['pnr']) ?>" title="Copy PNR to clipboard" aria-label="Copy PNR">
+                      <span>📋</span> <span>Copy PNR</span>
+                    </button>
+                  </div>
                 </div>
-                <?php
-                $b_status = (string)($b['status'] ?? 'Confirmed');
-                $status_class = 'badge-pnr-confirmed';
-                if ($b_status === 'Pending') $status_class = 'badge-pnr-pending';
-                elseif ($b_status === 'Cancelled' || $b_status === 'Expired') $status_class = 'badge-pnr-cancelled';
-                ?>
                 <span class="badge badge-pnr-status <?= $status_class ?>">
-                  <?= e($b_status) ?>
+                  <span><?= $status_icon ?></span> <?= e($status_display) ?>
                 </span>
               </div>
-              <div class="ticket-body">
-                <div class="row">
-                  <div class="col-sm-6 ticket-row-item">
-                    <div class="item-label">Passenger Name</div>
-                    <div class="item-value"><?= e($b['name']) ?></div>
+
+              <!-- Zone 2: Route Corridor Hero -->
+              <div class="ticket-corridor-wrap">
+                <div class="ticket-route-corridor">
+                  <div class="route-city origin">
+                    <div class="city-name"><?= e($b['city1']) ?></div>
+                    <div class="city-sub">Origin Boarding</div>
                   </div>
-                  <div class="col-sm-6 ticket-row-item">
-                    <div class="item-label">Contact Phone</div>
-                    <div class="item-value">***-***-<?= e(substr($b['contact'], -4)) ?></div>
-                  </div>
-                  <div class="col-sm-6 ticket-row-item">
-                    <div class="item-label">Route Journey</div>
-                    <div class="item-value"><?= e($b['city1']) ?> &rarr; <?= e($b['city2']) ?></div>
-                  </div>
-                  <div class="col-sm-6 ticket-row-item">
-                    <div class="item-label">Departure Schedule</div>
-                    <div class="item-value"><?= e($formattedDate) ?> at <?= e($formattedTime) ?></div>
-                  </div>
-                  <div class="col-sm-6 ticket-row-item">
-                    <div class="item-label">Bus Vehicle</div>
-                    <div class="item-value">Bus #<?= e($b['bus']) ?></div>
-                  </div>
-                  <div class="col-sm-6 ticket-row-item">
-                    <div class="item-label">Seat Assigned</div>
-                    <div class="item-value text-primary font-weight-bold">Seat #<?= e((string)$b['seat']) ?></div>
-                  </div>
-                  <?php $pass_sig = get_ticket_signature($b); ?>
-                  <div class="col-12 pt-3 border-top d-flex flex-wrap justify-content-between align-items-center">
-                    <div class="mb-2 mb-sm-0">
-                      <span class="text-muted font-weight-bold">Total Fare:</span>
-                      <span class="font-weight-bold text-success h4 mb-0 ml-1"><?= CURRENCY ?><?= e(number_format((float)$b['price'], 2)) ?></span>
+                  <div class="route-transit-corridor">
+                    <span class="transit-bus-pill">🚌 Bus #<?= e($b['bus']) ?></span>
+                    <div class="transit-track-line">
+                      <span class="transit-arrow-head">&rarr;</span>
                     </div>
-                    <a href="<?= BASE_URL ?>/user/ticket.php?pnr=<?= urlencode($b['pnr']) ?>&sig=<?= urlencode($pass_sig) ?>" class="btn btn-outline-primary btn-sm font-weight-bold shadow-sm" target="_blank" rel="noopener">
-                      View &amp; Print Boarding Pass &rarr;
-                    </a>
                   </div>
+                  <div class="route-city destination">
+                    <div class="city-name"><?= e($b['city2']) ?></div>
+                    <div class="city-sub">Destination</div>
+                  </div>
+                </div>
+                <div class="ticket-meta-schedule">
+                  <span>📅 <?= e($formattedDate) ?></span>
+                  <span class="schedule-dot">•</span>
+                  <span>🕒 <?= e($formattedTime) ?> Departure</span>
+                  <span class="schedule-dot">•</span>
+                  <span>🔒 Authenticated Ticket</span>
+                </div>
+              </div>
+
+              <!-- Perforated Line with Side Ticket Notches -->
+              <div class="ticket-perforated-wrap">
+                <span class="ticket-notch ticket-notch-left" aria-hidden="true"></span>
+                <hr class="ticket-perforated-line">
+                <span class="ticket-notch ticket-notch-right" aria-hidden="true"></span>
+              </div>
+
+              <!-- Zone 3: Passenger & Seat Stub -->
+              <div class="ticket-stub-details">
+                <div class="ticket-stub-grid">
+                  <div>
+                    <div class="stub-cell-label">Passenger Name</div>
+                    <div class="stub-cell-value">👤 <?= e($b['name']) ?></div>
+                  </div>
+                  <div>
+                    <div class="stub-cell-label">Contact Phone</div>
+                    <div class="stub-cell-value">📞 ***-***-<?= e(substr($b['contact'], -4)) ?></div>
+                  </div>
+                  <div>
+                    <div class="stub-cell-label">Seat Assignment</div>
+                    <div class="stub-cell-value">
+                      <span class="ticket-seat-pill">💺 Seat #<?= e((string)$b['seat']) ?></span>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="stub-cell-label">Booking SNo / System ID</div>
+                    <div class="stub-cell-value text-muted font-monospace">#<?= e((string)$b['sno']) ?></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Zone 4: Action & Fare Bar -->
+              <div class="ticket-receipt-footer">
+                <div class="ticket-total-fare">
+                  Total Fare Paid:
+                  <span class="fare-highlight"><?= CURRENCY ?><?= e(number_format((float)$b['price'], 2)) ?></span>
+                </div>
+                <div class="ticket-actions-group">
+                  <a href="<?= BASE_URL ?>/user/ticket.php?pnr=<?= urlencode($b['pnr']) ?>&sig=<?= urlencode($pass_sig) ?>" class="btn btn-primary btn-sm font-weight-bold shadow-sm" target="_blank" rel="noopener">
+                    🖨️ View &amp; Print Boarding Pass &rarr;
+                  </a>
+                  <a href="<?= BASE_URL ?>/user/verify.php?pnr=<?= urlencode($b['pnr']) ?>&sig=<?= urlencode($pass_sig) ?>" class="btn btn-outline-secondary btn-sm font-weight-bold" target="_blank" rel="noopener" title="Verify cryptographic digital seal">
+                    🛡️ Verify Seal
+                  </a>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" id="btnSearchAnother">
+                    🔍 Check Another
+                  </button>
                 </div>
               </div>
             </div>
           <?php elseif ($pnr_state === 'throttled'): ?>
-            <div class="alert alert-danger mt-4 text-center mb-0" role="alert" tabindex="-1" id="pnrResultArea">
-              <strong>Lookup limit reached:</strong> Too many verification attempts have been made. Please wait 15 minutes before checking this ticket again.
+            <div class="pnr-alert-card border-danger" role="alert" tabindex="-1" id="pnrResultArea">
+              <span class="pnr-alert-icon">🛡️</span>
+              <h5 class="pnr-alert-title text-danger">Verification Rate Limit Reached</h5>
+              <p class="pnr-alert-desc">
+                For passenger privacy and security, lookup attempts are temporarily limited after multiple queries. Please wait 15 minutes before checking this ticket again.
+              </p>
+              <div class="pnr-tips-box">
+                <strong>Why does this happen?</strong>
+                <ul>
+                  <li>Dual-factor PNR protection blocks automated brute-force attempts.</li>
+                  <li>If you are travelling urgently, call our 24/7 Helpline or check your confirmation SMS.</li>
+                </ul>
+              </div>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="btnTryAgainThrottled">
+                Try Another Search
+              </button>
             </div>
           <?php elseif ($pnr_state === 'invalid'): ?>
-            <div class="alert alert-warning mt-4 text-center mb-0" role="alert" tabindex="-1" id="pnrResultArea">
-              <strong>Invalid format:</strong> Please verify that your PNR is exactly 10 characters (letters A-F and numbers) and phone digits are 4 numbers.
+            <div class="pnr-alert-card border-warning" role="alert" tabindex="-1" id="pnrResultArea">
+              <span class="pnr-alert-icon">⚠️</span>
+              <h5 class="pnr-alert-title text-warning">Invalid Format Provided</h5>
+              <p class="pnr-alert-desc">
+                Please ensure your booking PNR and contact phone PIN match the required formats:
+              </p>
+              <div class="pnr-tips-box">
+                <ul>
+                  <li><strong>PNR Reference:</strong> Must be exactly 10 alphanumeric characters (letters A-F and numbers 0-9, e.g. <code>9B3A57EF10</code>).</li>
+                  <li><strong>Phone Security PIN:</strong> Must be exactly the last 4 digits of your booking phone number (e.g. <code>5521</code>).</li>
+                </ul>
+              </div>
+              <button type="button" class="btn btn-primary btn-sm font-weight-bold" id="btnTryAgainInvalid">
+                Correct Details &rarr;
+              </button>
             </div>
           <?php else: ?>
-            <div class="alert alert-warning mt-4 text-center mb-0" role="alert" tabindex="-1" id="pnrResultArea">
-              <strong>No matching reservation:</strong> No booking record was found matching that PNR token and phone number.
+            <div class="pnr-alert-card border-warning" role="alert" tabindex="-1" id="pnrResultArea">
+              <span class="pnr-alert-icon">🔍</span>
+              <h5 class="pnr-alert-title">No Matching Reservation Found</h5>
+              <p class="pnr-alert-desc">
+                We could not locate any active booking for PNR <code><?= e($searched_pnr) ?></code> matching phone ending in <code><?= e($searched_phone4) ?></code>.
+              </p>
+              <div class="pnr-tips-box">
+                <strong>Troubleshooting tips:</strong>
+                <ul>
+                  <li>Confirm that your 10-character PNR code matches your booking SMS or confirmation email.</li>
+                  <li>Ensure the 4 phone digits belong to the exact mobile number provided during seat booking.</li>
+                  <li>If you booked within the last 60 seconds, please allow a moment and try again.</li>
+                </ul>
+              </div>
+              <button type="button" class="btn btn-primary btn-sm font-weight-bold" id="btnTryAgainNotFound">
+                Check Again &rarr;
+              </button>
             </div>
           <?php endif; ?>
           <script>
