@@ -1274,6 +1274,229 @@ function export_csv(string $filename, array $headers, array $rows): void {
     exit;
 }
 
+if (!function_exists('escape_pdf_txt')) {
+    function escape_pdf_txt(string $s): string {
+        $s = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $s);
+        return iconv('UTF-8', 'windows-1252//TRANSLIT//IGNORE', $s) ?: $s;
+    }
+}
+
+/**
+ * Generates a clean, pure PHP PDF-1.4 binary string for tabular reports.
+ * Dynamically switches between Portrait (<= 6 columns) and Landscape (> 6 columns).
+ *
+ * @param string $title Document title banner
+ * @param array $headers List of column titles
+ * @param array $rows Array of ordered indexed rows
+ * @param array $meta Optional key-value metadata to display in the header summary strip
+ * @return string Binary PDF document string starting with %PDF-1.4 and ending with %%EOF
+ */
+function generate_table_pdf_doc(string $title, array $headers, array $rows, array $meta = []): string {
+    $colCount = count($headers);
+    $isLandscape = $colCount > 6;
+
+    $w = $isLandscape ? 841.89 : 595.28;
+    $h = $isLandscape ? 595.28 : 841.89;
+    $margin = 36;
+    $contentWidth = $w - ($margin * 2);
+
+    $rowsPerPage = $isLandscape ? 18 : 28;
+    $chunks = !empty($rows) ? array_chunk($rows, $rowsPerPage) : [[]];
+    $pageCount = count($chunks);
+
+    // Compute column widths dynamically based on content length
+    $colWeights = [];
+    foreach ($headers as $colIdx => $hdr) {
+        $len = mb_strlen((string)$hdr);
+        foreach (array_slice($rows, 0, 20) as $r) {
+            $val = isset($r[$colIdx]) ? (string)$r[$colIdx] : '';
+            $len = max($len, min(mb_strlen($val), 32));
+        }
+        $colWeights[$colIdx] = max($len, 6);
+    }
+    $totalWeight = array_sum($colWeights) ?: 1;
+    $colWidths = [];
+    $colX = [];
+    $curX = $margin;
+    foreach ($colWeights as $colIdx => $wgt) {
+        $width = ($wgt / $totalWeight) * $contentWidth;
+        $colWidths[$colIdx] = $width;
+        $colX[$colIdx] = $curX;
+        $curX += $width;
+    }
+
+    $pageContents = [];
+
+    foreach ($chunks as $pageIndex => $pageRows) {
+        $pageNum = $pageIndex + 1;
+        $stream = "";
+
+        // Top Header Banner (Deep Slate Navy)
+        $bannerH = 40;
+        $bannerY = $h - $margin - $bannerH;
+        $stream .= "0.06 0.09 0.16 rg\n";
+        $stream .= "{$margin} {$bannerY} {$contentWidth} {$bannerH} re f\n";
+
+        // Title & Page indicator
+        $stream .= "BT\n/F2 14 Tf\n1 1 1 rg\n" . ($margin + 12) . " " . ($bannerY + 22) . " Td (" . escape_pdf_txt("BusBook - " . $title) . ") Tj\nET\n";
+        $stream .= "BT\n/F1 7.5 Tf\n0.8 0.85 0.9 rg\n" . ($margin + 12) . " " . ($bannerY + 9) . " Td (OFFICIAL ADMINISTRATIVE REPORT | PAGE {$pageNum} OF {$pageCount} | CONFIDENTIAL) Tj\nET\n";
+
+        // Metadata Box
+        $metaH = 26;
+        $metaY = $bannerY - $metaH - 8;
+        $stream .= "0.96 0.97 0.99 rg\n";
+        $stream .= "{$margin} {$metaY} {$contentWidth} {$metaH} re f\n";
+        $stream .= "0.82 0.86 0.92 RG 0.75 w\n";
+        $stream .= "{$margin} {$metaY} {$contentWidth} {$metaH} re S\n";
+
+        // Metadata text items
+        $metaText = "TOTAL RECORDS: " . count($rows) . " | EXPORTED: " . date('d M Y, H:i');
+        if (!empty($meta)) {
+            $extra = [];
+            foreach ($meta as $k => $v) {
+                if ($v !== null && $v !== '') {
+                    $extra[] = strtoupper((string)$k) . ": " . (string)$v;
+                }
+            }
+            if (!empty($extra)) {
+                $metaText .= " | " . implode(' | ', $extra);
+            }
+        }
+        $metaText = mb_strimwidth($metaText, 0, $isLandscape ? 130 : 90, '...');
+        $stream .= "BT\n/F2 8 Tf\n0.2 0.25 0.35 rg\n" . ($margin + 10) . " " . ($metaY + 9) . " Td (" . escape_pdf_txt($metaText) . ") Tj\nET\n";
+
+        // Table Header
+        $tableTop = $metaY - 10;
+        $rowH = 20;
+        $hdrY = $tableTop - $rowH;
+
+        $stream .= "0.15 0.23 0.36 rg\n";
+        $stream .= "{$margin} {$hdrY} {$contentWidth} {$rowH} re f\n";
+
+        $stream .= "BT\n/F2 8 Tf\n1 1 1 rg\n";
+        foreach ($headers as $colIdx => $hdr) {
+            $maxHdrChars = max(4, (int)($colWidths[$colIdx] / 5.5));
+            $hdrTxt = mb_strimwidth((string)$hdr, 0, $maxHdrChars, '.');
+            $txtX = $colX[$colIdx] + 6;
+            $txtY = $hdrY + 6;
+            $stream .= "{$txtX} {$txtY} Td (" . escape_pdf_txt($hdrTxt) . ") Tj\n";
+            $stream .= "-" . $txtX . " -" . $txtY . " Td\n";
+        }
+        $stream .= "ET\n";
+
+        // Table Rows
+        $y = $hdrY - $rowH;
+        $rowCounter = 0;
+
+        if (empty($pageRows)) {
+            $stream .= "BT\n/F1 8.5 Tf\n0.5 0.5 0.5 rg\n" . ($margin + ($contentWidth / 3)) . " " . ($y + 6) . " Td (No records found matching criteria.) Tj\nET\n";
+            $y -= $rowH;
+        } else {
+            foreach ($pageRows as $r) {
+                // Zebra stripe
+                if ($rowCounter % 2 === 1) {
+                    $stream .= "0.96 0.97 0.99 rg\n";
+                    $stream .= "{$margin} {$y} {$contentWidth} {$rowH} re f\n";
+                }
+
+                // Divider line
+                $stream .= "0.88 0.90 0.94 RG 0.5 w\n";
+                $stream .= "{$margin} {$y} m " . ($margin + $contentWidth) . " {$y} l S\n";
+
+                $stream .= "BT\n0.15 0.15 0.15 rg\n";
+                foreach ($headers as $colIdx => $hdr) {
+                    $rawVal = isset($r[$colIdx]) ? (string)$r[$colIdx] : '';
+                    $maxChars = max(4, (int)($colWidths[$colIdx] / 5.2));
+                    $cellTxt = mb_strimwidth($rawVal, 0, $maxChars, '..');
+                    $isBold = ($colIdx === 0 || $hdr === 'PNR' || $hdr === 'Status');
+                    $font = $isBold ? '/F2' : '/F1';
+                    $txtX = $colX[$colIdx] + 6;
+                    $txtY = $y + 6;
+                    $stream .= "{$font} 7.5 Tf\n";
+                    $stream .= "{$txtX} {$txtY} Td (" . escape_pdf_txt($cellTxt) . ") Tj\n";
+                    $stream .= "-" . $txtX . " -" . $txtY . " Td\n";
+                }
+                $stream .= "ET\n";
+
+                $y -= $rowH;
+                $rowCounter++;
+            }
+        }
+
+        // Table Outer Border
+        $tableTotalH = ($tableTop) - $y;
+        $stream .= "0.8 0.84 0.90 RG 0.75 w\n";
+        $stream .= "{$margin} {$y} {$contentWidth} {$tableTotalH} re S\n";
+
+        // Page Footer
+        $stream .= "BT\n/F1 7 Tf\n0.5 0.5 0.5 rg\n" . $margin . " 20 Td (Generated by BusBook Management System | Confidential Administrative Report) Tj\nET\n";
+
+        $pageContents[] = $stream;
+    }
+
+    // Assemble PDF
+    $objects = [];
+    $addObject = function($content) use (&$objects) {
+        $objects[] = $content;
+        return count($objects);
+    };
+
+    $catalogId = $addObject("");
+    $pagesId = $addObject("");
+
+    $font1Id = $addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
+    $font2Id = $addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
+
+    $pageIds = [];
+    foreach ($pageContents as $streamData) {
+        $streamLen = strlen($streamData);
+        $streamObjId = $addObject("<< /Length {$streamLen} >>\nstream\n{$streamData}\nendstream");
+        $pageObjId = $addObject("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {$w} {$h}] /Contents {$streamObjId} 0 R /Resources << /Font << /F1 {$font1Id} 0 R /F2 {$font2Id} 0 R >> >> >>");
+        $pageIds[] = $pageObjId;
+    }
+
+    $kidsStr = implode(" 0 R ", $pageIds) . " 0 R";
+    $objects[0] = "<< /Type /Catalog /Pages 2 0 R >>";
+    $objects[1] = "<< /Type /Pages /Kids [{$kidsStr}] /Count " . count($pageIds) . " >>";
+
+    $out = "%PDF-1.4\n%\xe2\xe3\xcf\xd3\n";
+    $xref = [];
+    $xref[] = "0000000000 65535 f ";
+
+    foreach ($objects as $idx => $obj) {
+        $id = $idx + 1;
+        $offset = strlen($out);
+        $xref[] = sprintf("%010d 00000 n ", $offset);
+        $out .= "{$id} 0 obj\n{$obj}\nendobj\n";
+    }
+
+    $xrefOffset = strlen($out);
+    $out .= "xref\n0 " . count($xref) . "\n";
+    foreach ($xref as $entry) {
+        $out .= $entry . "\n";
+    }
+    $out .= "trailer\n<< /Size " . count($xref) . " /Root 1 0 R >>\n";
+    $out .= "startxref\n{$xrefOffset}\n%%EOF\n";
+
+    return $out;
+}
+
+/**
+ * Streams a generated PDF tabular report to the browser as a downloaded attachment.
+ */
+function export_pdf(string $filename, string $title, array $headers, array $rows, array $meta = []): void {
+    if (ob_get_level()) {
+        ob_end_clean();
+    }
+    $pdf = generate_table_pdf_doc($title, $headers, $rows, $meta);
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="' . rawurlencode($filename) . '"');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+    echo $pdf;
+    exit;
+}
+
 /**
  * Executes an unprepared SQL query and returns all associative rows.
  * Safe for schema introspection (SHOW INDEX, SHOW COLUMNS).
@@ -1616,13 +1839,6 @@ function generate_manifest_pdf_doc(string $title, string $bus_number, string $da
     $out .= "startxref\n{$xrefOffset}\n%%EOF\n";
 
     return $out;
-}
-
-if (!function_exists('escape_pdf_txt')) {
-    function escape_pdf_txt(string $s): string {
-        $s = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $s);
-        return iconv('UTF-8', 'windows-1252//TRANSLIT//IGNORE', $s) ?: $s;
-    }
 }
 
 

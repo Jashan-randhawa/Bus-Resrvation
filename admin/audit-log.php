@@ -54,8 +54,9 @@ $keep_filter = array_filter([
     'to_date'   => $filter_to_date !== '' ? $filter_to_date : null,
 ], fn($v) => $v !== null);
 
-// CSV Export (Item 7)
-if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+// CSV & PDF Export (Item 7)
+if (isset($_GET['export']) && in_array($_GET['export'], ['csv', 'pdf'], true)) {
+    $export_type = $_GET['export'];
     $export_sql = "
         SELECT a.id, a.timestamp, adm.name AS admin_name, a.action, a.entity_type, a.entity_id, a.old_value, a.new_value, a.ip_address
         FROM audit_log a
@@ -64,8 +65,24 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
         ORDER BY a.id DESC
     ";
     $export_rows = !empty($params) ? db_all($link, $export_sql, $types, $params) : db_all($link, $export_sql);
-    $headers = ['Log ID', 'Timestamp', 'Admin Name', 'Action', 'Entity Type', 'Entity ID', 'Old Value (JSON)', 'New Value (JSON)', 'IP Address'];
-    export_csv('audit-log-export-' . date('Ymd-His') . '.csv', $headers, $export_rows);
+    $headers = ['Log ID', 'Timestamp', 'Admin', 'Action', 'Entity', 'Target ID', 'Old Value', 'New Value', 'IP Address'];
+    $cleaned_export = [];
+    foreach ($export_rows as $er) {
+        $cleaned_export[] = [
+            $er['id'], $er['timestamp'], $er['admin_name'] ?: 'System',
+            $er['action'], $er['entity_type'], $er['entity_id'] ?: '-',
+            $er['old_value'] ?: '-', $er['new_value'] ?: '-', $er['ip_address'] ?: '-'
+        ];
+    }
+    if ($export_type === 'pdf') {
+        $meta = [
+            'Action' => $filter_action ?: 'All',
+            'Entity' => $filter_entity ?: 'All'
+        ];
+        export_pdf('audit-log-export-' . date('Ymd-His') . '.pdf', 'Administrative Audit Trail Report', $headers, $cleaned_export, $meta);
+    } else {
+        export_csv('audit-log-export-' . date('Ymd-His') . '.csv', $headers, $export_rows);
+    }
 }
 
 $count_sql = "SELECT COUNT(*) AS c FROM audit_log a {$where_sql}";
@@ -96,8 +113,8 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <p class="page-subtitle">Append-only compliance audit trail tracking administrative mutations, cancellations, and entity modifications.</p>
     </div>
     <div class="d-flex align-items-center">
-        <a href="?<?= http_build_query(array_merge($keep_filter, ['export' => 'csv'])) ?>" class="btn btn-outline-success btn-sm shadow-sm font-weight-bold">
-            📥 Export CSV
+        <a href="?<?= http_build_query(array_merge($keep_filter, ['export' => 'pdf'])) ?>" class="btn btn-outline-danger btn-sm shadow-sm font-weight-bold" title="Download compliance audit log PDF">
+            📄 Export PDF
         </a>
     </div>
 </div>

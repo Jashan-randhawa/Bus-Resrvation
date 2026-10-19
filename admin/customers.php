@@ -119,8 +119,9 @@ if ($search !== '') {
 
 $where_sql = !empty($where_clauses) ? 'WHERE ' . implode(' AND ', $where_clauses) : '';
 
-// CSV Export with Role Protection & PII Masking (Issue 7)
-if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+// CSV & PDF Export with Role Protection & PII Masking (Issue 7)
+if (isset($_GET['export']) && in_array($_GET['export'], ['csv', 'pdf'], true)) {
+    $export_type = $_GET['export'];
     $is_viewer = !can_write();
     $export_rows = !empty($params)
         ? db_all($link, "SELECT id, name, email, phone, address, archived_at FROM costumer {$where_sql} ORDER BY `{$cust_pk}` ASC", $types, $params)
@@ -128,7 +129,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
 
     try {
         audit($link, 'EXPORT', 'customer', null, null, [
-            'format' => 'csv',
+            'format' => $export_type,
             'count'  => count($export_rows),
             'masked' => $is_viewer,
             'tab'    => $view_tab,
@@ -136,7 +137,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
         ]);
     } catch (Throwable $e) {}
 
-    $headers = ['Customer ID', 'Full Name', 'Email Address', 'Phone Number', 'Address', 'Archived Timestamp'];
+    $headers = ['Customer ID', 'Full Name', 'Email Address', 'Phone Number', 'Address', 'Status'];
     $cleaned_export = [];
     foreach ($export_rows as $row) {
         $cleaned_export[] = [
@@ -144,11 +145,20 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
             $row['name'],
             $is_viewer ? mask_email((string)($row['email'] ?? '')) : (string)($row['email'] ?? ''),
             $is_viewer ? mask_phone((string)($row['phone'] ?? '')) : (string)($row['phone'] ?? ''),
-            $is_viewer ? '[Masked]' : ($row['address'] ?? ''),
-            $row['archived_at'] ?? 'Active'
+            $is_viewer ? '[Masked]' : ($row['address'] ?? 'N/A'),
+            !empty($row['archived_at']) ? 'Archived' : 'Active'
         ];
     }
-    export_csv('customers-export-' . date('Ymd-His') . '.csv', $headers, $cleaned_export);
+    if ($export_type === 'pdf') {
+        $meta = [
+            'Status' => ucfirst($view_tab),
+            'Search' => $search ?: 'None',
+            'Role'   => $is_viewer ? 'Viewer (Masked)' : 'Administrator'
+        ];
+        export_pdf('customers-export-' . date('Ymd-His') . '.pdf', 'Customer Accounts Directory', $headers, $cleaned_export, $meta);
+    } else {
+        export_csv('customers-export-' . date('Ymd-His') . '.csv', $headers, $cleaned_export);
+    }
 }
 
 // 25-item Pagination (P-10)
@@ -179,8 +189,8 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <p class="page-subtitle">Manage registered passenger profiles, credentials, contact records, and addresses.</p>
     </div>
     <div class="d-flex align-items-center">
-        <a href="?<?= http_build_query(array_merge($keep_params, ['export' => 'csv'])) ?>" class="btn btn-outline-success btn-sm mr-2 shadow-sm font-weight-bold">
-            📥 Export CSV
+        <a href="?<?= http_build_query(array_merge($keep_params, ['export' => 'pdf'])) ?>" class="btn btn-outline-danger btn-sm mr-2 shadow-sm font-weight-bold" title="Download official customer directory PDF">
+            📄 Export PDF
         </a>
         <?php if (can_write()): ?>
         <button class="btn btn-primary shadow-sm" data-toggle="modal" data-target="#addCustomerModal">

@@ -78,9 +78,26 @@ for ($i = 1; $i <= 35; $i++) {
 $multipage_pdf = generate_manifest_pdf_doc('PASSENGER TRIP MANIFEST', 'BUS-MULTI', '2026-10-11', $many_passengers, 17500.00);
 assert_test("Multipage PDF contains /Count 2 for 35 rows", str_contains($multipage_pdf, "/Count 2"));
 
+// General Tabular PDF Document Generator
+assert_test("generate_table_pdf_doc is defined in helpers.php", function_exists('generate_table_pdf_doc'));
+assert_test("export_pdf is defined in helpers.php", function_exists('export_pdf'));
+
+$test_tbl_pdf = generate_table_pdf_doc('Customer Accounts Directory', ['ID', 'Name', 'Email', 'Phone', 'Address', 'Status'], [
+    [1, 'Alice Johnson', 'alice@example.com', '9876543210', '123 Main St', 'Active']
+], ['Role' => 'Admin']);
+assert_test("generate_table_pdf_doc generates valid PDF document", str_starts_with($test_tbl_pdf, "%PDF-1.4") && str_contains($test_tbl_pdf, "%%EOF"));
+assert_test("generate_table_pdf_doc contains table headers and data", str_contains($test_tbl_pdf, "Alice Johnson") && str_contains($test_tbl_pdf, "Customer Accounts Directory"));
+
 // 2. Admin Manifest Mobile View & Endpoints
 echo "\n[*] Suite 2: Manifest Mobile UI & Export Endpoints\n";
 $manifest_code = file_get_contents(__DIR__ . '/../admin/manifest.php');
+$customers_code = file_get_contents(__DIR__ . '/../admin/customers.php');
+$bookings_code = file_get_contents(__DIR__ . '/../admin/bookings.php');
+$audit_code = file_get_contents(__DIR__ . '/../admin/audit-log.php');
+
+assert_test("customers.php exchanges CSV button with PDF export (?export=pdf and 📄 Export PDF)", str_contains($customers_code, "'export' => 'pdf'") && str_contains($customers_code, 'Export PDF'));
+assert_test("bookings.php exchanges CSV button with PDF export (?export=pdf and 📄 Export PDF)", str_contains($bookings_code, "'export' => 'pdf'") && str_contains($bookings_code, 'Export PDF'));
+assert_test("audit-log.php exchanges CSV button with PDF export (?export=pdf and 📄 Export PDF)", str_contains($audit_code, "'export' => 'pdf'") && str_contains($audit_code, 'Export PDF'));
 
 assert_test("manifest.php handles ?export=pdf", str_contains($manifest_code, "\$_GET['export'] === 'pdf'"));
 assert_test("manifest.php handles ?export=csv for desktop", str_contains($manifest_code, "\$_GET['export'] === 'csv'"));

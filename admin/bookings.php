@@ -252,8 +252,9 @@ if ($filter_date_to !== '') {
 
 $where_sql = !empty($where_clauses) ? 'WHERE ' . implode(' AND ', $where_clauses) : '';
 
-// CSV Export (Issues 7, 27)
-if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+// CSV & PDF Export (Issues 7, 27)
+if (isset($_GET['export']) && in_array($_GET['export'], ['csv', 'pdf'], true)) {
+    $export_type = $_GET['export'];
     $is_viewer = !can_write();
     $export_rows = !empty($params) 
         ? db_all($link, "SELECT sno, pnr, bus, name, contact, city1, city2, `date`, `time`, seat, price, status FROM booking {$where_sql} ORDER BY sno DESC", $types, $params)
@@ -261,14 +262,14 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
 
     try {
         audit($link, 'EXPORT', 'booking', null, null, [
-            'format'  => 'csv',
+            'format'  => $export_type,
             'count'   => count($export_rows),
             'masked'  => $is_viewer,
             'filters' => compact('selected_filter', 'search', 'filter_bus', 'filter_date_from', 'filter_date_to')
         ]);
     } catch (Throwable $e) {}
 
-    $headers = ['Booking ID', 'PNR', 'Bus Number', 'Passenger Name', 'Contact Phone', 'Origin', 'Destination', 'Travel Date', 'Departure Time', 'Seat Number', 'Tariff Paid', 'Status'];
+    $headers = ['Booking ID', 'PNR', 'Bus', 'Passenger Name', 'Contact Phone', 'Origin', 'Destination', 'Travel Date', 'Departure', 'Seat', 'Price', 'Status'];
     $cleaned_export = [];
     foreach ($export_rows as $er) {
         $contact = $is_viewer ? mask_phone((string)($er['contact'] ?? '')) : (string)($er['contact'] ?? '');
@@ -278,7 +279,16 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
             $er['price'], $er['status']
         ];
     }
-    export_csv('bookings-export-' . date('Ymd-His') . '.csv', $headers, $cleaned_export);
+    if ($export_type === 'pdf') {
+        $meta = [
+            'Filter' => $selected_filter,
+            'Search' => $search ?: 'None',
+            'Bus'    => $filter_bus ?: 'All'
+        ];
+        export_pdf('bookings-export-' . date('Ymd-His') . '.pdf', 'Booking Reservations Report', $headers, $cleaned_export, $meta);
+    } else {
+        export_csv('bookings-export-' . date('Ymd-His') . '.csv', $headers, $cleaned_export);
+    }
 }
 
 // 25-item Pagination (P-05, P-10)
@@ -313,8 +323,8 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
         <p class="page-subtitle">Track passenger tickets, review reservation statuses, or create manual administrative bookings.</p>
     </div>
     <div class="d-flex align-items-center">
-        <a href="?<?= http_build_query(array_merge($keep_params, ['export' => 'csv'])) ?>" class="btn btn-outline-success btn-sm mr-2 shadow-sm font-weight-bold">
-            📥 Export CSV
+        <a href="?<?= http_build_query(array_merge($keep_params, ['export' => 'pdf'])) ?>" class="btn btn-outline-danger btn-sm mr-2 shadow-sm font-weight-bold" title="Download booking report PDF">
+            📄 Export PDF
         </a>
         <?php if (can_write()): ?>
         <button class="btn btn-primary shadow-sm" data-toggle="modal" data-target="#addBookingModal">
