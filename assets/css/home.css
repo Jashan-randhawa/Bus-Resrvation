@@ -591,14 +591,20 @@ html[data-theme="dark"] .nav-user-menu .dropdown-divider {
 /* Core Fix: 3-Column Grid with bottom baseline lock */
 .tracker-form {
   display: grid;
-  grid-template-columns: 1.35fr 1fr auto;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) auto;
   gap: 16px;
   align-items: end;
 }
+.tracker-form input[type="hidden"] {
+  display: none !important;
+}
+.tracker-form .form-group,
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-bottom: 0 !important;
+  margin-top: 0;
 }
 .label-header, .pnr-label-row {
   display: flex;
@@ -607,6 +613,7 @@ html[data-theme="dark"] .nav-user-menu .dropdown-divider {
   gap: 8px;
   white-space: nowrap; /* Prevents 2-line label break */
   margin-bottom: 0.45rem;
+  min-height: 24px;
 }
 .form-label, .pnr-label-title {
   font-size: 0.875rem;
@@ -674,9 +681,13 @@ html[data-theme="dark"] .nav-user-menu .dropdown-divider {
   color: #2563eb;
 }
 
-.btn-search, .pnr-submit-btn {
-  height: 50px;
+.btn-search, .pnr-submit-btn, .tracker-form .btn-search {
+  height: 50px !important;
+  min-height: 50px !important;
+  max-height: 50px !important;
   padding: 0 26px;
+  margin: 0 !important;
+  margin-bottom: 0 !important;
   background: linear-gradient(135deg, #2563eb, #1d4ed8);
   color: #ffffff;
   font-size: 0.95rem;
@@ -691,6 +702,8 @@ html[data-theme="dark"] .nav-user-menu .dropdown-divider {
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  box-sizing: border-box;
+  align-self: end;
 }
 .btn-search .btn-icon, .pnr-submit-btn .btn-icon {
   width: 18px;
@@ -735,9 +748,25 @@ html[data-theme="dark"] .nav-user-menu .dropdown-divider {
   padding-left: 1.25rem;
 }
 
-@media (max-width: 768px) {
+/* Tablet & Split-Screen Viewports: retain horizontal line */
+@media (min-width: 576px) and (max-width: 768px) {
+  .tracker-form {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: end;
+  }
+  .btn-search, .pnr-submit-btn {
+    padding: 0 16px;
+    font-size: 0.88rem;
+    gap: 6px;
+  }
+}
+
+/* Mobile Viewports: Stack only on small screens (<576px) */
+@media (max-width: 575.98px) {
   .tracker-form {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
   .btn-search, .pnr-submit-btn {
     width: 100%;
