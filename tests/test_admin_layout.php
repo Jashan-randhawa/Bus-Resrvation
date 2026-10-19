@@ -151,6 +151,22 @@ assert_layout("admin.css groups PNR label and code with justify-content flex-sta
     str_contains($admin_css, 'justify-content: flex-start !important;')
 );
 
+assert_layout("admin.css unboxes .data-table-wrapper on mobile with stand-alone table-header pill",
+    str_contains($admin_css, '.data-table-wrapper {') &&
+    str_contains($admin_css, 'background: transparent !important;') &&
+    str_contains($admin_css, '.data-table-wrapper .table-header {')
+);
+
+assert_layout("admin.css provides 24px vertical separation between mobile ticket cards",
+    str_contains($admin_css, '.bookings-table tr {') &&
+    str_contains($admin_css, 'margin-bottom: 24px !important;')
+);
+
+assert_layout("admin.css defines 20px card spacing for generic .table-stack rows on mobile",
+    str_contains($admin_css, '.table-stack tr {') &&
+    str_contains($admin_css, 'margin-bottom: 20px !important;')
+);
+
 // -------------------------------------------------------------
 // Suite 4: Table Cell Data-Label Consistency (F9)
 // -------------------------------------------------------------

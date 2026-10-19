@@ -765,12 +765,15 @@ body.overflow-hidden {
     width: 100%;
   }
   .table-stack tr {
-    margin-bottom: 1rem;
+    margin-bottom: 20px !important;
     border: 1px solid var(--c-border, #e2e8f0);
     border-radius: var(--radius-md, 8px);
     background: var(--c-surface, #ffffff);
     padding: 0.85rem 1rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+  .table-stack tr:last-child {
+    margin-bottom: 8px !important;
   }
   .table-stack td {
     display: flex;
@@ -856,6 +859,24 @@ html[data-theme="dark"] .table-responsive .bg-light {
    Target Breakpoint: <= 768px (Mobile View)
    ========================================================================== */
 @media (max-width: 768px) {
+  /* On mobile, unbox data-table-wrapper so stacked cards float with distinct separation */
+  .data-table-wrapper {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .data-table-wrapper .table-header {
+    background: var(--c-surface, #ffffff) !important;
+    border: 1px solid var(--c-border, #cbd5e1) !important;
+    border-radius: 10px !important;
+    margin-bottom: 16px !important;
+    padding: 12px 16px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+  .data-table-wrapper .table-responsive {
+    overflow: visible !important;
+  }
+
   .bookings-table {
     display: block !important;
     width: 100% !important;
@@ -884,12 +905,15 @@ html[data-theme="dark"] .table-responsive .bg-light {
     background: var(--c-surface, #ffffff);
     border: 1px solid var(--c-border, #cbd5e1) !important;
     border-radius: 12px !important;
-    margin-bottom: 16px;
+    margin-bottom: 24px !important;
     overflow: hidden;
     padding: 0 !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
     width: 100% !important;
     box-sizing: border-box !important;
+  }
+  .bookings-table tr:last-child {
+    margin-bottom: 8px !important;
   }
 
   .bookings-table tr:has(td[colspan]) {
@@ -1136,6 +1160,18 @@ html[data-theme="dark"] .table-responsive .bg-light {
 
 /* Explicit Dark Mode Overrides for Option 2 Boarding Pass */
 @media (max-width: 768px) {
+  html[data-theme="dark"] .data-table-wrapper .table-header,
+  body.dark-mode .data-table-wrapper .table-header {
+    background: var(--c-surface, #111827) !important;
+    border-color: var(--c-border, #334155) !important;
+    color: var(--c-text, #f8fafc) !important;
+  }
+  html[data-theme="dark"] .data-table-wrapper .table-header .record-count,
+  body.dark-mode .data-table-wrapper .table-header .record-count {
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+  }
+
   html[data-theme="dark"] .bookings-table tr,
   body.dark-mode .bookings-table tr {
     background: var(--c-surface, #111827) !important;

@@ -1340,7 +1340,7 @@ html[data-theme="dark"] .bus-legend-item {
   border: 1px solid var(--c-border, #e2e8f0);
   border-radius: var(--radius-md, 10px);
   padding: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   transition: transform var(--transition-fast, 0.15s ease);
 }
