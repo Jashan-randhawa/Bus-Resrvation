@@ -363,14 +363,14 @@ html.dark-mode #viewQueryModal #viewModalSubject {
 <div class="modal fade text-left" id="viewQueryModal" tabindex="-1" role="dialog" aria-labelledby="viewQueryModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
         <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-dark text-white">
+            <div class="modal-header border-bottom">
                 <div class="d-flex align-items-center">
                     <h5 class="modal-title font-weight-bold mb-0" id="viewQueryModalLabel">
                         Inquiry Details <span class="text-muted font-weight-normal" id="viewModalId"></span>
                     </h5>
                     <span class="badge ml-3" id="viewModalStatusBadge"></span>
                 </div>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -435,9 +435,9 @@ html.dark-mode #viewQueryModal #viewModalSubject {
 <div class="modal fade text-left" id="singleReplyModal" tabindex="-1" role="dialog" aria-labelledby="singleReplyModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-dark text-white">
+            <div class="modal-header border-bottom">
                 <h5 class="modal-title font-weight-bold" id="singleReplyModalLabel">Reply to Passenger</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
