@@ -1819,7 +1819,7 @@ if (isset($_POST['subbtn'])) {
               Caps Lock is ON
             </div>
           </div>
-          <button type="submit" class="btn btn-primary btn-block py-2 font-weight-bold" name="admin" style="min-height: 44px;">
+          <button type="submit" class="btn btn-primary btn-block py-2 font-weight-bold admin-submit-btn" name="admin" style="min-height: 48px;">
             Admin Sign In
           </button>
           <div class="text-center mt-3 pt-2 border-top">

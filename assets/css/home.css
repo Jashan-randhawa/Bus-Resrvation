@@ -1472,12 +1472,25 @@ html[data-theme="dark"] .pnr-prefill-banner code {
 }
 
 /* ── 11. Responsive Refinements ─────────────────────────────── */
-@media (max-width: 991px) {
+@media (max-width: 991.98px) {
   .hero-image-wrapper {
     margin-top: 2rem;
   }
   .booking-search-card {
     margin-top: 0;
+  }
+  .btn-nav-action {
+    width: 100%;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+  #mycollapsediv button[data-target="#loginModal"],
+  #mycollapsediv a[href*="/admin/index.php"] {
+    margin-top: 0.85rem;
+    margin-bottom: 0.35rem;
   }
 }
 
@@ -1491,7 +1504,13 @@ html[data-theme="dark"] .pnr-prefill-banner code {
   }
   .btn-nav-action {
     width: 100%;
+    min-height: 46px;
     margin-top: 0.5rem;
+  }
+  #mycollapsediv button[data-target="#loginModal"],
+  #mycollapsediv a[href*="/admin/index.php"] {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
   }
 }
 
