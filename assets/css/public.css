@@ -57,17 +57,31 @@
 }
 
 .admin-auth-header {
-  background-color: var(--admin-surface-dark);
-  color: var(--admin-text-on-dark);
+  background-color: #ffffff;
+  color: #0f172a;
   padding: 1.25rem 1.5rem;
   border-top-left-radius: calc(0.3rem - 1px);
   border-top-right-radius: calc(0.3rem - 1px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.admin-auth-header .close {
+  color: #64748b;
+  opacity: 0.85;
+  text-shadow: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+
+.admin-auth-header .close:hover {
+  color: #0f172a;
+  opacity: 1;
 }
 
 .admin-modal-logo {
@@ -84,7 +98,7 @@
 }
 
 .admin-modal-title {
-  color: var(--admin-text-on-dark);
+  color: #0f172a;
   font-weight: 700;
   font-size: 1.125rem;
   margin-bottom: 0;
@@ -143,6 +157,19 @@
 html[data-theme="dark"] .admin-auth-header {
   background-color: var(--admin-surface-dark);
   color: var(--admin-text-on-dark);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme="dark"] .admin-modal-title {
+  color: var(--admin-text-on-dark);
+}
+
+html[data-theme="dark"] .admin-auth-header .close {
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .admin-auth-header .close:hover {
+  color: #f8fafc;
 }
 
 html[data-theme="dark"] #loginModal .modal-content {

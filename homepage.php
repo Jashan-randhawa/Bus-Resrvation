@@ -1783,7 +1783,7 @@ if (isset($_POST['subbtn'])) {
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
             Restricted access
           </span>
-          <button type="button" class="close text-white p-0 m-0" data-dismiss="modal" aria-label="Close" style="opacity: 0.85;">
+          <button type="button" class="close p-0 m-0" data-dismiss="modal" aria-label="Close" style="opacity: 0.85;">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
