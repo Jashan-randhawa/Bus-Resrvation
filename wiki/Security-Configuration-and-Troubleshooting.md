@@ -84,11 +84,21 @@ Apache security headers in `docker/apache-security.conf` enforce:
 - Self-hosting Bootstrap 4.6.2 and jQuery 3.5.1 in `assets/vendor/` guarantees that strict browser privacy engines (Microsoft Edge Tracking Prevention, Brave Shields, Safari ITP) never block asset loading or report storage access warnings.
 - Assures 100% offline service worker caching without external network dependencies.
 
+### 1.13 Pure-PHP In-Memory PDF Vector Compilation Safety
+- Full-platform PDF reporting (`generate_manifest_pdf_doc()`) is written in pure PHP using native vector drawing primitives.
+- Zero external process execution: `exec`, `shell_exec`, `system`, and `passthru` are strictly prohibited across the codebase.
+- Eliminates Ghostscript arbitrary command execution vulnerabilities (e.g. CVE-2021-3781) and headless browser (Chromium/wkhtmltopdf) memory leaks.
+
+### 1.14 CSS Theme & Layout Boundary Isolation
+- Enforced `@media (min-width: 769px)` layout integrity rules on administrative tables prevent mobile card grid rules or flex containers from corrupting desktop column alignment.
+- Passenger cabin seat map classes are scoped strictly to `.bus-seats-grid .bus-row, div.bus-row`, preventing global selector pollution of table rows (`.fleet-bus-row`).
+- Emerald Cyber Theme B (`theme-emerald.css`) variables and selectors are strictly gated under `[data-theme="dark"]` and `body.dark-mode`, ensuring zero style leakage into the pure-white light mode.
+
 ---
 
 ## 2. Automated Test Harnesses
 
-The system contains 18 automated test suites (480+ assertions) verifying security, concurrency, data integrity, PDF generation, PWA compliance, and UI responsiveness:
+The system contains 28+ automated test suites (600+ assertions) verifying security, concurrency, data integrity, PDF generation, PWA compliance, and UI responsiveness:
 
 ```bash
 # Admin Login Entry Points, Query Whitelist & Modal UI
@@ -148,6 +158,21 @@ php tests/test_password_reset.php
 
 # Customer Google OAuth 2.0 / OpenID Connect PKCE & Token Validation Suite
 php tests/test_google_auth.php
+
+# Real-Time PNR Tracker, dual-factor inputs, auto-advance & boarding pass card suite (33 assertions)
+php tests/test_pnr_section.php
+
+# Customer inquiries message clamping, modal triggers & email reply transitions (20 assertions)
+php tests/test_queries_modal.php
+
+# Emerald Cyber (Theme B) design system tokens, components & dark layout integration (49 assertions)
+php tests/test_theme_emerald.php
+
+# Light theme fidelity & strict Theme B dark mode isolation (22 assertions)
+php tests/test_light_theme_fidelity.php
+
+# Dark mode elevation, card contrast & surface tokens (30 assertions)
+php tests/test_dark_mode_elevation.php
 ```
 
 ---
@@ -214,3 +239,7 @@ php tests/test_google_auth.php
 ### Issue 13: "Banner Not Shown: beforeinstallpromptevent.preventDefault() Called"
 - **Cause:** The browser's native PWA installation mini-infobar was suppressed by `e.preventDefault()` without an active button triggering `e.prompt()`.
 - **Fix:** The install controller in `assets/js/pwa-install.js` stores the `beforeinstallprompt` event without suppression, activating the custom `#pwa-install-btn` in the navbar and triggering native prompts smoothly upon user tap.
+
+### Issue 14: "Fleet Buses Table or Admin Card Tables Column Layout Distorted on Desktop"
+- **Cause:** A CSS class collision occurred between table rows and cabin seating grid rows (e.g. cabin seat grid `.bus-row` applying `display: flex; align-items: center; justify-content: space-between;` to table `<tr>` elements, collapsing all table cells into flex items on the left side of the row).
+- **Fix:** Fleet bus rows use the dedicated class `.fleet-bus-row`, cabin seat grid rows are strictly scoped to `.bus-seats-grid .bus-row, div.bus-row`, and `assets/css/admin.css` defines explicit `@media (min-width: 769px)` layout integrity rules enforcing `display: table-row !important` on `tr` and `display: table-cell !important` on `td`.

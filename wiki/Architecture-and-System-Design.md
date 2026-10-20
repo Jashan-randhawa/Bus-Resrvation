@@ -46,7 +46,8 @@ Bus-Reservation/
 ├── index.php                 # Canonical entry point (redirects to homepage.php)
 ├── homepage.php              # Public landing page, login modals, Google SSO, carousels & PNR lookup
 ├── login.php                 # Standalone customer login endpoint (password & Google SSO)
-├── loading.php               # Cinematic 3D transit loading page & preloader experience
+├── pnr.php                   # Standalone PNR lookup endpoint (Web Share & protocol handler)
+├── loading.html              # Standalone animated splash & loading screen
 ├── forgot-password.php       # Customer password reset link request endpoint
 ├── reset-password.php        # Single-use SHA-256 hashed token password reset completion
 ├── google-login.php          # Google OAuth 2.0 / OpenID Connect authorization redirector
@@ -56,6 +57,7 @@ Bus-Reservation/
 ├── manifest.json             # PWABuilder-compliant Web App Manifest (Widgets, Shortcuts, Handlers)
 ├── sw.js                     # Service Worker (Cache-First static, Network-First dynamic, Background Sync)
 ├── offline.html              # Branded offline fallback screen for network outages
+├── .env.example              # Reference environment configuration template
 │
 ├── android/                  # 🤖 Android TWA Native App Package
 │   ├── BusBook-v2.4.0.apk    # Signed production release APK for direct installation
@@ -135,7 +137,8 @@ Bus-Reservation/
 │   │   ├── user.css          # Customer portal, mobile boarding pass & custom dropdown styles
 │   │   ├── seat-map.css      # Fluid seat map grid & sticky mobile booking bar
 │   │   ├── preloader.css     # Cinematic 3D preloader & transit overlay animation
-│   │   └── home.css          # Public landing page styles & user profile pill navbar
+│   │   ├── home.css          # Public landing page styles & user profile pill navbar
+│   │   └── theme-emerald.css # Emerald Cyber (Theme B) Dark Mode design system
 │   ├── js/
 │   │   ├── admin-mobile.js   # Accessible off-canvas drawer & swipe gesture controller
 │   │   ├── perf-chart.js     # Chart.js dual-axis booking/revenue & status donut charts
@@ -147,6 +150,9 @@ Bus-Reservation/
 │       ├── bus.svg           # High-definition vector bus brand icon
 │       ├── bus-emblem.png    # High-resolution BusBook brand emblem
 │       └── pwa/              # 192x192, 512x512 standard & maskable application icons
+│   └── partials/
+│       ├── _preloader.php    # Path-aware brand preloader overlay partial
+│       └── _pwa-head.php     # Path-aware PWA head tags & Service Worker register
 │
 ├── database/                 # 🗄️ Relational Schema & Migration Engine
 │   ├── init.sql              # Idempotent hardened schema DDL
@@ -156,7 +162,7 @@ Bus-Reservation/
 │   ├── expire-holds.php      # CLI expired seat hold release utility
 │   ├── purge-audit-log.php   # CLI audit log retention cleanup utility
 │   └── migrations/           # Sequential Schema Migrations (001 to 013)
-└── tests/                    # 🧪 Automated Test Harnesses (18 suites, 480+ assertions)
+└── tests/                    # 🧪 Automated Test Harnesses (28+ suites, 600+ assertions)
 ```
 
 ---
@@ -165,10 +171,10 @@ Bus-Reservation/
 
 The frontend uses a centralized CSS custom property token system (`assets/css/design-system.css`) shared across both the Customer Portal (`user/`) and Administrator Control Center (`admin/`):
 
-1. **Global Light (White) & Dark (Slate) Theme Tokens:**
+1. **High-Fidelity Light Mode & Scoped Emerald Cyber Theme B Dark Mode:**
    - **Light Mode (`:root`):** Crisp pure-white navigation sidebar and card surfaces (`--sidebar-bg: #ffffff`, `--surface: #ffffff`), slate typography (`--text-primary: #0f172a`), and royal blue active accents (`#2563eb`).
-   - **Dark Mode (`[data-theme="dark"]`):** Deep midnight navy surfaces (`--sidebar-bg: #0f172a`, `--bg-body: #0b1120`) with high-contrast slate text (`#f8fafc`) and glowing indigo accents.
-   - Controlled persistently via `assets/js/theme-toggle.js` and `localStorage.getItem('busres_theme')`.
+   - **Emerald Cyber Dark Mode (`[data-theme="dark"]`, `assets/css/theme-emerald.css`):** Deep Obsidian canvas (`#050C0F`), Dark Pine surfaces (`#081216`), Elevated Teal accents (`#0F222A`), Mint Emerald primary CTA (`#10B981`), and Sky Cyan interactive highlights (`#06B6D4`). Enforces strict CSS scoping so dark tokens never pollute the crisp light theme.
+   - Controlled persistently via `assets/js/theme-toggle.js` and `localStorage.getItem('busres_theme_mode')`.
 2. **Modern Passenger Profile Pill & Navbar:**
    - `includes/layout/header-public.php` renders a unified profile pill for logged-in passengers featuring a gradient avatar circle with passenger initials, one-line layout (`white-space: nowrap;`), quick shortcuts to Dashboard, My Bookings, and Account Settings, and an isolated CSRF signout link.
 3. **Modern 4-Column Web Footer & PWA Standalone Bottom Navigation:**
@@ -190,13 +196,20 @@ The frontend uses a centralized CSS custom property token system (`assets/css/de
    - Stylesheet references append `?v=filemtime(...)` dynamically so CSS updates take effect immediately across browser sessions without stale cache artifacts.
 9. **Responsive Off-Canvas Navigation Drawer (`<992px`):**
    - `assets/js/admin-mobile.js` powers an accessible mobile navigation drawer (`min(86vw, 320px)`) with swipe-to-dismiss gesture detection, focus trapping, `inert` background locking, and `44x44px` minimum touch targets.
+10. **Option 2 Mobile Card Architecture vs. Desktop Table Layout Integrity:**
+   - On mobile viewports (`<= 768px`), all administrative tables (`.buses-table`, `.bookings-table`, `.queries-table`, `.customers-table`) transform into tailored card components with 24px vertical separation and borderless wrappers.
+   - On desktop viewports (`min-width: 769px`), layout integrity rules strictly enforce `display: table-row !important` on rows and `display: table-cell !important` on cells, preventing flexbox or CSS grid collapse.
+   - Fleet vehicle rows use `.fleet-bus-row`, strictly eliminating class collisions with passenger cabin seat rows (`.bus-seats-grid .bus-row, div.bus-row`).
+11. **Full-Platform Pure-PHP Vector PDF Reporting Engine:**
+   - Zero external runtime binaries (avoiding wkhtmltopdf, dompdf, or Node headless browsers).
+   - In-memory vector PDF 1.4 compilation (`generate_manifest_pdf_doc()`) generating branded, paginated, and print-ready reports across Manifests, Customers, Bookings, and Audit Trail.
 
 ---
 
 ## 4. Request Lifecycle & Routing
 
 1. **Initial Entry:** A visitor accessing the root URL (`/`) hits `index.php`, which fires an HTTP 302 redirect to `homepage.php`.
-2. **Public Operations:** `homepage.php` renders the hero search section with accessible custom city dropdowns, two-factor public PNR lookup, contact inquiry submission, and modal login dialogs.
+2. **Public Operations:** `homepage.php` renders the hero search section with accessible custom city dropdowns, real-time PNR ticket tracker with precision horizontal baseline alignment (`#pnr`, `pnr.php`), contact inquiry submission, and modal login dialogs.
 3. **Authentication Handshake:**
    - **Administrator Login:** Verifies credentials against the `admin` table (`password_verify()`), enforces rate limits, checks TOTP 2FA status (`admin/mfa.php`), initializes isolated `$_SESSION['admin_id']` state, and routes to `/admin/dashboard.php`.
    - **Customer Login:** Verifies credentials against the `costumer` table, initializes `$_SESSION['uid']`, and routes to `/user/index.php`.

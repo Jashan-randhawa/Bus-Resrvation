@@ -99,6 +99,11 @@ The dashboard surfaces real-time dispatch alerts, live departures, and privacy-f
 - **Soft-Delete Archiving:** Vehicles can be archived safely (`archived_at`). Active and Archived tabs allow one-click archiving and instant restoration.
 - **Referential Integrity on Deletion:** Vehicles with active routes or active upcoming bookings cannot be deleted or archived.
 - **Audit Logging:** Vehicle creation, update, archive, and restoration events are automatically recorded in the audit trail.
+- **Option 2 Indian License Plate Card Architecture (Mobile, ≤ 768px):** On mobile viewports, fleet vehicle rows transform into authentic Indian HSRP Commercial License Plate Hero cards (`.buses-table tr`):
+  - Top utility bar with vehicle ID (`#1`) on the left and quick action buttons (`Edit`, `Archive`) on the right.
+  - High-contrast yellow HSRP license plate hero badge (`[IND] HR55D5576`) styled with authentic blue IND tag and monospace registration numerals.
+  - 2-column specification footer separating Seating Capacity on the left from Seating Layout on the right.
+- **Desktop Table Layout Integrity (≥ 769px):** Enforced via `@media (min-width: 769px)` rules in `assets/css/admin.css` ensuring standard `display: table-row` and `display: table-cell` alignment across all 5 columns (`#`, `Bus Identifier / License`, `Seating Capacity`, `Seating Layout`, `Actions`). Uses dedicated `fleet-bus-row` classes to eliminate selector collisions with passenger cabin seat grids.
 
 ---
 
@@ -121,10 +126,12 @@ The dashboard surfaces real-time dispatch alerts, live departures, and privacy-f
 - **Multi-Criteria Search & Filters:** Search by PNR, passenger name, contact phone, or route with date range filtering.
 - **Bulk Actions:** Multi-select checkboxes for batch cancellations and selected-row CSV exports.
 - **Streaming CSV Exports:** Memory-efficient CSV exports with spreadsheet formula injection protection (`=`, `+`, `-`, `@`).
+- **Option 2 Boarding Pass Card Architecture (Mobile, ≤ 768px):** Mobile booking rows transform into airline-style digital boarding pass cards with 24px vertical separation, unboxed borderless wrapper, status-coded colored left borders (Confirmed emerald, Pending amber, Cancelled rose), monospace PNR badge, route corridor hero, and touch-friendly actions.
+- **Pure-PHP PDF Bookings Export (`?export=pdf`):** In addition to streaming CSV downloads, administrators can export print-ready PDF reports with full passenger roll call, route information, and collected tariffs.
 
 ---
 
-## 6. Passenger Trip Manifest & Native PDF Generator (`admin/manifest.php`)
+## 6. Passenger Trip Manifest & Full-Platform Pure-PHP PDF Generator (`admin/manifest.php`)
 
 A dedicated operational workspace for bus conductors and dispatchers:
 - **Corridor & Departure Filter:** Filter passenger manifests by vehicle, departure date, and route.
@@ -144,10 +151,22 @@ A dedicated operational workspace for bus conductors and dispatchers:
 - **Modal Email Replies:** Dispatch email responses directly from the dashboard using RFC 5321 SMTP relay.
 - **Audit Integration:** Inquiry status updates and sent replies are logged to the audit trail.
 - **Unread Counter:** A live badge in the navigation sidebar alerts administrators to new inquiries.
+- **Option 2 Support Ticket Card Architecture (Mobile, ≤ 768px):** Mobile inquiry rows transform into executive support ticket cards with status-coded left borders (`new` red, `replied` emerald, `closed` slate), sender profile badge, line-clamped inquiry message preview, and stacked touch-friendly actions.
+- **Inquiry Message Clamping & Modal Inspection:** Long message previews are clamped to 3 lines on desktop and mobile, with a "Read More →" trigger that launches the comprehensive `#viewQueryModal` dialog.
+- **Clean Light-Themed Modal Header:** Modal dialog features a clean, high-contrast light header with dark text (`#1e293b`) and subtle bottom divider, with a 1-click transition button to the `#singleReplyModal` for drafting email replies.
 
 ---
 
-## 8. Live Seat Availability Visualizer (`admin/seats.php`)
+## 8. Customer Accounts Management (`admin/customers.php`)
+
+- **Customer Directory & Security Status:** Comprehensive directory of registered passenger profiles with full name, email, phone number, security status, and residential address.
+- **Option 2 Passenger Profile Card Architecture (Mobile, ≤ 768px):** Mobile customer rows transform into clean passenger profile cards with active/archived status badges, direct email links, and touch-friendly administrative actions.
+- **Pure-PHP PDF Customer Directory Export (`?export=pdf`):** Generates structured, branded PDF reports of registered travelers alongside streaming CSV export.
+- **Soft-Delete Archiving & Restoration:** Customer accounts can be safely archived and restored without losing historical booking linkages.
+
+---
+
+## 9. Live Seat Availability Visualizer (`admin/seats.php`)
 
 - **Trip Selection:** Select vehicle, journey date, and departure time.
 - **Dynamic Seating Matrix:** Automatically adapts to vehicle capacity (`buses.capacity`) and geometry (`buses.layout`).
@@ -156,7 +175,7 @@ A dedicated operational workspace for bus conductors and dispatchers:
 
 ---
 
-## 9. Administrative Audit Trail (`admin/audit-log.php`)
+## 10. Administrative Audit Trail (`admin/audit-log.php`)
 
 Restricted exclusively to `super_admin`:
 - **Immutable Log:** Records admin actor ID, action (`CREATE`, `UPDATE`, `DELETE`, `CANCEL`, `LOGIN`), target entity, entity ID, JSON state diffs (old vs new values), client IP, and user-agent string.
@@ -168,7 +187,7 @@ Restricted exclusively to `super_admin`:
 
 ---
 
-## 10. System Diagnostics (`admin/diagnostics.php`)
+## 11. System Diagnostics (`admin/diagnostics.php`)
 
 Restricted exclusively to `super_admin`:
 - **Security Headers:** Enforces `Cache-Control: no-store, private` to prevent caching of diagnostic data.

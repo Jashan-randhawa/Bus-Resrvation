@@ -200,14 +200,31 @@ Passengers can manage their personal details and security settings from a dedica
 
 ---
 
-## 8. Public PNR Verification (`homepage.php#pnr`)
+## 8. Real-Time PNR Tracker & Dual-Factor Verification (`homepage.php#pnr`, `pnr.php`)
 
-Travelers can verify ticket status from the homepage without logging in:
-1. Requires the **10-character PNR** and the **last 4 digits of the passenger phone number**.
-2. **Rate Limited (O1):** Public lookups are protected against brute-force enumeration:
+Travelers can verify and track their ticket status directly without logging in via the public tracker:
+1. **Dual-Factor Security Verification:** Requires the **10-character hexadecimal PNR** and the **last 4 digits of the passenger phone number**.
+2. **Smart Input Controls & Auto-Advance:**
+   - Monospace uppercase PNR input with live character counter badge (`10/10`) and real-time uppercase conversion.
+   - 4-digit phone PIN numeric input with auto-advance upon typing 10 PNR characters.
+   - Precision CSS Grid baseline alignment locking inputs and the "Search Ticket" button to a single horizontal baseline across all viewports.
+3. **Airline-Style Option 2 Boarding Pass Ticket Result Card:**
+   - Displays real-time status pill with pulsing animation and state class (`Confirmed` emerald, `Pending` amber, `Cancelled` rose, `Expired` slate).
+   - Zone 1: Monospace PNR code with 1-click clipboard copy and toast feedback.
+   - Zone 2: Route corridor hero (`Origin → Destination`), transit bus badge, and perforated ticket stub divider with side notches.
+   - Zone 3: Passenger initials stub, seat badge, departure timestamp, and total fare paid.
+   - Direct action toolbar with **View Full Boarding Pass** and **Check Another Ticket** reset action.
+4. **Interactive Troubleshooting Assistance Cards:**
+   - **Rate Limit Throttled:** Clear 15-minute explanation when security limits are exceeded.
+   - **Invalid Format Guide:** Format hints explaining the 10-character hex code and 4-digit phone requirement.
+   - **No Matching Reservation:** Helpful troubleshooting tips (check typos, verify departure date).
+5. **Rate Limiting & Abuse Defense:**
    - Max 10 attempts per 10 minutes per IP.
    - Max 5 attempts per 15 minutes per target PNR token.
-3. Displays live status badge (`Confirmed`, `Pending`, `Expired`, `Cancelled`), passenger initials, route, seat number, departure time, and a direct **"View & Print Boarding Pass &rarr;"** button linking to the full mobile ticket.
+6. **Standalone Endpoint & OS Integration (`pnr.php`):**
+   - Direct standalone landing page (`pnr.php`) that forwards query parameters seamlessly to `homepage.php#pnr`.
+   - Registered OS protocol handler for `web+bus:` and `web+ticket:`.
+   - Web Share Target API integration receiving shared PNR strings directly from WhatsApp and messaging apps.
 
 ---
 
