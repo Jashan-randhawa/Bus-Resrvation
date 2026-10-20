@@ -1775,7 +1775,7 @@ if (isset($_POST['subbtn'])) {
     <div class="modal-content">
       <div class="modal-header admin-auth-header">
         <div class="d-flex align-items-center">
-          <img src="<?= BASE_URL ?>/assets/images/bus.svg" alt="BusBook Logo" width="28" height="28" class="mr-2">
+          <img src="<?= BASE_URL ?>/assets/images/bus.svg" srcset="<?= BASE_URL ?>/assets/images/bus-emblem.png 1x, <?= BASE_URL ?>/assets/images/bus-emblem.png 2x" onerror="this.onerror=null;this.src='<?= BASE_URL ?>/assets/images/bus-emblem.png';" alt="BusBook Logo" width="28" height="28" class="mr-2 admin-modal-logo">
           <h5 id="adminLoginModalTitle" class="admin-modal-title">Administration Portal</h5>
         </div>
         <div class="d-flex align-items-center">
