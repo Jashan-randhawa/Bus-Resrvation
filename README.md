@@ -7,6 +7,7 @@
 ### *A Modern, Cloud-Ready Full-Stack Bus Ticket Booking & Fleet Management Platform*
 
 [![Latest Release](https://img.shields.io/badge/Release-v2.4.0-blue?style=for-the-badge&logo=github)](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/tag/v2.4.0)
+[![PWA Ready](https://img.shields.io/badge/PWA-Installable%20%7C%20Offline-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white)](manifest.json)
 [![Android Package](https://img.shields.io/badge/Android%20App-APK%20%7C%20AAB-3DDC84?style=for-the-badge&logo=android&logoColor=white)](packages/app)
 [![Docker Package](https://img.shields.io/badge/GitHub%20Package-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation)
 [![npm Packages](https://img.shields.io/badge/GitHub%20Packages-npm-CB3837?style=for-the-badge&logo=npm&logoColor=white)](https://github.com/Jashan-randhawa/Bus-Resrvation/packages)
@@ -63,7 +64,9 @@ Comprehensive architectural, operational, and security documentation is availabl
 - 🧭 **Custom Search Dropdowns & Interactive City Swap:** Accessible in-DOM custom dropdown menus (`.custom-dropdown-widget`) with Title Case city formatting, dynamic connected-route destination filtering, and 1-click circular origin/destination swap controls (`⇄`) across the homepage and user portal.
 - 🔒 **Atomic Concurrency:** Concurrency-safe seat reservation engine with database transactions and row-level locks preventing double-booking race conditions.
 - 🎫 **Instant Cryptographic PNR:** Auto-generated unique random 10-character token with departure details, seat assignment, and pricing.
-- 🔎 **Two-Factor Public PNR Lookup:** Check reservation status directly from the homepage without logging in, protected by rate limiting, phone number verification, and direct links to full boarding passes.
+- 🔎 **Real-Time PNR Tracker & Dual-Factor Verification (`#pnr`, `pnr.php`):** Dedicated ticket lookup terminal engineered from custom specification featuring an eyebrow status pill with pulsing animation, privacy/verification badges, and smart dual-factor inputs (10-character hex pattern with live counter badge, 4-digit phone PIN, auto-uppercase, and auto-advance). Renders an airline-grade Option 2 Boarding Pass ticket card preview with route corridor hero, transit bus badge, perforated stub divider with cutout notches, passenger/seat badge, total fare, and 1-click clipboard copy with toast feedback. Protected by rate limiting and includes interactive troubleshooting assistance cards (*Rate Limit Throttled*, *Invalid Format*, *No Matching Reservation*).
+- 📐 **Unified Horizontal Baseline Grid:** Precision CSS Grid input row on the PNR lookup terminal locking inputs and the "Search Ticket" button to a unified horizontal baseline across responsive desktop and split tablet viewports without misalignments.
+- 📲 **Progressive Web App (PWA) & Offline Resilience:** Fully installable PWA with Service Worker (`sw.js`) implementing `sbtbs-bus-cache-v1` with non-GET mutation protection, offline fallback page (`offline.html`), Web App Manifest (`manifest.json`) with dual quick-actions (`Book Tickets`, `Admin Dashboard`), and path-aware layout head (`assets/partials/_pwa-head.php`). Features Web Push notification listeners, background sync for deferred inquiries, Windows 11 Widgets Board integration, and native Android Trusted Web Activity packaging.
 - 📱 **Mobile-First Customer Portal:** Profile & account security settings (`user/profile.php` with password rotation, email change, and account deactivation), 3-column reservation status filter tabs (`user/my-bookings.php`), and self-service cancellation with cutoff window safeguards.
 - 💬 **Inquiry Support:** Direct feedback and query submission form for passenger support.
 
@@ -73,16 +76,27 @@ Comprehensive architectural, operational, and security documentation is availabl
 - 🛠️ **CLI Break-Glass Recovery:** Dedicated emergency command-line utilities for administrator creation (`create-admin.php`) and 2FA recovery resets (`reset-mfa.php`).
 - 🚨 **Attention-Needed Action Center & Today's Departures:** Real-time priority-ranked operational alert strip (`Critical`, `High Priority`, `Attention`) and Today's Departures compact schedule cards with live seat occupancy progress bars and departure countdown chips (`admin/dashboard.php`).
 - 📈 **Privacy-First Performance Overview & Analytics Workspace:** 4 KPI metric cards with period-over-period delta badges, interactive Chart.js dual-axis Booking & Revenue Trends combo chart (`Daily` / `Weekly` toggle), Booking Status donut breakdown, Key Insights strip, and strict PII-free server-side aggregation (`admin/dashboard.php`, `assets/js/perf-chart.js`).
-- 📋 **Passenger Trip Manifest & Native PDF Generator:** Dedicated manifest workspace (`admin/manifest.php`) featuring a zero-dependency pure-PHP PDF 1.4 generator (`generate_manifest_pdf_doc()` via `?export=pdf`), a streamlined mobile PDF download card (`.manifest-mobile-card`), desktop CSV export, and print-ready (`@media print`) layout with conductor/driver sign-off blocks.
+- 📄 **Full-Platform Pure-PHP Native PDF 1.4 Reporting Engine:** Zero-dependency, memory-efficient vector PDF 1.4 generator (`generate_manifest_pdf_doc()`) built with pure PHP without external binaries (wkhtmltopdf/dompdf). Generates downloadable, print-ready branded documents with conductor/driver sign-off blocks and pagination across:
+  - **Passenger Trip Manifest** (`admin/manifest.php?export=pdf`) with passenger roll call, seat allocations, and mobile download card (`.manifest-mobile-card`).
+  - **Customer Directory** (`admin/customers.php?export=pdf`) with registered user profiles, security status, and contact details.
+  - **Bookings & Reservations** (`admin/bookings.php?export=pdf`) with corridor routes, seat allocations, payment status, and tariffs.
+  - **Compliance Audit Trail** (`admin/audit-log.php?export=pdf`) with IP addresses, timestamps, and state diffs.
+  Complemented by streaming CSV downloads with formula injection defense (`=`, `+`, `-`, `@`).
+- 📱 **Option 2 Mobile Card Architecture for Admin Tables (≤ 768px):** Eliminates cramped, horizontally overflowing tables on mobile viewports by transforming rows into specialized elevated cards with 24px vertical separation and borderless wrapper:
+  - **Active Fleet Vehicles Table** (`admin/buses.php`): Authentic Indian HSRP Commercial License Plate Hero card with `[IND]` tag, bold yellow license plate, ID bar, and 2-column capacity & layout footer. Enforced desktop table integrity (`@media (min-width: 769px)`) ensuring standard table rows with zero CSS collisions.
+  - **Bookings Table** (`admin/bookings.php`): Airline-style Boarding Pass card with status-colored left accents (Confirmed emerald, Pending amber, Cancelled rose), PNR badge, route corridor, bus details, passenger stub, total fare, and touch-friendly actions.
+  - **Customer Queries Table** (`admin/queries.php`): Support Ticket card architecture with status accents, sender profile block, line-clamped inquiry message preview, and modal email response workflow. Clean Light-themed modal header with high-contrast text and subtle divider.
+  - **Customer Accounts Table** (`admin/customers.php`): Passenger Profile card with status badges, contact details, email links, and administrative actions.
+  - **Route Schedules** (`admin/routes.php`): Emerald-accented mobile route cards with corridor hero, stats strip, and 44px touch targets.
 - 🛣️ **Modernized Transit Route Schedule Management:** 4 operational KPI cards, smart multi-criteria filter toolbar (search, status pills, sort order), visual route corridor cards, 1-click manifest links, bidirectional city swap controls, and schedule collision detection (`admin/routes.php`).
 - 🚌 **Fleet & Bus Management:** Configure custom seating capacities (10–60) and seating layout geometries (`2+2`, `2+1`, `1+2`, `1+1`).
 - 🗑️ **Soft-Delete Archiving & Restoration:** Safe `archived_at` lifecycle with Active vs Archived tab views and one-click restoration across fleet buses, routes, and customer accounts.
 - 📥 **Streaming CSV Exports:** Memory-efficient CSV downloads with spreadsheet formula injection protection (`=`, `+`, `-`, `@`) for bookings, customers, trip manifests, and audit trails.
 - 🔍 **Multi-Field Search & Date Filters:** Parameterized multi-criteria filtering across bookings, customer accounts, and audit events.
 - 📜 **Immutable Audit Trail:** Append-only event logging with visual before/after state diffing, database trigger protection, and automated retention cleanup.
-- 💬 **Customer Query Inbox & Email Replies:** Support inquiry lifecycle (`new`, `replied`, `closed`), modal email replies with RFC 5321 SMTP transport, and a live sidebar unread query counter.
+- 💬 **Customer Query Inbox & Modal Email Reply Workflow:** Support inquiry lifecycle (`new`, `replied`, `closed`), multi-line inquiry message preview clamping with "Read More →" modal inspection, clean Light-themed modal dialog with high-contrast headers, smooth 1-click transition to email reply modal (`#singleReplyModal`), and RFC 5321 SMTP email delivery.
 - 🎟️ **Bulk Booking Operations:** Multi-select checkboxes for batch reservation cancellations and selected-row CSV exports.
-- 🎨 **Global Light (White) & Dark Theme System & Responsive Navigation:** Unified design token architecture (`assets/css/design-system.css`) delivering a crisp pure-white Light Mode surface (`#ffffff`) and slate-navy Dark Mode (`#0f172a`) across both Customer and Admin portals, complete with a custom SVG vector icon sprite system, high-definition bus brand emblem (`assets/images/bus.svg`), glassmorphic sticky topbar with semantic section eyebrow pills, automatic CSS cache-busting, and an accessible touch-first mobile navigation drawer (`<992px`).
+- 🎨 **High-Fidelity Light Mode & Emerald Cyber (Theme B) Dark Mode System:** Unified design token architecture (`assets/css/design-system.css`, `assets/css/theme-emerald.css`) delivering a crisp pure-white Light Mode surface (`#ffffff`) and a cybernetic Dark Mode (`data-theme="dark"` / `body.dark-mode`) featuring Deep Obsidian canvas (`#050C0F`), Dark Pine surfaces (`#081216`), Elevated Teal accents (`#0F222A`), Mint Emerald primary CTA (`#10B981`), and Sky Cyan interactive highlights (`#06B6D4`). Enforces strict CSS scoping to ensure dark mode tokens never pollute the crisp light theme, complete with a custom SVG vector icon sprite system, high-definition bus brand emblem (`assets/images/bus.svg`), glassmorphic sticky topbar with semantic section eyebrow pills, automatic CSS cache-busting, and an accessible touch-first mobile navigation drawer (`<992px`).
 - ⚡ **Animated BusBook Splash & Loading Experience:** Dedicated standalone loading page (`loading.html`) and responsive app preloader overlay (`assets/partials/_preloader.php`) built around the luminous BusBook speed-ticket logo, featuring perspective road travel animations, gradient progress indicator, journey status updates, and auto-dismiss logic.
 
 ---
@@ -119,12 +133,12 @@ flowchart TD
 
 | Layer | Technologies |
 |---|---|
-| **Frontend** | HTML5, CSS3 (Custom Design Tokens & Light/Dark Theme System), JavaScript (ES6), Bootstrap 4.6, Chart.js, AOS.js, Font Awesome, QRCode.js, Inline SVG Sprite System |
+| **Frontend** | HTML5, CSS3 (Custom Design Tokens, Light Mode & Emerald Cyber Dark Theme), JavaScript (ES6), Bootstrap 4.6, Chart.js, Font Awesome, QRCode.js, Inline SVG Sprite System, Progressive Web App (Service Worker, Web App Manifest) |
 | **Backend** | PHP 8.3 / 8.4 (Apache 2.4 runtime), Session Auth, Pure-PHP Native PDF 1.4 Engine, Brevo REST API / SMTP Mailer, MySQLi with TLS/SSL |
 | **Database** | TiDB Cloud Serverless (MySQL Compatible) / MySQL 8.0+ |
 | **Security & Auth** | RFC 6238 TOTP 2FA, Google OAuth 2.0 / OpenID Connect (PKCE S256), AES-256-GCM, Bcrypt Hashing, Anti-CSRF, Enforced CSP, Rate Limiting |
 | **DevOps & Cloud** | Docker, Render Web Services, GitHub Actions CI/CD, GHCR Container Registry |
-| **Registries & Packages** | GitHub Container Registry (`ghcr.io`), GitHub Packages (npm), Composer |
+| **Registries & Packages** | GitHub Container Registry (`ghcr.io`), GitHub Packages (npm), Composer, Android TWA (APK/AAB) |
 
 ---
 
@@ -326,7 +340,7 @@ php tests/test_phase3.php
 # Phase 4: Enforced CSP headers, SRI hashes, SQL LIKE escaping & CLI guards
 php tests/test_phase4.php
 
-# Admin mobile drawer, topbar eyebrow pills, SVG sprites & global theme tokens
+# Admin mobile drawer, topbar eyebrow pills, Option 2 card architectures & desktop table integrity (60 assertions)
 php tests/test_admin_layout.php
 
 # Customer portal mobile responsiveness, custom dropdowns & sticky booking bar
@@ -350,6 +364,36 @@ php tests/test_password_reset.php
 
 # Google OAuth 2.0, OpenID Connect, PKCE, re-auth, session sync & profile guards (120 assertions)
 php tests/test_google_auth.php
+
+# Real-Time PNR Tracker, dual-factor inputs, auto-advance & boarding pass card suite (33 assertions)
+php tests/test_pnr_section.php
+
+# Customer inquiries message clamping, modal triggers & email reply transitions (20 assertions)
+php tests/test_queries_modal.php
+
+# Emerald Cyber (Theme B) design system tokens, components & dark layout integration (49 assertions)
+php tests/test_theme_emerald.php
+
+# Light theme fidelity & strict Theme B dark mode isolation (22 assertions)
+php tests/test_light_theme_fidelity.php
+
+# Dark mode elevation, card contrast & surface tokens (30 assertions)
+php tests/test_dark_mode_elevation.php
+
+# Modern 4-column responsive web footer, PWA bottom nav & admin utility bar (36 assertions)
+php tests/test_modern_footer.php
+
+# Mobile features & routes touch swipe carousels & 5-second auto-scroll (28 assertions)
+php tests/test_features_carousel.php
+
+# Standalone loading page & brand preloader overlay test suite (26 assertions)
+php tests/test_loading_page.php
+
+# PWABuilder web app manifest compliance test suite (30 assertions)
+php tests/test_pwabuilder_manifest.php
+
+# Boarding pass email button & HMAC signature authorization test suite
+php tests/test_email_ticket_link.php
 ```
 
 ---
@@ -366,6 +410,12 @@ Bus-Reservation/
 ├── google-login.php          # Google OAuth 2.0 / OpenID Connect authorization redirector
 ├── google-callback.php       # Google OAuth 2.0 PKCE token exchange & customer login handler
 ├── google-reauth.php         # Fresh Google re-authentication challenge for sensitive actions
+├── pnr.php                   # Standalone PNR lookup endpoint (Web Share & protocol handler)
+├── loading.html              # Standalone animated splash & loading screen
+├── offline.html              # Offline fallback screen for Service Worker
+├── manifest.json             # Progressive Web App (PWA) manifest
+├── sw.js                     # Root Service Worker (sbtbs-bus-cache-v1)
+├── .env.example              # Reference environment configuration template
 ├── admin.php                 # Backward-compatibility shim (redirects to admin/index.php)
 │
 ├── admin/                    # 👑 Administrator Management Subsystem
@@ -435,16 +485,22 @@ Bus-Reservation/
 │   │   ├── dashboard.css     # Attention Center, Today's Departures & Analytics styles
 │   │   ├── user.css          # Customer portal, boarding pass & custom dropdown styles
 │   │   ├── seat-map.css      # Fluid seat map grid & sticky mobile booking bar
-│   │   └── home.css          # Public landing page styles
+│   │   ├── home.css          # Public landing page styles
+│   │   ├── theme-emerald.css # Emerald Cyber (Theme B) Dark Mode design system
+│   │   └── preloader.css     # Brand splash preloader stylesheet
 │   ├── js/
 │   │   ├── admin-mobile.js   # Accessible off-canvas drawer & swipe gesture controller
 │   │   ├── perf-chart.js     # Chart.js dual-axis booking/revenue & status donut charts
 │   │   ├── theme-toggle.js   # Persistent Light/Dark theme switcher
-│   │   └── user-idle.js      # Customer session idle warning & auto-logout monitor
+│   │   ├── user-idle.js      # Customer session idle warning & auto-logout monitor
+│   │   └── preloader.js      # Brand preloader controller API (window.BusBookLoader)
 │   └── images/
 │       ├── logo.png          # High-resolution BusBook brand master logo
 │       ├── bus-emblem.png    # Transparent speed-ticket transit coach emblem
 │       └── bus.svg           # Scalable vector bus brand emblem
+│   └── partials/
+│       ├── _preloader.php    # Path-aware brand preloader overlay partial
+│       └── _pwa-head.php     # Path-aware PWA head tags & Service Worker register
 │
 ├── database/                 # 🗄️ Relational Schema & Migration Engine
 │   ├── init.sql              # Idempotent hardened schema DDL
@@ -485,7 +541,12 @@ Bus-Reservation/
 │   ├── test_phase3_pwa.php   # Dynamic PWA root resolution, service worker & print guard test suite
 │   ├── test_phase4.php       # Phase 4: Hygiene & hardening test suite
 │   ├── test_google_auth.php  # Google OAuth 2.0, OpenID Connect & re-auth test suite
-│   ├── test_admin_layout.php # Admin mobile drawer, topbar & global theme test suite
+│   ├── test_admin_layout.php # Admin mobile drawer, Option 2 card architectures & desktop table integrity
+│   ├── test_pnr_section.php  # Real-Time PNR Tracker, dual-factor inputs & boarding pass card suite
+│   ├── test_queries_modal.php # Customer inquiries message clamping & descriptive modal dialog suite
+│   ├── test_theme_emerald.php # Emerald Cyber (Theme B) design system tokens & layout integration
+│   ├── test_light_theme_fidelity.php # Light theme fidelity & strict Theme B dark mode isolation
+│   ├── test_dark_mode_elevation.php # Dark mode elevation, card contrast & surface tokens
 │   ├── test_user_layout.php  # Customer portal mobile & custom dropdown test suite
 │   ├── test_email_ticket_link.php # Boarding pass email button & HMAC signature authorization test suite
 │   ├── test_features_carousel.php # Mobile features & routes swipe carousels & 5s auto-scroll test suite
@@ -544,6 +605,8 @@ Bus-Reservation/
 - 🔒 **Transactional Seat Locking:** Concurrency-safe seat reservation using dedicated `seat_lock` table and row-level locks preventing race conditions.
 - 🎟️ **Cryptographic PNR Privacy & HMAC-SHA256 Boarding Pass Seals:** Random 10-character hexadecimal tokens replacing sequential IDs, with rate-limited two-factor status lookup and tamper-proof 12-character HMAC-SHA256 digital seals securing direct mobile email boarding pass access without authentication bottlenecks.
 - 📊 **Streaming CSV Formula Injection Defense:** Prepends `'` to cells beginning with `=`, `+`, `-`, or `@` to neutralize spreadsheet execution exploits.
+- 📄 **Pure-PHP Vector PDF Security & Memory Safety:** Manifests and administrative exports are compiled in-memory via pure-PHP PDF primitives (`generate_manifest_pdf_doc()`) without invoking external system binaries or shell wrappers, eliminating command injection and remote code execution vulnerabilities commonly associated with headless browser or Ghostscript pipelines.
+- 🎨 **Strict Theme Boundary Isolation:** CSS architecture guarantees clean isolation between high-fidelity Light Mode and Emerald Cyber (Theme B) Dark Mode, preventing theme leakage, layout shifts, or selector collisions across desktop and mobile cards.
 - 🧼 **XSS Output Sanitization:** Context-aware `e()` HTML escaping on all dynamic data.
 - 🐳 **Hardened Container Runtime:** PHP 8.4-apache with HSTS, CSP (`script-src`, `img-src data:`, SRI hashes), X-Frame-Options, and X-Content-Type-Options headers.
 
