@@ -1550,14 +1550,20 @@ usort($attention_items, static function($a, $b) {
 <!-- 7. Attention-Needed Operational Panel -->
 <section class="dash-section" aria-label="Attention Needed Items">
     <div class="card attention-card border-0 shadow-sm">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <div>
-                <h6 class="mb-0 font-weight-bold text-dark d-flex align-items-center">
-                    <span class="attention-header-dot mr-2" aria-hidden="true"></span>
-                    Attention Needed
-                    <!-- Attention-Needed Items compatibility -->
-                </h6>
-                <p class="text-muted small mb-0 mt-0">Issues requiring review or action</p>
+        <div class="card-header border-0 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center">
+                <svg class="attention-header-icon mr-2 flex-shrink-0" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2.8"></line>
+                </svg>
+                <div>
+                    <h6 class="mb-0 font-weight-bold text-dark attention-title-header d-flex align-items-center">
+                        ATTENTION NEEDED
+                        <!-- Attention-Needed Items compatibility -->
+                    </h6>
+                    <p class="text-muted small mb-0 mt-0 attention-sub-header">Issues requiring review or action</p>
+                </div>
             </div>
             <?php if (!empty($attention_items)): ?>
                 <span class="badge attention-count-badge font-weight-bold"><?= count($attention_items) ?> issue<?= count($attention_items) === 1 ? '' : 's' ?></span>
@@ -1565,11 +1571,11 @@ usort($attention_items, static function($a, $b) {
                 <span class="badge badge-success font-weight-bold">All Clear</span>
             <?php endif; ?>
         </div>
-        <div class="card-body p-3">
+        <div class="card-body px-3 px-md-4 py-2">
             <?php if (empty($attention_items)): ?>
                 <div class="attention-empty">
                     <div class="attention-empty-icon mb-2">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                     </div>
                     <h6 class="font-weight-bold text-dark mb-1">All clear</h6>
                     <p class="small text-muted mb-0">No outstanding issues require attention.</p>
@@ -1578,17 +1584,51 @@ usort($attention_items, static function($a, $b) {
                 <div class="attention-list">
                     <?php foreach ($attention_items as $item): ?>
                         <div class="attention-item attention-row priority-<?= e($item['priority'] ?? 'attention') ?> level-<?= e($item['level']) ?>">
-                            <div class="attention-indicator-wrap" aria-hidden="true">
-                                <span class="attention-dot"></span>
-                            </div>
-                            <div class="attention-content">
-                                <div class="attention-meta-line">
-                                    <span class="attention-badge priority-badge-<?= e($item['priority'] ?? 'attention') ?>">
-                                        <?= $item['priority'] === 'critical' ? 'Critical' : ($item['priority'] === 'high' ? 'High Priority' : 'Attention') ?>
-                                    </span>
-                                    <span class="attention-title"><?= e($item['title']) ?></span>
+                            <div class="attention-item-main d-flex align-items-center">
+                                <div class="attention-indicator-wrap mr-3" aria-hidden="true">
+                                    <?php if (($item['type'] ?? '') === 'boarding'): ?>
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="attention-type-icon" aria-hidden="true">
+                                            <path d="M12 2a9 9 0 0 0-9 9c0 4.1 2.8 7.6 6.6 8.7"></path>
+                                            <polyline points="12 6 12 11 14.5 12.5"></polyline>
+                                            <path d="M12 13h7a2 2 0 0 1 2 2v4a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1h-4v1a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-6z"></path>
+                                            <circle cx="14.5" cy="17.5" r="1" fill="#334155"></circle>
+                                            <circle cx="18.5" cy="17.5" r="1" fill="#334155"></circle>
+                                            <line x1="12" y1="15" x2="21" y2="15"></line>
+                                        </svg>
+                                    <?php elseif (($item['type'] ?? '') === 'inquiry'): ?>
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="attention-type-icon" aria-hidden="true">
+                                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                            <path d="M10 8a2 2 0 1 1 3 1.7c-.5.3-1 .8-1 1.3"></path>
+                                            <line x1="12" y1="14" x2="12.01" y2="14" stroke-width="2.5"></line>
+                                        </svg>
+                                    <?php elseif (($item['type'] ?? '') === 'low_occupancy'): ?>
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="attention-type-icon" aria-hidden="true">
+                                            <circle cx="7" cy="5" r="2.5"></circle>
+                                            <path d="M4 10h6a2 2 0 0 1 2 2v4H2v-4a2 2 0 0 1 2-2z"></path>
+                                            <circle cx="17" cy="5" r="2.5"></circle>
+                                            <path d="M14 10h6a2 2 0 0 1 2 2v4h-10v-4a2 2 0 0 1 2-2z"></path>
+                                            <path d="M4 16v4"></path>
+                                            <path d="M10 16v4"></path>
+                                            <path d="M14 16v4"></path>
+                                            <path d="M20 16v4"></path>
+                                        </svg>
+                                    <?php else: ?>
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="attention-type-icon" aria-hidden="true">
+                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"></line>
+                                        </svg>
+                                    <?php endif; ?>
                                 </div>
-                                <div class="attention-desc"><?= e(str_replace('&rarr;', '→', (string)$item['desc'])) ?></div>
+                                <div class="attention-content">
+                                    <div class="attention-meta-line d-flex align-items-center flex-wrap">
+                                        <span class="attention-badge priority-badge-<?= e($item['priority'] ?? 'attention') ?>">
+                                            <?= $item['priority'] === 'critical' ? 'Critical' : ($item['priority'] === 'high' ? 'High Priority' : 'Attention') ?>
+                                        </span>
+                                        <span class="attention-title font-weight-bold ml-2"><?= e($item['title']) ?></span>
+                                    </div>
+                                    <div class="attention-desc text-muted"><?= e(str_replace('&rarr;', '→', (string)$item['desc'])) ?></div>
+                                </div>
                             </div>
                             <?php if (!empty($item['action_url'])): ?>
                                 <div class="attention-action-wrap">
