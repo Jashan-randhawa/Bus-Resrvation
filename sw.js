@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sbtbs-bus-cache-v1-rev5'; // increments sbtbs-bus-cache-v1
+const CACHE_NAME = 'sbtbs-bus-cache-v1-rev6'; // increments sbtbs-bus-cache-v1
 const OFFLINE_URL = './offline.html';
 
 const STATIC_ASSETS = [

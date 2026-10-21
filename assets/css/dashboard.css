@@ -671,17 +671,20 @@
 }
 
 /* ==========================================================================
-   Attention-Needed Operational Action Center
-   Warm amber theme matching executive design specifications
-   Uniform button dimensions for equal visual weight
+   Attention-Needed Operational Action Center (OPS-ALERT-01 Specification)
+   Warm amber theme (#FDE6BD) with 5px left amber accent (#E59A38)
+   Strict uniform 148px button width architecture
    ========================================================================== */
 .attention-card {
-  border-radius: var(--radius-lg, 10px);
-  background: #fde9c8 !important;
-  border: 1px solid #f6d198 !important;
-  border-left: 4px solid #d98a32 !important;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  background-color: #FDE6BD !important;
+  border: 1px solid #F3CFA0 !important;
+  border-left: 5px solid #E59A38 !important;
+  border-radius: 10px !important;
+  padding: 16px 22px !important;
+  color: #111827 !important;
+  margin-bottom: 1.5rem !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  display: block !important;
 }
 
 .attention-grid {
@@ -690,28 +693,46 @@
   gap: 0.75rem;
 }
 
-.attention-card .card-header {
-  border-bottom: 1px solid rgba(217, 138, 50, 0.22) !important;
-  background: transparent !important;
-  padding: 1rem 1.25rem;
+.attention-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding-bottom: 14px !important;
+  border-bottom: 1px solid #F3CFA0 !important;
+  margin-bottom: 0 !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
 }
 
-.attention-header-icon {
-  display: inline-block;
-  vertical-align: middle;
-  color: #d97706;
+.attention-header-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
 }
 
-.attention-title-header {
-  font-size: 0.875rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: #0f172a;
+.warn-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #E59A38 !important;
+  flex-shrink: 0 !important;
 }
 
-.attention-sub-header {
-  font-size: 0.78rem;
-  color: #78716c;
+.attention-title {
+  font-size: 0.875rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  color: #111827 !important;
+  margin: 0 !important;
+  text-transform: uppercase !important;
+  line-height: 1.2 !important;
+}
+
+.attention-subtitle {
+  font-size: 0.78rem !important;
+  color: #78716c !important;
+  margin: 2px 0 0 0 !important;
+  line-height: 1.2 !important;
 }
 
 .attention-header-dot {
@@ -719,69 +740,82 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--c-warning, #d97706);
+  background: var(--c-warning, #E59A38);
 }
 
+.issues-count-pill,
 .attention-count-badge {
-  background: #d8872c !important;
+  background-color: #E59A38 !important;
   color: #ffffff !important;
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 0.35rem 0.85rem;
-  border-radius: 9999px;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  padding: 4px 12px !important;
+  border-radius: 9999px !important;
   border: none !important;
-  letter-spacing: 0.01em;
-  box-shadow: 0 1px 2px rgba(216, 135, 44, 0.3);
+  letter-spacing: 0.01em !important;
+  box-shadow: 0 1px 2px rgba(229, 154, 56, 0.3) !important;
+  display: inline-block !important;
+  line-height: 1.2 !important;
 }
 
 .attention-list {
-  display: flex;
-  flex-direction: column;
-  padding: 0;
-  margin: 0;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
+.attention-row,
+.alert-row,
 .attention-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.25rem;
-  padding: 0.95rem 0;
-  background: transparent;
-  border: none;
-  border-top: 1px solid rgba(217, 138, 50, 0.2);
-  border-radius: 0;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 14px 0 !important;
+  border-top: 1px solid #F3CFA0 !important;
+  gap: 16px !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
   transition: background-color 0.15s ease;
 }
 
+.attention-row:first-child,
+.alert-row:first-child,
 .attention-item:first-child {
-  border-top: none;
+  border-top: none !important;
 }
 
+.attention-row:hover,
+.alert-row:hover,
 .attention-item:hover {
-  background: rgba(217, 138, 50, 0.05);
+  background: rgba(229, 154, 56, 0.05) !important;
 }
 
-.attention-item-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
+.attention-row-left,
+.alert-row-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  flex: 1 !important;
+  min-width: 0 !important;
 }
 
-/* Category Icons */
+.row-icon,
 .attention-indicator-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
 }
 
-.attention-type-icon {
+.row-icon svg,
+.attention-indicator-wrap svg {
   display: block;
-  flex-shrink: 0;
 }
 
 .attention-dot {
@@ -792,7 +826,7 @@
   background: #64748b;
 }
 
-/* Semantic level & priority classes retained for audit test suite assertions */
+/* Semantic level & priority states retained for audit test suite */
 .attention-item.priority-critical,
 .attention-item.level-danger {
   /* Level danger state */
@@ -830,60 +864,71 @@
   /* Neutral state */
 }
 
-/* Status Badges */
-.attention-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 0.2rem 0.65rem;
-  border-radius: 9999px;
-  line-height: 1.2;
-  white-space: nowrap;
-}
-
-.priority-badge-critical {
-  background: #dc2626 !important;
-  color: #ffffff !important;
-}
-
-.priority-badge-high {
-  background: #e0572c !important;
-  color: #ffffff !important;
-}
-
-.priority-badge-attention {
-  background: #f0be34 !important;
-  color: #1e293b !important;
-}
-
+.row-content,
 .attention-content {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
+  flex: 1 !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
 }
 
+.row-heading,
 .attention-meta-line {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
 }
 
-.attention-title {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.3;
+.row-heading strong,
+.row-heading .attention-title {
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+  line-height: 1.3 !important;
+  text-transform: none !important;
 }
 
+.priority-pill,
+.attention-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 2px 10px !important;
+  border-radius: 9999px !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+  text-transform: none !important;
+}
+
+.priority-pill.pill-high,
+.priority-badge-high {
+  background-color: #E0582F !important;
+  color: #ffffff !important;
+}
+
+.priority-pill.pill-attention,
+.priority-badge-attention {
+  background-color: #FAC32D !important;
+  color: #111827 !important;
+}
+
+.priority-pill.pill-critical,
+.priority-badge-critical {
+  background-color: #DC2626 !important;
+  color: #ffffff !important;
+}
+
+.row-subtext,
+.row-subtext-strong,
 .attention-desc {
-  font-size: 0.8125rem;
-  color: #334155;
-  line-height: 1.35;
+  font-size: 0.8125rem !important;
+  color: #111827 !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
 }
 
 .attention-action-wrap {
@@ -894,59 +939,64 @@
 }
 
 /* ==========================================================================
-   Uniform Button Sizing Constraint
-   Enforces identical width, height, alignment, and typography across all actions
+   Target Equality: 148px Uniform CTA Architecture
+   Explicit width: 148px guarantees identical visual weight across all actions
    ========================================================================== */
+.alert-btn,
 .attention-action-link,
 .attention-action-wrap .btn,
 .attention-item .attention-action-link {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
+  width: 148px !important;
+  min-width: 148px !important;
+  max-width: 148px !important;
   height: 36px !important;
   min-height: 36px !important;
   max-height: 36px !important;
   padding: 0 10px !important;
-  font-size: 0.8125rem !important;
+  font-size: 13px !important;
   font-weight: 600 !important;
   line-height: 1 !important;
   color: #ffffff !important;
-  background-color: #2563eb !important;
-  border: 1px solid #2563eb !important;
+  background-color: #2563EB !important;
+  border: 1px solid #2563EB !important;
   border-radius: 6px !important;
   text-decoration: none !important;
   white-space: nowrap !important;
   text-align: center !important;
   box-sizing: border-box !important;
-  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
-  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease !important;
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2) !important;
+  flex-shrink: 0 !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
 }
 
+.alert-btn:hover,
 .attention-action-link:hover,
 .attention-action-wrap .btn:hover,
 .attention-item .attention-action-link:hover {
-  background-color: #1d4ed8 !important;
-  border-color: #1d4ed8 !important;
+  background-color: #1D4ED8 !important;
+  border-color: #1D4ED8 !important;
   color: #ffffff !important;
   text-decoration: none !important;
   box-shadow: 0 2px 5px rgba(37, 99, 235, 0.35) !important;
 }
 
+.alert-btn:focus,
 .attention-action-link:focus,
 .attention-action-link:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 2px;
+  outline: 2px solid #2563EB !important;
+  outline-offset: 2px !important;
 }
 
+.alert-btn:active,
 .attention-action-link:active,
 .attention-action-wrap .btn:active,
 .attention-item .attention-action-link:active {
-  background-color: #1e40af !important;
-  border-color: #1e40af !important;
-  transform: translateY(1px);
+  background-color: #1E40AF !important;
+  border-color: #1E40AF !important;
+  transform: translateY(1px) !important;
 }
 
 .attention-empty {
@@ -954,7 +1004,7 @@
   text-align: center;
   background: rgba(255, 255, 255, 0.5);
   border-radius: var(--radius-md, 8px);
-  border: 1px dashed rgba(217, 138, 50, 0.35);
+  border: 1px dashed rgba(229, 154, 56, 0.35);
 }
 
 .attention-empty-icon {
@@ -967,33 +1017,34 @@
   background: rgba(16, 185, 129, 0.12);
 }
 
-/* Responsive Button Alignment & Sizing */
 @media (max-width: 767.98px) {
+  .attention-row,
+  .alert-row,
   .attention-item {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
-    padding: 0.95rem 0;
-  }
-  .attention-item-main {
-    width: 100%;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 12px 0 !important;
   }
   .attention-action-wrap {
     width: 100%;
     display: flex;
     justify-content: flex-end;
   }
+  .alert-btn,
   .attention-action-link,
   .attention-action-wrap .btn,
   .attention-item .attention-action-link {
-    width: 140px !important;
-    min-width: 140px !important;
-    max-width: 140px !important;
+    align-self: flex-end !important;
+    width: 148px !important;
+    min-width: 148px !important;
+    max-width: 148px !important;
     height: 36px !important;
   }
 }
 
 @media (max-width: 420px) {
+  .alert-btn,
   .attention-action-link,
   .attention-action-wrap .btn,
   .attention-item .attention-action-link {
@@ -1001,6 +1052,7 @@
     min-width: 100% !important;
     max-width: 100% !important;
     height: 38px !important;
+    align-self: stretch !important;
   }
 }
 

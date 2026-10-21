@@ -1548,100 +1548,344 @@ usort($attention_items, static function($a, $b) {
 </section>
 
 <!-- 7. Attention-Needed Operational Panel -->
-<section class="dash-section" aria-label="Attention Needed Items">
-    <div class="card attention-card border-0 shadow-sm">
-        <div class="card-header border-0 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <div class="d-flex align-items-center">
-                <svg class="attention-header-icon mr-2 flex-shrink-0" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<style>
+/* OPS-ALERT-01 Component Specification: Attention Needed Operational Alert Panel */
+.attention-card {
+  background-color: #FDE6BD !important;
+  border: 1px solid #F3CFA0 !important;
+  border-left: 5px solid #E59A38 !important;
+  border-radius: 10px !important;
+  padding: 16px 22px !important;
+  color: #111827 !important;
+  margin-bottom: 1.5rem !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  display: block !important;
+}
+.attention-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding-bottom: 14px !important;
+  border-bottom: 1px solid #F3CFA0 !important;
+  margin-bottom: 0 !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+}
+.attention-header-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+.warn-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #E59A38 !important;
+  flex-shrink: 0 !important;
+}
+.attention-title {
+  font-size: 0.875rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  color: #111827 !important;
+  margin: 0 !important;
+  text-transform: uppercase !important;
+  line-height: 1.2 !important;
+}
+.attention-subtitle {
+  font-size: 0.78rem !important;
+  color: #78716c !important;
+  margin: 2px 0 0 0 !important;
+  line-height: 1.2 !important;
+}
+.issues-count-pill,
+.attention-count-badge {
+  background-color: #E59A38 !important;
+  color: #ffffff !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  padding: 4px 12px !important;
+  border-radius: 9999px !important;
+  border: none !important;
+  letter-spacing: 0.01em !important;
+  display: inline-block !important;
+  line-height: 1.2 !important;
+}
+.attention-list {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.attention-row,
+.alert-row,
+.attention-item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 14px 0 !important;
+  border-top: 1px solid #F3CFA0 !important;
+  gap: 16px !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+  transition: background-color 0.15s ease;
+}
+.attention-row:first-child,
+.alert-row:first-child,
+.attention-item:first-child {
+  border-top: none !important;
+}
+.attention-row:hover,
+.alert-row:hover,
+.attention-item:hover {
+  background: rgba(229, 154, 56, 0.05) !important;
+}
+.attention-row-left,
+.alert-row-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+.row-icon,
+.attention-indicator-wrap {
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+.row-icon svg,
+.attention-indicator-wrap svg {
+  display: block;
+}
+.row-content,
+.attention-content {
+  flex: 1 !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+}
+.row-heading,
+.attention-meta-line {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+.row-heading strong,
+.row-heading .attention-title {
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+  line-height: 1.3 !important;
+  text-transform: none !important;
+}
+.priority-pill,
+.attention-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 2px 10px !important;
+  border-radius: 9999px !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+  text-transform: none !important;
+}
+.priority-pill.pill-high,
+.priority-badge-high {
+  background-color: #E0582F !important;
+  color: #ffffff !important;
+}
+.priority-pill.pill-attention,
+.priority-badge-attention {
+  background-color: #FAC32D !important;
+  color: #111827 !important;
+}
+.priority-pill.pill-critical,
+.priority-badge-critical {
+  background-color: #DC2626 !important;
+  color: #ffffff !important;
+}
+.row-subtext,
+.row-subtext-strong,
+.attention-desc {
+  font-size: 0.8125rem !important;
+  color: #111827 !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+}
+/* Uniform 148px Button Specification */
+.alert-btn,
+.attention-action-link {
+  width: 148px !important;
+  min-width: 148px !important;
+  max-width: 148px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: #2563EB !important;
+  color: #FFFFFF !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  text-decoration: none !important;
+  border: 1px solid #2563EB !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2) !important;
+  flex-shrink: 0 !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+.alert-btn:hover,
+.attention-action-link:hover {
+  background-color: #1D4ED8 !important;
+  border-color: #1D4ED8 !important;
+  color: #FFFFFF !important;
+  text-decoration: none !important;
+  box-shadow: 0 2px 5px rgba(37, 99, 235, 0.35) !important;
+}
+.alert-btn:focus,
+.attention-action-link:focus {
+  outline: 2px solid #2563EB !important;
+  outline-offset: 2px !important;
+}
+.alert-btn:active,
+.attention-action-link:active {
+  background-color: #1E40AF !important;
+  border-color: #1E40AF !important;
+  transform: translateY(1px) !important;
+}
+@media (max-width: 767.98px) {
+  .attention-row,
+  .alert-row,
+  .attention-item {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 12px 0 !important;
+  }
+  .alert-btn,
+  .attention-action-link {
+    align-self: flex-end !important;
+    width: 148px !important;
+    min-width: 148px !important;
+    max-width: 148px !important;
+    height: 36px !important;
+  }
+}
+@media (max-width: 420px) {
+  .alert-btn,
+  .attention-action-link {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    height: 38px !important;
+    align-self: stretch !important;
+  }
+}
+</style>
+<section class="attention-card" aria-label="Attention Needed Items">
+    <header class="attention-header">
+        <div class="attention-header-left">
+            <span class="warn-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E59A38" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
                     <line x1="12" y1="9" x2="12" y2="13"></line>
                     <line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2.8"></line>
                 </svg>
-                <div>
-                    <h6 class="mb-0 font-weight-bold text-dark attention-title-header d-flex align-items-center">
-                        ATTENTION NEEDED
-                        <!-- Attention-Needed Items compatibility -->
-                    </h6>
-                    <p class="text-muted small mb-0 mt-0 attention-sub-header">Issues requiring review or action</p>
-                </div>
+            </span>
+            <div>
+                <h3 class="attention-title">ATTENTION NEEDED</h3>
+                <!-- Attention-Needed Items compatibility -->
+                <p class="attention-subtitle">Issues requiring review or action</p>
             </div>
-            <?php if (!empty($attention_items)): ?>
-                <span class="badge attention-count-badge font-weight-bold"><?= count($attention_items) ?> issue<?= count($attention_items) === 1 ? '' : 's' ?></span>
-            <?php else: ?>
-                <span class="badge badge-success font-weight-bold">All Clear</span>
-            <?php endif; ?>
         </div>
-        <div class="card-body px-3 px-md-4 py-2">
-            <?php if (empty($attention_items)): ?>
-                <div class="attention-empty">
-                    <div class="attention-empty-icon mb-2">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                    </div>
-                    <h6 class="font-weight-bold text-dark mb-1">All clear</h6>
-                    <p class="small text-muted mb-0">No outstanding issues require attention.</p>
+        <?php if (!empty($attention_items)): ?>
+            <span class="issues-count-pill attention-count-badge"><?= count($attention_items) ?> issue<?= count($attention_items) === 1 ? '' : 's' ?></span>
+        <?php else: ?>
+            <span class="issues-count-pill badge badge-success">All Clear</span>
+        <?php endif; ?>
+    </header>
+
+    <div class="attention-list">
+        <?php if (empty($attention_items)): ?>
+            <div class="attention-empty" style="padding: 2.2rem 1rem; text-align: center; background: rgba(255,255,255,0.5); border-radius: 8px; border: 1px dashed rgba(229,154,56,0.35); margin-top: 14px;">
+                <div class="attention-empty-icon mb-2" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(16,185,129,0.12);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                 </div>
-            <?php else: ?>
-                <div class="attention-list">
-                    <?php foreach ($attention_items as $item): ?>
-                        <div class="attention-item attention-row priority-<?= e($item['priority'] ?? 'attention') ?> level-<?= e($item['level']) ?>">
-                            <div class="attention-item-main d-flex align-items-center">
-                                <div class="attention-indicator-wrap mr-3" aria-hidden="true">
-                                    <?php if (($item['type'] ?? '') === 'boarding'): ?>
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="attention-type-icon" aria-hidden="true">
-                                            <path d="M12 2a9 9 0 0 0-9 9c0 4.1 2.8 7.6 6.6 8.7"></path>
-                                            <polyline points="12 6 12 11 14.5 12.5"></polyline>
-                                            <path d="M12 13h7a2 2 0 0 1 2 2v4a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1h-4v1a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-6z"></path>
-                                            <circle cx="14.5" cy="17.5" r="1" fill="#334155"></circle>
-                                            <circle cx="18.5" cy="17.5" r="1" fill="#334155"></circle>
-                                            <line x1="12" y1="15" x2="21" y2="15"></line>
-                                        </svg>
-                                    <?php elseif (($item['type'] ?? '') === 'inquiry'): ?>
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="attention-type-icon" aria-hidden="true">
-                                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                                            <path d="M10 8a2 2 0 1 1 3 1.7c-.5.3-1 .8-1 1.3"></path>
-                                            <line x1="12" y1="14" x2="12.01" y2="14" stroke-width="2.5"></line>
-                                        </svg>
-                                    <?php elseif (($item['type'] ?? '') === 'low_occupancy'): ?>
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="attention-type-icon" aria-hidden="true">
-                                            <circle cx="7" cy="5" r="2.5"></circle>
-                                            <path d="M4 10h6a2 2 0 0 1 2 2v4H2v-4a2 2 0 0 1 2-2z"></path>
-                                            <circle cx="17" cy="5" r="2.5"></circle>
-                                            <path d="M14 10h6a2 2 0 0 1 2 2v4h-10v-4a2 2 0 0 1 2-2z"></path>
-                                            <path d="M4 16v4"></path>
-                                            <path d="M10 16v4"></path>
-                                            <path d="M14 16v4"></path>
-                                            <path d="M20 16v4"></path>
-                                        </svg>
-                                    <?php else: ?>
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="attention-type-icon" aria-hidden="true">
-                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                                            <line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"></line>
-                                        </svg>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="attention-content">
-                                    <div class="attention-meta-line d-flex align-items-center flex-wrap">
-                                        <span class="attention-badge priority-badge-<?= e($item['priority'] ?? 'attention') ?>">
-                                            <?= $item['priority'] === 'critical' ? 'Critical' : ($item['priority'] === 'high' ? 'High Priority' : 'Attention') ?>
-                                        </span>
-                                        <span class="attention-title font-weight-bold ml-2"><?= e($item['title']) ?></span>
-                                    </div>
-                                    <div class="attention-desc text-muted"><?= e(str_replace('&rarr;', '→', (string)$item['desc'])) ?></div>
-                                </div>
-                            </div>
-                            <?php if (!empty($item['action_url'])): ?>
-                                <div class="attention-action-wrap">
-                                    <a href="<?= e($item['action_url']) ?>" class="attention-action-link">
-                                        <?= e(str_replace('&rarr;', '→', (string)$item['action_label'])) ?>
-                                    </a>
-                                </div>
+                <h6 class="font-weight-bold text-dark mb-1">All clear</h6>
+                <p class="small text-muted mb-0">No outstanding issues require attention.</p>
+            </div>
+        <?php else: ?>
+            <?php foreach ($attention_items as $item): ?>
+                <div class="attention-row alert-row attention-item level-<?= e($item['level']) ?> priority-<?= e($item['priority'] ?? 'attention') ?>">
+                    <div class="attention-row-left alert-row-left">
+                        <div class="row-icon attention-indicator-wrap" aria-hidden="true">
+                            <?php if (($item['type'] ?? '') === 'boarding'): ?>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="attention-type-icon" aria-hidden="true">
+                                    <path d="M12 2a9 9 0 0 0-9 9c0 4.1 2.8 7.6 6.6 8.7"></path>
+                                    <polyline points="12 6 12 11 14.5 12.5"></polyline>
+                                    <path d="M12 13h7a2 2 0 0 1 2 2v4a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1h-4v1a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-6z"></path>
+                                    <circle cx="14.5" cy="17.5" r="1" fill="#334155"></circle>
+                                    <circle cx="18.5" cy="17.5" r="1" fill="#334155"></circle>
+                                    <line x1="12" y1="15" x2="21" y2="15"></line>
+                                </svg>
+                            <?php elseif (($item['type'] ?? '') === 'inquiry'): ?>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="attention-type-icon" aria-hidden="true">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                    <path d="M10 8a2 2 0 1 1 3 1.7c-.5.3-1 .8-1 1.3"></path>
+                                    <line x1="12" y1="14" x2="12.01" y2="14" stroke-width="2.5"></line>
+                                </svg>
+                            <?php elseif (($item['type'] ?? '') === 'low_occupancy'): ?>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="attention-type-icon" aria-hidden="true">
+                                    <circle cx="7" cy="5" r="2.5"></circle>
+                                    <path d="M4 10h6a2 2 0 0 1 2 2v4H2v-4a2 2 0 0 1 2-2z"></path>
+                                    <circle cx="17" cy="5" r="2.5"></circle>
+                                    <path d="M14 10h6a2 2 0 0 1 2 2v4h-10v-4a2 2 0 0 1 2-2z"></path>
+                                    <path d="M4 16v4"></path>
+                                    <path d="M10 16v4"></path>
+                                    <path d="M14 16v4"></path>
+                                    <path d="M20 16v4"></path>
+                                </svg>
+                            <?php else: ?>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="attention-type-icon" aria-hidden="true">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"></line>
+                                </svg>
                             <?php endif; ?>
                         </div>
-                    <?php endforeach; ?>
+                        <div class="row-content attention-content">
+                            <div class="row-heading attention-meta-line">
+                                <span class="priority-pill pill-<?= $item['priority'] === 'critical' ? 'critical' : ($item['priority'] === 'high' ? 'high' : 'attention') ?> attention-badge priority-badge-<?= e($item['priority'] ?? 'attention') ?>">
+                                    <?= $item['priority'] === 'critical' ? 'Critical' : ($item['priority'] === 'high' ? 'High Priority' : 'Attention') ?>
+                                </span>
+                                <strong class="attention-title"><?= e($item['title']) ?></strong>
+                            </div>
+                            <div class="row-subtext row-subtext-strong attention-desc"><?= e(str_replace('&rarr;', '→', (string)$item['desc'])) ?></div>
+                        </div>
+                    </div>
+                    <?php if (!empty($item['action_url'])): ?>
+                        <a href="<?= e($item['action_url']) ?>" class="alert-btn attention-action-link">
+                            <?= e(str_replace('&rarr;', '→', (string)$item['action_label'])) ?>
+                        </a>
+                    <?php endif; ?>
                 </div>
-            <?php endif; ?>
-        </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
     </div>
 </section>
 
