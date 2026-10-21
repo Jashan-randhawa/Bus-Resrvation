@@ -63,7 +63,13 @@ include $head_path;
 ob_end_clean();
 $root_resolves_here = isset($root_prefix) && $root_prefix === './';
 
-report_phase3("Runtime Path Depth: /user/ resolves to '../' and root resolves to './'", $user_resolves_up && $root_resolves_here);
+$_SERVER['SCRIPT_NAME'] = '/admin/edit/edit-route.php';
+ob_start();
+include $head_path;
+ob_end_clean();
+$edit_resolves_two_up = isset($root_prefix) && $root_prefix === '../../';
+
+report_phase3("Runtime Path Depth: /user/ resolves to '../', root resolves to './', and /admin/edit/ resolves to '../../'", $user_resolves_up && $root_resolves_here && $edit_resolves_two_up);
 
 // 3. Root Service Worker Scope
 $has_sw_scope = str_contains($content, 'scope: rootPrefix') && str_contains($content, 'serviceWorker.register');

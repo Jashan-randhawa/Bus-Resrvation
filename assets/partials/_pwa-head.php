@@ -5,10 +5,12 @@
  * - Root pages (/index.php, /pnr.php) -> "./"
  * - Admin pages (/admin/*.php) -> "../"
  * - User pages (/user/*.php) -> "../"
+ * - Nested edit pages (/admin/edit/*.php) -> "../../"
  */
 $current_script = isset($_SERVER['SCRIPT_NAME']) ? str_replace('\\', '/', $_SERVER['SCRIPT_NAME']) : '';
+$is_nested_admin = (strpos($current_script, '/admin/edit/') !== false || strpos($current_script, '/user/edit/') !== false || (bool)preg_match('#/(admin|user)/[^/]+/#i', $current_script));
 $is_admin_route = (strpos($current_script, '/admin/') !== false || strpos($current_script, '/user/') !== false);
-$root_prefix = $is_admin_route ? '../' : './';
+$root_prefix = $is_nested_admin ? '../../' : ($is_admin_route ? '../' : './');
 ?>
 <!-- PWA Manifest & Mobile App Meta Tags -->
 <link rel="manifest" href="<?php echo $root_prefix; ?>manifest.json">

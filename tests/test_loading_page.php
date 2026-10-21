@@ -83,6 +83,12 @@ include $partial_path;
 ob_end_clean();
 assert_loading("_preloader.php resolves preloader_prefix to './' for root routes", isset($preloader_prefix) && $preloader_prefix === './');
 
+$_SERVER['SCRIPT_NAME'] = '/admin/edit/edit-route.php';
+ob_start();
+include $partial_path;
+ob_end_clean();
+assert_loading("_preloader.php resolves preloader_prefix to '../../' for nested /admin/edit/ routes", isset($preloader_prefix) && $preloader_prefix === '../../');
+
 assert_loading("_preloader.php embeds #busbook-preloader element", strpos($partial_content, 'id="busbook-preloader"') !== false);
 
 $header_public = file_get_contents($root . '/includes/layout/header-public.php');
