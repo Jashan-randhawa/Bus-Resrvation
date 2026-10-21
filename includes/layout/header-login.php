@@ -1,6 +1,6 @@
 <?php require_once __DIR__ . '/../config.php'; ?>
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 
 <head>
     <meta charset="utf-8">
@@ -17,7 +17,6 @@
     <!-- Design System & Auth Styles -->
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/design-system.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/public.css">
-    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/theme-emerald.css?v=<?= file_exists(dirname(__DIR__, 2) . '/assets/css/theme-emerald.css') ? filemtime(dirname(__DIR__, 2) . '/assets/css/theme-emerald.css') : '2.4.1' ?>">
     
     <!-- Global Theme Toggle (Head load to avoid FOUC) -->
     <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>

@@ -28,56 +28,6 @@ body.home-page {
   line-height: 1.6;
 }
 
-/* ── Dark Theme Scoped Overrides for Home Page ──────────────── */
-html[data-theme="dark"] body.home-page,
-html.dark-mode body.home-page {
-  --home-navy:       #f8fafc;
-  --home-navy-light: #cbd5e1;
-  --home-text-muted: #94a3b8;
-  --home-bg-warm:    #090d16;
-  --home-bg-white:   #131b2e;
-  --home-primary:    #3b82f6;
-  --home-primary-h:  #60a5fa;
-  --home-accent:     #fbbf24;
-  --home-accent-fill:rgba(217, 119, 6, 0.2);
-  --home-border:     #1e293b;
-  --home-border-subtle: rgba(30, 41, 59, 0.8);
-}
-
-html[data-theme="dark"] .hero-pill {
-  background: rgba(245, 158, 11, 0.15) !important;
-  color: #fbbf24 !important;
-  border: 1px solid rgba(251, 191, 36, 0.35);
-}
-
-html[data-theme="dark"] .navbar-public {
-  background: rgba(19, 27, 46, 0.95);
-  border-bottom-color: var(--home-border);
-}
-html[data-theme="dark"] .hero-split-section {
-  background-color: var(--home-bg-warm);
-}
-html[data-theme="dark"] .hero-image-wrapper {
-  background: var(--home-bg-white);
-  border-color: var(--home-border);
-}
-html[data-theme="dark"] .hero-image-wrapper img {
-  background: var(--home-bg-white);
-}
-html[data-theme="dark"] .booking-search-card,
-html[data-theme="dark"] .pnr-search-box,
-html[data-theme="dark"] .ticket-receipt-card,
-html[data-theme="dark"] .feature-card,
-html[data-theme="dark"] .contact-form-card,
-html[data-theme="dark"] .public-footer {
-  background-color: var(--home-bg-white);
-  border-color: var(--home-border);
-}
-html[data-theme="dark"] .feature-svg-icon {
-  background-color: #1e293b;
-  color: var(--home-primary);
-}
-
 
 /* ── 2. Accessibility, Skip Link, & Scroll Margins ──────────── */
 .skip-link {
@@ -291,46 +241,6 @@ section[id] {
 
 .nav-menu-icon {
   flex-shrink: 0;
-}
-
-/* Dark theme overrides for User Dropdown */
-html[data-theme="dark"] .nav-user-pill {
-  background: #1e293b;
-  border-color: #334155;
-  color: #f1f5f9;
-}
-html[data-theme="dark"] .nav-user-pill:hover,
-html[data-theme="dark"] .nav-user-pill:focus,
-html[data-theme="dark"] .nav-user-dropdown.show .nav-user-pill {
-  background: #1e293b;
-  border-color: #60a5fa;
-  color: #93c5fd;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-}
-html[data-theme="dark"] .nav-user-menu {
-  background: #1e293b;
-  border-color: #334155;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
-}
-html[data-theme="dark"] .nav-user-header {
-  border-color: #334155 !important;
-}
-html[data-theme="dark"] .nav-user-fullname {
-  color: #f8fafc !important;
-}
-html[data-theme="dark"] .nav-user-meta {
-  color: #94a3b8 !important;
-}
-html[data-theme="dark"] .nav-user-menu .dropdown-item {
-  color: #cbd5e1;
-}
-html[data-theme="dark"] .nav-user-menu .dropdown-item:hover,
-html[data-theme="dark"] .nav-user-menu .dropdown-item:focus {
-  background-color: rgba(59, 130, 246, 0.15);
-  color: #93c5fd;
-}
-html[data-theme="dark"] .nav-user-menu .dropdown-divider {
-  border-top-color: #334155;
 }
 
 /* Mobile drawer presentation (<992px) */
@@ -1120,104 +1030,6 @@ html[data-theme="dark"] .nav-user-menu .dropdown-divider {
   margin-bottom: 0;
 }
 
-/* Dark Mode Specific Overrides for PNR Component */
-html[data-theme="dark"] .pnr-eyebrow-pill,
-html[data-theme="dark"] .status-badge {
-  background: rgba(56, 189, 248, 0.12) !important;
-  color: #38bdf8 !important;
-  border-color: rgba(56, 189, 248, 0.25) !important;
-}
-html[data-theme="dark"] .tracker-card {
-  background: #131b2e !important;
-  border-color: #1e293b !important;
-}
-html[data-theme="dark"] .form-label {
-  color: #f8fafc !important;
-}
-html[data-theme="dark"] .badge-hint {
-  background: #1e293b !important;
-  color: #94a3b8 !important;
-}
-html[data-theme="dark"] .badge-hint.complete {
-  background: rgba(16, 185, 129, 0.2) !important;
-  color: #34d399 !important;
-}
-html[data-theme="dark"] .input-wrapper .form-control,
-html[data-theme="dark"] .pnr-input-group .form-control {
-  background: #090d16 !important;
-  border-color: #1e293b !important;
-  color: #f8fafc !important;
-}
-html[data-theme="dark"] .input-wrapper .form-control:focus,
-html[data-theme="dark"] .pnr-input-group .form-control:focus {
-  background: #0d1527 !important;
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25) !important;
-}
-html[data-theme="dark"] .field-icon {
-  color: #64748b !important;
-}
-html[data-theme="dark"] .input-wrapper:focus-within .field-icon {
-  color: #60a5fa !important;
-}
-html[data-theme="dark"] .feature-item {
-  color: #94a3b8 !important;
-}
-html[data-theme="dark"] .help-drawer {
-  border-color: #1e293b !important;
-}
-html[data-theme="dark"] .help-summary {
-  color: #94a3b8 !important;
-}
-html[data-theme="dark"] .help-summary:hover {
-  color: #60a5fa !important;
-}
-html[data-theme="dark"] .help-body {
-  background: #090d16 !important;
-  border-color: #1e293b !important;
-  color: #cbd5e1 !important;
-}
-html[data-theme="dark"] .ticket-header {
-  background: #081216 !important;
-  border-bottom-color: #132a32 !important;
-}
-html[data-theme="dark"] .ticket-notch {
-  background: var(--home-bg-warm) !important;
-  border-color: var(--home-border) !important;
-}
-html[data-theme="dark"] .ticket-seat-pill {
-  background: rgba(56, 189, 248, 0.15) !important;
-  color: #38bdf8 !important;
-  border-color: rgba(56, 189, 248, 0.3) !important;
-}
-html[data-theme="dark"] .transit-bus-pill {
-  background: #0f172a !important;
-  border-color: #334155 !important;
-  color: #f8fafc !important;
-}
-html[data-theme="dark"] .ticket-meta-schedule {
-  background: #0f172a !important;
-  color: #94a3b8 !important;
-}
-html[data-theme="dark"] .ticket-corridor-wrap,
-html[data-theme="dark"] .ticket-perforated-wrap,
-html[data-theme="dark"] .ticket-stub-details {
-  background: var(--home-bg-white) !important;
-}
-html[data-theme="dark"] .ticket-receipt-footer {
-  background: #0b111e !important;
-  border-top-color: var(--home-border) !important;
-}
-html[data-theme="dark"] .pnr-prefill-banner {
-  background: rgba(56, 189, 248, 0.1) !important;
-  border-color: rgba(56, 189, 248, 0.25) !important;
-  color: #f8fafc !important;
-}
-html[data-theme="dark"] .pnr-prefill-banner code {
-  background: rgba(56, 189, 248, 0.2) !important;
-  color: #38bdf8 !important;
-}
-
 /* ── 7. Features & Capability Tiles (Section C1, C4) ────────── */
 .features-carousel-wrap {
   position: relative;
@@ -1400,26 +1212,13 @@ html[data-theme="dark"] .pnr-prefill-banner code {
     box-shadow: 0 0 10px rgba(0, 102, 255, 0.35);
   }
 
-  html[data-theme="dark"] .features-carousel-arrow {
-    background-color: #1e293b;
-    border-color: #334155;
-    color: #f1f5f9;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-  }
+  
 
-  html[data-theme="dark"] .features-carousel-arrow:hover {
-    background-color: var(--home-primary, #2563eb);
-    border-color: var(--home-primary, #2563eb);
-    color: #ffffff;
-  }
+  
 
-  html[data-theme="dark"] .features-dot {
-    background-color: #475569;
-  }
+  
 
-  html[data-theme="dark"] .features-dot.active {
-    background-color: var(--home-primary, #2563eb);
-  }
+  
 }
 
 @media (min-width: 768px) {
@@ -1814,26 +1613,13 @@ input[type="date"].form-control {
     box-shadow: 0 0 10px rgba(0, 102, 255, 0.35);
   }
 
-  html[data-theme="dark"] .routes-carousel-arrow {
-    background-color: #1e293b;
-    border-color: #334155;
-    color: #f1f5f9;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-  }
+  
 
-  html[data-theme="dark"] .routes-carousel-arrow:hover {
-    background-color: var(--home-primary, #2563eb);
-    border-color: var(--home-primary, #2563eb);
-    color: #ffffff;
-  }
+  
 
-  html[data-theme="dark"] .routes-dot {
-    background-color: #475569;
-  }
+  
 
-  html[data-theme="dark"] .routes-dot.active {
-    background-color: var(--home-primary, #2563eb);
-  }
+  
 }
 
 @media (min-width: 768px) {
@@ -1841,26 +1627,3 @@ input[type="date"].form-control {
   .routes-carousel-arrow {
     display: none !important;
   }
-}
-
-html[data-theme="dark"] #popularRoutesCarousel .carousel-control-prev,
-html[data-theme="dark"] #popularRoutesCarousel .carousel-control-next {
-  background-color: #1e293b;
-  border-color: #334155;
-}
-
-html[data-theme="dark"] #popularRoutesCarousel .carousel-control-prev-icon {
-  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23f1f5f9' viewBox='0 0 8 8'%3E%3Cpath d='M5.25 0l-4 4 4 4 1.5-1.5-2.5-2.5 2.5-2.5-1.5-1.5z'/%3E%3C/svg%3E");
-}
-
-html[data-theme="dark"] #popularRoutesCarousel .carousel-control-next-icon {
-  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23f1f5f9' viewBox='0 0 8 8'%3E%3Cpath d='M2.75 0l-1.5 1.5 2.5 2.5-2.5 2.5 1.5 1.5 4-4-4-4z'/%3E%3C/svg%3E");
-}
-
-html[data-theme="dark"] #popularRoutesCarousel .carousel-indicators li {
-  background-color: #475569;
-}
-
-html[data-theme="dark"] #popularRoutesCarousel .carousel-indicators li.active {
-  background-color: var(--home-primary, #2563eb);
-}

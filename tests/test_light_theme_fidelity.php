@@ -101,8 +101,8 @@ assert_light("Admin and user tables are scoped to dark mode (preserves white tab
 
 // Suite 4: PWA Status Bar & Dynamic Sync for Light Mode
 echo "\n[*] Suite 4: PWA Status Bar & Dynamic Toggle for Light Mode\n";
-assert_light("_pwa-head.php sets #ffffff theme-color for light color scheme",
-    str_contains($pwa_head, '<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">')
+assert_light("_pwa-head.php sets #ffffff theme-color",
+    str_contains($pwa_head, '<meta name="theme-color" content="#ffffff">')
 );
 assert_light("theme-toggle.js sets #ffffff status bar when switching to light mode",
     str_contains($theme_toggle, "'#ffffff'")

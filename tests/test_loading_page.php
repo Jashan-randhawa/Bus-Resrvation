@@ -43,7 +43,7 @@ assert_loading("loading.html contains percentage counter", strpos($loading_conte
 assert_loading("loading.html provides interactive launch button", strpos($loading_content, 'id="launchBtn"') !== false);
 assert_loading("loading.html includes accessibility semantics (role=status, aria-live)", strpos($loading_content, 'role="status"') !== false && strpos($loading_content, 'aria-live="polite"') !== false);
 assert_loading("loading.html includes prefers-reduced-motion media query", strpos($loading_content, 'prefers-reduced-motion') !== false);
-assert_loading("loading.html implements light/dark theme toggle", strpos($loading_content, 'data-theme') !== false && strpos($loading_content, 'themeToggleBtn') !== false);
+assert_loading("loading.html enforces permanent clean light mode", strpos($loading_content, 'data-theme="light"') !== false && strpos($loading_content, 'themeToggleBtn') === false);
 
 // Suite 2: Preloader Stylesheet & Controller
 echo "\n[*] Suite 2: Preloader Core Assets (CSS & JS)\n";

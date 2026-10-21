@@ -117,7 +117,7 @@ echo "\n[*] Suite 3: Admin Stylesheet Verification\n";
 $css_code = file_get_contents(__DIR__ . '/../assets/css/admin.css');
 assert_test("admin.css defines .manifest-mobile-card", str_contains($css_code, ".manifest-mobile-card"));
 assert_test("admin.css defines .manifest-mobile-icon-wrap", str_contains($css_code, ".manifest-mobile-icon-wrap"));
-assert_test("admin.css supports dark theme for manifest-mobile-card", str_contains($css_code, 'html[data-theme="dark"] .manifest-mobile-card'));
+assert_test("admin.css enforces permanent clean light mode for manifest-mobile-card", !str_contains($css_code, 'html[data-theme="dark"] .manifest-mobile-card'));
 
 echo "\n========================================================\n";
 echo "   Results: {$passed} Passed, {$failed} Failed\n";

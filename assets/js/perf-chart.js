@@ -91,21 +91,20 @@
 
         function getThemeColors() {
             var cs = window.getComputedStyle(document.documentElement);
-            var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             return {
                 primary: cs.getPropertyValue('--c-primary').trim() || '#2563eb',
-                primaryBg: isDark ? 'rgba(59, 130, 246, 0.85)' : 'rgba(37, 99, 235, 0.85)',
-                confirmed: isDark ? '#22c55e' : '#10b981',
-                pending: isDark ? '#fbbf24' : '#f59e0b',
-                cancelled: isDark ? '#f87171' : '#ef4444',
-                expired: isDark ? '#94a3b8' : '#64748b',
-                barBookings: isDark ? 'rgba(96, 165, 250, 0.85)' : '#60a5fa',
-                revenueLine: isDark ? '#60a5fa' : '#2563eb',
-                surface: isDark ? '#131b2e' : '#ffffff',
-                text: cs.getPropertyValue('--c-text').trim() || (isDark ? '#f8fafc' : '#0f172a'),
-                textMuted: cs.getPropertyValue('--c-text-muted').trim() || (isDark ? '#94a3b8' : '#64748b'),
-                border: cs.getPropertyValue('--c-border').trim() || (isDark ? '#334155' : '#e2e8f0'),
-                grid: isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.06)',
+                primaryBg: 'rgba(37, 99, 235, 0.85)',
+                confirmed: '#10b981',
+                pending: '#f59e0b',
+                cancelled: '#ef4444',
+                expired: '#64748b',
+                barBookings: '#60a5fa',
+                revenueLine: '#2563eb',
+                surface: '#ffffff',
+                text: cs.getPropertyValue('--c-text').trim() || '#0f172a',
+                textMuted: cs.getPropertyValue('--c-text-muted').trim() || '#64748b',
+                border: cs.getPropertyValue('--c-border').trim() || '#e2e8f0',
+                grid: 'rgba(0, 0, 0, 0.06)',
             };
         }
 
@@ -430,13 +429,7 @@
             }
         }
 
-        var themeObserver = new MutationObserver(function() {
-            updateChartsTheme();
-        });
-        themeObserver.observe(document.documentElement, {
-            attributes: true,
-            attributeFilter: ['data-theme']
-        });
+        // Permanent light mode: theme observer removed
     }
 
     // 3-second auto-scroller for mobile perf-tiles, key insights and top corridors

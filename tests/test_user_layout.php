@@ -101,9 +101,7 @@ assert_user_layout("header-user.php topbar uses .page-title-mobile for clean res
     str_contains($header_user, 'page-title-mobile')
 );
 
-assert_user_layout("header-user.php topbar uses .theme-toggle-btn 44px touch target",
-    str_contains($header_user, 'class="theme-toggle-btn')
-);
+assert_user_layout("header-user.php enforces permanent light mode and removes theme toggle", !str_contains($header_user, "theme-toggle-btn") && str_contains($header_user, 'data-theme="light"'));
 
 // -------------------------------------------------------------
 // Suite 5: Phase 2 Mobile Search & Card Responsiveness (F6, F10)

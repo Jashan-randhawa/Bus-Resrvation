@@ -173,8 +173,8 @@ assert_check("public.css defines amber accent token (#f59e0b)",
     str_contains($public_css, '--admin-accent: #f59e0b;'));
 assert_check("public.css defines WCAG AA compliant helper token (#64748b)", 
     str_contains($public_css, '--admin-helper: #64748b;'));
-assert_check("public.css includes dark theme support", 
-    str_contains($public_css, 'html[data-theme="dark"] .admin-auth-header'));
+assert_check("public.css enforces clean light theme (no dark theme overrides)", 
+    !str_contains($public_css, 'html[data-theme="dark"]'));
 assert_check("header-public.php links public.css", 
     str_contains($header, 'assets/css/public.css'));
 

@@ -3,19 +3,18 @@ require_once __DIR__ . '/../config.php';
 $user_role = $_SESSION['role'] ?? null;
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <!-- Immediate Dark Mode Pre-Script to Prevent FOUC -->
+  <!-- Enforce Permanent Clean Light Mode & Clear Legacy Dark Mode Storage -->
   <script>
-  (function(){try{var k='busres_theme_mode',s=localStorage.getItem(k);if(!s&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)s='dark';if(s==='dark'){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');}}catch(e){}})();
+  (function(){try{localStorage.removeItem('busres_theme_mode');localStorage.removeItem('busbook_theme');localStorage.removeItem('theme');document.documentElement.setAttribute('data-theme','light');document.documentElement.classList.remove('dark-mode');}catch(e){}})();
   </script>
   <meta name="description" content="Simple and reliable bus ticket booking system. Check real-time seat availability, lookup PNR status, and reserve seats across intercity routes.">
-  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0B0F19" media="(prefers-color-scheme: dark)">
-  <meta name="theme-color" content="#0B0F19">
+  <meta name="theme-color" content="#ffffff">
+
 
   <!-- Open Graph & Canonical (P19) -->
   <link rel="canonical" href="<?= e(BASE_URL) ?>/homepage.php">
@@ -47,7 +46,6 @@ $user_role = $_SESSION['role'] ?? null;
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/home.css?v=<?= file_exists(dirname(__DIR__, 2) . '/assets/css/home.css') ? filemtime(dirname(__DIR__, 2) . '/assets/css/home.css') : '2.4.1' ?>">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/public.css?v=<?= file_exists(dirname(__DIR__, 2) . '/assets/css/public.css') ? filemtime(dirname(__DIR__, 2) . '/assets/css/public.css') : '2.4.1' ?>">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/footer.css?v=<?= file_exists(dirname(__DIR__, 2) . '/assets/css/footer.css') ? filemtime(dirname(__DIR__, 2) . '/assets/css/footer.css') : '2.4.1' ?>">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/theme-emerald.css?v=<?= file_exists(dirname(__DIR__, 2) . '/assets/css/theme-emerald.css') ? filemtime(dirname(__DIR__, 2) . '/assets/css/theme-emerald.css') : '2.4.1' ?>">
   
   <!-- Global Theme Toggle (Head load to avoid FOUC) -->
   <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>
@@ -181,14 +179,6 @@ $user_role = $_SESSION['role'] ?? null;
               </button>
             </li>
           <?php endif; ?>
-
-          <!-- Global Dark / Light Mode Button -->
-          <li class="nav-item ml-lg-3 mt-2 mt-lg-0">
-            <button type="button" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle dark mode">
-              <span class="theme-toggle-icon"></span>
-              <span class="theme-toggle-text d-lg-none ml-1">Theme</span>
-            </button>
-          </li>
         </ul>
       </div>
     </div>

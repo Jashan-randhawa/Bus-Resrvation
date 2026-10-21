@@ -639,131 +639,6 @@
     gap: 0.75rem;
     align-items: center;
   }
-}
-
-/* ==========================================================================
-   Dark Mode Overrides
-   ========================================================================== */
-html[data-theme="dark"] .dash-header-title {
-  color: var(--c-text, #f8fafc);
-}
-
-html[data-theme="dark"] .dash-date-chip {
-  background: var(--c-surface, #131b2e);
-  border-color: var(--c-border, #334155);
-  color: var(--c-text-muted, #94a3b8);
-}
-
-html[data-theme="dark"] .stat-card {
-  background: var(--c-surface, #131b2e);
-  border-color: var(--c-border, #334155);
-}
-
-html[data-theme="dark"] .stat-revenue   { --stat-icon-bg: rgba(22, 163, 74, 0.2); --stat-icon-color: #4ade80; }
-html[data-theme="dark"] .stat-bookings  { --stat-icon-bg: rgba(37, 99, 235, 0.2); --stat-icon-color: #60a5fa; }
-html[data-theme="dark"] .stat-customers { --stat-icon-bg: rgba(139, 92, 246, 0.2); --stat-icon-color: #c084fc; }
-html[data-theme="dark"] .stat-queries   { --stat-icon-bg: rgba(14, 165, 233, 0.2); --stat-icon-color: #38bdf8; }
-html[data-theme="dark"] .stat-buses     { --stat-icon-bg: rgba(22, 163, 74, 0.2); --stat-icon-color: #4ade80; }
-html[data-theme="dark"] .stat-routes    { --stat-icon-bg: rgba(245, 158, 11, 0.2); --stat-icon-color: #fbbf24; }
-html[data-theme="dark"] .stat-seats     { --stat-icon-bg: rgba(6, 182, 212, 0.2); --stat-icon-color: #22d3ee; }
-html[data-theme="dark"] .stat-admins    { --stat-icon-bg: rgba(148, 163, 184, 0.2); --stat-icon-color: #cbd5e1; }
-
-html[data-theme="dark"] .stat-value {
-  color: var(--c-text, #f8fafc);
-}
-
-html[data-theme="dark"] .dep-card-wrap {
-  background: var(--c-surface, #131b2e);
-  border-color: var(--c-border, #334155);
-}
-
-html[data-theme="dark"] .dep-table-head {
-  background: #0b1120;
-  border-bottom-color: var(--c-border, #334155);
-  color: var(--c-text-muted, #94a3b8);
-}
-
-html[data-theme="dark"] .dep-table-container {
-  border-top-color: var(--c-border, #334155);
-}
-
-html[data-theme="dark"] .dep-row {
-  background: var(--c-surface, #131b2e);
-  border-bottom-color: var(--c-border, #334155);
-}
-
-html[data-theme="dark"] .dep-row:hover {
-  background-color: #1e293b;
-}
-
-html[data-theme="dark"] .dep-row-time,
-html[data-theme="dark"] .dep-route-corridor {
-  color: var(--c-text, #f8fafc);
-}
-
-html[data-theme="dark"] .dep-bus-badge {
-  background: #0b1120;
-  border-color: var(--c-border, #334155);
-  color: var(--c-text-muted, #94a3b8);
-}
-
-html[data-theme="dark"] .dep-progress-slim {
-  background: #1e293b;
-}
-
-html[data-theme="dark"] .dep-summary-pill {
-  background: var(--c-surface, #131b2e);
-  border-color: var(--c-border, #334155);
-  color: var(--c-text, #f8fafc);
-}
-
-html[data-theme="dark"] .dep-chip.is-departed {
-  background: #1e293b;
-  color: #94a3b8;
-  border-color: #334155;
-}
-
-html[data-theme="dark"] .dep-chip.is-boarding {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
-  border-color: rgba(245, 158, 11, 0.4);
-}
-
-html[data-theme="dark"] .dep-chip.is-upcoming {
-  background: rgba(59, 130, 246, 0.2);
-  color: #93c5fd;
-  border-color: rgba(59, 130, 246, 0.4);
-}
-
-html[data-theme="dark"] .corridor-row {
-  background: var(--c-surface, #131b2e);
-  border-color: var(--c-border, #334155);
-}
-
-html[data-theme="dark"] .corridor-row:hover {
-  background: rgba(59, 130, 246, 0.05);
-  border-color: var(--c-primary, #3b82f6);
-}
-
-html[data-theme="dark"] .corridor-rank {
-  background: #1e293b;
-  color: var(--c-text, #f8fafc);
-}
-
-html[data-theme="dark"] .corridor-row:first-child .corridor-rank {
-  background: rgba(59, 130, 246, 0.25);
-  color: #60a5fa;
-}
-
-html[data-theme="dark"] .corridor-title {
-  color: var(--c-text, #f8fafc);
-}
-
-html[data-theme="dark"] .corridor-bus-badge {
-  background: #0b1120;
-  border-color: var(--c-border, #334155);
-  color: var(--c-text-muted, #94a3b8);
-}
 
 /* ==========================================================================
    Dashboard Reporting Controls & Mode Switcher
@@ -1060,49 +935,6 @@ html[data-theme="dark"] .corridor-bus-badge {
   gap: 0.35rem;
 }
 
-/* ==========================================================================
-   Dark Mode Overrides for Attention, Tabs & Export
-   ========================================================================== */
-html[data-theme="dark"] .dash-time-chip {
-  background: var(--c-surface, #131b2e);
-  border-color: var(--c-border, #334155);
-  color: var(--c-text, #f8fafc);
-}
-
-html[data-theme="dark"] .attention-item {
-  background: var(--c-surface, #131b2e);
-  border-color: var(--c-border, #334155);
-}
-
-html[data-theme="dark"] .attention-item.level-danger {
-  background: rgba(220, 38, 38, 0.08);
-}
-
-html[data-theme="dark"] .attention-item.level-warning {
-  background: rgba(245, 158, 11, 0.08);
-}
-
-html[data-theme="dark"] .attention-item.level-info {
-  background: rgba(59, 130, 246, 0.08);
-}
-
-html[data-theme="dark"] .attention-item.level-neutral {
-  background: rgba(148, 163, 184, 0.05);
-}
-
-html[data-theme="dark"] .attention-title {
-  color: var(--c-text, #f8fafc);
-}
-
-html[data-theme="dark"] .attention-desc {
-  color: var(--c-text-muted, #94a3b8);
-}
-
-html[data-theme="dark"] .attention-empty {
-  background: var(--c-surface, #131b2e);
-  border-color: var(--c-border, #334155);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .dep-row,
   .dep-progress-fill,
@@ -1351,22 +1183,6 @@ html[data-theme="dark"] .attention-empty {
 }
 
 /* ==========================================================================
-   Dark mode overrides for new mobile rules
-   ========================================================================== */
-html[data-theme="dark"] .perf-empty-state {
-  background: rgba(15, 23, 42, 0.95);
-}
-
-html[data-theme="dark"] .dash-mode-toggle .btn-outline-secondary {
-  border-color: var(--c-border, #334155);
-  color: var(--c-text-muted, #94a3b8);
-}
-
-html[data-theme="dark"] .dash-mode-toggle .btn-outline-secondary:hover {
-  background: var(--c-surface, #131b2e);
-}
-
-/* ==========================================================================
    Performance Tiles, Key Insights & Top Corridors: Mobile Horizontal Moving Scroll (3s interval)
    ========================================================================== */
 @media (max-width: 767.98px) {
@@ -1412,4 +1228,4 @@ html[data-theme="dark"] .dash-mode-toggle .btn-outline-secondary:hover {
   }
 }
 
-
+}

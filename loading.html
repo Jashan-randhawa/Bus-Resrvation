@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#081225">
+  <meta name="theme-color" content="#bdd8f8">
   <meta name="description" content="BusBook - Real-time Bus Reservation and Ticket Booking Platform">
   <title>BusBook Express - Loading System...</title>
 
@@ -24,25 +24,6 @@
        BUSBOOK CINEMATIC LOADING THEME & RESET
        ========================================================================== */
     :root {
-      --bg-space: #040914;
-      --bg-horizon: #0b1e42;
-      --road-color: #0c1626;
-      --road-lane: #00d2ff;
-      --road-lane-glow: rgba(0, 210, 255, 0.6);
-      --primary: #0066FF;
-      --primary-light: #38bdf8;
-      --accent: #00f0ff;
-      --neon-amber: #f59e0b;
-      --neon-red: #ef4444;
-      --hud-bg: rgba(7, 18, 38, 0.78);
-      --hud-border: rgba(56, 189, 248, 0.28);
-      --hud-glow: rgba(0, 102, 255, 0.35);
-      --text-main: #ffffff;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-    }
-
-    [data-theme="light"] {
       --bg-space: #bdd8f8;
       --bg-horizon: #e2eeff;
       --road-color: #2a374a;
@@ -51,6 +32,8 @@
       --primary: #0052cc;
       --primary-light: #0284c7;
       --accent: #0066FF;
+      --neon-amber: #f59e0b;
+      --neon-red: #ef4444;
       --hud-bg: rgba(255, 255, 255, 0.88);
       --hud-border: rgba(0, 102, 255, 0.25);
       --hud-glow: rgba(0, 102, 255, 0.2);
@@ -130,15 +113,11 @@
       width: 200%;
       bottom: -150px;
       height: 75vh;
-      background: linear-gradient(to top, var(--road-color) 0%, #060c16 95%);
+      background: linear-gradient(to top, #334155 0%, #1e293b 95%);
       transform-origin: 50% 100%;
       transform: rotateX(74deg) translateZ(0);
       overflow: hidden;
       box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.9);
-    }
-
-    [data-theme="light"] .road-plane {
-      background: linear-gradient(to top, #334155 0%, #1e293b 95%);
     }
 
     /* Roadside illuminated borders */
@@ -694,16 +673,11 @@
     .progress-track {
       width: 100%;
       height: 8px;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.08);
       border-radius: 100px;
       overflow: hidden;
       position: relative;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    [data-theme="light"] .progress-track {
-      background: rgba(0, 0, 0, 0.08);
-      border-color: rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(0, 0, 0, 0.08);
     }
 
     .progress-fill {
@@ -917,12 +891,6 @@
         <span id="soundIcon">🔇</span>
         <span id="soundLabel">Sound Off</span>
       </button>
-
-      <!-- Theme Switcher (Required for tests) -->
-      <button type="button" class="hud-control-btn" id="themeToggleBtn" aria-label="Toggle Light and Dark Mode">
-        <span id="themeIcon">☀️</span>
-        <span id="themeLabel">Light Mode</span>
-      </button>
     </div>
   </header>
 
@@ -1074,9 +1042,6 @@
       const routeMarker = document.getElementById('routeMarker');
       const gearIndicator = document.getElementById('gearIndicator');
       const odoIndicator = document.getElementById('odoIndicator');
-      const themeToggleBtn = document.getElementById('themeToggleBtn');
-      const themeIcon = document.getElementById('themeIcon');
-      const themeLabel = document.getElementById('themeLabel');
       const soundToggleBtn = document.getElementById('soundToggleBtn');
       const soundIcon = document.getElementById('soundIcon');
       const soundLabel = document.getElementById('soundLabel');
@@ -1166,66 +1131,18 @@
 
       function drawSkyScene() {
         ctx.clearRect(0, 0, w, h);
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
 
-        // Sky Gradient
+        // Sky Gradient (Clean light mode daytime atmosphere)
         const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.6);
-        if (isDark) {
-          skyGrad.addColorStop(0, '#040914');
-          skyGrad.addColorStop(0.5, '#081630');
-          skyGrad.addColorStop(1, '#0e2348');
-        } else {
-          skyGrad.addColorStop(0, '#a5ccf7');
-          skyGrad.addColorStop(0.5, '#cce2ff');
-          skyGrad.addColorStop(1, '#ffeedb');
-        }
+        skyGrad.addColorStop(0, '#a5ccf7');
+        skyGrad.addColorStop(0.5, '#cce2ff');
+        skyGrad.addColorStop(1, '#ffeedb');
         ctx.fillStyle = skyGrad;
         ctx.fillRect(0, 0, w, h * 0.6);
 
-        // Draw Twinkling Stars (in dark theme)
-        if (isDark) {
-          for (let s of stars) {
-            s.phase += s.speed;
-            const alpha = s.baseAlpha + Math.sin(s.phase) * 0.25;
-            ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.1, alpha)})`;
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
-            ctx.fill();
-          }
-
-          // Draw Meteors
-          createMeteor();
-          for (let i = meteors.length - 1; i >= 0; i--) {
-            const m = meteors[i];
-            m.x += Math.cos(m.angle) * m.speed;
-            m.y += Math.sin(m.angle) * m.speed;
-            m.alpha -= 0.02;
-
-            if (m.alpha <= 0) {
-              meteors.splice(i, 1);
-              continue;
-            }
-
-            const tailX = m.x - Math.cos(m.angle) * m.length;
-            const tailY = m.y - Math.sin(m.angle) * m.length;
-
-            const grad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
-            grad.addColorStop(0, `rgba(56, 189, 248, ${m.alpha})`);
-            grad.addColorStop(0.4, `rgba(0, 210, 255, ${m.alpha * 0.6})`);
-            grad.addColorStop(1, 'transparent');
-
-            ctx.strokeStyle = grad;
-            ctx.lineWidth = 2.5;
-            ctx.beginPath();
-            ctx.moveTo(m.x, m.y);
-            ctx.lineTo(tailX, tailY);
-            ctx.stroke();
-          }
-        }
-
         // Draw City Skyline Silhouette at Horizon
         const baseY = h * 0.52;
-        ctx.fillStyle = isDark ? '#050c18' : '#64748b';
+        ctx.fillStyle = '#64748b';
 
         for (let b of buildings) {
           const topY = baseY - b.h;
@@ -1233,7 +1150,7 @@
 
           // Tower antenna beacon
           if (b.hasTower) {
-            ctx.fillStyle = isDark ? '#02060e' : '#475569';
+            ctx.fillStyle = '#475569';
             ctx.fillRect(b.x + b.w / 2 - 1.5, topY - 24, 3, 24);
             // Red blinking aviation beacon
             const beaconOn = (Date.now() % 1400) < 700;
@@ -1246,25 +1163,7 @@
               ctx.fill();
               ctx.shadowBlur = 0;
             }
-            ctx.fillStyle = isDark ? '#050c18' : '#64748b';
-          }
-
-          // Illuminated Windows
-          if (isDark) {
-            for (let r = 0; r < b.rows; r++) {
-              for (let c = 0; c < b.cols; c++) {
-                const lit = ((b.seed * (r + 1) * (c + 1) * 997) % 1) > 0.65;
-                if (lit) {
-                  const wx = b.x + 5 + c * 8;
-                  const wy = topY + 8 + r * 12;
-                  if (wx < b.x + b.w - 4 && wy < baseY - 6) {
-                    ctx.fillStyle = ((r + c) % 3 === 0) ? 'rgba(56, 189, 248, 0.7)' : 'rgba(254, 240, 138, 0.65)';
-                    ctx.fillRect(wx, wy, 4, 6);
-                  }
-                }
-              }
-            }
-            ctx.fillStyle = '#050c18';
+            ctx.fillStyle = '#64748b';
           }
         }
 
@@ -1515,30 +1414,15 @@
       requestAnimationFrame(renderParallax);
 
       // ========================================================================
-      // 6. LIGHT / DARK THEME TOGGLE (REQUIRED FOR TESTS)
+      // 6. ENFORCE PERMANENT CLEAN LIGHT MODE
       // ========================================================================
-      function applyTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('busbook_theme', theme);
-        if (theme === 'dark') {
-          themeIcon.textContent = '☀️';
-          themeLabel.textContent = 'Light Mode';
-        } else {
-          themeIcon.textContent = '🌙';
-          themeLabel.textContent = 'Dark Mode';
-        }
-      }
-
-      const savedTheme = localStorage.getItem('busbook_theme') || 
-        (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-      applyTheme(savedTheme);
-
-      themeToggleBtn.addEventListener('click', () => {
-        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-        applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
-      });
-
-    })();
+      try {
+        localStorage.removeItem('busbook_theme');
+        localStorage.removeItem('busres_theme_mode');
+        localStorage.removeItem('theme');
+        document.documentElement.setAttribute('data-theme', 'light');
+      } catch (e) {}
+})();
   </script>
 </body>
 </html>

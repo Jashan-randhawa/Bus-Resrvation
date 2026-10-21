@@ -1,14 +1,14 @@
 <?php require_once __DIR__ . '/../config.php'; ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <!-- Immediate Dark Mode Pre-Script to Prevent FOUC -->
-    <script>
-    (function(){try{var k='busres_theme_mode',s=localStorage.getItem(k);if(!s&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)s='dark';if(s==='dark'){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');}}catch(e){}})();
-    </script>
+    <!-- Enforce Permanent Clean Light Mode & Clear Legacy Dark Mode Storage -->
+  <script>
+  (function(){try{localStorage.removeItem('busres_theme_mode');localStorage.removeItem('busbook_theme');localStorage.removeItem('theme');document.documentElement.setAttribute('data-theme','light');document.documentElement.classList.remove('dark-mode');}catch(e){}})();
+  </script>
     <link rel="shortcut icon" href="<?= BASE_URL ?>/favicon.ico">
     <link rel="icon" type="image/x-icon" href="<?= BASE_URL ?>/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="<?= BASE_URL ?>/assets/images/bus-emblem.png">
@@ -28,7 +28,6 @@
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin-mobile-responsive.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/admin-mobile-responsive.css') ?: 1 ?>">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/user.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/user.css') ?: 1 ?>">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/seat-map.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/seat-map.css') ?: 1 ?>">
-    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/theme-emerald.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/theme-emerald.css') ?: 1 ?>">
 
     <!-- Global Theme Toggle (Head load to avoid FOUC) -->
     <script src="<?= BASE_URL ?>/assets/js/theme-toggle.js"></script>
@@ -175,12 +174,6 @@
                     <h1 class="page-title-mobile font-weight-bold d-lg-none">
                         <?= e($title ?? 'Customer Area') ?>
                     </h1>
-                </div>
-                
-                <div class="ml-auto d-flex align-items-center">
-                    <button type="button" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle dark mode">
-                        <span class="theme-toggle-icon"></span>
-                    </button>
                 </div>
             </div>
 

@@ -166,9 +166,9 @@ assert_route_ui("admin.css defines .route-corridor, .route-city, and .route-arro
     str_contains($admin_css, '.route-arrow')
 );
 
-assert_route_ui("admin.css defines .route-card-mobile with dark theme elevation",
+assert_route_ui("admin.css defines .route-card-mobile with permanent clean light mode",
     str_contains($admin_css, '.route-card-mobile') &&
-    str_contains($admin_css, 'html[data-theme="dark"] .route-card-mobile')
+    !str_contains($admin_css, 'html[data-theme="dark"] .route-card-mobile')
 );
 
 assert_route_ui("admin.css styles #swapModalCitiesBtn with smooth rotation animation",

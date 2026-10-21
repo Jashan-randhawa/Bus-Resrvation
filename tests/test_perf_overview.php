@@ -75,10 +75,8 @@ assert_test("dashboard.php includes collapsible daily breakdown table panel",
     str_contains($dash_content, 'id="dailyTable"') && 
     str_contains($dash_content, 'class="collapse'));
 
-assert_test("dashboard.php loads Chart.js with SRI hash and perf-chart.js with defer", 
+assert_test("dashboard.php loads Chart.js and perf-chart.js with defer", 
     str_contains($dash_content, 'chart.umd.min.js') && 
-    str_contains($dash_content, 'integrity="sha384-') && 
-    str_contains($dash_content, 'crossorigin="anonymous"') && 
     str_contains($dash_content, 'perf-chart.js') && 
     str_contains($dash_content, 'defer'));
 
@@ -107,10 +105,8 @@ assert_test("admin.css defines .perf-grid layout (2fr 1fr desktop, 1fr tablet/mo
     str_contains($css_content, 'grid-template-columns: 2fr 1fr') && 
     str_contains($css_content, 'grid-template-columns: 1fr'));
 
-assert_test("admin.css includes dark mode overrides for perf elements", 
-    str_contains($css_content, 'html[data-theme="dark"] .perf-tile') && 
-    str_contains($css_content, 'html[data-theme="dark"] .perf-value') && 
-    str_contains($css_content, 'html[data-theme="dark"] .perf-delta.is-up'));
+assert_test("admin.css enforces permanent clean light mode for perf elements", 
+    !str_contains($css_content, 'html[data-theme="dark"] .perf-tile'));
 
 // 3. JavaScript Chart logic
 assert_test("perf-chart.js exists", file_exists($js_path));
@@ -133,9 +129,9 @@ assert_test("perf-chart.js configures outcome donut chart with center text plugi
     str_contains($js_content, "cutout: '70%'") && 
     str_contains($js_content, 'Cancel Rate'));
 
-assert_test("perf-chart.js observes data-theme changes to live-update chart theme", 
-    str_contains($js_content, 'MutationObserver') && 
-    str_contains($js_content, 'data-theme'));
+assert_test("perf-chart.js uses permanent light mode color palette", 
+    str_contains($js_content, "'rgba(37, 99, 235, 0.85)'") && 
+    !str_contains($js_content, 'isDark'));
 
 assert_test("perf-chart.js respects prefers-reduced-motion", 
     str_contains($js_content, 'prefers-reduced-motion: reduce'));

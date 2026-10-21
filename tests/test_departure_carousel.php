@@ -132,12 +132,8 @@ assert_test("dashboard.css defines mobile stacked responsive layout (< 576px)",
     str_contains($css_content, '@media (max-width: 575.98px)') &&
     str_contains($css_content, 'flex-direction: column'));
 
-assert_test("dashboard.css provides dark mode overrides for compact departure list",
-    str_contains($css_content, 'html[data-theme="dark"] .dep-card-wrap') &&
-    str_contains($css_content, 'html[data-theme="dark"] .dep-table-head') &&
-    str_contains($css_content, 'html[data-theme="dark"] .dep-row') &&
-    str_contains($css_content, 'html[data-theme="dark"] .dep-row-time') &&
-    str_contains($css_content, 'html[data-theme="dark"] .dep-bus-badge'));
+assert_test("dashboard.css enforces permanent clean light mode for compact departure list",
+    !str_contains($css_content, 'html[data-theme="dark"] .dep-card-wrap'));
 
 assert_test("dashboard.css honors prefers-reduced-motion for departure list",
     str_contains($css_content, 'prefers-reduced-motion: reduce') &&

@@ -153,51 +153,6 @@
   background-color: #ffffff;
 }
 
-/* Dark Theme Variant */
-html[data-theme="dark"] .admin-auth-header {
-  background-color: var(--admin-surface-dark);
-  color: var(--admin-text-on-dark);
-  border-bottom-color: rgba(255, 255, 255, 0.08);
-}
-
-html[data-theme="dark"] .admin-modal-title {
-  color: var(--admin-text-on-dark);
-}
-
-html[data-theme="dark"] .admin-auth-header .close {
-  color: #94a3b8;
-}
-
-html[data-theme="dark"] .admin-auth-header .close:hover {
-  color: #f8fafc;
-}
-
-html[data-theme="dark"] #loginModal .modal-content {
-  background-color: var(--c-surface, #1e293b);
-  border-color: var(--c-border, #334155);
-}
-
-html[data-theme="dark"] #loginModal .modal-body {
-  background-color: var(--c-surface, #1e293b);
-  color: var(--c-text, #f8fafc);
-}
-
-html[data-theme="dark"] .admin-auth-subtitle,
-html[data-theme="dark"] .admin-form-label {
-  color: var(--c-text-muted, #94a3b8);
-}
-
-html[data-theme="dark"] #loginModal .form-control {
-  background-color: #0f172a;
-  border-color: #334155;
-  color: #f8fafc;
-}
-
-html[data-theme="dark"] #loginModal .form-control:focus {
-  border-color: var(--c-primary, #2563eb);
-  box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
-}
-
 #admin-pwd-toggle {
   font-size: 0.8125rem;
   font-weight: 500;
@@ -208,17 +163,6 @@ html[data-theme="dark"] #loginModal .form-control:focus {
 #admin-pwd-toggle:hover {
   background-color: #f1f5f9;
   color: #1e293b;
-}
-
-html[data-theme="dark"] #admin-pwd-toggle {
-  background-color: #1e293b;
-  border-color: #334155;
-  color: #cbd5e1;
-}
-
-html[data-theme="dark"] #admin-pwd-toggle:hover {
-  background-color: #334155;
-  color: #f8fafc;
 }
 
 #admin-caps-warning {

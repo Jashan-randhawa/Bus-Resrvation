@@ -108,9 +108,8 @@ assert_test("dashboard.css styles attention items and levels",
     str_contains($css_content, '.level-danger') && 
     str_contains($css_content, '.level-warning') && 
     str_contains($css_content, '.level-info'));
-assert_test("dashboard.css provides dark mode overrides for attention items", 
-    str_contains($css_content, 'html[data-theme="dark"] .attention-item') && 
-    str_contains($css_content, 'html[data-theme="dark"] .dash-time-chip'));
+assert_test("dashboard.css enforces permanent clean light mode for attention items", 
+    !str_contains($css_content, 'html[data-theme="dark"] .attention-item'));
 assert_test("dashboard.css honors prefers-reduced-motion", 
     str_contains($css_content, 'prefers-reduced-motion: reduce') && 
     str_contains($css_content, '.attention-item'));

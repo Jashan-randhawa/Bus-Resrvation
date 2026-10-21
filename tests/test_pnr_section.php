@@ -171,13 +171,13 @@ assert_pnr("home.css defines .ticket-perforated-line with 2px dashed border",
 assert_pnr("home.css defines .ticket-notch cutouts with rounded border",
     str_contains($home_css, '.ticket-notch') && str_contains($home_css, 'border-radius: 50%')
 );
-assert_pnr("home.css defines dark mode overrides for .ticket-header and .ticket-receipt-card",
-    str_contains($home_css, 'html[data-theme="dark"] .ticket-header') &&
-    str_contains($home_css, 'background: #081216 !important;')
+assert_pnr("home.css enforces permanent clean light mode for .ticket-header and .ticket-receipt-card",
+    !str_contains($home_css, 'html[data-theme="dark"] .ticket-header') &&
+    !str_contains($home_css, 'html[data-theme="dark"] .ticket-receipt-card')
 );
-assert_pnr("home.css defines dark mode overrides for .pnr-eyebrow-pill and .ticket-seat-pill",
-    str_contains($home_css, 'html[data-theme="dark"] .pnr-eyebrow-pill') &&
-    str_contains($home_css, 'html[data-theme="dark"] .ticket-seat-pill')
+assert_pnr("home.css enforces permanent clean light mode for .pnr-eyebrow-pill and .ticket-seat-pill",
+    !str_contains($home_css, 'html[data-theme="dark"] .pnr-eyebrow-pill') &&
+    !str_contains($home_css, 'html[data-theme="dark"] .ticket-seat-pill')
 );
 
 // Suite 7: Standalone Entry Point pnr.php Integration

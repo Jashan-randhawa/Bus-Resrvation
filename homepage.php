@@ -1476,32 +1476,7 @@ if (isset($_POST['subbtn'])) {
         background-color: var(--home-primary, #2563eb) !important;
         box-shadow: 0 0 10px rgba(0, 102, 255, 0.35) !important;
       }
-
-      html[data-theme="dark"] .features-carousel-arrow,
-      html[data-theme="dark"] .routes-carousel-arrow {
-        background-color: #1e293b !important;
-        border-color: #334155 !important;
-        color: #f1f5f9 !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
-      }
-
-      html[data-theme="dark"] .features-carousel-arrow:hover,
-      html[data-theme="dark"] .routes-carousel-arrow:hover {
-        background-color: var(--home-primary, #2563eb) !important;
-        border-color: var(--home-primary, #2563eb) !important;
-        color: #ffffff !important;
-      }
-
-      html[data-theme="dark"] .features-dot,
-      html[data-theme="dark"] .routes-dot {
-        background-color: #475569 !important;
-      }
-
-      html[data-theme="dark"] .features-dot.active,
-      html[data-theme="dark"] .routes-dot.active {
-        background-color: var(--home-primary, #2563eb) !important;
-      }
-    }
+}
 
     @media (min-width: 768px) {
       .features-carousel-controls,

@@ -162,34 +162,6 @@ require_once __DIR__ . '/../includes/layout/header-admin.php';
     border-radius: 6px;
     padding: 14px 16px;
 }
-html[data-theme="dark"] .query-desc-box,
-html.dark-mode .query-desc-box {
-    background-color: rgba(15, 23, 42, 0.75) !important;
-    border-color: #334155 !important;
-    color: #f8fafc !important;
-}
-html[data-theme="dark"] #viewQueryModal .modal-content,
-html.dark-mode #viewQueryModal .modal-content {
-    background-color: #1e293b;
-    color: #f8fafc;
-}
-html[data-theme="dark"] #viewQueryModal .card.bg-light,
-html.dark-mode #viewQueryModal .card.bg-light,
-html[data-theme="dark"] #viewQueryModal .modal-footer.bg-light,
-html.dark-mode #viewQueryModal .modal-footer.bg-light {
-    background-color: #0f172a !important;
-    border-color: #334155 !important;
-}
-html[data-theme="dark"] #viewQueryModal .border,
-html.dark-mode #viewQueryModal .border {
-    border-color: #334155 !important;
-}
-html[data-theme="dark"] #viewQueryModal #viewModalSubject,
-html.dark-mode #viewQueryModal #viewModalSubject {
-    background-color: #0f172a !important;
-    color: #f8fafc !important;
-    border-color: #334155 !important;
-}
 @media (max-width: 767.98px) {
     .table-stack td[data-label="Subject & Message"] {
         display: block !important;

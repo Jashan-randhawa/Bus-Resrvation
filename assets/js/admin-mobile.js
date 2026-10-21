@@ -194,7 +194,7 @@
         var navLinks = sidebar.querySelectorAll('.admin-nav a, .admin-sidebar-footer a, .admin-sidebar-footer button');
         navLinks.forEach(function(link) {
             link.addEventListener('click', function() {
-                if (window.innerWidth < 992 && !link.classList.contains('theme-toggle-btn')) {
+                if (window.innerWidth < 992) {
                     closeSidebar(false);
                 }
             });

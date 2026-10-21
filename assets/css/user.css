@@ -93,11 +93,6 @@
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
   }
 
-  html[data-theme="dark"] .booking-sticky-footer {
-    background: var(--c-surface, #1e293b);
-    border-top-color: var(--c-border, #334155);
-  }
-
   .booking-summary-strip {
     background: transparent !important;
     border: none !important;
@@ -308,45 +303,6 @@
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
 }
 
-/* Dark Theme Overrides */
-html[data-theme="dark"] .upcoming-journey-card {
-  background: var(--c-surface, #131b2e) !important;
-  border-color: rgba(59, 130, 246, 0.25) !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3) !important;
-}
-
-html[data-theme="dark"] .journey-badge-upcoming {
-  background: rgba(16, 185, 129, 0.18);
-  color: #34d399;
-  border-color: rgba(16, 185, 129, 0.35);
-}
-
-html[data-theme="dark"] .journey-pnr-pill {
-  background: rgba(15, 23, 42, 0.8);
-  border-color: #334155;
-}
-
-html[data-theme="dark"] .journey-pnr-pill .pnr-label {
-  color: #94a3b8;
-}
-
-html[data-theme="dark"] .journey-pnr-pill .pnr-code {
-  color: #f8fafc;
-}
-
-html[data-theme="dark"] .journey-meta-grid {
-  background: rgba(15, 23, 42, 0.6);
-  border-color: #334155;
-}
-
-html[data-theme="dark"] .journey-meta-item {
-  color: #94a3b8;
-}
-
-html[data-theme="dark"] .journey-meta-item strong {
-  color: #f1f5f9;
-}
-
 @media (max-width: 575.98px) {
   .journey-corridor .journey-city {
     font-size: 1.15rem;
@@ -401,23 +357,6 @@ html[data-theme="dark"] .journey-meta-item strong {
 
 #search-form select option[disabled] {
   color: var(--c-text-muted, #94a3b8);
-}
-
-html[data-theme="dark"] #search-form select.custom-select,
-html[data-theme="dark"] #search-form select.form-control {
-  background-color: var(--c-surface, #1e293b);
-  border-color: var(--c-border, #334155);
-  color: var(--c-text, #f1f5f9);
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-}
-
-html[data-theme="dark"] #search-form select option {
-  background-color: #1e293b;
-  color: #f1f5f9;
-}
-
-html[data-theme="dark"] #search-form select option[disabled] {
-  color: #64748b;
 }
 
 /* Custom Dropdown UI Enhancement (Replaces Native OS Combobox) */
@@ -559,42 +498,6 @@ html[data-theme="dark"] #search-form select option[disabled] {
   font-size: 0.85rem;
   font-weight: bold;
   color: var(--c-primary, #2563eb);
-}
-
-/* Dark Theme Overrides for Custom Dropdown */
-html[data-theme="dark"] .custom-dropdown-btn {
-  background-color: var(--c-surface, #1e293b);
-  border-color: var(--c-border, #334155);
-  color: var(--c-text, #f1f5f9);
-}
-
-html[data-theme="dark"] .custom-dropdown-btn:hover {
-  border-color: #475569;
-}
-
-html[data-theme="dark"] .custom-dropdown-btn.has-placeholder .custom-dropdown-val {
-  color: #64748b;
-}
-
-html[data-theme="dark"] .custom-dropdown-menu {
-  background: var(--c-surface, #1e293b);
-  border-color: var(--c-border, #334155);
-  box-shadow: 0 14px 30px -4px rgba(0, 0, 0, 0.5);
-}
-
-html[data-theme="dark"] .custom-dropdown-option {
-  color: var(--c-text, #f1f5f9);
-}
-
-html[data-theme="dark"] .custom-dropdown-option:hover,
-html[data-theme="dark"] .custom-dropdown-option.focused {
-  background-color: rgba(59, 130, 246, 0.18);
-  color: #60a5fa;
-}
-
-html[data-theme="dark"] .custom-dropdown-option.selected {
-  background-color: rgba(59, 130, 246, 0.28);
-  color: #93c5fd;
 }
 
 /* ── Digital Boarding Pass Mobile Responsiveness (user/ticket.php) ── */
@@ -886,59 +789,6 @@ html[data-theme="dark"] .custom-dropdown-option.selected {
 .ticket-toast.show {
   transform: translateX(-50%) translateY(0);
   opacity: 1;
-}
-
-/* Dark mode theme overrides */
-html[data-theme="dark"] .ticket-container {
-  background-color: var(--bg-surface, #111827) !important;
-  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08)) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.14) !important;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5) !important;
-}
-html[data-theme="dark"] .ticket-brand-title {
-  color: #60a5fa;
-}
-html[data-theme="dark"] .ticket-brand-sub {
-  color: #94a3b8;
-}
-html[data-theme="dark"] .ticket-pnr-pill {
-  background: rgba(59, 130, 246, 0.15);
-  border-color: rgba(96, 165, 250, 0.3);
-}
-html[data-theme="dark"] .ticket-pnr-pill .pnr-label {
-  color: #94a3b8;
-}
-html[data-theme="dark"] .ticket-pnr-pill .pnr-val {
-  color: #f1f5f9;
-}
-html[data-theme="dark"] .ticket-corridor {
-  background: #0f172a;
-  border-color: #334155;
-}
-html[data-theme="dark"] .ticket-city-name {
-  color: #f8fafc;
-}
-html[data-theme="dark"] .ticket-city-sub {
-  color: #94a3b8;
-}
-html[data-theme="dark"] .ticket-meta-label {
-  color: #94a3b8;
-}
-html[data-theme="dark"] .ticket-meta-val {
-  color: #f1f5f9;
-}
-html[data-theme="dark"] .ticket-meta-sub {
-  color: #94a3b8;
-}
-html[data-theme="dark"] .ticket-perforated-stub {
-  border-top-color: #334155;
-}
-html[data-theme="dark"] .ticket-seal-card {
-  background: #0f172a;
-  border-color: #334155;
-}
-html[data-theme="dark"] .ticket-instructions-list li {
-  color: #cbd5e1;
 }
 
 /* Print styles override (strictly pure white for paper) */

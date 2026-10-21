@@ -118,9 +118,9 @@ assert_layout("admin-mobile-responsive.css does NOT contain duplicate hardcoded 
     !str_contains($mobile_css, 'background: #ffffff;')
 );
 
-assert_layout("admin.css defines .table-stack with theme tokens and dark mode overrides",
+assert_layout("admin.css defines .table-stack with theme tokens and enforces permanent light mode",
     str_contains($admin_css, 'var(--c-surface') &&
-    str_contains($admin_css, 'html[data-theme="dark"] .table-stack tr')
+    !str_contains($admin_css, 'html[data-theme="dark"] .table-stack tr')
 );
 
 assert_layout("admin.css styles mobile sticky bulk action bar with safe-area padding",
@@ -142,8 +142,8 @@ assert_layout("admin.css implements Option 2 Boarding Pass CSS Grid mobile layou
     str_contains($admin_css, 'border-bottom: 2px dashed')
 );
 
-assert_layout("admin.css defines dark mode overrides for .bookings-table",
-    str_contains($admin_css, 'html[data-theme="dark"] .bookings-table tr')
+assert_layout("admin.css enforces permanent clean light mode for .bookings-table",
+    !str_contains($admin_css, 'html[data-theme="dark"] .bookings-table tr')
 );
 
 assert_layout("admin.css groups PNR label and code with justify-content flex-start without gap blowout",
@@ -198,7 +198,7 @@ assert_layout("admin.css implements Option 2 Indian License Plate / Vehicle Badg
 assert_layout("admin.css defines amber commercial colored borders and left accents for buses-table",
     str_contains($admin_css, '.buses-table tr') &&
     str_contains($admin_css, 'border-left: 5px solid #f59e0b') &&
-    str_contains($admin_css, 'html[data-theme="dark"] .buses-table tr')
+    !str_contains($admin_css, 'html[data-theme="dark"] .buses-table tr')
 );
 
 assert_layout("admin.css defines desktop table layout integrity for buses-table and card tables",
@@ -225,7 +225,7 @@ assert_layout("admin.css defines emerald colored borders, 5px left accent, and 2
     str_contains($admin_css, '.route-card-mobile {') &&
     str_contains($admin_css, 'border-left: 5px solid #10b981 !important;') &&
     str_contains($admin_css, 'margin-bottom: 24px !important;') &&
-    str_contains($admin_css, 'html[data-theme="dark"] .route-card-mobile')
+    !str_contains($admin_css, 'html[data-theme="dark"] .route-card-mobile')
 );
 
 // -------------------------------------------------------------
@@ -262,9 +262,8 @@ assert_layout("admin.css defines status-coded colored borders, 5px left accent, 
     str_contains($admin_css, 'margin-bottom: 24px !important;')
 );
 
-assert_layout("admin.css defines dark mode overrides for .queries-table",
-    str_contains($admin_css, 'html[data-theme="dark"] .queries-table tr') &&
-    str_contains($admin_css, 'html[data-theme="dark"] .queries-table tr.query-row-new')
+assert_layout("admin.css enforces permanent clean light mode for .queries-table",
+    !str_contains($admin_css, 'html[data-theme="dark"] .queries-table tr')
 );
 
 $customers_content = file_get_contents(__DIR__ . '/../admin/customers.php');
@@ -294,9 +293,8 @@ assert_layout("admin.css defines status-coded colored borders, 5px left accent, 
     str_contains($admin_css, 'margin-bottom: 24px !important;')
 );
 
-assert_layout("admin.css defines dark mode overrides for .customers-table",
-    str_contains($admin_css, 'html[data-theme="dark"] .customers-table tr') &&
-    str_contains($admin_css, 'html[data-theme="dark"] .customers-table tr.customer-row-active')
+assert_layout("admin.css enforces permanent clean light mode for .customers-table",
+    !str_contains($admin_css, 'html[data-theme="dark"] .customers-table tr')
 );
 
 // -------------------------------------------------------------
@@ -399,11 +397,10 @@ assert_layout("admin.css honors prefers-reduced-motion for drawer and overlay tr
 );
 
 $design_system_css = file_get_contents(__DIR__ . '/../assets/css/design-system.css');
-assert_layout("admin.css and design-system.css define global white light theme and dark theme for sidebar drawer",
+assert_layout("admin.css and design-system.css enforce permanent white light theme for sidebar drawer",
     str_contains($admin_css, '--sidebar-bg: #ffffff;') &&
-    str_contains($admin_css, '--sidebar-bg: #0f172a;') &&
     str_contains($design_system_css, '--sidebar-bg: #ffffff;') &&
-    str_contains($design_system_css, '--sidebar-bg:            #0f172a;')
+    !str_contains($admin_css, 'html[data-theme="dark"]')
 );
 
 assert_layout("admin.css defines 0.75rem (12px) margin-right on .nav-icon-tile for icon-text spacing",

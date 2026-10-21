@@ -104,33 +104,6 @@
   --sidebar-border: rgba(255,255,255,0.06);
 }
 
-/* ── Dark Theme Tokens Override (html[data-theme="dark"]) ──── */
-html[data-theme="dark"],
-html.dark-mode {
-  --c-bg:            #090d16;
-  --c-surface:       #131b2e;
-  --c-text:          #f1f5f9;
-  --c-text-muted:    #94a3b8;
-  --c-text-light:    #64748b;
-  --c-border:        #1e293b;
-  --c-border-dark:   #334155;
-
-  --c-primary-light: #1e3a8a;
-  --c-success-bg:    #064e3b;
-  --c-warning-bg:    #78350f;
-  --c-error-bg:      #7f1d1d;
-  --c-info-bg:       #164e63;
-
-  --sidebar-bg:      #0b1120;
-  --sidebar-border:  rgba(255,255,255,0.08);
-
-  --shadow-xs:  0 1px 2px rgba(0,0,0,0.3);
-  --shadow-sm:  0 1px 3px rgba(0,0,0,0.4);
-  --shadow-md:  0 4px 6px -1px rgba(0,0,0,0.5);
-  --shadow-lg:  0 10px 15px -3px rgba(0,0,0,0.6);
-  --shadow-xl:  0 20px 25px -5px rgba(0,0,0,0.7);
-}
-
 /* Theme Toggle Button Component */
 .theme-toggle-btn {
   display: inline-flex;
@@ -158,56 +131,6 @@ html.dark-mode {
   width: 16px;
   height: 16px;
   stroke: currentColor;
-}
-
-/* Dark mode bootstrap tweaks */
-html[data-theme="dark"] .bg-light,
-html[data-theme="dark"] .bg-white {
-  background-color: var(--c-surface) !important;
-}
-html[data-theme="dark"] .text-dark {
-  color: #f1f5f9 !important;
-}
-html[data-theme="dark"] .text-muted {
-  color: #94a3b8 !important;
-}
-html[data-theme="dark"] .thead-light th {
-  background-color: #1a243b !important;
-  color: #cbd5e1 !important;
-  border-color: #24304d !important;
-}
-html[data-theme="dark"] .table {
-  color: #e2e8f0;
-}
-html[data-theme="dark"] .table-hover tbody tr:hover {
-  background-color: #1a253d;
-}
-html[data-theme="dark"] .card {
-  background-color: var(--c-surface);
-  border-color: var(--c-border);
-}
-html[data-theme="dark"] .form-control,
-html[data-theme="dark"] .custom-select {
-  background-color: #0f172a;
-  color: #f1f5f9;
-  border-color: var(--c-border);
-}
-html[data-theme="dark"] .form-control:focus {
-  background-color: #0f172a;
-  color: #ffffff;
-}
-html[data-theme="dark"] .modal-content {
-  background-color: var(--c-surface);
-  color: var(--c-text);
-  border: 1px solid var(--c-border);
-}
-html[data-theme="dark"] .modal-header,
-html[data-theme="dark"] .modal-footer {
-  border-color: var(--c-border);
-}
-html[data-theme="dark"] .breadcrumb {
-  background-color: var(--c-surface);
-  border-color: var(--c-border);
 }
 
 
@@ -1100,56 +1023,6 @@ div.bus-row {
     rgba(239, 68, 68, 0.35) 5px
   );
   border: 1.5px solid #ef4444;
-}
-
-/* ── Dark Mode Adaptations ────────────────────────────────── */
-html[data-theme="dark"] .bus-map-card {
-  background: #1e293b;
-  border-color: #475569;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-}
-html[data-theme="dark"] .bus-driver-label,
-html[data-theme="dark"] .bus-door-label,
-html[data-theme="dark"] .bus-rear-label {
-  color: #94a3b8;
-}
-html[data-theme="dark"] .bus-dash-divider {
-  border-color: #334155;
-}
-html[data-theme="dark"] .seat-available {
-  background-color: #0f172a;
-  border-color: #38bdf8;
-  color: #38bdf8;
-}
-html[data-theme="dark"] .seat-available:hover {
-  background-color: #1e293b;
-}
-html[data-theme="dark"] .swatch-available {
-  border-color: #38bdf8;
-  background-color: #0f172a;
-}
-html[data-theme="dark"] .seat-booked {
-  background-color: #3f1d24 !important;
-  background-image: repeating-linear-gradient(
-    135deg,
-    transparent,
-    transparent 5px,
-    rgba(239, 68, 68, 0.35) 5px,
-    rgba(239, 68, 68, 0.35) 7px
-  ) !important;
-  border-color: #ef4444 !important;
-  color: #f87171 !important;
-}
-html[data-theme="dark"] .seat-booked .seat-num,
-html[data-theme="dark"] .seat-booked .seat-type-tag,
-html[data-theme="dark"] .seat-booked .seat-corner-icon {
-  color: #f87171 !important;
-}
-html[data-theme="dark"] .swatch-booked {
-  background-color: #3f1d24;
-}
-html[data-theme="dark"] .bus-legend-item {
-  color: #cbd5e1;
 }
 
 /* ── Mobile Viewports (<= 480px) ──────────────────────────── */

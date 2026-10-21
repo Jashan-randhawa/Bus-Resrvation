@@ -27,56 +27,6 @@
   stroke: currentColor;
 }
 
-/* Dark mode bootstrap tweaks */
-html[data-theme="dark"] .bg-light,
-html[data-theme="dark"] .bg-white {
-  background-color: var(--c-surface) !important;
-}
-html[data-theme="dark"] .text-dark {
-  color: #f1f5f9 !important;
-}
-html[data-theme="dark"] .text-muted {
-  color: #94a3b8 !important;
-}
-html[data-theme="dark"] .thead-light th {
-  background-color: #1a243b !important;
-  color: #cbd5e1 !important;
-  border-color: #24304d !important;
-}
-html[data-theme="dark"] .table {
-  color: #e2e8f0;
-}
-html[data-theme="dark"] .table-hover tbody tr:hover {
-  background-color: #1a253d;
-}
-html[data-theme="dark"] .card {
-  background-color: var(--c-surface);
-  border-color: var(--c-border);
-}
-html[data-theme="dark"] .form-control,
-html[data-theme="dark"] .custom-select {
-  background-color: #0f172a;
-  color: #f1f5f9;
-  border-color: var(--c-border);
-}
-html[data-theme="dark"] .form-control:focus {
-  background-color: #0f172a;
-  color: #ffffff;
-}
-html[data-theme="dark"] .modal-content {
-  background-color: var(--c-surface);
-  color: var(--c-text);
-  border: 1px solid var(--c-border);
-}
-html[data-theme="dark"] .modal-header,
-html[data-theme="dark"] .modal-footer {
-  border-color: var(--c-border);
-}
-html[data-theme="dark"] .breadcrumb {
-  background-color: var(--c-surface);
-  border-color: var(--c-border);
-}
-
 
 /* ── 2. Base Reset & Typography ────────────────────────────── */
 *, *::before, *::after {
@@ -967,56 +917,6 @@ div.bus-row {
     rgba(239, 68, 68, 0.35) 5px
   );
   border: 1.5px solid #ef4444;
-}
-
-/* ── Dark Mode Adaptations ────────────────────────────────── */
-html[data-theme="dark"] .bus-map-card {
-  background: #1e293b;
-  border-color: #475569;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-}
-html[data-theme="dark"] .bus-driver-label,
-html[data-theme="dark"] .bus-door-label,
-html[data-theme="dark"] .bus-rear-label {
-  color: #94a3b8;
-}
-html[data-theme="dark"] .bus-dash-divider {
-  border-color: #334155;
-}
-html[data-theme="dark"] .seat-available {
-  background-color: #0f172a;
-  border-color: #38bdf8;
-  color: #38bdf8;
-}
-html[data-theme="dark"] .seat-available:hover {
-  background-color: #1e293b;
-}
-html[data-theme="dark"] .swatch-available {
-  border-color: #38bdf8;
-  background-color: #0f172a;
-}
-html[data-theme="dark"] .seat-booked {
-  background-color: #3f1d24 !important;
-  background-image: repeating-linear-gradient(
-    135deg,
-    transparent,
-    transparent 5px,
-    rgba(239, 68, 68, 0.35) 5px,
-    rgba(239, 68, 68, 0.35) 7px
-  ) !important;
-  border-color: #ef4444 !important;
-  color: #f87171 !important;
-}
-html[data-theme="dark"] .seat-booked .seat-num,
-html[data-theme="dark"] .seat-booked .seat-type-tag,
-html[data-theme="dark"] .seat-booked .seat-corner-icon {
-  color: #f87171 !important;
-}
-html[data-theme="dark"] .swatch-booked {
-  background-color: #3f1d24;
-}
-html[data-theme="dark"] .bus-legend-item {
-  color: #cbd5e1;
 }
 
 /* ── Mobile Viewports (<= 480px) ──────────────────────────── */

@@ -97,9 +97,9 @@ assert_carousel("home.css hides carousel controls on desktop (min-width: 768px)"
     strpos($css_content, '.features-carousel-controls') !== false &&
     strpos($css_content, 'display: none !important') !== false);
 
-assert_carousel("home.css includes dark mode support for mobile carousel controls", 
-    strpos($css_content, 'html[data-theme="dark"] .features-carousel-arrow') !== false &&
-    strpos($css_content, 'html[data-theme="dark"] .features-dot') !== false);
+assert_carousel("home.css enforces permanent clean light mode for mobile carousel controls", 
+    strpos($css_content, 'html[data-theme="dark"] .features-carousel-arrow') === false &&
+    strpos($css_content, 'html[data-theme="dark"] .features-dot') === false);
 
 // Suite 3: JavaScript Controller
 echo "\n[*] Suite 3: Controller Interactions in homepage.php\n";
