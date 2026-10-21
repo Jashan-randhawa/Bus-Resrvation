@@ -96,7 +96,7 @@ Comprehensive architectural, operational, and security documentation is availabl
 - 📜 **Immutable Audit Trail:** Append-only event logging with visual before/after state diffing, database trigger protection, and automated retention cleanup.
 - 💬 **Customer Query Inbox & Modal Email Reply Workflow:** Support inquiry lifecycle (`new`, `replied`, `closed`), multi-line inquiry message preview clamping with "Read More →" modal inspection, clean Light-themed modal dialog with high-contrast headers, smooth 1-click transition to email reply modal (`#singleReplyModal`), and RFC 5321 SMTP email delivery.
 - 🎟️ **Bulk Booking Operations:** Multi-select checkboxes for batch reservation cancellations and selected-row CSV exports.
-- 🎨 **High-Fidelity Light Mode & Emerald Cyber (Theme B) Dark Mode System:** Unified design token architecture (`assets/css/design-system.css`, `assets/css/theme-emerald.css`) delivering a crisp pure-white Light Mode surface (`#ffffff`) and a cybernetic Dark Mode (`data-theme="dark"` / `body.dark-mode`) featuring Deep Obsidian canvas (`#050C0F`), Dark Pine surfaces (`#081216`), Elevated Teal accents (`#0F222A`), Mint Emerald primary CTA (`#10B981`), and Sky Cyan interactive highlights (`#06B6D4`). Enforces strict CSS scoping to ensure dark mode tokens never pollute the crisp light theme, complete with a custom SVG vector icon sprite system, high-definition bus brand emblem (`assets/images/bus.svg`), glassmorphic sticky topbar with semantic section eyebrow pills, automatic CSS cache-busting, and an accessible touch-first mobile navigation drawer (`<992px`).
+- 🎨 **Permanent Clean Light Mode & Unified Design System:** Modern, high-contrast design token architecture (`assets/css/design-system.css`) enforcing permanent clean light mode across all modules. Features a pure-white canvas (`#ffffff`), subtle surface backgrounds (`#f8fafc`), slate typography (`#0f172a` / `#1e293b`), high-contrast borders (`#e2e8f0`), and vibrant primary accents (`#2563eb`), complete with a custom SVG vector icon sprite system, high-definition bus brand emblem (`assets/images/bus.svg`), sticky topbar with semantic section eyebrow pills, automatic CSS cache-busting, and an accessible touch-first mobile navigation drawer (`<992px`). Dark mode toggling has been deprecated and removed to provide an uncompromised, accessible, high-legibility experience.
 - ⚡ **Animated BusBook Splash & Loading Experience:** Dedicated standalone loading page (`loading.html`) and responsive app preloader overlay (`assets/partials/_preloader.php`) built around the luminous BusBook speed-ticket logo, featuring perspective road travel animations, gradient progress indicator, journey status updates, and auto-dismiss logic.
 
 ---
@@ -133,7 +133,7 @@ flowchart TD
 
 | Layer | Technologies |
 |---|---|
-| **Frontend** | HTML5, CSS3 (Custom Design Tokens, Light Mode & Emerald Cyber Dark Theme), JavaScript (ES6), Bootstrap 4.6, Chart.js, Font Awesome, QRCode.js, Inline SVG Sprite System, Progressive Web App (Service Worker, Web App Manifest) |
+| **Frontend** | HTML5, CSS3 (Custom Design Tokens, Permanent Clean Light Mode), JavaScript (ES6), Bootstrap 4.6, Chart.js, Font Awesome, QRCode.js, Inline SVG Sprite System, Progressive Web App (Service Worker, Web App Manifest) |
 | **Backend** | PHP 8.3 / 8.4 (Apache 2.4 runtime), Session Auth, Pure-PHP Native PDF 1.4 Engine, Brevo REST API / SMTP Mailer, MySQLi with TLS/SSL |
 | **Database** | TiDB Cloud Serverless (MySQL Compatible) / MySQL 8.0+ |
 | **Security & Auth** | RFC 6238 TOTP 2FA, Google OAuth 2.0 / OpenID Connect (PKCE S256), AES-256-GCM, Bcrypt Hashing, Anti-CSRF, Enforced CSP, Rate Limiting |
@@ -149,7 +149,7 @@ flowchart TD
 | **🐳 Docker App Container** | [`ghcr.io/jashan-randhawa/bus-resrvation`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation) | Production app image (`:latest`, `:2.4.0`, `:edge`) |
 | **⚡ Docker Migration Runner** | [`ghcr.io/jashan-randhawa/bus-resrvation-migrate`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/container/bus-resrvation-migrate) | One-off CLI database migration runner (`:latest`, `:1.0.0`) |
 | **💺 Seat Picker Widget (npm)** | [`@jashan-randhawa/bus-seat-picker`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/npm/bus-seat-picker) | Accessible seat selection widget with live availability polling |
-| **🎨 Design Tokens & UI (npm)** | [`@jashan-randhawa/busres-ui`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/npm/busres-ui) | Design tokens, components, and dark/light theme toggle |
+| **🎨 Design Tokens & UI (npm)** | [`@jashan-randhawa/busres-ui`](https://github.com/Jashan-randhawa/Bus-Resrvation/pkgs/npm/busres-ui) | Shared design tokens, light mode components, and legacy storage purger |
 | **📱 Android Native App (TWA)** | [`packages/app`](packages/app) | Native Android APK (~999 KB) & Play Store AAB Bundle (~1.08 MB) |
 | **🗜️ Release Zip Archive** | [`bus-reservation-v2.4.0.zip`](https://github.com/Jashan-randhawa/Bus-Resrvation/releases/download/v2.4.0/bus-reservation-v2.4.0.zip) | Curated distribution bundle via GitHub Actions |
 | **📄 Implementation Plan PDF** | [`Bus_Reservation_GitHub_Packages_Plan.pdf`](https://github.com/Jashan-randhawa/Bus-Resrvation/blob/main/docs/Bus_Reservation_GitHub_Packages_Plan.pdf) | GitHub Packages Release Plan |
@@ -371,13 +371,13 @@ php tests/test_pnr_section.php
 # Customer inquiries message clamping, modal triggers & email reply transitions (20 assertions)
 php tests/test_queries_modal.php
 
-# Emerald Cyber (Theme B) design system tokens, components & dark layout integration (49 assertions)
+# Theme Emerald deprecation & layout unlinking verification (16 assertions)
 php tests/test_theme_emerald.php
 
-# Light theme fidelity & strict Theme B dark mode isolation (22 assertions)
+# Light theme fidelity & baseline token integrity (22 assertions)
 php tests/test_light_theme_fidelity.php
 
-# Dark mode elevation, card contrast & surface tokens (30 assertions)
+# Dark mode removal & light mode architecture enforcement (20 assertions)
 php tests/test_dark_mode_elevation.php
 
 # Modern 4-column responsive web footer, PWA bottom nav & admin utility bar (36 assertions)
@@ -478,7 +478,7 @@ Bus-Reservation/
 │
 ├── assets/                   # 🎨 Stylesheets, Scripts & Vector Brand Assets
 │   ├── css/
-│   │   ├── design-system.css # Global Light (White) & Dark (Slate) design tokens
+│   │   ├── design-system.css # Authoritative permanent light mode design tokens
 │   │   ├── footer.css        # Scoped 4-column footer, dark-slate tokens & PWA media queries
 │   │   ├── admin.css         # Admin workspace, topbar, sidebar & table styles
 │   │   ├── admin-mobile-responsive.css # Responsive mobile drawer & card adaptations
@@ -486,12 +486,12 @@ Bus-Reservation/
 │   │   ├── user.css          # Customer portal, boarding pass & custom dropdown styles
 │   │   ├── seat-map.css      # Fluid seat map grid & sticky mobile booking bar
 │   │   ├── home.css          # Public landing page styles
-│   │   ├── theme-emerald.css # Emerald Cyber (Theme B) Dark Mode design system
+│   │   ├── theme-emerald.css # Deprecated: dark mode removed in favor of permanent clean light mode
 │   │   └── preloader.css     # Brand splash preloader stylesheet
 │   ├── js/
 │   │   ├── admin-mobile.js   # Accessible off-canvas drawer & swipe gesture controller
 │   │   ├── perf-chart.js     # Chart.js dual-axis booking/revenue & status donut charts
-│   │   ├── theme-toggle.js   # Persistent Light/Dark theme switcher
+│   │   ├── theme-toggle.js   # Permanent light mode enforcer & legacy storage purger
 │   │   ├── user-idle.js      # Customer session idle warning & auto-logout monitor
 │   │   └── preloader.js      # Brand preloader controller API (window.BusBookLoader)
 │   └── images/
@@ -544,9 +544,9 @@ Bus-Reservation/
 │   ├── test_admin_layout.php # Admin mobile drawer, Option 2 card architectures & desktop table integrity
 │   ├── test_pnr_section.php  # Real-Time PNR Tracker, dual-factor inputs & boarding pass card suite
 │   ├── test_queries_modal.php # Customer inquiries message clamping & descriptive modal dialog suite
-│   ├── test_theme_emerald.php # Emerald Cyber (Theme B) design system tokens & layout integration
-│   ├── test_light_theme_fidelity.php # Light theme fidelity & strict Theme B dark mode isolation
-│   ├── test_dark_mode_elevation.php # Dark mode elevation, card contrast & surface tokens
+│   ├── test_theme_emerald.php # Theme Emerald deprecation & layout unlinking verification
+│   ├── test_light_theme_fidelity.php # Light theme fidelity & baseline token integrity
+│   ├── test_dark_mode_elevation.php # Dark mode removal & permanent light mode architecture
 │   ├── test_user_layout.php  # Customer portal mobile & custom dropdown test suite
 │   ├── test_email_ticket_link.php # Boarding pass email button & HMAC signature authorization test suite
 │   ├── test_features_carousel.php # Mobile features & routes swipe carousels & 5s auto-scroll test suite
@@ -606,7 +606,7 @@ Bus-Reservation/
 - 🎟️ **Cryptographic PNR Privacy & HMAC-SHA256 Boarding Pass Seals:** Random 10-character hexadecimal tokens replacing sequential IDs, with rate-limited two-factor status lookup and tamper-proof 12-character HMAC-SHA256 digital seals securing direct mobile email boarding pass access without authentication bottlenecks.
 - 📊 **Streaming CSV Formula Injection Defense:** Prepends `'` to cells beginning with `=`, `+`, `-`, or `@` to neutralize spreadsheet execution exploits.
 - 📄 **Pure-PHP Vector PDF Security & Memory Safety:** Manifests and administrative exports are compiled in-memory via pure-PHP PDF primitives (`generate_manifest_pdf_doc()`) without invoking external system binaries or shell wrappers, eliminating command injection and remote code execution vulnerabilities commonly associated with headless browser or Ghostscript pipelines.
-- 🎨 **Strict Theme Boundary Isolation:** CSS architecture guarantees clean isolation between high-fidelity Light Mode and Emerald Cyber (Theme B) Dark Mode, preventing theme leakage, layout shifts, or selector collisions across desktop and mobile cards.
+- 🎨 **Permanent Clean Light Mode Enforcement:** CSS architecture guarantees clean, high-contrast light mode styling throughout all portals, eliminating dark theme selector collisions and enforcing WCAG AA contrast across desktop, tablet, and mobile cards.
 - 🧼 **XSS Output Sanitization:** Context-aware `e()` HTML escaping on all dynamic data.
 - 🐳 **Hardened Container Runtime:** PHP 8.4-apache with HSTS, CSP (`script-src`, `img-src data:`, SRI hashes), X-Frame-Options, and X-Content-Type-Options headers.
 

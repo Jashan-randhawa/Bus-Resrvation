@@ -119,7 +119,7 @@ On mobile viewports (`<768px`), the **Features** and **Popular Routes** sections
 The Customer Dashboard combines an airline-grade boarding pass preview with an accessible search engine:
 1. **Upcoming Journey Hero Card:** Automatically highlights the passenger's next confirmed departure with a live pulsing status badge, origin/destination route visualization, departure countdown, assigned seat & PNR pills, and 1-tap **Boarding Pass** and **Share** actions.
 2. **Accessible In-DOM Custom City Dropdowns (`.custom-dropdown-widget`):**
-   - Replaces inconsistent OS-native combobox popups with a theme-aware in-DOM dropdown menu (`role="listbox"`) supporting full keyboard navigation (`ArrowDown`, `ArrowUp`, `Enter`, `Escape`).
+   - Replaces inconsistent OS-native combobox popups with an accessible in-DOM dropdown menu (`role="listbox"`) supporting full keyboard navigation (`ArrowDown`, `ArrowUp`, `Enter`, `Escape`).
    - Formats city names in clean Title Case and dynamically filters available destination cities based on the selected origin city (`routePairs`).
    - Includes a circular **Swap Cities (`⇄`)** button that validates reverse route connectivity before swapping.
 3. **Real-Time Seat Availability Calculation:**

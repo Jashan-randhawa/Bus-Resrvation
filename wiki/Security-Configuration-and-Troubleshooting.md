@@ -89,10 +89,10 @@ Apache security headers in `docker/apache-security.conf` enforce:
 - Zero external process execution: `exec`, `shell_exec`, `system`, and `passthru` are strictly prohibited across the codebase.
 - Eliminates Ghostscript arbitrary command execution vulnerabilities (e.g. CVE-2021-3781) and headless browser (Chromium/wkhtmltopdf) memory leaks.
 
-### 1.14 CSS Theme & Layout Boundary Isolation
+### 1.14 Permanent Clean Light Mode & Theme Consistency
 - Enforced `@media (min-width: 769px)` layout integrity rules on administrative tables prevent mobile card grid rules or flex containers from corrupting desktop column alignment.
 - Passenger cabin seat map classes are scoped strictly to `.bus-seats-grid .bus-row, div.bus-row`, preventing global selector pollution of table rows (`.fleet-bus-row`).
-- Emerald Cyber Theme B (`theme-emerald.css`) variables and selectors are strictly gated under `[data-theme="dark"]` and `body.dark-mode`, ensuring zero style leakage into the pure-white light mode.
+- All application templates hardcode `<html lang="en" data-theme="light">` and stylesheets enforce `color-scheme: light;`, eliminating accidental low-contrast states or dark mode selector leakage.
 
 ---
 
@@ -165,13 +165,13 @@ php tests/test_pnr_section.php
 # Customer inquiries message clamping, modal triggers & email reply transitions (20 assertions)
 php tests/test_queries_modal.php
 
-# Emerald Cyber (Theme B) design system tokens, components & dark layout integration (49 assertions)
+# Theme Emerald deprecation & layout unlinking verification (16 assertions)
 php tests/test_theme_emerald.php
 
-# Light theme fidelity & strict Theme B dark mode isolation (22 assertions)
+# Light theme fidelity & baseline token integrity (22 assertions)
 php tests/test_light_theme_fidelity.php
 
-# Dark mode elevation, card contrast & surface tokens (30 assertions)
+# Dark mode removal & permanent light mode architecture (20 assertions)
 php tests/test_dark_mode_elevation.php
 ```
 

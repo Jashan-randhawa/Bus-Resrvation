@@ -38,7 +38,7 @@ flowchart LR
 - **Authentication & Security:** RFC 6238 TOTP 2FA, Google OAuth 2.0 / OpenID Connect (PKCE S256), SHA-256 Hashed Password Resets, Bcrypt, HMAC-SHA256 Boarding Pass Seals, and CSRF Protection
 - **Web Server:** Apache 2.4 HTTP Server with `mod_rewrite` and `mod_headers`
 - **Database Engine:** TiDB Cloud Serverless (MySQL 8.0 compatible wire protocol)
-- **Frontend UI & Assets:** HTML5, CSS3 (Custom Design Tokens with High-Fidelity Light Mode & Scoped Emerald Cyber Theme B Dark Mode), JavaScript (ES6), Self-Hosted Bootstrap 4.6.2 & jQuery 3.5.1 (Zero CDN tracking warnings), Chart.js, QRCode.js, Inline SVG Sprite System, Option 2 Mobile Card Architecture, Precision Horizontal Baseline Grid, Cinematic 3D Transit Preloader
+- **Frontend UI & Assets:** HTML5, CSS3 (Custom Design Tokens with Permanent Clean Light Mode), JavaScript (ES6), Self-Hosted Bootstrap 4.6.2 & jQuery 3.5.1 (Zero CDN tracking warnings), Chart.js, QRCode.js, Inline SVG Sprite System, Option 2 Mobile Card Architecture, Precision Horizontal Baseline Grid, Cinematic 3D Transit Preloader
 - **Containerization:** Docker (Multi-stage build context, non-root web directory, dynamic PORT support)
 - **Cloud Hosting:** Render Web Services
 - **CI/CD & Registry:** GitHub Actions, GitHub Container Registry (`ghcr.io`), GitHub Packages (npm)

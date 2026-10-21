@@ -7,7 +7,7 @@ The Bus Reservation System uses a lightweight, modular monolithic PHP architectu
 ```mermaid
 flowchart TD
     subgraph ClientLayer ["1. Client Layer"]
-        Browser["Desktop & Mobile Browsers<br/>(Global Light/Dark Theme Tokens & Responsive Viewports)"]
+        Browser["Desktop & Mobile Browsers<br/>(Permanent Clean Light Mode & Responsive Viewports)"]
     end
 
     subgraph AppServer ["2. Application Container (Render / Docker)"]
@@ -129,7 +129,7 @@ Bus-Reservation/
 │   │   ├── bootstrap/        # Bootstrap 4.6.2 CSS & bundle JS
 │   │   └── jquery/           # jQuery 3.5.1 production minified runtime
 │   ├── css/
-│   │   ├── design-system.css # Global Light (White) & Dark (Slate) design tokens
+│   │   ├── design-system.css # Authoritative permanent light mode design tokens
 │   │   ├── footer.css        # Scoped 4-column footer, dark-slate tokens & PWA media queries
 │   │   ├── admin.css         # Admin workspace, topbar, sidebar & table styles
 │   │   ├── admin-mobile-responsive.css # Responsive mobile drawer & card adaptations
@@ -138,11 +138,11 @@ Bus-Reservation/
 │   │   ├── seat-map.css      # Fluid seat map grid & sticky mobile booking bar
 │   │   ├── preloader.css     # Cinematic 3D preloader & transit overlay animation
 │   │   ├── home.css          # Public landing page styles & user profile pill navbar
-│   │   └── theme-emerald.css # Emerald Cyber (Theme B) Dark Mode design system
+│   │   └── theme-emerald.css # Deprecated: dark mode removed in favor of permanent clean light mode
 │   ├── js/
 │   │   ├── admin-mobile.js   # Accessible off-canvas drawer & swipe gesture controller
 │   │   ├── perf-chart.js     # Chart.js dual-axis booking/revenue & status donut charts
-│   │   ├── theme-toggle.js   # Persistent Light/Dark theme switcher
+│   │   ├── theme-toggle.js   # Permanent light mode enforcer & legacy storage purger
 │   │   ├── preloader.js      # Global preloader transition controller
 │   │   ├── pwa-install.js    # Progressive Web App installation prompt controller
 │   │   └── user-idle.js      # Customer session idle warning & auto-logout monitor
@@ -171,10 +171,10 @@ Bus-Reservation/
 
 The frontend uses a centralized CSS custom property token system (`assets/css/design-system.css`) shared across both the Customer Portal (`user/`) and Administrator Control Center (`admin/`):
 
-1. **High-Fidelity Light Mode & Scoped Emerald Cyber Theme B Dark Mode:**
-   - **Light Mode (`:root`):** Crisp pure-white navigation sidebar and card surfaces (`--sidebar-bg: #ffffff`, `--surface: #ffffff`), slate typography (`--text-primary: #0f172a`), and royal blue active accents (`#2563eb`).
-   - **Emerald Cyber Dark Mode (`[data-theme="dark"]`, `assets/css/theme-emerald.css`):** Deep Obsidian canvas (`#050C0F`), Dark Pine surfaces (`#081216`), Elevated Teal accents (`#0F222A`), Mint Emerald primary CTA (`#10B981`), and Sky Cyan interactive highlights (`#06B6D4`). Enforces strict CSS scoping so dark tokens never pollute the crisp light theme.
-   - Controlled persistently via `assets/js/theme-toggle.js` and `localStorage.getItem('busres_theme_mode')`.
+1. **Permanent Clean Light Mode Architecture:**
+   - **Light Mode (`:root`):** Crisp pure-white navigation sidebar and card surfaces (`--sidebar-bg: #ffffff`, `--surface: #ffffff`, `--bg-base: #f8fafc`, `--bg-surface: #ffffff`), slate typography (`--text-primary: #0f172a`), high-contrast borders (`--c-border: #e2e8f0`), and royal blue primary accents (`#2563eb`).
+   - **Dark Mode Removal:** Dark theme support and toggling controls have been completely removed. Root templates enforce `<html lang="en" data-theme="light">` and `:root { color-scheme: light; }`.
+   - **Legacy Storage Purging:** `assets/js/theme-toggle.js` automatically purges legacy theme keys (`busres_theme_mode`, `busbook_theme`, `theme`) from browser storage and ensures `<meta name="theme-color">` is fixed to `#ffffff`.
 2. **Modern Passenger Profile Pill & Navbar:**
    - `includes/layout/header-public.php` renders a unified profile pill for logged-in passengers featuring a gradient avatar circle with passenger initials, one-line layout (`white-space: nowrap;`), quick shortcuts to Dashboard, My Bookings, and Account Settings, and an isolated CSRF signout link.
 3. **Modern 4-Column Web Footer & PWA Standalone Bottom Navigation:**

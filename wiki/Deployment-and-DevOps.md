@@ -147,7 +147,7 @@ The repository publishes pre-built distribution packages to **GitHub Packages** 
 | **🐳 Docker App Container** | `ghcr.io/jashan-randhawa/bus-resrvation` | Production app container image |
 | **⚡ Migration Runner** | `ghcr.io/jashan-randhawa/bus-resrvation-migrate` | Standalone CLI database migration image |
 | **💺 Seat Picker Widget** | `@jashan-randhawa/bus-seat-picker` | Standalone accessible seat selection widget |
-| **🎨 BusRes UI & Tokens** | `@jashan-randhawa/busres-ui` | Shared design tokens, styles, and dark mode |
+| **🎨 BusRes UI & Tokens** | `@jashan-randhawa/busres-ui` | Shared design tokens, light mode styles, and storage purger |
 
 ### Installing npm Packages:
 

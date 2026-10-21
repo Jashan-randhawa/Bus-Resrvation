@@ -1,6 +1,6 @@
 # @jashan-randhawa/busres-ui
 
-Design tokens, component styling, and dark mode theme switcher for the Bus Reservation System.
+Design tokens, component styling, and permanent light mode enforcement for the Bus Reservation System.
 
 ## Installation
 
@@ -40,40 +40,27 @@ Or component classes:
 @import "@jashan-randhawa/busres-ui/components.css";
 ```
 
-## Theme Switcher
+## Permanent Light Mode Enforcer & Storage Purger
 
-Include the theme toggle script in your page `<head>` or before `</body>`:
+Include the theme module in your page `<head>` or before `</body>`:
 
 ```html
 <script src="node_modules/@jashan-randhawa/busres-ui/src/theme-toggle.js"></script>
 ```
 
-Add theme toggle buttons anywhere in your markup:
-
-```html
-<button class="theme-toggle-btn" aria-label="Toggle theme">
-  <span class="theme-toggle-icon"></span>
-  <span class="theme-toggle-text">Theme</span>
-</button>
-```
-
-### Configurable Storage Key
+### API Usage
 ```javascript
-const theme = BusThemeToggle.init({
-  storageKey: 'my_custom_theme_key'
-});
+const theme = BusThemeToggle.init();
 
-// Programmatic control:
-theme.toggle();
-console.log('Current theme:', theme.getTheme());
+console.log('Current theme:', theme.getTheme()); // Always 'light'
 ```
 
 ### Features
-- **PWA Status Bar Synchronization:** Automatically detects `<meta name="theme-color">` elements (including media-query dark/light variants) and syncs `#0B0F19` / `#ffffff` status bar colors dynamically on theme switch.
-- **Dual Element & Key Support:** Sets `data-theme="dark"` and `.dark-mode` class on both `document.documentElement` and `document.body`, with fallback synchronization for both `theme` and `busres_theme_mode` local storage keys.
+- **Permanent Light Mode Enforcement:** Automatically sets `data-theme="light"` on `document.documentElement` and removes legacy `.dark` and `.dark-mode` classes.
+- **Legacy Storage Purging:** Automatically purges deprecated local storage keys (`busres_theme_mode`, `busbook_theme`, `theme`) on load.
+- **PWA Status Bar Synchronization:** Sets `<meta name="theme-color">` to `#ffffff`.
 - **FOUC Prevention:** Immediately initializes before DOM ready to prevent visual flickering.
 
 ## License
 
 MIT © Jashan Randhawa
-
