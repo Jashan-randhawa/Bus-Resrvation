@@ -1,5 +1,5 @@
 # Dockerfile
-FROM php:8.4-apache
+FROM php:8.6-apache
 
 ENV PORT=80
 
